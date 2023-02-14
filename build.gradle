@@ -22,8 +22,7 @@ sourceSets {
 }
 
 generateGrammarSource {
-    arguments += ["-visitor", "-package", "a2geek.ghost.antlr"]
-    outputDirectory = file("${project.buildDir}/generated-src/antlr/main/a2geek/ghost/antlr")
+    arguments += ["-visitor"]
 }
 
 test {

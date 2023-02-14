@@ -1,5 +1,7 @@
 package a2geek.ghost.antlr;
 
+import a2geek.ghost.antlr.generated.BasicBaseVisitor;
+import a2geek.ghost.antlr.generated.BasicParser;
 import a2geek.ghost.model.CodeBlock;
 import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.Program;

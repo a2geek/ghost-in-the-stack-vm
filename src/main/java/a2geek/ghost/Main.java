@@ -1,7 +1,7 @@
 package a2geek.ghost;
 
-import a2geek.ghost.antlr.BasicLexer;
-import a2geek.ghost.antlr.BasicParser;
+import a2geek.ghost.antlr.generated.BasicLexer;
+import a2geek.ghost.antlr.generated.BasicParser;
 import a2geek.ghost.antlr.GhostBasicVisitor;
 import a2geek.ghost.model.Program;
 import a2geek.ghost.model.visitor.MetadataVisitor;
