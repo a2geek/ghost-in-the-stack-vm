@@ -1,8 +1,12 @@
-package a2geek.ghost;
+package a2geek.ghost.antlr;
 
-import a2geek.ghost.antlr.BasicBaseVisitor;
-import a2geek.ghost.antlr.BasicParser;
-import a2geek.ghost.model.*;
+import a2geek.ghost.model.CodeBlock;
+import a2geek.ghost.model.Expression;
+import a2geek.ghost.model.Program;
+import a2geek.ghost.model.expression.BinaryExpression;
+import a2geek.ghost.model.expression.IdentifierExpression;
+import a2geek.ghost.model.expression.IntegerConstant;
+import a2geek.ghost.model.statement.*;
 
 public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     private Program program;

@@ -2,7 +2,9 @@ package a2geek.ghost;
 
 import a2geek.ghost.antlr.BasicLexer;
 import a2geek.ghost.antlr.BasicParser;
+import a2geek.ghost.antlr.GhostBasicVisitor;
 import a2geek.ghost.model.Program;
+import a2geek.ghost.model.visitor.MetadataVisitor;
 import org.antlr.v4.runtime.*;
 
 import java.io.IOException;
@@ -35,9 +37,14 @@ public class Main {
 
         Program program = visitor.getProgram();
 
+        MetadataVisitor metadataVisitor = new MetadataVisitor();
+        program.accept(metadataVisitor);
+
         System.out.println("=== SOURCE CODE ===");
         System.out.println(code);
         System.out.println("=== MODEL ===");
         System.out.println(program);
+        System.out.println("=== VARIABLES ===");
+        System.out.println(metadataVisitor.getVariables());
     }
 }
