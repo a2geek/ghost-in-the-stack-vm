@@ -12,8 +12,16 @@ public class BinaryExpression implements Expression {
         return l;
     }
 
+    public void setL(Expression l) {
+        this.l = l;
+    }
+
     public Expression getR() {
         return r;
+    }
+
+    public void setR(Expression r) {
+        this.r = r;
     }
 
     public String getOp() {

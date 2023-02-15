@@ -17,8 +17,16 @@ public class PlotStatement implements Statement {
         return x;
     }
 
+    public void setX(Expression x) {
+        this.x = x;
+    }
+
     public Expression getY() {
         return y;
+    }
+
+    public void setY(Expression y) {
+        this.y = y;
     }
 
     @Override

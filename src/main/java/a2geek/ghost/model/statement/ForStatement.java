@@ -28,8 +28,16 @@ public class ForStatement implements Statement, CodeBlock {
         return start;
     }
 
+    public void setStart(Expression start) {
+        this.start = start;
+    }
+
     public Expression getEnd() {
         return end;
+    }
+
+    public void setEnd(Expression end) {
+        this.end = end;
     }
 
     @Override

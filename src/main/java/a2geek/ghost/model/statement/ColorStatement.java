@@ -15,6 +15,10 @@ public class ColorStatement implements Statement {
         return expr;
     }
 
+    public void setExpr(Expression expr) {
+        this.expr = expr;
+    }
+
     @Override
     public void accept(Visitor visitor) {
         expr.accept(visitor);
