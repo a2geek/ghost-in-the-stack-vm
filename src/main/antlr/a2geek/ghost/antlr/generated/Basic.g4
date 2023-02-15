@@ -20,8 +20,8 @@ statement
     ;
 
 expr
-    : a=expr op=( '+' | '-' ) b=expr                          # addSubExpr
-    | a=expr op=( '*' | '/' | 'mod' ) b=expr                  # mulDivModExpr
+    : a=expr op=( '*' | '/' | 'mod' ) b=expr                  # mulDivModExpr
+    | a=expr op=( '+' | '-' ) b=expr                          # addSubExpr
     | a=ID                                                    # identifier
     | a=INT                                                   # intConstant
     ;
