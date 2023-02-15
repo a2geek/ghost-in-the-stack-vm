@@ -1,16 +1,15 @@
 package a2geek.ghost;
 
+import a2geek.ghost.antlr.GhostBasicVisitor;
 import a2geek.ghost.antlr.generated.BasicLexer;
 import a2geek.ghost.antlr.generated.BasicParser;
-import a2geek.ghost.antlr.GhostBasicVisitor;
 import a2geek.ghost.model.Program;
 import a2geek.ghost.model.visitor.MetadataVisitor;
+import a2geek.ghost.model.visitor.RewriteVisitor;
 import org.antlr.v4.runtime.*;
 
-import java.io.IOException;
-
 public class Main {
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         String code = """
                 GR
                 FOR C = 0 TO 14
@@ -46,5 +45,11 @@ public class Main {
         System.out.println(program);
         System.out.println("=== VARIABLES ===");
         System.out.println(metadataVisitor.getVariables());
+
+        RewriteVisitor rewriteVisitor = new RewriteVisitor();
+        rewriteVisitor.visit(program);
+
+        System.out.println("=== REWRITTEN ===");
+        System.out.println(program);
     }
 }
