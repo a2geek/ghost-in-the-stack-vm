@@ -1,0 +1,28 @@
+package a2geek.ghost.model.code;
+
+public enum Opcode {
+    ADD,
+    SUB,
+    EXIT,
+    GOTO,
+    IFTRUE,
+//    IFFALSE,
+    RESERVE,
+//    LOAD0,
+//    LOAD1,
+    LOAD,
+    STORE,
+//    ILOAD,
+    ISTORE,
+    LOADC,
+//    POP,
+    LT,
+//    EQ,
+//    LE,
+//    PRINTI,
+//    PRINTS,
+    SETACC,
+    SETXREG,
+    SETYREG,
+    CALL,
+}

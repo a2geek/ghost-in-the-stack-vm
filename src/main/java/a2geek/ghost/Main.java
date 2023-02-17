@@ -4,6 +4,7 @@ import a2geek.ghost.antlr.GhostBasicVisitor;
 import a2geek.ghost.antlr.generated.BasicLexer;
 import a2geek.ghost.antlr.generated.BasicParser;
 import a2geek.ghost.model.Program;
+import a2geek.ghost.model.visitor.CodeGenerationVisitor;
 import a2geek.ghost.model.visitor.MetadataVisitor;
 import a2geek.ghost.model.visitor.RewriteVisitor;
 import org.antlr.v4.runtime.*;
@@ -51,5 +52,10 @@ public class Main {
 
         System.out.println("=== REWRITTEN ===");
         System.out.println(program);
+
+        CodeGenerationVisitor codeGenerationVisitor = new CodeGenerationVisitor(metadataVisitor.getVariables());
+        codeGenerationVisitor.visit(program);
+        System.out.println("=== CODE ===");
+        codeGenerationVisitor.getInstructions().forEach(System.out::println);
     }
 }
