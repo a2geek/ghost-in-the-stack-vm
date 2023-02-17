@@ -2,7 +2,7 @@ package a2geek.ghost.antlr;
 
 import a2geek.ghost.antlr.generated.BasicBaseVisitor;
 import a2geek.ghost.antlr.generated.BasicParser;
-import a2geek.ghost.model.CodeBlock;
+import a2geek.ghost.model.StatementBlock;
 import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.Program;
 import a2geek.ghost.model.expression.BinaryExpression;
@@ -12,7 +12,7 @@ import a2geek.ghost.model.statement.*;
 
 public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     private Program program;
-    private CodeBlock codeBlock;
+    private StatementBlock statementBlock;
 
     public Program getProgram() {
         return program;
@@ -21,7 +21,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     @Override
     public Expression visitProgram(BasicParser.ProgramContext ctx) {
         this.program = new Program();
-        this.codeBlock = this.program;
+        this.statementBlock = this.program;
         return super.visitProgram(ctx);
     }
 
@@ -30,13 +30,13 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         String id = ctx.id.getText();
         Expression expr = visit(ctx.a);
         AssignmentStatement assignmentStatement = new AssignmentStatement(id, expr);
-        codeBlock.addStatement(assignmentStatement);
+        statementBlock.addStatement(assignmentStatement);
         return null;
     }
 
     @Override
     public Expression visitGrStmt(BasicParser.GrStmtContext ctx) {
-        codeBlock.addStatement(new GrStatement());
+        statementBlock.addStatement(new GrStatement());
         return null;
     }
 
@@ -46,12 +46,12 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         Expression start = visit(ctx.a);
         Expression end = visit(ctx.b);
 
-        CodeBlock oldCodeBlock = this.codeBlock;
+        StatementBlock oldStatementBlock = this.statementBlock;
         ForStatement forStatement = new ForStatement(id, start, end);
-        codeBlock = forStatement;
+        statementBlock = forStatement;
         visit(ctx.s);
-        codeBlock = oldCodeBlock;
-        codeBlock.addStatement(forStatement);
+        statementBlock = oldStatementBlock;
+        statementBlock.addStatement(forStatement);
         return null;
     }
 
@@ -59,7 +59,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     public Expression visitColorStmt(BasicParser.ColorStmtContext ctx) {
         Expression expr = visit(ctx.a);
         ColorStatement colorStatement = new ColorStatement(expr);
-        codeBlock.addStatement(colorStatement);
+        statementBlock.addStatement(colorStatement);
         return null;
     }
 
@@ -68,13 +68,13 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         Expression x = visit(ctx.a);
         Expression y = visit(ctx.b);
         PlotStatement plotStatement = new PlotStatement(x, y);
-        codeBlock.addStatement(plotStatement);
+        statementBlock.addStatement(plotStatement);
         return null;
     }
 
     @Override
     public Expression visitEndStmt(BasicParser.EndStmtContext ctx) {
-        codeBlock.addStatement(new EndStatement());
+        statementBlock.addStatement(new EndStatement());
         return null;
     }
 
