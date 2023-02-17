@@ -1,6 +1,6 @@
 package a2geek.ghost.model.statement;
 
-import a2geek.ghost.model.CodeBlock;
+import a2geek.ghost.model.StatementBlock;
 import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.Statement;
 import a2geek.ghost.model.Visitor;
@@ -8,7 +8,7 @@ import a2geek.ghost.model.Visitor;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ForStatement implements Statement, CodeBlock {
+public class ForStatement implements Statement, StatementBlock {
     private String id;
     private Expression start;
     private Expression end;

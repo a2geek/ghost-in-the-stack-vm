@@ -3,7 +3,7 @@ package a2geek.ghost.model;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Program implements CodeBlock {
+public class Program implements StatementBlock {
     List<Statement> statements = new ArrayList<>();
 
     public List<Statement> getStatements() {
