@@ -7,13 +7,19 @@ package a2geek.ghost.antlr.generated;
 }
 
 program
-    : statement+
+    : statements EOF
+    ;
+
+statements
+    : ( statement ( ':' statement )* EOL* )+
     ;
 
 statement
     : id=ID '=' a=expr                                              # assignment
     | 'gr'                                                          # grStmt
-    | 'for' id=ID '=' a=expr 'to' b=expr s=statement+ 'next' id2=ID # forLoop
+    | 'for' id=ID '=' a=expr 'to' b=expr EOL+
+        s=statements EOL*  // EOL is included in statements itself
+      'next' id2=ID                                                 # forLoop
     | 'color=' a=expr                                               # colorStmt
     | 'plot' a=expr ',' b=expr                                      # plotStmt
     | 'end'                                                         # endStmt
@@ -29,4 +35,5 @@ expr
 ID : [a-z] ([a-z0-9])* ;
 INT : [0-9]+ ;
 
-WS : [ \t\n]+ -> skip ;
+EOL : [\r]? [\n] ;
+WS : [ \t]+ -> skip ;
