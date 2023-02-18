@@ -38,7 +38,7 @@ public class Main {
         Program program = visitor.getProgram();
 
         MetadataVisitor metadataVisitor = new MetadataVisitor();
-        program.accept(metadataVisitor);
+        metadataVisitor.visit(program);
 
         System.out.println("=== SOURCE CODE ===");
         System.out.println(code);

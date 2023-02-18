@@ -2,7 +2,6 @@ package a2geek.ghost.model.statement;
 
 import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.Statement;
-import a2geek.ghost.model.Visitor;
 
 public class AssignmentStatement implements Statement {
     private String id;
@@ -23,12 +22,6 @@ public class AssignmentStatement implements Statement {
 
     public void setExpr(Expression expr) {
         this.expr = expr;
-    }
-
-    @Override
-    public void accept(Visitor visitor) {
-        expr.accept(visitor);
-        visitor.visit(this);
     }
 
     @Override

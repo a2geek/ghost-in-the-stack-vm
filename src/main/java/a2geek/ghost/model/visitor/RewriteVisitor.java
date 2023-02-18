@@ -1,14 +1,14 @@
 package a2geek.ghost.model.visitor;
 
 import a2geek.ghost.model.Expression;
-import a2geek.ghost.model.VisitorAlt;
+import a2geek.ghost.model.Visitor;
 import a2geek.ghost.model.expression.BinaryExpression;
 import a2geek.ghost.model.expression.IntegerConstant;
 
 import java.util.Map;
 import java.util.function.BiFunction;
 
-public class RewriteVisitor extends VisitorAlt {
+public class RewriteVisitor extends Visitor {
     private static final Map<String, BiFunction<Integer,Integer,Integer>> FUNCS = Map.of(
             "+",   (a,b) -> a+b,
             "-",   (a,b) -> a-b,

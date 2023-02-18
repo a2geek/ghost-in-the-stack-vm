@@ -2,7 +2,6 @@ package a2geek.ghost.model.statement;
 
 import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.Statement;
-import a2geek.ghost.model.Visitor;
 
 public class PlotStatement implements Statement {
     private Expression x;
@@ -27,13 +26,6 @@ public class PlotStatement implements Statement {
 
     public void setY(Expression y) {
         this.y = y;
-    }
-
-    @Override
-    public void accept(Visitor visitor) {
-        x.accept(visitor);
-        y.accept(visitor);
-        visitor.visit(this);
     }
 
     @Override

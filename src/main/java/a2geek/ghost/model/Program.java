@@ -13,10 +13,6 @@ public class Program implements StatementBlock {
         this.statements.add(statement);
     }
 
-    public void accept(Visitor visitor) {
-        statements.forEach(statement -> statement.accept(visitor));
-    }
-
     @Override
     public String toString() {
         return statementsAsString();

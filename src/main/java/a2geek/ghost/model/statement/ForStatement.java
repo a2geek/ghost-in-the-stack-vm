@@ -3,7 +3,6 @@ package a2geek.ghost.model.statement;
 import a2geek.ghost.model.StatementBlock;
 import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.Statement;
-import a2geek.ghost.model.Visitor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,14 +37,6 @@ public class ForStatement implements Statement, StatementBlock {
 
     public void setEnd(Expression end) {
         this.end = end;
-    }
-
-    @Override
-    public void accept(Visitor visitor) {
-        start.accept(visitor);
-        end.accept(visitor);
-        statements.forEach(statement -> statement.accept(visitor));
-        visitor.visit(this);
     }
 
     public void addStatement(Statement statement) {

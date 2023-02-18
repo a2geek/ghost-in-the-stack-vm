@@ -1,7 +1,6 @@
 package a2geek.ghost.model.expression;
 
 import a2geek.ghost.model.Expression;
-import a2geek.ghost.model.Visitor;
 
 public class BinaryExpression implements Expression {
     private Expression l;
@@ -32,13 +31,6 @@ public class BinaryExpression implements Expression {
         this.l = l;
         this.r = r;
         this.op = op;
-    }
-
-    @Override
-    public void accept(Visitor visitor) {
-        l.accept(visitor);
-        r.accept(visitor);
-        visitor.visit(this);
     }
 
     @Override

@@ -2,7 +2,7 @@ package a2geek.ghost.model.visitor;
 
 import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.Program;
-import a2geek.ghost.model.VisitorAlt;
+import a2geek.ghost.model.Visitor;
 import a2geek.ghost.model.code.CodeBlock;
 import a2geek.ghost.model.code.Instruction;
 import a2geek.ghost.model.code.Opcode;
@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class CodeGenerationVisitor extends VisitorAlt {
+public class CodeGenerationVisitor extends Visitor {
     private List<String> variables = new ArrayList<>();
     private CodeBlock code = new CodeBlock();
     private int labelNumber;
