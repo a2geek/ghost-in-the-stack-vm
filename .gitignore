@@ -20,10 +20,12 @@ gradle-app.setting
 /bin/
 .classpath
 .project
-.settings/
+/.settings/
+/src/main/antlr/a2geek/ghost/antlr/generated/.antlr/
 
 # Assembly output
 *.bin
 *.lst
 *.o
 interp.po
+a.out
