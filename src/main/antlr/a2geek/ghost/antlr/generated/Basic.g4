@@ -37,3 +37,5 @@ INT : [0-9]+ ;
 
 EOL : [\r]? [\n] ;
 WS : [ \t]+ -> skip ;
+
+COMMENT : '\'' ~[\n]* [\n] -> skip ;
