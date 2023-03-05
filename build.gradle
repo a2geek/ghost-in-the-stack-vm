@@ -17,6 +17,12 @@ dependencies {
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
 }
 
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
 sourceSets {
     main.java.srcDirs += "${project.buildDir}/generated-src/antlr/main"
 }
