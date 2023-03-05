@@ -198,11 +198,13 @@ _istore:
 
 ; LT: (A) (B) => (A<B)
 _lt:
-    lda stack+2,x
-    cmp stack,x
-    bcs @not
     lda stack+3,x
     cmp stack+1,x
+    beq @maybe
+    bcs @not
+@maybe:
+    lda stack+2,x
+    cmp stack,x
     bcs @not
     lda #1
     sta stack+2,x
@@ -305,7 +307,7 @@ _iftrue:
     pla
     lda stack,x
     ora stack+1,x
-    beq _goto
+    bne _goto   ; non-zero == true
     jmp loop
 
 ; EXIT: restore back to original SP
