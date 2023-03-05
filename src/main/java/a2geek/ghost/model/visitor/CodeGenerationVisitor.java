@@ -26,12 +26,12 @@ public class CodeGenerationVisitor extends Visitor {
     public List<Instruction> getInstructions() {
         return code.getInstructions();
     }
-    int varNum(String var) {
+    int varOffset(String var) {
         var num = variables.indexOf(var);
         if (num == -1) {
             throw new RuntimeException("Variable is unknown: " + var);
         }
-        return num;
+        return num * 2;
     }
     List<String> label(final String... names) {
         List<String> labels = new ArrayList<>();
@@ -53,13 +53,14 @@ public class CodeGenerationVisitor extends Visitor {
     @Override
     public void visit(AssignmentStatement statement) {
         dispatch(statement.getExpr());
-        code.emit(Opcode.STORE, varNum(statement.getId()));
+        code.emit(Opcode.STORE, varOffset(statement.getId()));
     }
 
     public void visit(ColorStatement statement) {
         dispatch(statement.getExpr());
-        code.emit(Opcode.LOADC, 0x0030);
-        code.emit(Opcode.ISTORE);
+        code.emit(Opcode.SETACC);
+        code.emit(Opcode.LOADC, 0xf864);
+        code.emit(Opcode.CALL);
     }
 
     public void visit(EndStatement statement) {
@@ -70,15 +71,15 @@ public class CodeGenerationVisitor extends Visitor {
         var labels = label("FOR", "FORX");
         visit(new AssignmentStatement(statement.getId(), statement.getStart()));
         code.emit(labels.get(0));
-        code.emit(Opcode.LOAD, varNum(statement.getId()));
+        code.emit(Opcode.LOAD, varOffset(statement.getId()));
         dispatch(statement.getEnd());
         code.emit(Opcode.LT);
         code.emit(Opcode.IFTRUE, labels.get(1));
         statement.getStatements().forEach(this::dispatch);
-        code.emit(Opcode.LOAD, varNum(statement.getId()));
+        code.emit(Opcode.LOAD, varOffset(statement.getId()));
         code.emit(Opcode.LOADC, 1);
         code.emit(Opcode.ADD);
-        code.emit(Opcode.STORE, varNum(statement.getId()));
+        code.emit(Opcode.STORE, varOffset(statement.getId()));
         code.emit(Opcode.GOTO, labels.get(0));
         code.emit(labels.get(1));
     }
@@ -109,7 +110,7 @@ public class CodeGenerationVisitor extends Visitor {
     }
 
     public Expression visit(IdentifierExpression expression) {
-        code.emit(Opcode.LOAD, varNum(expression.getId()));
+        code.emit(Opcode.LOAD, varOffset(expression.getId()));
         return null;
     }
 
