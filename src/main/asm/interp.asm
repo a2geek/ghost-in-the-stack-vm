@@ -11,6 +11,7 @@ yreg    .byte
 xreg    .byte
 locals  .byte
 baseip  .addr
+basesp  .byte
 flags   .byte
 .endstruct
 
@@ -26,6 +27,8 @@ main:
     lda #>(code-1)
     sta ZP::ip+1
     sta ZP::baseip+1
+    tsx
+    stx ZP::basesp
     lda #'T'|$80
     jsr $fded
     lda #'?'|$80
@@ -91,10 +94,6 @@ loop:
     and #3
     tax
 ;@copy:
-;    jsr fetch
-;    sta ZP::arg,x
-;    dex
-;    bne @copy
     beq @copydone
     jsr fetch
     sta ZP::arg
@@ -160,7 +159,7 @@ brlen = *-brtable
 _break:
     brk     ; TODO
 
-; ADD
+; ADD:  (A) (B) => (A+B)
 _add:
     clc
     lda stack,x
@@ -174,7 +173,7 @@ poploop:
     pla
     jmp loop
 
-; SUB
+; SUB:  (A) (B) => (A-B)
 _sub:
     sec
     lda stack+3,x
@@ -185,8 +184,8 @@ _sub:
     sta stack+2,x
     jmp poploop
 
-; ISTORE
-_istore:    ; *tos = byte(tos-1)
+; ISTORE: (A) (B) => (); *B = byte(A)
+_istore:
     pla
     sta @ptr+1
     pla
@@ -197,7 +196,7 @@ _istore:    ; *tos = byte(tos-1)
     pla     ; toss high byte
     jmp loop
 
-; LT
+; LT: (A) (B) => (A<B)
 _lt:
     lda stack+2,x
     cmp stack,x
@@ -216,21 +215,21 @@ _lt:
     sta stack+3,x
     jmp poploop
 
-; SETACC
+; SETACC: (A) => (); Acc=byte(A)
 _setacc:
     pla
     sta ZP::acc
     pla
     jmp loop
 
-; SETYREG
+; SETYREG: (A) => (); Y-register=byte(A)
 _setyreg:
     pla
     sta ZP::yreg
     pla
     jmp loop
 
-; CALL
+; CALL: (A) => (); PC=A
 _call:
     pla
     sta ZP::arg
@@ -245,7 +244,7 @@ _call:
     sty ZP::yreg
     jmp loop
 
-; RESERVE <n>
+; RESERVE <n>: () => (0 ...); locals=SP
 _reserve:
     ldy ZP::arg
     lda #0
@@ -257,7 +256,7 @@ _reserve:
     stx ZP::locals
     jmp loop
 
-; LOADC <int>
+; LOADC <int>: () => (int)
 _loadc:
     lda ZP::arg+1
     pha
@@ -265,31 +264,31 @@ _loadc:
     pha
     jmp loop
 
-; LOAD <offset>
+; LOAD <offset>: () => *(locals+offset)
 _load:
     clc
     lda ZP::arg
     adc ZP::locals
     tay
-    lda stack,y
-    sta stack,x
     lda stack+1,y
-    sta stack+1,x
+    pha
+    lda stack,y
+    pha
     jmp loop
 
-; STORE <offset>
+; STORE <offset>: (A) => (); *(locals+offset)=A
 _store:
     clc
     lda ZP::arg
     adc ZP::locals
     tay
-    lda stack,x
+    pla
     sta stack,y
-    lda stack+1,x
+    pla
     sta stack+1,y
     jmp loop
 
-; GOTO <addr>
+; GOTO <addr>: IP=addr
 _goto:
     clc
     lda ZP::arg
@@ -300,7 +299,7 @@ _goto:
     sta ZP::ip+1
     jmp loop
 
-; IFTRUE <addr>
+; IFTRUE <addr>: (A) => (); A <> 0 => IP=addr
 _iftrue:
     pla
     pla
@@ -309,7 +308,10 @@ _iftrue:
     beq _goto
     jmp loop
 
-_exit:
+; EXIT: restore back to original SP
+_exit: 
+    ldx ZP::basesp
+    txs
     rts
 
 code:
