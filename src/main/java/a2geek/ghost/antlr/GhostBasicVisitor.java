@@ -2,6 +2,8 @@ package a2geek.ghost.antlr;
 
 import a2geek.ghost.antlr.generated.BasicBaseVisitor;
 import a2geek.ghost.antlr.generated.BasicParser;
+import a2geek.ghost.antlr.generated.BasicParser.CompExprContext;
+import a2geek.ghost.antlr.generated.BasicParser.IfStatementContext;
 import a2geek.ghost.model.StatementBlock;
 import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.Program;
@@ -37,6 +39,25 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     @Override
     public Expression visitGrStmt(BasicParser.GrStmtContext ctx) {
         statementBlock.addStatement(new GrStatement());
+        return null;
+    }
+
+    @Override
+    public Expression visitIfStatement(IfStatementContext ctx) {
+        Expression expr = visit(ctx.a);
+
+        StatementBlock oldStatementBlock = this.statementBlock;
+        StatementBlock trueStatements = new BaseStatementBlock();
+        StatementBlock falseStatements = new BaseStatementBlock();
+
+        statementBlock = trueStatements;
+        visit(ctx.t);
+        statementBlock = falseStatements;
+        visit(ctx.f);
+        statementBlock = oldStatementBlock;
+
+        IfStatement statement = new IfStatement(expr, trueStatements, falseStatements);
+        statementBlock.addStatement(statement);
         return null;
     }
 
@@ -86,6 +107,14 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     @Override
     public Expression visitIntConstant(BasicParser.IntConstantContext ctx) {
         return new IntegerConstant(Integer.parseInt(ctx.a.getText()));
+    }
+
+    @Override
+    public Expression visitCompExpr(CompExprContext ctx) {
+        Expression l = visit(ctx.a);
+        Expression r = visit(ctx.b);
+        String op = ctx.op.getText();
+        return new BinaryExpression(l, r, op);
     }
 
     @Override

@@ -67,6 +67,18 @@ public class CodeGenerationVisitor extends Visitor {
         code.emit(Opcode.EXIT);
     }
 
+    @Override
+    public void visit(IfStatement statement) {
+        var labels = label("IFT", "IFX");
+        dispatch(statement.getExpression());
+        code.emit(Opcode.IFTRUE, labels.get(0));
+        statement.getFalseStatements().getStatements().forEach(this::dispatch);
+        code.emit(Opcode.GOTO, labels.get(1));
+        code.emit(labels.get(0));
+        statement.getTrueStatements().getStatements().forEach(this::dispatch);
+        code.emit(labels.get(1));
+    }
+
     public void visit(ForStatement statement) {
         var labels = label("FOR", "FORX");
         visit(new AssignmentStatement(statement.getId(), statement.getStart()));
@@ -99,11 +111,20 @@ public class CodeGenerationVisitor extends Visitor {
     }
 
     public Expression visit(BinaryExpression expression) {
-        dispatch(expression.getL());
-        dispatch(expression.getR());
+        // FIXME: Special case ">" isn't implemented, so swap arguments and use LT.
+        if (">".equals(expression.getOp())) {
+            dispatch(expression.getR());
+            dispatch(expression.getL());
+        } 
+        else {
+            dispatch(expression.getL());
+            dispatch(expression.getR());
+        }
+
         switch (expression.getOp()) {
             case "+" -> code.emit(Opcode.ADD);
             case "-" -> code.emit(Opcode.SUB);
+            case "<" -> code.emit(Opcode.LT);
             default -> throw new RuntimeException("Operation not supported: " + expression.getOp());
         }
         return null;

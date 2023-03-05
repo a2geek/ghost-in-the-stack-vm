@@ -15,19 +15,25 @@ statements
     ;
 
 statement
-    : id=ID '=' a=expr                                              # assignment
-    | 'gr'                                                          # grStmt
+    : id=ID '=' a=expr                                                  # assignment
+    | 'if' a=expr 'then' EOL+
+        t=statements 
+      'else' EOL+
+        f=statements 
+      'end' 'if' EOL+                                                   # ifStatement
+    | 'gr'                                                              # grStmt
     | 'for' id=ID '=' a=expr 'to' b=expr EOL+
         s=statements EOL*  // EOL is included in statements itself
-      'next' id2=ID                                                 # forLoop
-    | 'color=' a=expr                                               # colorStmt
-    | 'plot' a=expr ',' b=expr                                      # plotStmt
-    | 'end'                                                         # endStmt
+      'next' id2=ID                                                     # forLoop
+    | 'color=' a=expr                                                   # colorStmt
+    | 'plot' a=expr ',' b=expr                                          # plotStmt
+    | 'end'                                                             # endStmt
     ;
 
 expr
     : a=expr op=( '*' | '/' | 'mod' ) b=expr                  # mulDivModExpr
     | a=expr op=( '+' | '-' ) b=expr                          # addSubExpr
+    | a=expr op=( '<' | '>' ) b=expr                          # compExpr
     | a=ID                                                    # identifier
     | a=INT                                                   # intConstant
     ;

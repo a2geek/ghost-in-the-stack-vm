@@ -14,7 +14,9 @@ public class RewriteVisitor extends Visitor {
             "-",   (a,b) -> a-b,
             "*",   (a,b) -> a*b,
             "/",   (a,b) -> a/b,
-            "mod", (a,b) -> a%b
+            "mod", (a,b) -> a%b,
+            "<",   (a,b) -> (a<b) ? 1 : 0,
+            ">",   (a,b) -> (a>b) ? 1 : 0
         );
 
     @Override
@@ -33,7 +35,7 @@ public class RewriteVisitor extends Visitor {
 
         // Special cases
         switch (expression.getOp()) {
-            case "+", "-" -> {
+            case "+", "-", "<", ">" -> {
                 return null;
             }
             case "*" -> {

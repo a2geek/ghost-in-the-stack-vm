@@ -21,6 +21,9 @@ public abstract class Visitor {
         else if (statement instanceof EndStatement s) {
             visit(s);
         }
+        else if (statement instanceof IfStatement s) {
+            visit(s);
+        }
         else if (statement instanceof ForStatement s) {
             visit(s);
         }
@@ -62,6 +65,13 @@ public abstract class Visitor {
     }
 
     public void visit(EndStatement statement) {
+    }
+
+    public void visit(IfStatement statement) {
+        var expr = dispatch(statement.getExpression());
+        statement.getTrueStatements().getStatements().forEach(this::dispatch);
+        statement.getFalseStatements().getStatements().forEach(this::dispatch);
+        expr.ifPresent(statement::setExpression);
     }
 
     public void visit(ForStatement statement) {
