@@ -18,6 +18,9 @@ gradle-app.setting
 
 # VS Code?
 /bin/
+.classpath
+.project
+.settings/
 
 # Assembly output
 *.bin
