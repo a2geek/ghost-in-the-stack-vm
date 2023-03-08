@@ -66,14 +66,6 @@ fetch:
     jsr print
     .byte $82,ZP::ip
     .byte ": ",0
-;    lda ZP::ip+1
-;    jsr prbyte
-;    lda ZP::ip
-;    jsr prbyte
-;    lda #':'|$80
-;    jsr cout
-;    lda #' '|$80
-;    jsr cout
     ldy #0
     lda (ZP::ip),y
     jsr prbyte
@@ -186,6 +178,8 @@ brtable:
     .byte $81
     .addr _iftrue-1
     .byte $82
+    .addr _iffalse-1
+    .byte $83
     .addr _loadc-1
 brlen = *-brtable
 
@@ -343,6 +337,15 @@ _iftrue:
     bne _goto   ; non-zero == true
     jmp loop
 
+; IFFALSE <addr>: (A) => (); A == 0 => IP=addr
+_iffalse:
+    pla
+    pla
+    lda stack+1,x
+    ora stack+2,x
+    beq _goto   ; zero == false
+    jmp loop
+
 ; EXIT: restore back to original SP
 _exit: 
     ldx ZP::basesp
@@ -381,7 +384,6 @@ subcommands:
     cmp #4
     bcs @not123
 @printhex:
-;FIXME: $8n = bytes to print, ZP::ptr+1 == address, do not add!  Maybe use Y? Then we have value, ZP location, bytes to go.
     tax
     ldy #1
     adc (ZP::ptr),y

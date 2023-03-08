@@ -19,7 +19,8 @@ public enum Opcode {
     // Two byte argument instructions (0b10nn nnnn)
     GOTO(0x80, 2),
     IFTRUE(0x81, 2),
-    LOADC(0x82, 2);
+    IFFALSE(0x82, 2),
+    LOADC(0x83, 2);
 
     int opcode;
     int argc;
