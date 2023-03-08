@@ -4,7 +4,7 @@ AC=/Users/rob/Documents/Source/AppleCommander/app/cli-ac/build/libs/AppleCommand
 all: interp.bin
 
 interp.bin: interp.asm
-	cl65 -l interp.lst -v -vm -C interp.config interp.asm -o interp-base.bin
+	cl65 -l interp.lst -v -vm -t none -C interp.config interp.asm -o interp-base.bin
 	cat interp-base.bin ../../../output.bin > interp.bin
 	cp template.po interp.po
 	$(JAVA) -jar $(AC) -p interp.po interp BIN 0x2000 < interp.bin
