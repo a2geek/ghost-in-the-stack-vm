@@ -1,5 +1,7 @@
     .p02
 
+DEBUG = 1
+
 ; ZP locations
 ; Note: Struct is to make assignment and sizing self-referential.
 .struct ZP
@@ -12,10 +14,18 @@ xreg    .byte
 locals  .byte
 baseip  .addr
 basesp  .byte
+.ifdef DEBUG
 flags   .byte
+ptr     .addr
+.endif
 .endstruct
 
 stack = $100
+
+rdkey = $fd0c
+crout = $fd8e
+prbyte = $fdda
+cout = $fded
 
     .org $2000
 
@@ -29,10 +39,11 @@ main:
     sta ZP::baseip+1
     tsx
     stx ZP::basesp
-    lda #'T'|$80
-    jsr $fded
-    lda #'?'|$80
-    jsr $fd0c
+
+.ifdef DEBUG
+    jsr print
+    .byte "ENABLE TRACING? ",$00
+    jsr rdkey
     cmp #'Y'|$80
     beq :+
     cmp #'y'|$80
@@ -41,6 +52,7 @@ main:
     beq :++
 :   lda #$ff
 :   sta ZP::flags
+.endif
     jmp loop
 
 fetch:
@@ -48,23 +60,28 @@ fetch:
     bne @skip
     inc ZP::ip+1
 @skip:
-    ; FIXME DEBUG CODE HERE
+.ifdef DEBUG
     bit ZP::flags
-    bpl :+
-    lda ZP::ip+1
-    jsr $fdda
-    lda ZP::ip
-    jsr $fdda
-    lda #':'|$80
-    jsr $fded
-    lda #' '|$80
-    jsr $fded
+    bpl @noflag
+    jsr print
+    .byte $82,ZP::ip
+    .byte ": ",0
+;    lda ZP::ip+1
+;    jsr prbyte
+;    lda ZP::ip
+;    jsr prbyte
+;    lda #':'|$80
+;    jsr cout
+;    lda #' '|$80
+;    jsr cout
     ldy #0
     lda (ZP::ip),y
-    jsr $fdda
-    jsr $fd8e
+    jsr prbyte
+    jsr crout
+@noflag:
+.endif
 
-:   ldy #0
+    ldy #0
     lda (ZP::ip),y
     rts
 
@@ -72,21 +89,37 @@ callarg:
     jmp (ZP::arg)
 
 loop:
-    ; DEBUG/TRACE
+.ifdef DEBUG
     bit ZP::flags
-    bpl :++
-    lda #'='|$80
-    jsr $fded
-    ldy #0
-:   lda ZP::ip,y
-    jsr $fdda
-    iny
-    cpy #.sizeof(ZP)
-    bcc :-
-    jsr $fd0c   ; RDKEY
-    jsr $fd8e
+    bpl @noflag
+    jsr print
+    .byte "IP=",$82,ZP::ip
+    .byte ", ARG=",$83,ZP::arg
+    .byte ", A/Y/X=",$81,ZP::acc,$81,ZP::yreg,$81,ZP::xreg
+    .byte $d,"STACK=",0
+    tsx
+    lda stack+2,x
+    jsr prbyte
+    lda stack+1,x
+    jsr prbyte
+    lda #' '|$80
+    jsr cout
+    lda stack+4,x
+    jsr prbyte
+    lda stack+3,x
+    jsr prbyte
+    lda #' '|$80
+    jsr cout
+    lda stack+6,x
+    jsr prbyte
+    lda stack+5,x
+    jsr prbyte
+    jsr rdkey
+    jsr crout
+@noflag:
+.endif
 
-:   jsr fetch
+    jsr fetch
     pha
     rol     ; bit 7 into C
     rol     ; bit 6 into C, bit 7 now bit 0
@@ -162,12 +195,12 @@ _break:
 ; ADD:  (A) (B) => (A+B)
 _add:
     clc
-    lda stack,x
-    adc stack+2,x
-    sta stack+2,x
     lda stack+1,x
     adc stack+3,x
     sta stack+3,x
+    lda stack+2,x
+    adc stack+4,x
+    sta stack+4,x
 poploop:
     pla
     pla
@@ -176,12 +209,12 @@ poploop:
 ; SUB:  (A) (B) => (A-B)
 _sub:
     sec
+    lda stack+4,x
+    sbc stack+2,x
+    sta stack+4,x
     lda stack+3,x
     sbc stack+1,x
     sta stack+3,x
-    lda stack+2,x
-    sbc stack,x
-    sta stack+2,x
     jmp poploop
 
 ; ISTORE: (A) (B) => (); *B = byte(A)
@@ -198,23 +231,23 @@ _istore:
 
 ; LT: (A) (B) => (A<B)
 _lt:
-    lda stack+3,x
-    cmp stack+1,x
+    lda stack+4,x
+    cmp stack+2,x
     beq @maybe
     bcs @not
 @maybe:
-    lda stack+2,x
-    cmp stack,x
+    lda stack+3,x
+    cmp stack+1,x
     bcs @not
     lda #1
-    sta stack+2,x
-    lda #0
     sta stack+3,x
+    lda #0
+    sta stack+4,x
     jmp poploop
 @not:
     lda #0
-    sta stack+2,x
     sta stack+3,x
+    sta stack+4,x
     jmp poploop
 
 ; SETACC: (A) => (); Acc=byte(A)
@@ -272,9 +305,9 @@ _load:
     lda ZP::arg
     adc ZP::locals
     tay
-    lda stack+1,y
+    lda stack+2,y
     pha
-    lda stack,y
+    lda stack+1,y
     pha
     jmp loop
 
@@ -285,9 +318,9 @@ _store:
     adc ZP::locals
     tay
     pla
-    sta stack,y
-    pla
     sta stack+1,y
+    pla
+    sta stack+2,y
     jmp loop
 
 ; GOTO <addr>: IP=addr
@@ -305,8 +338,8 @@ _goto:
 _iftrue:
     pla
     pla
-    lda stack,x
-    ora stack+1,x
+    lda stack+1,x
+    ora stack+2,x
     bne _goto   ; non-zero == true
     jmp loop
 
@@ -316,5 +349,62 @@ _exit:
     txs
     rts
 
+.ifdef DEBUG
+.proc print
+    pla
+    sta ZP::ptr
+    pla
+    sta ZP::ptr+1
+    txa
+    pha
+    tya
+    pha
+loop:
+    jsr getch
+    beq done
+    bmi subcommands
+    ora #$80
+    jsr cout
+    jmp loop
+done:
+    pla
+    tay
+    pla
+    tax
+    lda ZP::ptr+1
+    pha
+    lda ZP::ptr
+    pha
+    rts
+subcommands:
+    and #$7f
+    cmp #4
+    bcs @not123
+@printhex:
+;FIXME: $8n = bytes to print, ZP::ptr+1 == address, do not add!  Maybe use Y? Then we have value, ZP location, bytes to go.
+    tax
+    ldy #1
+    adc (ZP::ptr),y
+    tay
+    dex
+    dey
+:   lda $0,y
+    jsr prbyte
+    dey
+    dex
+    bpl :-
+    jsr getch   ; just to toss ZP away
+@not123:
+    jmp loop
+getch:
+    inc ZP::ptr
+    bne @skip
+    inc ZP::ptr+1
+@skip:
+    ldy #0
+    lda (ZP::ptr),y
+    rts
+.endproc
+.endif
+
 code:
-    
