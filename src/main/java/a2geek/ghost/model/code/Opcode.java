@@ -10,6 +10,7 @@ public enum Opcode {
     SETACC(0x05, 0),
     SETYREG(0x06, 0),
     CALL(0x07,0),
+    LE(0x08, 0),
 
     // Single byte argument instructions (0b01nn nnnn)
     RESERVE(0x40, 1),

@@ -85,7 +85,7 @@ public class CodeGenerationVisitor extends Visitor {
         code.emit(labels.get(0));
         code.emit(Opcode.LOAD, varOffset(statement.getId()));
         dispatch(statement.getEnd());
-        code.emit(Opcode.LT);
+        code.emit(Opcode.LE);
         code.emit(Opcode.IFFALSE, labels.get(1));
         statement.getStatements().forEach(this::dispatch);
         code.emit(Opcode.LOAD, varOffset(statement.getId()));

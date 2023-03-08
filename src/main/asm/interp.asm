@@ -1,6 +1,6 @@
     .p02
 
-DEBUG = 1
+;DEBUG = 1
 
 ; ZP locations
 ; Note: Struct is to make assignment and sizing self-referential.
@@ -167,6 +167,8 @@ brtable:
     .addr _setyreg-1
     .byte $07
     .addr _call-1
+    .byte $08
+    .addr _le-1
     .byte $40
     .addr _reserve-1
     .byte $41
@@ -233,6 +235,29 @@ _lt:
     lda stack+3,x
     cmp stack+1,x
     bcs @not
+    lda #1
+    sta stack+3,x
+    lda #0
+    sta stack+4,x
+    jmp poploop
+@not:
+    lda #0
+    sta stack+3,x
+    sta stack+4,x
+    jmp poploop
+
+; LE: (A) (B) => (A<=B)
+_le:
+    lda stack+4,x
+    cmp stack+2,x
+    beq @maybe
+    bcs @not
+@maybe:
+    lda stack+3,x
+    cmp stack+1,x
+    beq @yes
+    bcs @not
+@yes:
     lda #1
     sta stack+3,x
     lda #0
