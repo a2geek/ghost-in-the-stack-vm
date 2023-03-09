@@ -1,18 +1,5 @@
 package a2geek.ghost.command;
 
-import java.io.ByteArrayOutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.Callable;
-
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.ConsoleErrorListener;
-import org.antlr.v4.runtime.TokenStream;
-
 import a2geek.ghost.antlr.GhostBasicVisitor;
 import a2geek.ghost.antlr.generated.BasicLexer;
 import a2geek.ghost.antlr.generated.BasicParser;
@@ -21,23 +8,38 @@ import a2geek.ghost.model.code.Instruction;
 import a2geek.ghost.model.visitor.CodeGenerationVisitor;
 import a2geek.ghost.model.visitor.MetadataVisitor;
 import a2geek.ghost.model.visitor.RewriteVisitor;
+import io.github.applecommander.applesingle.AppleSingle;
+import org.antlr.v4.runtime.*;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Help.Visibility;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
-import picocli.CommandLine.Help.Visibility;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.Callable;
 
 @Command(name = "compile", mixinStandardHelpOptions = true, 
     description = "Compile Ghost BASIC program.")
 public class CompileCommand implements Callable<Integer> {
+    public static final String INTERPRETER = "/interp-base.as";
+    public static final String DEBUG_INTERPRETER = "/interp-debug-base.as";
     @Parameters(index = "0", description = "program to compile")
-    private Path code;
+    private Path sourceCode;
 
-    @Option(names = { "-o", "--output" }, description = "output file name", defaultValue = "a.out", showDefaultValue = Visibility.ALWAYS)
-    private Path output;
+    @Option(names = { "-o", "--output" }, description = "output file name",
+            defaultValue = "a.out", showDefaultValue = Visibility.ALWAYS)
+    private Path outputFile;
+
+    @Option(names = { "--debug" }, description = "use the debugging interpreter")
+    private boolean debugFlag;
 
     @Override
     public Integer call() throws Exception {
-        CharStream stream = CharStreams.fromPath(code);
+        CharStream stream = CharStreams.fromPath(sourceCode);
         BasicLexer lexer = new BasicLexer(stream);
         lexer.addErrorListener(ConsoleErrorListener.INSTANCE);
         TokenStream tokens = new CommonTokenStream(lexer);
@@ -54,7 +56,7 @@ public class CompileCommand implements Callable<Integer> {
         metadataVisitor.visit(program);
 
         System.out.println("=== SOURCE CODE ===");
-        System.out.println(code);
+        System.out.println(sourceCode);
         System.out.println("=== MODEL ===");
         System.out.println(program);
         System.out.println("=== VARIABLES ===");
@@ -108,8 +110,25 @@ public class CompileCommand implements Callable<Integer> {
             addr += instruction.size();
         }
 
-        Files.write(output, out.toByteArray());
+        saveAsAppleSingle(out.toByteArray());
 
         return 0;
+    }
+
+    public void saveAsAppleSingle(byte[] code) throws IOException {
+        String asInterpreter = debugFlag ? DEBUG_INTERPRETER : INTERPRETER;
+        AppleSingle as = AppleSingle.read(getClass().getResourceAsStream(asInterpreter));
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        baos.writeBytes(as.getDataFork());  // Interpreter code
+        baos.writeBytes(code);              // Byte code program
+
+        AppleSingle.builder()
+                .access(as.getProdosFileInfo().getAccess())
+                .auxType(as.getProdosFileInfo().getAuxType())
+                .fileType(as.getProdosFileInfo().getFileType())
+                .dataFork(baos.toByteArray())
+                .build()
+                .save(outputFile);
     }
 }

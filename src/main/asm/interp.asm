@@ -27,7 +27,6 @@ crout = $fd8e
 prbyte = $fdda
 cout = $fded
 
-    .org $2000
 
 main:
 ;    TODO initialization???

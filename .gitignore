@@ -24,8 +24,9 @@ gradle-app.setting
 /src/main/antlr/a2geek/ghost/antlr/generated/.antlr/
 
 # Assembly output
-*.bin
-*.lst
-*.o
-interp.po
+/src/main/asm/*.lst
+/src/main/asm/*.o
+/src/main/asm/interp.po
+/src/main/resources/interp-*.as
 a.out
+*.po
