@@ -78,6 +78,15 @@ fetch:
 callarg:
     jmp (arg)
 
+compareAB:
+    lda stackB+1,x
+    cmp stackA+1,x
+    bne @done
+    lda stackB,x
+    cmp stackA,x
+@done:
+    rts
+
 loop:
 .ifdef DEBUG
     bit flags
@@ -225,20 +234,15 @@ _istore:
 
 ; LT: (A) (B) => (A<B)
 _lt:
-    lda stackB+1,x
-    cmp stackA+1,x
-    beq @maybe
-    bcs @not
-@maybe:
-    lda stackB,x
-    cmp stackA,x
-    bcs @not
+    jsr compareAB
+    bcs setBto0
+setBto1:
     lda #1
     sta stackB,x
     lda #0
     sta stackB+1,x
     jmp poploop
-@not:
+setBto0:
     lda #0
     sta stackB,x
     sta stackB+1,x
@@ -246,26 +250,10 @@ _lt:
 
 ; LE: (A) (B) => (A<=B)
 _le:
-    lda stackB+1,x
-    cmp stackA+1,x
-    beq @maybe
-    bcs @not
-@maybe:
-    lda stackB,x
-    cmp stackA,x
-    beq @yes
-    bcs @not
-@yes:
-    lda #1
-    sta stackB,x
-    lda #0
-    sta stackB+1,x
-    jmp poploop
-@not:
-    lda #0
-    sta stackB,x
-    sta stackB+1,x
-    jmp poploop
+    jsr compareAB
+    beq setBto1
+    bcc setBto1
+    bcs setBto0
 
 ; SETACC: (A) => (); Acc=byte(A)
 _setacc:
