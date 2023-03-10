@@ -1,8 +1,6 @@
 package a2geek.ghost.model;
 
-import a2geek.ghost.model.expression.BinaryExpression;
-import a2geek.ghost.model.expression.IdentifierExpression;
-import a2geek.ghost.model.expression.IntegerConstant;
+import a2geek.ghost.model.expression.*;
 import a2geek.ghost.model.statement.*;
 
 import java.util.Optional;
@@ -33,6 +31,24 @@ public abstract class Visitor {
         else if (statement instanceof PlotStatement s) {
             visit(s);
         }
+        else if (statement instanceof HlinStatement s) {
+            visit(s);
+        }
+        else if (statement instanceof VlinStatement s) {
+            visit(s);
+        }
+        else if (statement instanceof HomeStatement s) {
+            visit(s);
+        }
+        else if (statement instanceof PrintStatement s) {
+            visit(s);
+        }
+        else if (statement instanceof PokeStatement s) {
+            visit(s);
+        }
+        else if (statement instanceof CallStatement s) {
+            visit(s);
+        }
         else {
             throw new RuntimeException("statement type not supported: " +
                     statement.getClass().getName());
@@ -46,6 +62,12 @@ public abstract class Visitor {
             return Optional.ofNullable(visit(e));
         }
         else if (expression instanceof IntegerConstant e) {
+            return Optional.ofNullable(visit(e));
+        }
+        else if (expression instanceof ParenthesisExpression e) {
+            return Optional.ofNullable(visit(e));
+        }
+        else if (expression instanceof NegateExpression e) {
             return Optional.ofNullable(visit(e));
         }
         else {
@@ -65,6 +87,23 @@ public abstract class Visitor {
     }
 
     public void visit(EndStatement statement) {
+    }
+
+    public void visit(HomeStatement statement) {
+    }
+
+    public void visit(PrintStatement statement) {
+        for (PrintStatement.Action action : statement.getActions()) {
+            if (action instanceof PrintStatement.PrintIntegerAction a) {
+                var expr = dispatch(a.getExpr());
+                expr.ifPresent(a::setExpr);
+            }
+        }
+    }
+
+    public void visit(CallStatement statement) {
+        var expr = dispatch(statement.getExpr());
+        expr.ifPresent(statement::setExpr);
     }
 
     public void visit(IfStatement statement) {
@@ -93,6 +132,31 @@ public abstract class Visitor {
         y.ifPresent(statement::setY);
     }
 
+    public void visit(HlinStatement statement) {
+        var a = dispatch(statement.getA());
+        var b = dispatch(statement.getB());
+        var y = dispatch(statement.getY());
+        a.ifPresent(statement::setA);
+        b.ifPresent(statement::setB);
+        y.ifPresent(statement::setY);
+    }
+
+    public void visit(VlinStatement statement) {
+        var a = dispatch(statement.getA());
+        var b = dispatch(statement.getB());
+        var x = dispatch(statement.getX());
+        a.ifPresent(statement::setA);
+        b.ifPresent(statement::setB);
+        x.ifPresent(statement::setX);
+    }
+
+    public void visit(PokeStatement statement) {
+        var a = dispatch(statement.getA());
+        var b = dispatch(statement.getB());
+        a.ifPresent(statement::setA);
+        b.ifPresent(statement::setB);
+    }
+
     public Expression visit(BinaryExpression expression) {
         var l = dispatch(expression.getL());
         var r = dispatch(expression.getR());
@@ -109,6 +173,24 @@ public abstract class Visitor {
     }
 
     public Expression visit(IntegerConstant expression) {
+        return null;
+    }
+
+    public Expression visit(ParenthesisExpression expression) {
+        var e = dispatch(expression.getExpr());
+        if (e.isPresent()) {
+            e.ifPresent(expression::setExpr);
+            return expression;
+        }
+        return null;
+    }
+
+    public Expression visit(NegateExpression expression) {
+        var e = dispatch(expression.getExpr());
+        if (e.isPresent()) {
+            e.ifPresent(expression::setExpr);
+            return expression;
+        }
         return null;
     }
 }

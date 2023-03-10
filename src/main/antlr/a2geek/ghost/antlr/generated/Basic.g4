@@ -27,13 +27,21 @@ statement
       'next' id2=ID                                                     # forLoop
     | 'color=' a=expr                                                   # colorStmt
     | 'plot' a=expr ',' b=expr                                          # plotStmt
+    | 'vlin' a=expr ',' b=expr 'at' x=expr                              # vlinStmt
+    | 'hlin' a=expr ',' b=expr 'at' y=expr                              # hlinStmt
     | 'end'                                                             # endStmt
+    | 'home'                                                            # homeStmt
+    | 'print' (expr | ',' | ';')*                                       # printStmt
+    | 'poke' a=expr ',' b=expr                                          # pokeStmt
+    | 'call' a=expr                                                     # callStmt
     ;
 
 expr
     : a=expr op=( '*' | '/' | 'mod' ) b=expr                  # mulDivModExpr
     | a=expr op=( '+' | '-' ) b=expr                          # addSubExpr
-    | a=expr op=( '<' | '>' ) b=expr                          # compExpr
+    | a=expr op=( '<' | '>' | '=' ) b=expr                    # compExpr
+    | '-' a=expr                                              # negateExpr
+    | '(' a=expr ')'                                          # parenExpr
     | a=ID                                                    # identifier
     | a=INT                                                   # intConstant
     ;

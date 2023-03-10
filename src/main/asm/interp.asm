@@ -144,12 +144,14 @@ brtable:
     .addr _exit-1
     .addr _add-1
     .addr _sub-1
+    .addr _mul-1
     .addr _istore-1
     .addr _lt-1
+    .addr _le-1
+    .addr _eq-1
     .addr _setacc-1
     .addr _setyreg-1
     .addr _call-1
-    .addr _le-1
     .addr _reserve-1
     .addr _load-1
     .addr _store-1
@@ -187,6 +189,35 @@ _sub:
     sta stackB,x
     jmp poploop
 
+; MUL:  (A) (B) => (A*B)
+; See http://6502.org/users/obelisk/ for original source
+_mul:
+    lda #0
+    sta arg
+    sta arg+1
+    ldy #16
+@loop:
+    asl arg
+    rol arg+1
+    asl stackA,x
+    rol stackA+1,x
+    bcc @next
+    clc
+    lda stackB,x
+    adc arg
+    sta arg
+    lda stackB+1,x
+    adc arg+1
+    sta arg+1
+@next:
+    dey
+    bne @loop
+    lda arg
+    sta stackB,x
+    lda arg+1
+    sta stackB+1,x
+    jmp poploop
+
 ; ISTORE: (A) (B) => (); *B = byte(A)
 _istore:
     pla
@@ -209,11 +240,6 @@ setBto1:
     lda #0
     sta stackB+1,x
     jmp poploop
-setBto0:
-    lda #0
-    sta stackB,x
-    sta stackB+1,x
-    jmp poploop
 
 ; LE: (A) (B) => (A<=B)
 _le:
@@ -221,6 +247,16 @@ _le:
     beq setBto1
     bcc setBto1
     bcs setBto0
+
+; EQ: (A) (B) => (A=B)
+_eq:
+    jsr compareAB
+    beq setBto1
+setBto0:
+    lda #0
+    sta stackB,x
+    sta stackB+1,x
+    jmp poploop
 
 ; SETACC: (A) => (); Acc=byte(A)
 _setacc:

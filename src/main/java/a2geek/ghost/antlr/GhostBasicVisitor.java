@@ -4,13 +4,12 @@ import a2geek.ghost.antlr.generated.BasicBaseVisitor;
 import a2geek.ghost.antlr.generated.BasicParser;
 import a2geek.ghost.antlr.generated.BasicParser.CompExprContext;
 import a2geek.ghost.antlr.generated.BasicParser.IfStatementContext;
-import a2geek.ghost.model.StatementBlock;
 import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.Program;
-import a2geek.ghost.model.expression.BinaryExpression;
-import a2geek.ghost.model.expression.IdentifierExpression;
-import a2geek.ghost.model.expression.IntegerConstant;
+import a2geek.ghost.model.StatementBlock;
+import a2geek.ghost.model.expression.*;
 import a2geek.ghost.model.statement.*;
+import org.antlr.v4.runtime.tree.ParseTree;
 
 public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     private Program program;
@@ -94,8 +93,79 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     }
 
     @Override
+    public Expression visitHlinStmt(BasicParser.HlinStmtContext ctx) {
+        var a = visit(ctx.a);
+        var b = visit(ctx.b);
+        var y = visit(ctx.y);
+        HlinStatement hlinStatement = new HlinStatement(a, b, y);
+        statementBlock.addStatement(hlinStatement);
+        return null;
+    }
+
+    @Override
+    public Expression visitVlinStmt(BasicParser.VlinStmtContext ctx) {
+        var a = visit(ctx.a);
+        var b = visit(ctx.b);
+        var x = visit(ctx.x);
+        VlinStatement vlinStatement = new VlinStatement(a, b, x);
+        statementBlock.addStatement(vlinStatement);
+        return null;
+    }
+
+    @Override
     public Expression visitEndStmt(BasicParser.EndStmtContext ctx) {
         statementBlock.addStatement(new EndStatement());
+        return null;
+    }
+
+    @Override
+    public Expression visitHomeStmt(BasicParser.HomeStmtContext ctx) {
+        statementBlock.addStatement(new HomeStatement());
+        return null;
+    }
+
+    @Override
+    public Expression visitPrintStmt(BasicParser.PrintStmtContext ctx) {
+        PrintStatement printStatement = new PrintStatement();
+        // Print is a little bit different in that we need to pay attention to syntax,
+        // so this tortured code handles that.
+        boolean semiColonAtEnd = false;
+        for (ParseTree pt : ctx.children) {
+            semiColonAtEnd = false;
+            if ("print".equalsIgnoreCase(pt.getText())) {
+                // this is the zeroth element
+            }
+            else if (";".equals(pt.getText())) {
+                semiColonAtEnd = true;
+            }
+            else if (",".equals(pt.getText())) {
+                printStatement.addCommaAction();
+            }
+            else {
+                Expression expr = pt.accept(this);
+                printStatement.addIntegerAction(expr);
+            }
+        }
+        if (!semiColonAtEnd) {
+            printStatement.addNewlineAction();
+        }
+
+        statementBlock.addStatement(printStatement);
+        return null;
+    }
+
+    public Expression visitCallStmt(BasicParser.CallStmtContext ctx) {
+        Expression expr = visit(ctx.a);
+        CallStatement callStatement = new CallStatement(expr);
+        statementBlock.addStatement(callStatement);
+        return null;
+    }
+
+    @Override
+    public Expression visitPokeStmt(BasicParser.PokeStmtContext ctx) {
+        var a = visit(ctx.a);
+        var b = visit(ctx.b);
+        statementBlock.addStatement(new PokeStatement(a, b));
         return null;
     }
 
@@ -131,5 +201,17 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         Expression r = visit(ctx.b);
         String op = ctx.op.getText();
         return new BinaryExpression(l, r, op);
+    }
+
+    @Override
+    public Expression visitParenExpr(BasicParser.ParenExprContext ctx) {
+        Expression e = visit(ctx.a);
+        return new ParenthesisExpression(e);
+    }
+
+    @Override
+    public Expression visitNegateExpr(BasicParser.NegateExprContext ctx) {
+        Expression e = visit(ctx.a);
+        return new NegateExpression(e);
     }
 }

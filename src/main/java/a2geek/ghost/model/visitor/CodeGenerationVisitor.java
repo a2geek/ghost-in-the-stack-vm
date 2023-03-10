@@ -9,6 +9,7 @@ import a2geek.ghost.model.code.Opcode;
 import a2geek.ghost.model.expression.BinaryExpression;
 import a2geek.ghost.model.expression.IdentifierExpression;
 import a2geek.ghost.model.expression.IntegerConstant;
+import a2geek.ghost.model.expression.ParenthesisExpression;
 import a2geek.ghost.model.statement.*;
 
 import java.util.ArrayList;
@@ -68,6 +69,45 @@ public class CodeGenerationVisitor extends Visitor {
     }
 
     @Override
+    public void visit(HomeStatement statement) {
+        code.emit(Opcode.LOADC, 0xfc58);
+        code.emit(Opcode.CALL);
+    }
+
+    @Override
+    public void visit(PrintStatement statement) {
+        for (PrintStatement.Action action : statement.getActions()) {
+            if (action instanceof PrintStatement.PrintCommaAction a) {
+                // FIXME. Just spacing between.
+                code.emit(Opcode.LOADC, 0xa0);
+                code.emit(Opcode.SETACC);
+                code.emit(Opcode.LOADC, 0xfded);
+                code.emit(Opcode.CALL);
+            }
+            else if (action instanceof PrintStatement.PrintIntegerAction a) {
+                // FIXME. Just printing low byte. And in hex.
+                dispatch(a.getExpr());
+                code.emit(Opcode.SETACC);
+                code.emit(Opcode.LOADC, 0xfdda);
+                code.emit(Opcode.CALL);
+            }
+            else if (action instanceof PrintStatement.PrintNewlineAction a) {
+                code.emit(Opcode.LOADC, 0xfd8e);
+                code.emit(Opcode.CALL);
+            }
+            else {
+                throw new RuntimeException("Unexpected action class: " + action.getClass().getName());
+            }
+        }
+    }
+
+    @Override
+    public void visit(CallStatement statement) {
+        dispatch(statement.getExpr());
+        code.emit(Opcode.CALL);
+    }
+
+    @Override
     public void visit(IfStatement statement) {
         var labels = label("IFT", "IFX");
         dispatch(statement.getExpression());
@@ -110,6 +150,39 @@ public class CodeGenerationVisitor extends Visitor {
         code.emit(Opcode.CALL);
     }
 
+    @Override
+    public void visit(HlinStatement statement) {
+        dispatch(statement.getA());
+        code.emit(Opcode.SETYREG);
+        dispatch(statement.getB());
+        code.emit(Opcode.LOADC, 0x2c);
+        code.emit(Opcode.ISTORE);
+        dispatch(statement.getY());
+        code.emit(Opcode.SETACC);
+        code.emit(Opcode.LOADC, 0xf819);
+        code.emit(Opcode.CALL);
+    }
+
+    @Override
+    public void visit(VlinStatement statement) {
+        dispatch(statement.getA());
+        code.emit(Opcode.SETACC);
+        dispatch(statement.getB());
+        code.emit(Opcode.LOADC, 0x2d);
+        code.emit(Opcode.ISTORE);
+        dispatch(statement.getX());
+        code.emit(Opcode.SETYREG);
+        code.emit(Opcode.LOADC, 0xf828);
+        code.emit(Opcode.CALL);
+    }
+
+    @Override
+    public void visit(PokeStatement statement) {
+        dispatch(statement.getB());
+        dispatch(statement.getA());
+        code.emit(Opcode.ISTORE);
+    }
+
     public Expression visit(BinaryExpression expression) {
         // FIXME: Special case ">" isn't implemented, so swap arguments and use LT.
         if (">".equals(expression.getOp())) {
@@ -124,7 +197,9 @@ public class CodeGenerationVisitor extends Visitor {
         switch (expression.getOp()) {
             case "+" -> code.emit(Opcode.ADD);
             case "-" -> code.emit(Opcode.SUB);
-            case "<" -> code.emit(Opcode.LT);
+            case "*" -> code.emit(Opcode.MUL);
+            case "<", ">" -> code.emit(Opcode.LT);  // We swapped arguments for ">" to reuse "LT"
+            case "=" -> code.emit(Opcode.EQ);
             default -> throw new RuntimeException("Operation not supported: " + expression.getOp());
         }
         return null;
@@ -140,4 +215,9 @@ public class CodeGenerationVisitor extends Visitor {
         return null;
     }
 
+    @Override
+    public Expression visit(ParenthesisExpression expression) {
+        dispatch(expression.getExpr());
+        return null;
+    }
 }

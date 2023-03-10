@@ -4,6 +4,7 @@ import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.Visitor;
 import a2geek.ghost.model.expression.BinaryExpression;
 import a2geek.ghost.model.expression.IntegerConstant;
+import a2geek.ghost.model.expression.NegateExpression;
 
 import java.util.Map;
 import java.util.function.BiFunction;
@@ -16,7 +17,8 @@ public class RewriteVisitor extends Visitor {
             "/",   (a,b) -> a/b,
             "mod", (a,b) -> a%b,
             "<",   (a,b) -> (a<b) ? 1 : 0,
-            ">",   (a,b) -> (a>b) ? 1 : 0
+            ">",   (a,b) -> (a>b) ? 1 : 0,
+            "=",   (a,b) -> (a==b) ? 1 : 0
         );
 
     @Override
@@ -35,7 +37,7 @@ public class RewriteVisitor extends Visitor {
 
         // Special cases
         switch (expression.getOp()) {
-            case "+", "-", "<", ">" -> {
+            case "+", "-", "<", ">", "=" -> {
                 return null;
             }
             case "*" -> {
@@ -52,10 +54,21 @@ public class RewriteVisitor extends Visitor {
                         return new BinaryExpression(left, left, "+");
                     }
                 }
-                // Else fail!
+                return null;
             }
         }
 
         throw new RuntimeException("Operation not supported: " + expression);
+    }
+
+    @Override
+    public Expression visit(NegateExpression expression) {
+        dispatch(expression.getExpr()).ifPresent(expression::setExpr);
+
+        if (expression.getExpr() instanceof IntegerConstant e) {
+            return new IntegerConstant(- e.getValue());
+        }
+
+        throw new RuntimeException("Negate expression (Unary??) not supported: " + expression);
     }
 }
