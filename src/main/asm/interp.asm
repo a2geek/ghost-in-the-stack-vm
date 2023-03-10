@@ -1,43 +1,42 @@
     .p02
 
-;DEBUG = 1
+    .zeropage
 
-; ZP locations
-; Note: Struct is to make assignment and sizing self-referential.
-.struct ZP
-        .org $0
-ip      .addr
-arg     .res 3
-acc     .byte
-yreg    .byte
-xreg    .byte
-locals  .byte
-baseip  .addr
-basesp  .byte
+ip:     .addr 0
+arg:    .res 3
+acc:    .byte 0
+yreg:   .byte 0
+xreg:   .byte 0
+locals: .byte 0
+baseip: .addr 0
+basesp: .byte 0
 .ifdef DEBUG
-flags   .byte
-ptr     .addr
+flags:  .byte 0
+ptr:    .addr 0
 .endif
-.endstruct
 
 stack = $100
+stackA = stack+1
+stackB = stack+3
+stackC = stack+5
 
 rdkey = $fd0c
 crout = $fd8e
 prbyte = $fdda
 cout = $fded
 
+    .code
 
 main:
 ;    TODO initialization???
     lda #<(code-1)
-    sta ZP::ip
-    sta ZP::baseip
+    sta ip
+    sta baseip
     lda #>(code-1)
-    sta ZP::ip+1
-    sta ZP::baseip+1
+    sta ip+1
+    sta baseip+1
     tsx
-    stx ZP::basesp
+    stx basesp
 
 .ifdef DEBUG
     jsr print
@@ -50,60 +49,60 @@ main:
     lda #0
     beq :++
 :   lda #$ff
-:   sta ZP::flags
+:   sta flags
 .endif
     jmp loop
 
 fetch:
-    inc ZP::ip
+    inc ip
     bne @skip
-    inc ZP::ip+1
+    inc ip+1
 @skip:
 .ifdef DEBUG
-    bit ZP::flags
+    bit flags
     bpl @noflag
     jsr print
-    .byte $82,ZP::ip
+    .byte $82,ip
     .byte ": ",0
     ldy #0
-    lda (ZP::ip),y
+    lda (ip),y
     jsr prbyte
     jsr crout
 @noflag:
 .endif
 
     ldy #0
-    lda (ZP::ip),y
+    lda (ip),y
     rts
 
 callarg:
-    jmp (ZP::arg)
+    jmp (arg)
 
 loop:
 .ifdef DEBUG
-    bit ZP::flags
+    bit flags
     bpl @noflag
     jsr print
-    .byte "IP=",$82,ZP::ip
-    .byte ", ARG=",$83,ZP::arg
-    .byte ", A/Y/X=",$81,ZP::acc,$81,ZP::yreg,$81,ZP::xreg
+    .byte "IP=",$82,ip
+    .byte ", ARG=",$83,arg
+    .byte ", A/Y/X=",$81,acc,$81,yreg,$81,xreg
     .byte $d,"STACK=",0
     tsx
-    lda stack+2,x
+    lda stackA+1,x
     jsr prbyte
-    lda stack+1,x
-    jsr prbyte
-    lda #' '|$80
-    jsr cout
-    lda stack+4,x
-    jsr prbyte
-    lda stack+3,x
+    lda stackA,x
     jsr prbyte
     lda #' '|$80
     jsr cout
-    lda stack+6,x
+    lda stackB+1,x
     jsr prbyte
-    lda stack+5,x
+    lda stackB,x
+    jsr prbyte
+    lda #' '|$80
+    jsr cout
+    lda stackC+1,x
+    jsr prbyte
+    lda stackC,x
     jsr prbyte
     jsr rdkey
     jsr crout
@@ -120,15 +119,15 @@ loop:
 ;@copy:
     beq @copydone
     jsr fetch
-    sta ZP::arg
+    sta arg
     dex
     beq @copydone
     jsr fetch
-    sta ZP::arg+1
+    sta arg+1
     dex
     beq @copydone
     jsr fetch
-    sta ZP::arg+2
+    sta arg+2
 @copydone:
     pla
 
@@ -190,12 +189,12 @@ _break:
 ; ADD:  (A) (B) => (A+B)
 _add:
     clc
-    lda stack+1,x
-    adc stack+3,x
-    sta stack+3,x
-    lda stack+2,x
-    adc stack+4,x
-    sta stack+4,x
+    lda stackA,x
+    adc stackB,x
+    sta stackB,x
+    lda stackA+1,x
+    adc stackB+1,x
+    sta stackB+1,x
 poploop:
     pla
     pla
@@ -204,12 +203,12 @@ poploop:
 ; SUB:  (A) (B) => (A-B)
 _sub:
     sec
-    lda stack+4,x
-    sbc stack+2,x
-    sta stack+4,x
-    lda stack+3,x
-    sbc stack+1,x
-    sta stack+3,x
+    lda stackB+1,x
+    sbc stackA+1,x
+    sta stackB+1,x
+    lda stackB,x
+    sbc stackA,x
+    sta stackB,x
     jmp poploop
 
 ; ISTORE: (A) (B) => (); *B = byte(A)
@@ -226,138 +225,138 @@ _istore:
 
 ; LT: (A) (B) => (A<B)
 _lt:
-    lda stack+4,x
-    cmp stack+2,x
+    lda stackB+1,x
+    cmp stackA+1,x
     beq @maybe
     bcs @not
 @maybe:
-    lda stack+3,x
-    cmp stack+1,x
+    lda stackB,x
+    cmp stackA,x
     bcs @not
     lda #1
-    sta stack+3,x
+    sta stackB,x
     lda #0
-    sta stack+4,x
+    sta stackB+1,x
     jmp poploop
 @not:
     lda #0
-    sta stack+3,x
-    sta stack+4,x
+    sta stackB,x
+    sta stackB+1,x
     jmp poploop
 
 ; LE: (A) (B) => (A<=B)
 _le:
-    lda stack+4,x
-    cmp stack+2,x
+    lda stackB+1,x
+    cmp stackA+1,x
     beq @maybe
     bcs @not
 @maybe:
-    lda stack+3,x
-    cmp stack+1,x
+    lda stackB,x
+    cmp stackA,x
     beq @yes
     bcs @not
 @yes:
     lda #1
-    sta stack+3,x
+    sta stackB,x
     lda #0
-    sta stack+4,x
+    sta stackB+1,x
     jmp poploop
 @not:
     lda #0
-    sta stack+3,x
-    sta stack+4,x
+    sta stackB,x
+    sta stackB+1,x
     jmp poploop
 
 ; SETACC: (A) => (); Acc=byte(A)
 _setacc:
     pla
-    sta ZP::acc
+    sta acc
     pla
     jmp loop
 
 ; SETYREG: (A) => (); Y-register=byte(A)
 _setyreg:
     pla
-    sta ZP::yreg
+    sta yreg
     pla
     jmp loop
 
 ; CALL: (A) => (); PC=A
 _call:
     pla
-    sta ZP::arg
+    sta arg
     pla
-    sta ZP::arg+1
-    ldx ZP::xreg
-    ldy ZP::yreg
-    lda ZP::acc
+    sta arg+1
+    ldx xreg
+    ldy yreg
+    lda acc
     jsr callarg
-    sta ZP::acc
-    stx ZP::xreg
-    sty ZP::yreg
+    sta acc
+    stx xreg
+    sty yreg
     jmp loop
 
 ; RESERVE <n>: () => (0 ...); locals=SP
 _reserve:
-    ldy ZP::arg
+    ldy arg
     lda #0
 @0: pha
     pha
     dey
     bne @0
     tsx
-    stx ZP::locals
+    stx locals
     jmp loop
 
 ; LOADC <int>: () => (int)
 _loadc:
-    lda ZP::arg+1
+    lda arg+1
     pha
-    lda ZP::arg
+    lda arg
     pha
     jmp loop
 
 ; LOAD <offset>: () => *(locals+offset)
 _load:
     clc
-    lda ZP::arg
-    adc ZP::locals
+    lda arg
+    adc locals
     tay
-    lda stack+2,y
+    lda stackA+1,y
     pha
-    lda stack+1,y
+    lda stackA,y
     pha
     jmp loop
 
 ; STORE <offset>: (A) => (); *(locals+offset)=A
 _store:
     clc
-    lda ZP::arg
-    adc ZP::locals
+    lda arg
+    adc locals
     tay
     pla
-    sta stack+1,y
+    sta stackA,y
     pla
-    sta stack+2,y
+    sta stackA+1,y
     jmp loop
 
 ; GOTO <addr>: IP=addr
 _goto:
     clc
-    lda ZP::arg
-    adc ZP::baseip
-    sta ZP::ip
-    lda ZP::arg+1
-    adc ZP::baseip+1
-    sta ZP::ip+1
+    lda arg
+    adc baseip
+    sta ip
+    lda arg+1
+    adc baseip+1
+    sta ip+1
     jmp loop
 
 ; IFTRUE <addr>: (A) => (); A <> 0 => IP=addr
 _iftrue:
     pla
     pla
-    lda stack+1,x
-    ora stack+2,x
+    lda stackA,x
+    ora stackA+1,x
     bne _goto   ; non-zero == true
     jmp loop
 
@@ -365,23 +364,23 @@ _iftrue:
 _iffalse:
     pla
     pla
-    lda stack+1,x
-    ora stack+2,x
+    lda stackA,x
+    ora stackA+1,x
     beq _goto   ; zero == false
     jmp loop
 
 ; EXIT: restore back to original SP
 _exit: 
-    ldx ZP::basesp
+    ldx basesp
     txs
     rts
 
 .ifdef DEBUG
 .proc print
     pla
-    sta ZP::ptr
+    sta ptr
     pla
-    sta ZP::ptr+1
+    sta ptr+1
     txa
     pha
     tya
@@ -398,9 +397,9 @@ done:
     tay
     pla
     tax
-    lda ZP::ptr+1
+    lda ptr+1
     pha
-    lda ZP::ptr
+    lda ptr
     pha
     rts
 subcommands:
@@ -410,7 +409,7 @@ subcommands:
 @printhex:
     tax
     ldy #1
-    adc (ZP::ptr),y
+    adc (ptr),y
     tay
     dex
     dey
@@ -423,12 +422,12 @@ subcommands:
 @not123:
     jmp loop
 getch:
-    inc ZP::ptr
+    inc ptr
     bne @skip
-    inc ZP::ptr+1
+    inc ptr+1
 @skip:
     ldy #0
-    lda (ZP::ptr),y
+    lda (ptr),y
     rts
 .endproc
 .endif
