@@ -87,6 +87,17 @@ compareAB:
 @done:
     rts
 
+fetch1Arg:
+    jsr fetch
+    sta arg
+    rts
+fetch2Args:
+    jsr fetch
+    sta arg
+    jsr fetch
+    sta arg+1
+    rts
+
 loop:
 .ifdef DEBUG
     bit flags
@@ -119,76 +130,32 @@ loop:
 .endif
 
     jsr fetch
-    pha
-    rol     ; bit 7 into C
-    rol     ; bit 6 into C, bit 7 now bit 0
-    rol     ; bit 67 now bits 10
-    and #3
-    tax
-;@copy:
-    beq @copydone
-    jsr fetch
-    sta arg
-    dex
-    beq @copydone
-    jsr fetch
-    sta arg+1
-    dex
-    beq @copydone
-    jsr fetch
-    sta arg+2
-@copydone:
-    pla
-
-    ldy #0
-@search:
-    cmp brtable,y
-    beq @found
-    iny
-    iny
-    iny
-    cpy #brlen
-    bcc @search
+    cmp #(brlen/2)
     bcs _break
-@found:
+    asl
+    tay
     tsx
-    lda brtable+2,y
-    pha
     lda brtable+1,y
+    pha
+    lda brtable,y
     pha
     rts
 brtable:
-    .byte $00
     .addr _exit-1
-    .byte $01
     .addr _add-1
-    .byte $02
     .addr _sub-1
-    .byte $03
     .addr _istore-1
-    .byte $04
     .addr _lt-1
-    .byte $05
     .addr _setacc-1
-    .byte $06
     .addr _setyreg-1
-    .byte $07
     .addr _call-1
-    .byte $08
     .addr _le-1
-    .byte $40
     .addr _reserve-1
-    .byte $41
     .addr _load-1
-    .byte $42
     .addr _store-1
-    .byte $80
     .addr _goto-1
-    .byte $81
     .addr _iftrue-1
-    .byte $82
     .addr _iffalse-1
-    .byte $83
     .addr _loadc-1
 brlen = *-brtable
 
@@ -286,7 +253,8 @@ _call:
 
 ; RESERVE <n>: () => (0 ...); locals=SP
 _reserve:
-    ldy arg
+    jsr fetch1Arg   ; Acc = arg
+    tay
     lda #0
 @0: pha
     pha
@@ -298,7 +266,7 @@ _reserve:
 
 ; LOADC <int>: () => (int)
 _loadc:
-    lda arg+1
+    jsr fetch2Args  ; Acc = arg+1
     pha
     lda arg
     pha
@@ -306,8 +274,8 @@ _loadc:
 
 ; LOAD <offset>: () => *(locals+offset)
 _load:
+    jsr fetch1Arg   ; Acc = arg
     clc
-    lda arg
     adc locals
     tay
     lda stackA+1,y
@@ -318,8 +286,8 @@ _load:
 
 ; STORE <offset>: (A) => (); *(locals+offset)=A
 _store:
+    jsr fetch1Arg   ; Acc = arg
     clc
-    lda arg
     adc locals
     tay
     pla
@@ -330,8 +298,9 @@ _store:
 
 ; GOTO <addr>: IP=addr
 _goto:
-    clc
+    jsr fetch2Args  ; Acc = arg+1
     lda arg
+    clc
     adc baseip
     sta ip
     lda arg+1
@@ -346,6 +315,7 @@ _iftrue:
     lda stackA,x
     ora stackA+1,x
     bne _goto   ; non-zero == true
+    jsr fetch2Args  ; need to toss these away
     jmp loop
 
 ; IFFALSE <addr>: (A) => (); A == 0 => IP=addr
@@ -355,6 +325,7 @@ _iffalse:
     lda stackA,x
     ora stackA+1,x
     beq _goto   ; zero == false
+    jsr fetch2Args  ; need to toss these away
     jmp loop
 
 ; EXIT: restore back to original SP

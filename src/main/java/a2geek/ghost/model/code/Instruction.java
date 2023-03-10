@@ -16,8 +16,8 @@ public record Instruction (String label, Opcode opcode, Integer arg) {
         }
 
         byte[] data = new byte[size()];
-        data[0] = (byte)(opcode.opcode & 0xff);
-        switch (opcode.argc) {
+        data[0] = opcode.getByteCode();
+        switch (opcode.getArgumentCount()) {
             case 1:
                 data[1] = arg.byteValue();
                 break;
