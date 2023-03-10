@@ -27,6 +27,13 @@ java {
 }
 
 sourceSets {
+    doFirst {
+        // Embed building of interpreter
+        exec {
+            workingDir "src/main/asm"
+            commandLine "make"
+        }
+    }
     main.java.srcDirs += "${project.buildDir}/generated-src/antlr/main"
 }
 
