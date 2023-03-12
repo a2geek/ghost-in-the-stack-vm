@@ -47,12 +47,15 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
         StatementBlock oldStatementBlock = this.statementBlock;
         StatementBlock trueStatements = new BaseStatementBlock();
-        StatementBlock falseStatements = new BaseStatementBlock();
+        StatementBlock falseStatements = null;
 
         statementBlock = trueStatements;
         visit(ctx.t);
-        statementBlock = falseStatements;
-        visit(ctx.f);
+        if (ctx.f != null) {
+            falseStatements = new BaseStatementBlock();
+            statementBlock = falseStatements;
+            visit(ctx.f);
+        }
         statementBlock = oldStatementBlock;
 
         IfStatement statement = new IfStatement(expr, trueStatements, falseStatements);
@@ -65,9 +68,17 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         String id = ctx.id.getText();
         Expression start = visit(ctx.a);
         Expression end = visit(ctx.b);
+        Expression step = null;
+
+        if (ctx.c == null) {
+            step = new IntegerConstant(1);
+        }
+        else {
+            step = visit(ctx.c);
+        }
 
         StatementBlock oldStatementBlock = this.statementBlock;
-        ForStatement forStatement = new ForStatement(id, start, end);
+        ForStatement forStatement = new ForStatement(id, start, end, step);
         statementBlock = forStatement;
         visit(ctx.s);
         statementBlock = oldStatementBlock;
@@ -170,6 +181,18 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     }
 
     @Override
+    public Expression visitLabel(BasicParser.LabelContext ctx) {
+        statementBlock.addStatement(new LabelStatement(ctx.id.getText()));
+        return null;
+    }
+
+    @Override
+    public Expression visitGotoStmt(BasicParser.GotoStmtContext ctx) {
+        statementBlock.addStatement(new GotoStatement(ctx.l.getText()));
+        return null;
+    }
+
+    @Override
     public Expression visitIdentifier(BasicParser.IdentifierContext ctx) {
         return new IdentifierExpression(ctx.a.getText());
     }
@@ -199,7 +222,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     public Expression visitMulDivModExpr(BasicParser.MulDivModExprContext ctx) {
         Expression l = visit(ctx.a);
         Expression r = visit(ctx.b);
-        String op = ctx.op.getText();
+        String op = ctx.op.getText().toLowerCase();
         return new BinaryExpression(l, r, op);
     }
 
@@ -213,5 +236,11 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     public Expression visitNegateExpr(BasicParser.NegateExprContext ctx) {
         Expression e = visit(ctx.a);
         return new NegateExpression(e);
+    }
+
+    @Override
+    public Expression visitPeekExpr(BasicParser.PeekExprContext ctx) {
+        Expression e = visit(ctx.a);
+        return new FunctionExpression("peek", e);
     }
 }

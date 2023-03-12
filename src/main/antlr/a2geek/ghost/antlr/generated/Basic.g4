@@ -11,18 +11,19 @@ program
     ;
 
 statements
-    : ( statement ( ':' statement )* EOL* )+
+    : ( statement ( ':' statement )* EOL* | EOL )+
     ;
 
 statement
     : id=ID '=' a=expr                                                  # assignment
+    | id=ID ':'                                                         # label
     | 'if' a=expr 'then' EOL+
         t=statements 
-      'else' EOL+
-        f=statements 
+      ('else' EOL+
+        f=statements)?
       'end' 'if' EOL+                                                   # ifStatement
     | 'gr'                                                              # grStmt
-    | 'for' id=ID '=' a=expr 'to' b=expr EOL+
+    | 'for' id=ID '=' a=expr 'to' b=expr ('step' c=expr)? EOL+
         s=statements EOL*  // EOL is included in statements itself
       'next' id2=ID                                                     # forLoop
     | 'color=' a=expr                                                   # colorStmt
@@ -34,6 +35,7 @@ statement
     | 'print' (expr | ',' | ';')*                                       # printStmt
     | 'poke' a=expr ',' b=expr                                          # pokeStmt
     | 'call' a=expr                                                     # callStmt
+    | 'goto' l=ID                                                       # gotoStmt
     ;
 
 expr
@@ -42,6 +44,7 @@ expr
     | a=expr op=( '<' | '>' | '=' ) b=expr                    # compExpr
     | '-' a=expr                                              # negateExpr
     | '(' a=expr ')'                                          # parenExpr
+    | 'peek' '(' a=expr ')'                                   # peekExpr
     | a=ID                                                    # identifier
     | a=INT                                                   # intConstant
     ;

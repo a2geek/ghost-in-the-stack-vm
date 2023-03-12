@@ -11,12 +11,14 @@ public class ForStatement implements Statement, StatementBlock {
     private String id;
     private Expression start;
     private Expression end;
+    private Expression step;
     private List<Statement> statements = new ArrayList<>();
 
-    public ForStatement(String id, Expression start, Expression end) {
+    public ForStatement(String id, Expression start, Expression end, Expression step) {
         this.id = id;
         this.start = start;
         this.end = end;
+        this.step = step;
     }
 
     public String getId() {
@@ -26,7 +28,6 @@ public class ForStatement implements Statement, StatementBlock {
     public Expression getStart() {
         return start;
     }
-
     public void setStart(Expression start) {
         this.start = start;
     }
@@ -34,9 +35,15 @@ public class ForStatement implements Statement, StatementBlock {
     public Expression getEnd() {
         return end;
     }
-
     public void setEnd(Expression end) {
         this.end = end;
+    }
+
+    public Expression getStep() {
+        return step;
+    }
+    public void setStep(Expression step) {
+        this.step = step;
     }
 
     public void addStatement(Statement statement) {
@@ -50,6 +57,11 @@ public class ForStatement implements Statement, StatementBlock {
 
     @Override
     public String toString() {
-        return String.format("FOR %s = %s TO %s : %s : NEXT %s", id, start, end, statementsAsString(), id);
+        String stepText = "";
+        if (step != null) {
+            stepText = String.format("STEP %s ", step);
+        }
+        return String.format("FOR %s = %s TO %s %s: %s : NEXT %s",
+                id, start, end, stepText, statementsAsString(), id);
     }
 }

@@ -41,7 +41,7 @@ public record Instruction (String label, Opcode opcode, Integer arg) {
             return String.format("\t%s", opcode);
         }
         else if (label == null && opcode != null && arg != null) {
-            return String.format("\t%s %04X", opcode, arg);
+            return String.format("\t%s %04X", opcode, arg & 0xffff);
         }
         else if (label != null && opcode != null && arg == null) {
             return String.format("\t%s %s", opcode, label);

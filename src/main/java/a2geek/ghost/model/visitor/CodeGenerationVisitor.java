@@ -6,10 +6,7 @@ import a2geek.ghost.model.Visitor;
 import a2geek.ghost.model.code.CodeBlock;
 import a2geek.ghost.model.code.Instruction;
 import a2geek.ghost.model.code.Opcode;
-import a2geek.ghost.model.expression.BinaryExpression;
-import a2geek.ghost.model.expression.IdentifierExpression;
-import a2geek.ghost.model.expression.IntegerConstant;
-import a2geek.ghost.model.expression.ParenthesisExpression;
+import a2geek.ghost.model.expression.*;
 import a2geek.ghost.model.statement.*;
 
 import java.util.ArrayList;
@@ -24,9 +21,11 @@ public class CodeGenerationVisitor extends Visitor {
     public CodeGenerationVisitor(Collection<String> variables) {
         this.variables.addAll(variables);
     }
+
     public List<Instruction> getInstructions() {
         return code.getInstructions();
     }
+
     int varOffset(String var) {
         var num = variables.indexOf(var);
         if (num == -1) {
@@ -34,6 +33,7 @@ public class CodeGenerationVisitor extends Visitor {
         }
         return num * 2;
     }
+
     List<String> label(final String... names) {
         List<String> labels = new ArrayList<>();
         labelNumber++;
@@ -109,13 +109,15 @@ public class CodeGenerationVisitor extends Visitor {
 
     @Override
     public void visit(IfStatement statement) {
-        var labels = label("IFT", "IFX");
+        var labels = label("IFF", "IFX");
         dispatch(statement.getExpression());
-        code.emit(Opcode.IFTRUE, labels.get(0));
-        statement.getFalseStatements().getStatements().forEach(this::dispatch);
-        code.emit(Opcode.GOTO, labels.get(1));
-        code.emit(labels.get(0));
+        code.emit(Opcode.IFFALSE, statement.hasFalseStatements() ? labels.get(0) : labels.get(1));
         statement.getTrueStatements().getStatements().forEach(this::dispatch);
+        if (statement.hasFalseStatements()) {
+            code.emit(Opcode.GOTO, labels.get(1));
+            code.emit(labels.get(0));
+            statement.getFalseStatements().getStatements().forEach(this::dispatch);
+        }
         code.emit(labels.get(1));
     }
 
@@ -123,13 +125,24 @@ public class CodeGenerationVisitor extends Visitor {
         var labels = label("FOR", "FORX");
         visit(new AssignmentStatement(statement.getId(), statement.getStart()));
         code.emit(labels.get(0));
-        code.emit(Opcode.LOAD, varOffset(statement.getId()));
-        dispatch(statement.getEnd());
+
+        // Note: We don't have a GE at this time.
+        // FIXME: If STEP is a variable, code generated will be incoorect.
+        boolean stepIsNegative = statement.getStep() instanceof IntegerConstant e && e.getValue() < 0;
+        if (stepIsNegative) {
+            dispatch(statement.getEnd());
+            code.emit(Opcode.LOAD, varOffset(statement.getId()));
+        }
+        else {
+            code.emit(Opcode.LOAD, varOffset(statement.getId()));
+            dispatch(statement.getEnd());
+        }
         code.emit(Opcode.LE);
+
         code.emit(Opcode.IFFALSE, labels.get(1));
         statement.getStatements().forEach(this::dispatch);
         code.emit(Opcode.LOAD, varOffset(statement.getId()));
-        code.emit(Opcode.LOADC, 1);
+        dispatch(statement.getStep());
         code.emit(Opcode.ADD);
         code.emit(Opcode.STORE, varOffset(statement.getId()));
         code.emit(Opcode.GOTO, labels.get(0));
@@ -183,6 +196,15 @@ public class CodeGenerationVisitor extends Visitor {
         code.emit(Opcode.ISTORE);
     }
 
+    public void visit(LabelStatement statement) {
+        code.emit(statement.getId());
+    }
+
+    @Override
+    public void visit(GotoStatement statement) {
+        code.emit(Opcode.GOTO, statement.getId());
+    }
+
     public Expression visit(BinaryExpression expression) {
         // FIXME: Special case ">" isn't implemented, so swap arguments and use LT.
         if (">".equals(expression.getOp())) {
@@ -198,6 +220,8 @@ public class CodeGenerationVisitor extends Visitor {
             case "+" -> code.emit(Opcode.ADD);
             case "-" -> code.emit(Opcode.SUB);
             case "*" -> code.emit(Opcode.MUL);
+            case "/" -> code.emit(Opcode.DIV);
+            case "mod" -> code.emit(Opcode.MOD);
             case "<", ">" -> code.emit(Opcode.LT);  // We swapped arguments for ">" to reuse "LT"
             case "=" -> code.emit(Opcode.EQ);
             default -> throw new RuntimeException("Operation not supported: " + expression.getOp());
@@ -219,5 +243,20 @@ public class CodeGenerationVisitor extends Visitor {
     public Expression visit(ParenthesisExpression expression) {
         dispatch(expression.getExpr());
         return null;
+    }
+
+    @Override
+    public Expression visit(FunctionExpression expression) {
+        dispatch(expression.getExpr());
+        switch (expression.getName()) {
+            case "peek" -> code.emit(Opcode.ILOAD);
+            default -> throw new RuntimeException("Function unknown: " + expression.getName());
+        }
+        return null;
+    }
+
+    @Override
+    public Expression visit(NegateExpression expression) {
+        throw new RuntimeException("Negate is not implemented yet.");
     }
 }

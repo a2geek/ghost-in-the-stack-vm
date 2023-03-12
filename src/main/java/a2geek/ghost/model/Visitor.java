@@ -49,6 +49,12 @@ public abstract class Visitor {
         else if (statement instanceof CallStatement s) {
             visit(s);
         }
+        else if (statement instanceof GotoStatement s) {
+            visit(s);
+        }
+        else if (statement instanceof LabelStatement s) {
+            visit(s);
+        }
         else {
             throw new RuntimeException("statement type not supported: " +
                     statement.getClass().getName());
@@ -68,6 +74,9 @@ public abstract class Visitor {
             return Optional.ofNullable(visit(e));
         }
         else if (expression instanceof NegateExpression e) {
+            return Optional.ofNullable(visit(e));
+        }
+        else if (expression instanceof FunctionExpression e) {
             return Optional.ofNullable(visit(e));
         }
         else {
@@ -109,16 +118,20 @@ public abstract class Visitor {
     public void visit(IfStatement statement) {
         var expr = dispatch(statement.getExpression());
         statement.getTrueStatements().getStatements().forEach(this::dispatch);
-        statement.getFalseStatements().getStatements().forEach(this::dispatch);
+        if (statement.hasFalseStatements()) {
+            statement.getFalseStatements().getStatements().forEach(this::dispatch);
+        }
         expr.ifPresent(statement::setExpression);
     }
 
     public void visit(ForStatement statement) {
         var start = dispatch(statement.getStart());
         var end = dispatch(statement.getEnd());
+        var step = dispatch(statement.getStep());   // Always set by GhostBasicVisitor
         statement.getStatements().forEach(this::dispatch);
         start.ifPresent(statement::setStart);
         end.ifPresent(statement::setEnd);
+        step.ifPresent(statement::setStep);
     }
 
     public void visit(GrStatement statement) {
@@ -157,6 +170,14 @@ public abstract class Visitor {
         b.ifPresent(statement::setB);
     }
 
+    public void visit(GotoStatement statement) {
+
+    }
+
+    public void visit(LabelStatement statement) {
+
+    }
+
     public Expression visit(BinaryExpression expression) {
         var l = dispatch(expression.getL());
         var r = dispatch(expression.getR());
@@ -186,6 +207,15 @@ public abstract class Visitor {
     }
 
     public Expression visit(NegateExpression expression) {
+        var e = dispatch(expression.getExpr());
+        if (e.isPresent()) {
+            e.ifPresent(expression::setExpr);
+            return expression;
+        }
+        return null;
+    }
+
+    public Expression visit(FunctionExpression expression) {
         var e = dispatch(expression.getExpr());
         if (e.isPresent()) {
             e.ifPresent(expression::setExpr);

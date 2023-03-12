@@ -30,9 +30,17 @@ public class IfStatement implements Statement {
         return falseStatements;
     }
 
+    public boolean hasFalseStatements() {
+        return falseStatements != null && falseStatements.isEmpty();
+    }
+
     @Override
     public String toString() {
-        return String.format("IF %s THEN %s : ELSE %s : END IF", expression.toString(),
-            trueStatements.statementsAsString(), falseStatements.statementsAsString());
+        String elseSegment = "";
+        if (hasFalseStatements()) {
+            elseSegment = String.format(": ELSE %s ", falseStatements.statementsAsString());
+        }
+        return String.format("IF %s THEN %s %s : END IF", expression.toString(),
+            trueStatements.statementsAsString(), elseSegment);
     }
 }

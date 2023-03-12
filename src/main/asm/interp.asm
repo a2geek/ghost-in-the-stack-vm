@@ -2,17 +2,19 @@
 
     .zeropage
 
-ip:     .addr 0
-arg:    .res 3
-acc:    .byte 0
-yreg:   .byte 0
-xreg:   .byte 0
-locals: .byte 0
-baseip: .addr 0
-basesp: .byte 0
+ip:        .addr 0
+arg:       .res 3
+acc:       .byte 0
+yreg:      .byte 0
+xreg:      .byte 0
+locals:    .byte 0
+baseip:    .addr 0
+basesp:    .byte 0
+quotient:  .word 0
+remainder: .word 0
+ptr:       .addr 0
 .ifdef DEBUG
-flags:  .byte 0
-ptr:    .addr 0
+flags:     .byte 0
 .endif
 
 stack = $100
@@ -98,6 +100,46 @@ fetch2Args:
     sta arg+1
     rts
 
+; See http://6502.org/users/obelisk/ downloads for original source
+div16:
+    lda #0
+    sta remainder
+    sta remainder+1
+    ldx #16
+@loop:
+    asl stackB,x
+    rol stackB+1,x
+    rol remainder
+    rol remainder+1
+    sec
+    lda remainder
+    sbc stackA,x
+    sta remainder
+    lda remainder+1
+    sbc stackA+1,x
+    sta remainder+1
+    bcs @next
+    lda remainder
+    adc stackA,x
+    sta remainder
+    lda remainder+1
+    adc stackA+1,x
+    sta remainder+1
+@next:
+    rol quotient
+    rol quotient+1
+    dex
+    bne @loop
+    rts
+
+setbpoploop:
+    sta stackB,x
+    tya
+    sta stackB+1,x
+poploop:
+    pla
+    pla
+    ; fall through to loop
 loop:
 .ifdef DEBUG
     bit flags
@@ -106,6 +148,7 @@ loop:
     .byte "IP=",$82,ip
     .byte ", ARG=",$83,arg
     .byte ", A/Y/X=",$81,acc,$81,yreg,$81,xreg
+    .byte ",",$d," PTR=",$82,ptr
     .byte $d,"STACK=",0
     tsx
     lda stackA+1,x
@@ -145,6 +188,9 @@ brtable:
     .addr _add-1
     .addr _sub-1
     .addr _mul-1
+    .addr _div-1
+    .addr _mod-1
+    .addr _iload-1
     .addr _istore-1
     .addr _lt-1
     .addr _le-1
@@ -164,7 +210,7 @@ brlen = *-brtable
 _break:
     brk     ; TODO
 
-; ADD:  (A) (B) => (A+B)
+; ADD:  (B) (A) => (B+A)
 _add:
     clc
     lda stackA,x
@@ -173,12 +219,9 @@ _add:
     lda stackA+1,x
     adc stackB+1,x
     sta stackB+1,x
-poploop:
-    pla
-    pla
-    jmp loop
+    jmp poploop
 
-; SUB:  (A) (B) => (A-B)
+; SUB:  (B) (A) => (B-A)
 _sub:
     sec
     lda stackB+1,x
@@ -189,7 +232,7 @@ _sub:
     sta stackB,x
     jmp poploop
 
-; MUL:  (A) (B) => (A*B)
+; MUL:  (B) (A) => (B*A)
 ; See http://6502.org/users/obelisk/ for original source
 _mul:
     lda #0
@@ -213,50 +256,72 @@ _mul:
     dey
     bne @loop
     lda arg
-    sta stackB,x
-    lda arg+1
-    sta stackB+1,x
-    jmp poploop
+    ldy arg+1
+    jmp setbpoploop
 
-; ISTORE: (A) (B) => (); *B = byte(A)
+; DIV: (B) (A) => (B/A)
+_div:
+    jsr div16
+    lda quotient
+    ldy quotient+1
+    jmp setbpoploop
+
+; MOD: (B) (A) => (B MOD A)
+_mod:
+    jsr div16
+    lda remainder
+    ldy quotient+1
+    jmp setbpoploop
+
+; ILOAD: (A) => (B); B = byte(*A)
+_iload:
+    pla
+    sta ptr
+    pla
+    sta ptr+1
+    ldy #0
+    tya
+    pha     ; high byte = 0
+    lda (ptr),y
+    pha
+    jmp loop
+
+; ISTORE: (B) (A) => (); *A = byte(B)
 _istore:
     pla
-    sta @ptr+1
+    sta ptr
     pla
-    sta @ptr+2
+    sta ptr+1
     pla
-@ptr:
-    sta $ffff
+    ldy #0
+    sta (ptr),y
     pla     ; toss high byte
     jmp loop
 
-; LT: (A) (B) => (A<B)
+; LT: (B) (A) => (B<A)
 _lt:
     jsr compareAB
     bcs setBto0
 setBto1:
     lda #1
-    sta stackB,x
-    lda #0
-    sta stackB+1,x
-    jmp poploop
+    ldy #0
+    jmp setbpoploop
 
-; LE: (A) (B) => (A<=B)
+; LE: (B) (A) => (B<=A)
 _le:
     jsr compareAB
     beq setBto1
     bcc setBto1
     bcs setBto0
 
-; EQ: (A) (B) => (A=B)
+; EQ: (B) (A) => (B=A)
 _eq:
     jsr compareAB
     beq setBto1
 setBto0:
     lda #0
-    sta stackB,x
-    sta stackB+1,x
-    jmp poploop
+    tay
+    jmp setbpoploop
 
 ; SETACC: (A) => (); Acc=byte(A)
 _setacc:

@@ -3,6 +3,7 @@ package a2geek.ghost.model.visitor;
 import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.Visitor;
 import a2geek.ghost.model.expression.BinaryExpression;
+import a2geek.ghost.model.expression.FunctionExpression;
 import a2geek.ghost.model.expression.IntegerConstant;
 import a2geek.ghost.model.expression.NegateExpression;
 
@@ -37,7 +38,7 @@ public class RewriteVisitor extends Visitor {
 
         // Special cases
         switch (expression.getOp()) {
-            case "+", "-", "<", ">", "=" -> {
+            case "+", "-", "<", ">", "=", "/", "mod" -> {
                 return null;
             }
             case "*" -> {
@@ -70,5 +71,12 @@ public class RewriteVisitor extends Visitor {
         }
 
         throw new RuntimeException("Negate expression (Unary??) not supported: " + expression);
+    }
+
+    @Override
+    public Expression visit(FunctionExpression expression) {
+        dispatch(expression.getExpr()).ifPresent(expression::setExpr);
+
+        return null;
     }
 }
