@@ -21,12 +21,15 @@ parse correctly (most likely is a compiler error).
 
 ### Traditional control flow
 
-Labels replace line numbers and `GOTO` targets those labels.
+Labels replace line numbers and `GOTO`/`GOSUB` targets those labels. `GOSUB` pushes the old code
+position on the stack and `RETURN` restores that position.
 
 ```
 label:
    ' ...
    goto label
+   gosub label
+   return
 ```
 
 ### Lores graphics
@@ -44,8 +47,8 @@ vlin y0,y1 at x
 
 ### If/Then/Else
 
-The traditional If/Then/Else statement. Note that all end with `end if`. `expr` is considered true if the expression
-evaluates to non-zero and false if it evaluates to zero.
+The traditional If/Then/Else statement. Note that generally, `if` end with `end if`. `expr` is considered true if the 
+expression evaluates to non-zero and false if it evaluates to zero.
 
 ```
 if expr then
@@ -54,6 +57,14 @@ else
   ' false statements
 end if
 ```
+
+There is also a single line if statement similar to Integer BASIC's - meaning only a single statement follows.
+
+```
+if expr then true_statement : statement2 : statement3 
+```
+
+`statement2` and `statement3` always execute, regardless of the value of `expr`. 
 
 ### For loop
 

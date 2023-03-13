@@ -49,10 +49,13 @@ public abstract class Visitor {
         else if (statement instanceof CallStatement s) {
             visit(s);
         }
-        else if (statement instanceof GotoStatement s) {
+        else if (statement instanceof GotoGosubStatement s) {
             visit(s);
         }
         else if (statement instanceof LabelStatement s) {
+            visit(s);
+        }
+        else if (statement instanceof ReturnStatement s) {
             visit(s);
         }
         else {
@@ -170,11 +173,15 @@ public abstract class Visitor {
         b.ifPresent(statement::setB);
     }
 
-    public void visit(GotoStatement statement) {
+    public void visit(GotoGosubStatement statement) {
 
     }
 
     public void visit(LabelStatement statement) {
+
+    }
+
+    public void visit(ReturnStatement statement) {
 
     }
 

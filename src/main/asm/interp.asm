@@ -2,6 +2,9 @@
 
     .zeropage
 
+            .res $40    ; moving variable locations to free $00-$1F for those pesky Integer BASIC apps.
+                        ; cannot use .org since that changes the entire app.
+
 ip:        .addr 0
 arg:       .res 3
 acc:       .byte 0
@@ -198,10 +201,12 @@ brtable:
     .addr _setacc-1
     .addr _setyreg-1
     .addr _call-1
+    .addr _return-1
     .addr _reserve-1
     .addr _load-1
     .addr _store-1
     .addr _goto-1
+    .addr _gosub-1
     .addr _iftrue-1
     .addr _iffalse-1
     .addr _loadc-1
@@ -397,15 +402,33 @@ _store:
     sta stackA+1,y
     jmp loop
 
+; GOSUB <addr>; () => (IP); IP=addr
+_gosub:
+    jsr fetch2Args  ; Acc = arg+1
+    lda ip+1
+    pha
+    lda ip
+    pha
+    jmp argtoip
+
 ; GOTO <addr>: IP=addr
 _goto:
     jsr fetch2Args  ; Acc = arg+1
+argtoip:
     lda arg
     clc
     adc baseip
     sta ip
     lda arg+1
     adc baseip+1
+    sta ip+1
+    jmp loop
+
+; RETURN; (TOS) => (); IP=TOS
+_return:
+    pla
+    sta ip
+    pla
     sta ip+1
     jmp loop
 

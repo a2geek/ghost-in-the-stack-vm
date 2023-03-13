@@ -15,10 +15,12 @@ public enum Opcode {
     SETACC(0),
     SETYREG(0),
     CALL(0),
+    RETURN(0),
     RESERVE(1),
     LOAD(1),
     STORE(1),
     GOTO(2),
+    GOSUB(2),
     IFTRUE(2),
     IFFALSE(2),
     LOADC(2);

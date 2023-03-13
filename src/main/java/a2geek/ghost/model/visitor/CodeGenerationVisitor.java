@@ -201,8 +201,13 @@ public class CodeGenerationVisitor extends Visitor {
     }
 
     @Override
-    public void visit(GotoStatement statement) {
-        code.emit(Opcode.GOTO, statement.getId());
+    public void visit(GotoGosubStatement statement) {
+        code.emit(Opcode.valueOf(statement.getOp().toUpperCase()), statement.getId());
+    }
+
+    @Override
+    public void visit(ReturnStatement statement) {
+        code.emit(Opcode.RETURN);
     }
 
     public Expression visit(BinaryExpression expression) {

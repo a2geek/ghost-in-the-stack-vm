@@ -17,6 +17,7 @@ statements
 statement
     : id=ID '=' a=expr                                                  # assignment
     | id=ID ':'                                                         # label
+    | 'if' a=expr 'then' t=statement                                    # ifShortStatement
     | 'if' a=expr 'then' EOL+
         t=statements 
       ('else' EOL+
@@ -35,7 +36,8 @@ statement
     | 'print' (expr | ',' | ';')*                                       # printStmt
     | 'poke' a=expr ',' b=expr                                          # pokeStmt
     | 'call' a=expr                                                     # callStmt
-    | 'goto' l=ID                                                       # gotoStmt
+    | op=( 'goto' | 'gosub' ) l=ID                                      # gotoGosubStmt
+    | 'return'                                                          # returnStmt
     ;
 
 expr

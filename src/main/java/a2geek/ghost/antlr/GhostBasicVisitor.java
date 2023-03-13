@@ -42,6 +42,22 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     }
 
     @Override
+    public Expression visitIfShortStatement(BasicParser.IfShortStatementContext ctx) {
+        Expression expr = visit(ctx.a);
+
+        StatementBlock oldStatementBlock = this.statementBlock;
+        StatementBlock trueStatements = new BaseStatementBlock();
+
+        statementBlock = trueStatements;
+        visit(ctx.t);
+        statementBlock = oldStatementBlock;
+
+        IfStatement statement = new IfStatement(expr, trueStatements, null);
+        statementBlock.addStatement(statement);
+        return null;
+    }
+
+    @Override
     public Expression visitIfStatement(IfStatementContext ctx) {
         Expression expr = visit(ctx.a);
 
@@ -187,8 +203,14 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     }
 
     @Override
-    public Expression visitGotoStmt(BasicParser.GotoStmtContext ctx) {
-        statementBlock.addStatement(new GotoStatement(ctx.l.getText()));
+    public Expression visitGotoGosubStmt(BasicParser.GotoGosubStmtContext ctx) {
+        statementBlock.addStatement(new GotoGosubStatement(ctx.op.getText().toLowerCase(), ctx.l.getText()));
+        return null;
+    }
+
+    @Override
+    public Expression visitReturnStmt(BasicParser.ReturnStmtContext ctx) {
+        statementBlock.addStatement(new ReturnStatement());
         return null;
     }
 
