@@ -1,0 +1,16 @@
+Capturing ideas
+===============
+
+Strings. Constant strings can just point at end of program.
+Fix PRINT numbers.
+Unit tests?
+Interpreter for use in tests.
+Structure assembly project; it's gonna get messier.
+WHILE loop
+ProDOS commands (OPEN, READ, WRITE, CLOSE). Is this SUB and/or FUNCTION?
+HGR
+Bit shifting, bit anding, bit oring, bit xoring?
+Arrays - need heap. Where? $200? but that is input and ProDOS can use it. If they are hard-coded, then they can just go into code!
+Function libraries (with inline?) - can a function return more than one value?
+Optimization - strength reduction (MOD 16 can be AND #$0F, MUL x2 can be shift left)
+Optimization - extract common code
