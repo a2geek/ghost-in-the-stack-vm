@@ -2,6 +2,8 @@ package a2geek.ghost.model.expression;
 
 import a2geek.ghost.model.Expression;
 
+import java.util.Objects;
+
 public class BinaryExpression implements Expression {
     private Expression l;
     private Expression r;
@@ -31,6 +33,20 @@ public class BinaryExpression implements Expression {
         this.l = l;
         this.r = r;
         this.op = op;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o instanceof BinaryExpression that) {
+            return Objects.equals(l, that.l) && Objects.equals(r, that.r) && Objects.equals(op, that.op);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(l, r, op);
     }
 
     @Override
