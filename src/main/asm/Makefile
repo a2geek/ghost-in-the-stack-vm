@@ -5,9 +5,11 @@ OUTPUT = ../resources
 all: interp.as interp-debug.as
 
 interp.as: interp.asm
+	mkdir -p $(OUTPUT)
 	cl65 -l interp.lst  $(CL65_ARGS) interp.asm -o $(OUTPUT)/interp-base.as
 
 interp-debug.as: interp.asm
+	mkdir -p $(OUTPUT)
 	cl65 --asm-define DEBUG -l interp-debug.lst  $(CL65_ARGS) interp.asm -o $(OUTPUT)/interp-debug-base.as
 
 clean:
