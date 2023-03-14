@@ -202,6 +202,7 @@ brtable:
     .addr _setyreg-1
     .addr _call-1
     .addr _return-1
+    .addr _dup-1
     .addr _reserve-1
     .addr _load-1
     .addr _store-1
@@ -383,10 +384,14 @@ _load:
     jsr fetch1Arg   ; Acc = arg
     clc
     adc locals
-    tay
-    lda stackA+1,y
+    tax
+    ; duplicating this address into TOS via DUP
+
+; DUP; (A) => (A) (A)
+_dup:
+    lda stackA+1,x
     pha
-    lda stackA,y
+    lda stackA,x
     pha
     jmp loop
 

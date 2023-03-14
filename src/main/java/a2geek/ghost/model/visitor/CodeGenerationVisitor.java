@@ -155,10 +155,16 @@ public class CodeGenerationVisitor extends Visitor {
     }
 
     public void visit(PlotStatement statement) {
-        dispatch(statement.getX());
-        code.emit(Opcode.SETYREG);
-        dispatch(statement.getY());
-        code.emit(Opcode.SETACC);
+        if (statement.getY().equals(statement.getX())) {
+            // Minor optimization if X=Y (aka PLOT 10,10)
+            dispatch(statement.getY());
+            code.emit(Opcode.DUP);
+        } else {
+            dispatch(statement.getY());
+            dispatch(statement.getX());
+        }
+        code.emit(Opcode.SETYREG);  // X coordinate
+        code.emit(Opcode.SETACC);   // Y coordinate
         code.emit(Opcode.LOADC, 0xf800);
         code.emit(Opcode.CALL);
     }
@@ -211,8 +217,13 @@ public class CodeGenerationVisitor extends Visitor {
     }
 
     public Expression visit(BinaryExpression expression) {
-        // FIXME: Special case ">" isn't implemented, so swap arguments and use LT.
-        if (">".equals(expression.getOp())) {
+        if (expression.getL().equals(expression.getR())) {
+            // Minor optimization when both args are identical
+            dispatch(expression.getL());
+            code.emit(Opcode.DUP);
+        }
+        else if (">".equals(expression.getOp())) {
+            // FIXME: Special case ">" isn't implemented, so swap arguments and use LT.
             dispatch(expression.getR());
             dispatch(expression.getL());
         } 
