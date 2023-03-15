@@ -12,6 +12,7 @@ import a2geek.ghost.model.statement.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 public class CodeGenerationVisitor extends Visitor {
     private List<String> variables = new ArrayList<>();
@@ -141,9 +142,13 @@ public class CodeGenerationVisitor extends Visitor {
 
         code.emit(Opcode.IFFALSE, labels.get(1));
         statement.getStatements().forEach(this::dispatch);
-        code.emit(Opcode.LOAD, varOffset(statement.getId()));
-        dispatch(statement.getStep());
-        code.emit(Opcode.ADD);
+
+        // Lean on the binary expression processor to setup an optimized STEP increment.
+        BinaryExpression stepIncrementExpr = new BinaryExpression(
+            new IdentifierExpression(statement.getId()),
+            statement.getStep(), "+");
+        visit(stepIncrementExpr);
+
         code.emit(Opcode.STORE, varOffset(statement.getId()));
         code.emit(Opcode.GOTO, labels.get(0));
         code.emit(labels.get(1));
@@ -216,7 +221,59 @@ public class CodeGenerationVisitor extends Visitor {
         code.emit(Opcode.RETURN);
     }
 
+    public boolean emitBinaryAddOptimizations(Expression left, Expression right) {
+        // left + 1 => left++
+        if (Objects.equals(left, IntegerConstant.ONE)) {
+            dispatch(right);
+            code.emit(Opcode.INCR);
+            return true;
+        }
+        // 1 + right => right++
+        else if (Objects.equals(right, IntegerConstant.ONE)) {
+            dispatch(left);
+            code.emit(Opcode.INCR);
+            return true;
+        }
+        // left + -1 => left--
+        else if (Objects.equals(left, IntegerConstant.NEGATIVE_ONE)) {
+            dispatch(right);
+            code.emit(Opcode.DECR);
+            return true;
+        }
+        // -1 + right => right--
+        else if (Objects.equals(right, IntegerConstant.NEGATIVE_ONE)) {
+            dispatch(left);
+            code.emit(Opcode.DECR);
+            return true;
+        }
+        return false;
+    }
+
+    public boolean emitBinarySubOptimizations(Expression left, Expression right) {
+        // left - -1 => left++
+        if (Objects.equals(right, IntegerConstant.NEGATIVE_ONE)) {
+            dispatch(left);
+            code.emit(Opcode.INCR);
+            return true;
+        }
+        // left - 1 => left--
+        else if (Objects.equals(right, IntegerConstant.ONE)) {
+            dispatch(left);
+            code.emit(Opcode.DECR);
+            return true;
+        }
+        return false;
+    }
+
+
     public Expression visit(BinaryExpression expression) {
+        boolean optimized = switch (expression.getOp()) {
+            case "+" -> emitBinaryAddOptimizations(expression.getL(), expression.getR());
+            case "-" -> emitBinarySubOptimizations(expression.getL(), expression.getR());
+            default -> false;
+        };
+        if (optimized) return null;
+
         if (expression.getL().equals(expression.getR())) {
             // Minor optimization when both args are identical
             dispatch(expression.getL());

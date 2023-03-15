@@ -17,6 +17,8 @@ public enum Opcode {
     CALL(0),
     RETURN(0),
     DUP(0),
+    INCR(0),
+    DECR(0),
     RESERVE(1),
     LOAD(1),
     STORE(1),

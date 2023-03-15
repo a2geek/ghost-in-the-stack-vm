@@ -203,6 +203,8 @@ brtable:
     .addr _call-1
     .addr _return-1
     .addr _dup-1
+    .addr _incr-1
+    .addr _decr-1
     .addr _reserve-1
     .addr _load-1
     .addr _store-1
@@ -393,6 +395,21 @@ _dup:
     pha
     lda stackA,x
     pha
+    jmp loop
+
+_incr:
+    inc stackA,x
+    bne @skip
+    inc stackA+1,x
+@skip:
+    jmp loop
+
+_decr:
+    lda stackA,x
+    bne @justlow
+    dec stackA+1,x
+@justlow:
+    dec stackA,x
     jmp loop
 
 ; STORE <offset>: (A) => (); *(locals+offset)=A

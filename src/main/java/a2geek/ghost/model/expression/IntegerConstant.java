@@ -5,6 +5,9 @@ import a2geek.ghost.model.Expression;
 import java.util.Objects;
 
 public class IntegerConstant implements Expression {
+    public static final IntegerConstant ONE = new IntegerConstant(1);
+    public static final IntegerConstant NEGATIVE_ONE = new IntegerConstant(-1);
+
     private int value;
 
     public int getValue() {
