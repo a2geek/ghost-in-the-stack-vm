@@ -2,7 +2,6 @@ Capturing ideas
 ===============
 
 Strings. Constant strings can just point at end of program.
-Fix PRINT numbers.
 Unit tests?
 Interpreter for use in tests.
 Structure assembly project; it's gonna get messier.

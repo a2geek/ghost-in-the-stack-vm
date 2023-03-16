@@ -86,10 +86,20 @@ public class CodeGenerationVisitor extends Visitor {
                 code.emit(Opcode.CALL);
             }
             else if (action instanceof PrintStatement.PrintIntegerAction a) {
-                // FIXME. Just printing low byte. And in hex.
+                // Defer to Applesoft for printing
                 dispatch(a.getExpr());
+                code.emit(Opcode.DUP);
+                code.emit(Opcode.SETYREG);
+                code.emit(Opcode.LOADC, 0x100);
+                code.emit(Opcode.DIV);
                 code.emit(Opcode.SETACC);
-                code.emit(Opcode.LOADC, 0xfdda);
+                code.emit(Opcode.LOADC, 0xe2f2);    // GIVAYF
+                code.emit(Opcode.CALL);
+                code.emit(Opcode.LOADC, 0xed34);    // FOUT
+                code.emit(Opcode.CALL);
+                // Note that we are "trusting" the interpreter
+                // to preserve Y,A from FOUT for STROUT...
+                code.emit(Opcode.LOADC, 0xdb3a);    // STROUT
                 code.emit(Opcode.CALL);
             }
             else if (action instanceof PrintStatement.PrintNewlineAction a) {
