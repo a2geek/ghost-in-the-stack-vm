@@ -6,14 +6,14 @@
                         ; cannot use .org since that changes the entire app.
 
 ip:        .addr 0
-arg:       .res 3
+arg:       .res 2
+temp:      .byte 0
 acc:       .byte 0
 yreg:      .byte 0
 xreg:      .byte 0
 locals:    .byte 0
 baseip:    .addr 0
 basesp:    .byte 0
-quotient:  .word 0
 remainder: .word 0
 ptr:       .addr 0
 .ifdef DEBUG
@@ -55,6 +55,7 @@ main:
     beq :++
 :   lda #$ff
 :   sta flags
+    jsr crout
 .endif
     jmp loop
 
@@ -103,37 +104,38 @@ fetch2Args:
     sta arg+1
     rts
 
-; See http://6502.org/users/obelisk/ downloads for original source
-div16:
-    lda #0
-    sta remainder
-    sta remainder+1
-    ldx #16
-@loop:
-    asl stackB,x
-    rol stackB+1,x
-    rol remainder
-    rol remainder+1
-    sec
-    lda remainder
-    sbc stackA,x
-    sta remainder
-    lda remainder+1
-    sbc stackA+1,x
-    sta remainder+1
-    bcs @next
-    lda remainder
-    adc stackA,x
-    sta remainder
-    lda remainder+1
-    adc stackA+1,x
-    sta remainder+1
-@next:
-    rol quotient
-    rol quotient+1
-    dex
-    bne @loop
-    rts
+; See https://codebase64.org/doku.php?id=base:16bit_division_16-bit_result
+; Note: quotient = stackB, remainder = remainder (in ZP)
+.proc div16
+divisor = stackA
+dividend = stackB
+result = dividend
+
+	lda #0	        ;preset remainder to 0
+	sta remainder
+	sta remainder+1
+	ldy #16	        ;repeat for each bit: ...
+divloop:
+    asl dividend,x	;dividend lb & hb*2, msb -> Carry
+	rol dividend+1,x
+	rol remainder	;remainder lb & hb * 2 + msb from carry
+	rol remainder+1
+	lda remainder
+	sec
+	sbc divisor,x	;substract divisor to see if it fits in
+	sta temp	    ;lb result -> temp, for we may need it later
+	lda remainder+1
+	sbc divisor+1,x
+	bcc skip	    ;if carry=0 then divisor didn't fit in yet
+	sta remainder+1	;else save substraction result as new remainder,
+    lda temp
+	sta remainder
+	inc result,x	;and INCrement result cause divisor fit in 1 times
+skip:
+    dey
+	bne divloop
+	rts
+.endproc
 
 setbpoploop:
     sta stackB,x
@@ -270,15 +272,15 @@ _mul:
 ; DIV: (B) (A) => (B/A)
 _div:
     jsr div16
-    lda quotient
-    ldy quotient+1
+    lda stackB,x
+    ldy stackB+1,x
     jmp setbpoploop
 
 ; MOD: (B) (A) => (B MOD A)
 _mod:
     jsr div16
     lda remainder
-    ldy quotient+1
+    ldy remainder+1
     jmp setbpoploop
 
 ; ILOAD: (A) => (B); B = byte(*A)
