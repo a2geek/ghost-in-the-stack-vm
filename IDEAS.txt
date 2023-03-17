@@ -2,6 +2,7 @@ Capturing ideas
 ===============
 
 Strings. Constant strings can just point at end of program.
+Review generated code and look for alternates with new opcodes.
 Unit tests?
 Interpreter for use in tests.
 Structure assembly project; it's gonna get messier.
