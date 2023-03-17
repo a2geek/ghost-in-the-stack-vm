@@ -30,3 +30,4 @@ gradle-app.setting
 /src/main/resources/interp-*.as
 a.out
 *.po
+/*.lst
