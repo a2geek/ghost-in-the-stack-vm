@@ -16,9 +16,9 @@ public class ForStatement implements Statement, StatementBlock {
 
     public ForStatement(String id, Expression start, Expression end, Expression step) {
         this.id = id;
-        this.start = start;
-        this.end = end;
-        this.step = step;
+        setStart(start);
+        setEnd(end);
+        setStep(step);
     }
 
     public String getId() {
@@ -33,6 +33,7 @@ public class ForStatement implements Statement, StatementBlock {
         return start;
     }
     public void setStart(Expression start) {
+        start.mustBe(Expression.Type.INTEGER);
         this.start = start;
     }
 
@@ -40,6 +41,7 @@ public class ForStatement implements Statement, StatementBlock {
         return end;
     }
     public void setEnd(Expression end) {
+        end.mustBe(Expression.Type.INTEGER);
         this.end = end;
     }
 
@@ -47,6 +49,7 @@ public class ForStatement implements Statement, StatementBlock {
         return step;
     }
     public void setStep(Expression step) {
+        step.mustBe(Expression.Type.INTEGER);
         this.step = step;
     }
 

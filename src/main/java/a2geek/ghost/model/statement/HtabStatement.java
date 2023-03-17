@@ -7,7 +7,7 @@ public class HtabStatement implements Statement {
     private Expression expr;
 
     public HtabStatement(Expression expr) {
-        this.expr = expr;
+        setExpr(expr);
     }
 
     public Expression getExpr() {
@@ -15,6 +15,7 @@ public class HtabStatement implements Statement {
     }
 
     public void setExpr(Expression expr) {
+        expr.mustBe(Expression.Type.INTEGER);
         this.expr = expr;
     }
 

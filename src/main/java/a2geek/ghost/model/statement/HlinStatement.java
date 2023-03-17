@@ -9,9 +9,9 @@ public class HlinStatement implements Statement {
     private Expression y;
 
     public HlinStatement(Expression a, Expression b, Expression y) {
-        this.a = a;
-        this.b = b;
-        this.y = y;
+        setA(a);
+        setB(b);
+        setY(y);
     }
 
     public Expression getA() {
@@ -19,6 +19,7 @@ public class HlinStatement implements Statement {
     }
 
     public void setA(Expression a) {
+        a.mustBe(Expression.Type.INTEGER);
         this.a = a;
     }
 
@@ -27,6 +28,7 @@ public class HlinStatement implements Statement {
     }
 
     public void setB(Expression b) {
+        b.mustBe(Expression.Type.INTEGER);
         this.b = b;
     }
 
@@ -35,6 +37,7 @@ public class HlinStatement implements Statement {
     }
 
     public void setY(Expression y) {
+        y.mustBe(Expression.Type.INTEGER);
         this.y = y;
     }
 

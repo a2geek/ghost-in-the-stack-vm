@@ -10,7 +10,7 @@ public class IfStatement implements Statement {
     private StatementBlock falseStatements;
 
     public IfStatement(Expression expression, StatementBlock trueStatements, StatementBlock falseStatement) {
-        this.expression = expression;
+        setExpression(expression);
         this.trueStatements = trueStatements;
         this.falseStatements = falseStatement;
     }
@@ -19,6 +19,7 @@ public class IfStatement implements Statement {
         return expression;
     }
     public void setExpression(Expression expression) {
+        expression.mustBe(Expression.Type.INTEGER);
         this.expression = expression;
     }
 

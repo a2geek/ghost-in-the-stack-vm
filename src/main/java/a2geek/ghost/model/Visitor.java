@@ -82,6 +82,9 @@ public abstract class Visitor {
         else if (expression instanceof IntegerConstant e) {
             return Optional.ofNullable(visit(e));
         }
+        else if (expression instanceof StringConstant e) {
+            return Optional.ofNullable(visit(e));
+        }
         else if (expression instanceof ParenthesisExpression e) {
             return Optional.ofNullable(visit(e));
         }
@@ -224,6 +227,10 @@ public abstract class Visitor {
     }
 
     public Expression visit(IntegerConstant expression) {
+        return null;
+    }
+
+    public Expression visit(StringConstant expression) {
         return null;
     }
 

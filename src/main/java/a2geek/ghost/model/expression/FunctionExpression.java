@@ -8,24 +8,35 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class FunctionExpression implements Expression {
-    private static final Map<String,Integer> FUNCS = Map.of(
-        "peek", 1,
-        "scrn", 2
+    private static final Map<String,Descriptor> FUNCS = Map.of(
+        "peek", new Descriptor(Type.INTEGER, Type.INTEGER),
+        "scrn", new Descriptor(Type.INTEGER,Type.INTEGER, Type.INTEGER),
+        "asc", new Descriptor(Type.INTEGER, Type.STRING)
+
     );
 
+    private Descriptor descriptor;
     private String name;
     private Expression[] expr;
 
     public FunctionExpression(String name, Expression ...expr) {
-        if (!FUNCS.containsKey(name)) {
-            throw new RuntimeException("Unknown function: " + name);
-        };
-        if (expr.length != FUNCS.get(name)) {
-            throw new RuntimeException("Wrong number of arguments to: " + name);
-        }
-
         this.name = name;
         this.expr = expr;
+        this.descriptor = FUNCS.get(name);
+        if (this.descriptor == null) {
+            throw new RuntimeException("Unknown function: " + name);
+        };
+        if (this.expr.length != this.descriptor.parameterTypes.length) {
+            throw new RuntimeException("Wrong number of arguments to: " + name);
+        }
+        for (int i=0; i<this.expr.length; i++) {
+            this.expr[i].mustBe(this.descriptor.parameterTypes[i]);
+        }
+    }
+
+    @Override
+    public Type getType() {
+        return descriptor.returnType;
     }
 
     public String getName() {
@@ -58,5 +69,12 @@ public class FunctionExpression implements Expression {
     public String toString() {
         String args = Arrays.asList(expr).stream().map(Expression::toString).collect(Collectors.joining(", "));
         return String.format("%s(%s)", name, args);
+    }
+
+    public record Descriptor(
+            Type returnType,
+            Type... parameterTypes
+    ) {
+
     }
 }

@@ -47,13 +47,14 @@ public class PrintStatement implements Statement {
         private Expression expr;
 
         public PrintIntegerAction(Expression expr) {
-            this.expr = expr;
+            setExpr(expr);
         }
 
         public Expression getExpr() {
             return expr;
         }
         public void setExpr(Expression expr) {
+            expr.mustBe(Expression.Type.INTEGER);
             this.expr = expr;
         }
 

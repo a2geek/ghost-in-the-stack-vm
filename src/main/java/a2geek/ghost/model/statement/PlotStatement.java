@@ -8,8 +8,8 @@ public class PlotStatement implements Statement {
     private Expression y;
 
     public PlotStatement(Expression x, Expression y) {
-        this.x = x;
-        this.y = y;
+        setX(x);
+        setY(y);
     }
 
     public Expression getX() {
@@ -17,6 +17,7 @@ public class PlotStatement implements Statement {
     }
 
     public void setX(Expression x) {
+        x.mustBe(Expression.Type.INTEGER);
         this.x = x;
     }
 
@@ -25,6 +26,7 @@ public class PlotStatement implements Statement {
     }
 
     public void setY(Expression y) {
+        y.mustBe(Expression.Type.INTEGER);
         this.y = y;
     }
 

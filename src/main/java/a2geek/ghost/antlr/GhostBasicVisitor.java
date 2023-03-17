@@ -247,6 +247,11 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     }
 
     @Override
+    public Expression visitStringConstant(BasicParser.StringConstantContext ctx) {
+        return new StringConstant(ctx.s.getText().replaceAll("^\"|\"$", ""));
+    }
+
+    @Override
     public Expression visitCompExpr(CompExprContext ctx) {
         Expression l = visit(ctx.a);
         Expression r = visit(ctx.b);
@@ -300,5 +305,11 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         Expression x = visit(ctx.a);
         Expression y = visit(ctx.b);
         return new FunctionExpression("scrn", x, y);
+    }
+
+    @Override
+    public Expression visitAscExpr(BasicParser.AscExprContext ctx) {
+        Expression e = visit(ctx.s);
+        return new FunctionExpression("asc", e);
     }
 }

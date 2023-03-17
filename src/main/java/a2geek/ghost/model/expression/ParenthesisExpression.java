@@ -11,6 +11,11 @@ public class ParenthesisExpression implements Expression {
         this.expr = expr;
     }
 
+    @Override
+    public Type getType() {
+        return expr.getType();
+    }
+
     public Expression getExpr() {
         return expr;
     }

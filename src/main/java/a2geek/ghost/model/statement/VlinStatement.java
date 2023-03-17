@@ -9,9 +9,9 @@ public class VlinStatement implements Statement {
     private Expression x;
 
     public VlinStatement(Expression a, Expression b, Expression x) {
-        this.a = a;
-        this.b = b;
-        this.x = x;
+        setA(a);
+        setB(b);
+        setX(x);
     }
 
     public Expression getA() {
@@ -19,6 +19,7 @@ public class VlinStatement implements Statement {
     }
 
     public void setA(Expression a) {
+        a.mustBe(Expression.Type.INTEGER);
         this.a = a;
     }
 
@@ -27,6 +28,7 @@ public class VlinStatement implements Statement {
     }
 
     public void setB(Expression b) {
+        b.mustBe(Expression.Type.INTEGER);
         this.b = b;
     }
 
@@ -35,6 +37,7 @@ public class VlinStatement implements Statement {
     }
 
     public void setX(Expression x) {
+        x.mustBe(Expression.Type.INTEGER);
         this.x = x;
     }
 

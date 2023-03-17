@@ -5,7 +5,13 @@ import a2geek.ghost.model.Expression;
 import java.util.Objects;
 
 public class IdentifierExpression implements Expression {
+    private Type type = Type.INTEGER;   // Default for now
     private String id;
+
+    @Override
+    public Type getType() {
+        return type;
+    }
 
     public String getId() {
         return id;

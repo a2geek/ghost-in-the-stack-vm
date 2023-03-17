@@ -2,10 +2,7 @@ package a2geek.ghost.model.visitor;
 
 import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.Visitor;
-import a2geek.ghost.model.expression.BinaryExpression;
-import a2geek.ghost.model.expression.FunctionExpression;
-import a2geek.ghost.model.expression.IntegerConstant;
-import a2geek.ghost.model.expression.NegateExpression;
+import a2geek.ghost.model.expression.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -93,6 +90,11 @@ public class RewriteVisitor extends Visitor {
             Expression expr = exprs[i];
             final int idx = i;
             dispatch(expr).ifPresent(e -> exprs[idx] = e);
+        }
+
+        if ("asc".equalsIgnoreCase(expression.getName()) && exprs.length == 1 &&
+                exprs[0] instanceof StringConstant s) {
+            return new IntegerConstant(s.getValue().charAt(0)|0x80);
         }
 
         return null;

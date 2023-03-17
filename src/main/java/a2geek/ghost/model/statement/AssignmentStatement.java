@@ -10,6 +10,7 @@ public class AssignmentStatement implements Statement {
     public AssignmentStatement(String id, Expression expr) {
         this.id = id;
         this.expr = expr;
+        expr.mustBe(Expression.Type.INTEGER);
     }
 
     public String getId() {

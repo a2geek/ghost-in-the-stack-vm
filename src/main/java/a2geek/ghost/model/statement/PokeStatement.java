@@ -8,8 +8,8 @@ public class PokeStatement implements Statement {
     private Expression b;
 
     public PokeStatement(Expression a, Expression b) {
-        this.a = a;
-        this.b = b;
+        setA(a);
+        setB(b);
     }
 
     public Expression getA() {
@@ -17,6 +17,7 @@ public class PokeStatement implements Statement {
     }
 
     public void setA(Expression a) {
+        a.mustBe(Expression.Type.INTEGER);
         this.a = a;
     }
 
@@ -25,6 +26,7 @@ public class PokeStatement implements Statement {
     }
 
     public void setB(Expression b) {
+        b.mustBe(Expression.Type.INTEGER);
         this.b = b;
     }
 

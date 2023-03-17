@@ -7,7 +7,7 @@ public class VtabStatement implements Statement {
     private Expression expr;
 
     public VtabStatement(Expression expr) {
-        this.expr = expr;
+        setExpr(expr);
     }
 
     public Expression getExpr() {
@@ -15,6 +15,7 @@ public class VtabStatement implements Statement {
     }
 
     public void setExpr(Expression expr) {
+        expr.mustBe(Expression.Type.INTEGER);
         this.expr = expr;
     }
 

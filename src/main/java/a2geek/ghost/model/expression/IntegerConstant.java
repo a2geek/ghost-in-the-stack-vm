@@ -10,6 +10,11 @@ public class IntegerConstant implements Expression {
 
     private int value;
 
+    @Override
+    public Type getType() {
+        return Type.INTEGER;    // Always
+    }
+
     public int getValue() {
         return value;
     }

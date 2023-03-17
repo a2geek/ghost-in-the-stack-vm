@@ -8,6 +8,7 @@ public class CallStatement implements Statement {
 
     public CallStatement(Expression expr) {
         this.expr = expr;
+        expr.mustBe(Expression.Type.INTEGER);
     }
 
     public Expression getExpr() {

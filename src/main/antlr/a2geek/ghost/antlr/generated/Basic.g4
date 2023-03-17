@@ -52,12 +52,18 @@ expr
     | '(' a=expr ')'                                                    # parenExpr
     | 'peek' '(' a=expr ')'                                             # peekExpr
     | 'scrn' '(' a=expr ',' b=expr ')'                                  # scrnExpr
+    | 'asc' '(' s=sexpr ')'                                             # ascExpr
     | a=ID                                                              # identifier
     | a=INT                                                             # intConstant
     ;
 
+sexpr
+    : s=STR                                                             # stringConstant
+    ;
+
 ID : [a-z] ([a-z0-9])* ;
 INT : [0-9]+ ;
+STR : '"' ~["]* '"' ;
 
 EOL : [\r]? [\n] ;
 WS : [ \t]+ -> skip ;
