@@ -215,6 +215,26 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     }
 
     @Override
+    public Expression visitTextStmt(BasicParser.TextStmtContext ctx) {
+        statementBlock.addStatement(new TextStatement());
+        return null;
+    }
+
+    @Override
+    public Expression visitHtabStmt(BasicParser.HtabStmtContext ctx) {
+        var a = visit(ctx.a);
+        statementBlock.addStatement(new HtabStatement(a));
+        return null;
+    }
+
+    @Override
+    public Expression visitVtabStmt(BasicParser.VtabStmtContext ctx) {
+        var a = visit(ctx.a);
+        statementBlock.addStatement(new VtabStatement(a));
+        return null;
+    }
+
+    @Override
     public Expression visitIdentifier(BasicParser.IdentifierContext ctx) {
         return new IdentifierExpression(ctx.a.getText());
     }

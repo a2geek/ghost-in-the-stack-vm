@@ -38,6 +38,9 @@ statement
     | 'call' a=expr                                                     # callStmt
     | op=( 'goto' | 'gosub' ) l=ID                                      # gotoGosubStmt
     | 'return'                                                          # returnStmt
+    | 'text'                                                            # textStmt
+    | 'vtab' a=expr                                                     # vtabStmt
+    | 'htab' a=expr                                                     # htabStmt
     ;
 
 expr

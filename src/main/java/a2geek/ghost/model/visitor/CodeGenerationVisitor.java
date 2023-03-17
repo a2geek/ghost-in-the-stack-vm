@@ -231,6 +231,27 @@ public class CodeGenerationVisitor extends Visitor {
         code.emit(Opcode.RETURN);
     }
 
+    public void visit(TextStatement statement) {
+        code.emit(Opcode.LOADC, 0xfb2f);
+        code.emit(Opcode.CALL);
+    }
+
+    @Override
+    public void visit(HtabStatement statement) {
+        dispatch(statement.getExpr());
+        code.emit(Opcode.DECR);
+        code.emit(Opcode.LOADC, 0x24);
+        code.emit(Opcode.ISTORE);
+    }
+
+    @Override
+    public void visit(VtabStatement statement) {
+        dispatch(statement.getExpr());
+        code.emit(Opcode.SETACC);
+        code.emit(Opcode.LOADC, 0xfb5b);
+        code.emit(Opcode.CALL);
+    }
+
     public boolean emitBinaryAddOptimizations(Expression left, Expression right) {
         // left + 1 => left++
         if (Objects.equals(left, IntegerConstant.ONE)) {

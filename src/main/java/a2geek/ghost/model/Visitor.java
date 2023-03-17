@@ -58,6 +58,15 @@ public abstract class Visitor {
         else if (statement instanceof ReturnStatement s) {
             visit(s);
         }
+        else if (statement instanceof TextStatement s) {
+            visit(s);
+        }
+        else if (statement instanceof HtabStatement s) {
+            visit(s);
+        }
+        else if (statement instanceof VtabStatement s) {
+            visit(s);
+        }
         else {
             throw new RuntimeException("statement type not supported: " +
                     statement.getClass().getName());
@@ -183,6 +192,20 @@ public abstract class Visitor {
 
     public void visit(ReturnStatement statement) {
 
+    }
+
+    public void visit(TextStatement statement) {
+
+    }
+
+    public void visit(HtabStatement statement) {
+        var expr = dispatch(statement.getExpr());
+        expr.ifPresent(statement::setExpr);
+    }
+
+    public void visit(VtabStatement statement) {
+        var expr = dispatch(statement.getExpr());
+        expr.ifPresent(statement::setExpr);
     }
 
     public Expression visit(BinaryExpression expression) {
