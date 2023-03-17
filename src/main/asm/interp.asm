@@ -2,8 +2,8 @@
 
     .zeropage
 
-            .res $40    ; moving variable locations to free $00-$1F for those pesky Integer BASIC apps.
-                        ; cannot use .org since that changes the entire app.
+;            .res $40    ; moving variable locations to free $00-$1F for those pesky Integer BASIC apps.
+;                        ; cannot use .org since that changes the entire app.
 
 ip:        .addr 0
 arg:       .res 2
@@ -47,6 +47,7 @@ main:
     jsr print
     .byte "ENABLE TRACING? ",$00
     jsr rdkey
+    jsr cout
     cmp #'Y'|$80
     beq :+
     cmp #'y'|$80
@@ -148,12 +149,18 @@ poploop:
 loop:
 .ifdef DEBUG
     bit flags
-    bpl @noflag
-    jsr print
+    bmi :+
+    jmp @noflag
+:   jsr print
     .byte "IP=",$82,ip
-    .byte ", ARG=",$83,arg
+    .byte ", ARG=",$82,arg
     .byte ", A/Y/X=",$81,acc,$81,yreg,$81,xreg
-    .byte ",",$d," PTR=",$82,ptr
+    .byte ",",$d,"PTR=",$82,ptr
+    .byte ", LOCALS=",$81,locals,", S=",0
+    tsx
+    txa
+    jsr prbyte
+    jsr print
     .byte $d,"STACK=",0
     tsx
     lda stackA+1,x
@@ -173,7 +180,10 @@ loop:
     lda stackC,x
     jsr prbyte
     jsr rdkey
-    jsr crout
+    cmp #$9b
+    bne :+
+    jmp _exit
+:   jsr crout
 @noflag:
 .endif
 
