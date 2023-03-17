@@ -44,14 +44,15 @@ statement
     ;
 
 expr
-    : a=expr op=( '*' | '/' | 'mod' ) b=expr                  # mulDivModExpr
-    | a=expr op=( '+' | '-' ) b=expr                          # addSubExpr
-    | a=expr op=( '<' | '>' | '=' ) b=expr                    # compExpr
-    | '-' a=expr                                              # negateExpr
-    | '(' a=expr ')'                                          # parenExpr
-    | 'peek' '(' a=expr ')'                                   # peekExpr
-    | a=ID                                                    # identifier
-    | a=INT                                                   # intConstant
+    : a=expr op=( '*' | '/' | 'mod' ) b=expr                            # mulDivModExpr
+    | a=expr op=( '+' | '-' ) b=expr                                    # addSubExpr
+    | a=expr op=( '<' | '<=' | '>' | '>=' | '=' | '<>' ) b=expr         # compExpr
+    | a=expr op=( 'or' | 'and' ) b=expr                                 # logicalExpr
+    | '-' a=expr                                                        # negateExpr
+    | '(' a=expr ')'                                                    # parenExpr
+    | 'peek' '(' a=expr ')'                                             # peekExpr
+    | a=ID                                                              # identifier
+    | a=INT                                                             # intConstant
     ;
 
 ID : [a-z] ([a-z0-9])* ;

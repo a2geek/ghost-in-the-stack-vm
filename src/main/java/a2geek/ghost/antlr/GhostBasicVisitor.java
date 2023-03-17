@@ -281,6 +281,13 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     }
 
     @Override
+    public Expression visitLogicalExpr(BasicParser.LogicalExprContext ctx) {
+        var l = visit(ctx.a);
+        var r = visit(ctx.b);
+        return new BinaryExpression(l, r, ctx.op.getText());
+    }
+
+    @Override
     public Expression visitPeekExpr(BasicParser.PeekExprContext ctx) {
         Expression e = visit(ctx.a);
         return new FunctionExpression("peek", e);

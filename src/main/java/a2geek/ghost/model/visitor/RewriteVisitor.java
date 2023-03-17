@@ -7,20 +7,33 @@ import a2geek.ghost.model.expression.FunctionExpression;
 import a2geek.ghost.model.expression.IntegerConstant;
 import a2geek.ghost.model.expression.NegateExpression;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
 
 public class RewriteVisitor extends Visitor {
-    private static final Map<String, BiFunction<Integer,Integer,Integer>> FUNCS = Map.of(
-            "+",   (a,b) -> a+b,
-            "-",   (a,b) -> a-b,
-            "*",   (a,b) -> a*b,
-            "/",   (a,b) -> a/b,
-            "mod", (a,b) -> a%b,
-            "<",   (a,b) -> (a<b) ? 1 : 0,
-            ">",   (a,b) -> (a>b) ? 1 : 0,
-            "=",   (a,b) -> (a==b) ? 1 : 0
-        );
+    private static final Map<String, BiFunction<Integer,Integer,Integer>> BINOPS;
+    static {
+        // 'Map.of(...)' maxes out at 10 items.
+        BINOPS = new HashMap<>();
+        BINOPS.putAll(Map.of(
+                "+",   (a,b) -> a+b,
+                "-",   (a,b) -> a-b,
+                "*",   (a,b) -> a*b,
+                "/",   (a,b) -> a/b,
+                "mod", (a,b) -> a%b
+        ));
+        BINOPS.putAll(Map.of(
+                "<",   (a,b) -> (a<b) ? 1 : 0,
+                "<=",  (a,b) -> (a<=b) ? 1 : 0,
+                ">",   (a,b) -> (a>b) ? 1 : 0,
+                ">=",  (a,b) -> (a>=b) ? 1 : 0,
+                "=",   (a,b) -> (a==b) ? 1 : 0,
+                "<>",  (a,b) -> (a!=b) ? 1 : 0,
+                "or",  (a,b) -> ((a!=0) || (b!=0)) ? 1 : 0,
+                "and", (a,b) -> ((a!=0) && (b!=0)) ? 1 : 0
+        ));
+    }
 
     @Override
     public Expression visit(BinaryExpression expression) {
@@ -30,15 +43,15 @@ public class RewriteVisitor extends Visitor {
         // Handle constant reduction
         if (expression.getL() instanceof IntegerConstant l
                 && expression.getR() instanceof IntegerConstant r) {
-            if (FUNCS.containsKey(expression.getOp())) {
-                BiFunction<Integer,Integer,Integer> f = FUNCS.get(expression.getOp());
+            if (BINOPS.containsKey(expression.getOp())) {
+                BiFunction<Integer,Integer,Integer> f = BINOPS.get(expression.getOp());
                 return new IntegerConstant(f.apply(l.getValue(), r.getValue()));
             }
         }
 
         // Special cases
         switch (expression.getOp()) {
-            case "+", "-", "<", ">", "=", "/", "mod" -> {
+            case "+", "-", "<", "<=", ">", ">=", "<>", "=", "/", "mod", "or", "and" -> {
                 return null;
             }
             case "*" -> {

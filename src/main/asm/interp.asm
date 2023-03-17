@@ -210,6 +210,9 @@ brtable:
     .addr _lt-1
     .addr _le-1
     .addr _eq-1
+    .addr _ne-1
+    .addr _or-1
+    .addr _and-1
     .addr _setacc-1
     .addr _setyreg-1
     .addr _call-1
@@ -342,6 +345,31 @@ setBto0:
     lda #0
     tay
     jmp setbpoploop
+
+; NE: (B) (A) => (B<>A)
+_ne:
+    jsr compareAB
+    bne setBto1
+    beq setBto0
+
+; OR: (B) (A) => (B OR A); at least one is true
+_or:
+    lda stackB,x
+    ora stackB+1,x
+    ora stackA,x
+    ora stackA+1,x
+    bne setBto1
+    beq setBto0
+
+; AND: (B) (A) => (B AND A); both are true
+_and:
+    lda stackB,x
+    ora stackB+1,x
+    beq setBto0
+    lda stackA,x
+    ora stackA+1,x
+    beq setBto0
+    bne setBto1
 
 ; SETACC: (A) => (); Acc=byte(A)
 _setacc:

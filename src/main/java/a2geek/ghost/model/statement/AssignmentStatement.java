@@ -16,6 +16,10 @@ public class AssignmentStatement implements Statement {
         return id;
     }
 
+    public void setId(String id) {
+        this.id = id;
+    }
+
     public Expression getExpr() {
         return expr;
     }

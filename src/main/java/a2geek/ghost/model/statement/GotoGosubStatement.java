@@ -19,6 +19,10 @@ public class GotoGosubStatement implements Statement {
         return id;
     }
 
+    public void setId(String id) {
+        this.id = id;
+    }
+
     @Override
     public String toString() {
         return String.format("%s %s", op.toUpperCase(), id);

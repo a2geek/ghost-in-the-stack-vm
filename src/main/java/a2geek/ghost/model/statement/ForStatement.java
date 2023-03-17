@@ -25,6 +25,10 @@ public class ForStatement implements Statement, StatementBlock {
         return id;
     }
 
+    public void setId(String id) {
+        this.id = id;
+    }
+
     public Expression getStart() {
         return start;
     }

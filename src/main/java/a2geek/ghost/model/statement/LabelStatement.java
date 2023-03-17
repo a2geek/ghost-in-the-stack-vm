@@ -13,6 +13,10 @@ public class LabelStatement implements Statement {
         return id;
     }
 
+    public void setId(String id) {
+        this.id = id;
+    }
+
     @Override
     public String toString() {
         return String.format("%s:", id);

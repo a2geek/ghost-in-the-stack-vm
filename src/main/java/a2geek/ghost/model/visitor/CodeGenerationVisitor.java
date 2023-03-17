@@ -9,10 +9,7 @@ import a2geek.ghost.model.code.Opcode;
 import a2geek.ghost.model.expression.*;
 import a2geek.ghost.model.statement.*;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class CodeGenerationVisitor extends Visitor {
     private List<String> variables = new ArrayList<>();
@@ -305,13 +302,13 @@ public class CodeGenerationVisitor extends Visitor {
         };
         if (optimized) return null;
 
+        final Set<String> needsSwap = Set.of(">", ">=");
         if (expression.getL().equals(expression.getR())) {
             // Minor optimization when both args are identical
             dispatch(expression.getL());
             code.emit(Opcode.DUP);
         }
-        else if (">".equals(expression.getOp())) {
-            // FIXME: Special case ">" isn't implemented, so swap arguments and use LT.
+        else if (needsSwap.contains(expression.getOp())) {
             dispatch(expression.getR());
             dispatch(expression.getL());
         } 
@@ -326,8 +323,12 @@ public class CodeGenerationVisitor extends Visitor {
             case "*" -> code.emit(Opcode.MUL);
             case "/" -> code.emit(Opcode.DIV);
             case "mod" -> code.emit(Opcode.MOD);
-            case "<", ">" -> code.emit(Opcode.LT);  // We swapped arguments for ">" to reuse "LT"
+            case "<", ">" -> code.emit(Opcode.LT);      // We swapped arguments for ">" to reuse "LT"
+            case "<=", ">=" -> code.emit(Opcode.LE);    // We swapped arguments for ">=" to reuse "LE"
             case "=" -> code.emit(Opcode.EQ);
+            case "<>" -> code.emit(Opcode.NE);
+            case "or" -> code.emit(Opcode.OR);
+            case "and" -> code.emit(Opcode.AND);
             default -> throw new RuntimeException("Operation not supported: " + expression.getOp());
         }
         return null;

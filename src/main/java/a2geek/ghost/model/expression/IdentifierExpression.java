@@ -11,6 +11,10 @@ public class IdentifierExpression implements Expression {
         return id;
     }
 
+    public void setId(String id) {
+        this.id = id;
+    }
+
     public IdentifierExpression(String id) {
         this.id = id;
     }

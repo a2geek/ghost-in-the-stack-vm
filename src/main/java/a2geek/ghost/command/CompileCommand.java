@@ -6,6 +6,7 @@ import a2geek.ghost.antlr.generated.BasicParser;
 import a2geek.ghost.model.Program;
 import a2geek.ghost.model.code.Instruction;
 import a2geek.ghost.model.visitor.CodeGenerationVisitor;
+import a2geek.ghost.model.visitor.FixCaseVisitor;
 import a2geek.ghost.model.visitor.MetadataVisitor;
 import a2geek.ghost.model.visitor.RewriteVisitor;
 import io.github.applecommander.applesingle.AppleSingle;
@@ -15,11 +16,12 @@ import picocli.CommandLine.Help.Visibility;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import java.io.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 
 @Command(name = "compile", mixinStandardHelpOptions = true, 
@@ -37,6 +39,14 @@ public class CompileCommand implements Callable<Integer> {
     @Option(names = { "--debug" }, description = "use the debugging interpreter")
     private boolean debugFlag;
 
+    @Option(names = { "--case-sensitive" },
+            defaultValue = "false", showDefaultValue = Visibility.ALWAYS,
+            description = "allow identifiers to be case sensitive (A is different from a)")
+    private boolean caseSensitive;
+
+    @Option(names = { "-l", "--listing" }, description = "create listing file")
+    private Optional<String> programListing;
+
     @Override
     public Integer call() throws Exception {
         CharStream stream = CharStreams.fromPath(sourceCode);
@@ -52,11 +62,14 @@ public class CompileCommand implements Callable<Integer> {
 
         Program program = visitor.getProgram();
 
+        if (!caseSensitive) {
+            FixCaseVisitor fixCaseVisitor = new FixCaseVisitor();
+            fixCaseVisitor.visit(program);
+        }
+
         MetadataVisitor metadataVisitor = new MetadataVisitor();
         metadataVisitor.visit(program);
 
-        System.out.println("=== SOURCE CODE ===");
-        System.out.println(sourceCode);
         System.out.println("=== MODEL ===");
         System.out.println(program);
         System.out.println("=== VARIABLES ===");
@@ -70,8 +83,6 @@ public class CompileCommand implements Callable<Integer> {
 
         CodeGenerationVisitor codeGenerationVisitor = new CodeGenerationVisitor(metadataVisitor.getVariables());
         codeGenerationVisitor.visit(program);
-        System.out.println("=== CODE ===");
-        codeGenerationVisitor.getInstructions().forEach(System.out::println);
 
         // Assembly first pass: Figure out label values
         Map<String,Integer> addrs = new HashMap<>();
@@ -84,6 +95,8 @@ public class CompileCommand implements Callable<Integer> {
         }
 
         // Assembly second pass: Generate output
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         addr = 0;
         for (Instruction instruction : codeGenerationVisitor.getInstructions()) {
@@ -105,10 +118,18 @@ public class CompileCommand implements Callable<Integer> {
                     bytes = String.format("%02x %02x %02x", data[0], data[1], data[2]);
                     break;
             }
-            System.out.printf("%04x: %-10.10s  %s\n", addr, bytes, instruction);
+            pw.printf("%04x: %-10.10s  %s\n", addr, bytes, instruction);
             //
             addr += instruction.size();
         }
+
+        programListing.ifPresent(filename -> {
+            try {
+                Files.write(Path.of(filename), sw.toString().getBytes());
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        });
 
         saveAsAppleSingle(out.toByteArray());
 
