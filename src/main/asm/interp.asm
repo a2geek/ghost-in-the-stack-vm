@@ -214,7 +214,11 @@ brtable:
     .addr _or-1
     .addr _and-1
     .addr _setacc-1
+    .addr _getacc-1
+    .addr _setxreg-1
+    .addr _getxreg-1
     .addr _setyreg-1
+    .addr _getyreg-1
     .addr _call-1
     .addr _return-1
     .addr _dup-1
@@ -318,8 +322,7 @@ _istore:
     pla
     ldy #0
     sta (ptr),y
-    pla     ; toss high byte
-    jmp loop
+    jmp tossHighByteLoop
 
 ; LT: (B) (A) => (B<A)
 _lt:
@@ -375,15 +378,41 @@ _and:
 _setacc:
     pla
     sta acc
+tossHighByteLoop:
     pla
     jmp loop
+
+; GETACC: () => (Acc)
+_getacc:
+    ldy acc
+pushByteLoop:
+    lda #0
+    pha
+    tya
+    pha
+    jmp loop
+
+; SETXREG: (A) => (); X-register=byte(A)
+_setxreg:
+    pla
+    sta xreg
+    jmp tossHighByteLoop
+
+; GETXREG: () => (X-register)
+_getxreg:
+    ldy xreg
+    jmp pushByteLoop
 
 ; SETYREG: (A) => (); Y-register=byte(A)
 _setyreg:
     pla
     sta yreg
-    pla
-    jmp loop
+    jmp tossHighByteLoop
+
+; GETYREG: () => (Y-register)
+_getyreg:
+    ldy yreg
+    jmp pushByteLoop
 
 ; CALL: (A) => (); PC=A
 _call:

@@ -352,14 +352,22 @@ public class CodeGenerationVisitor extends Visitor {
 
     @Override
     public Expression visit(FunctionExpression expression) {
-        dispatch(expression.getExpr());
+        for (Expression expr : expression.getExpr()) {
+            dispatch(expr);
+        }
         switch (expression.getName()) {
             case "peek" -> code.emit(Opcode.ILOAD);
+            case "scrn" -> {
+                code.emit(Opcode.SETACC);
+                code.emit(Opcode.SETYREG);
+                code.emit(Opcode.LOADC, 0xf871);
+                code.emit(Opcode.CALL);
+                code.emit(Opcode.GETACC);
+            }
             default -> throw new RuntimeException("Function unknown: " + expression.getName());
         }
         return null;
     }
-
     @Override
     public Expression visit(NegateExpression expression) {
         throw new RuntimeException("Negate is not implemented yet.");

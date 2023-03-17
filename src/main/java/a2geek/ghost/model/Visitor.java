@@ -246,9 +246,17 @@ public abstract class Visitor {
     }
 
     public Expression visit(FunctionExpression expression) {
-        var e = dispatch(expression.getExpr());
-        if (e.isPresent()) {
-            e.ifPresent(expression::setExpr);
+        boolean changed = false;
+        Expression[] exprs = expression.getExpr();
+        for (int i=0; i<exprs.length; i++) {
+            var e = dispatch(exprs[i]);
+            if (e.isPresent()) {
+                exprs[i] = e.get();
+                changed = true;
+            }
+        }
+        if (changed) {
+            expression.setExpr(exprs);
             return expression;
         }
         return null;

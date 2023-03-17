@@ -43,6 +43,7 @@ color= n
 plot x,y
 hlin x0,x1 at y
 vlin y0,y1 at x
+c = scrn(x,y)
 ```
 
 ### If/Then/Else
@@ -83,7 +84,10 @@ next var
 Output is very rudimentary at this time. Only the low byte is printed for `expr` and it is printed in hex.
 
 ```
+text
 home
+vtab expr
+htab expr
 print [ expr | ',' | ';' ]
 ```
 
@@ -94,6 +98,7 @@ Note that `end` should be placed at the end of all code. It is not automatically
 ```
 end
 poke addr,expr
+value = peek(addr)
 ```
 
 ## Expressions
@@ -101,23 +106,25 @@ poke addr,expr
 The following operations are currently supported. They are listed in order of precedence.
 (This has been done on the fly. Likely to change ... feel free to correct what is wrong.)
 
-|    Operator     | Type   | Notes                                                       |
-|:---------------:|:-------|:------------------------------------------------------------|
-| `*`, `/`, `mod` | Binary | Multiplication, division, modulus.                          |
-|    `+`, `-`     | Binary | Addition, subtraction.                                      |
-|  `<`, `>`, `=`  | Binary | Inequalities. Note `<=`, `>=` and `<>` do not exist.        |
-|       `-`       | Unary  | Negation. This is only supported on constants at this time. |
-|  `(` expr `)`   | Other  | Parenthesis to group subexpressions.                        |
-|    Functions    | Other  | See Functions section.                                      |
-|      `var`      | Other  | Variable reference.                                         |
-|     number      | Other  | Constant integer value.                                     |
+|            Operator             | Type   | Notes                                                                        |
+|:-------------------------------:|:-------|:-----------------------------------------------------------------------------|
+|         `*`, `/`, `mod`         | Binary | Multiplication, division, modulus.                                           |
+|            `+`, `-`             | Binary | Addition, subtraction.                                                       |
+| `<`, `<=`, `>`, `>=`, `=`, `<>` | Binary | Inequalities. Note `<=`, `>=` and `<>` do not exist.                         |
+|           `or`, `and`           | Binary | Logical operations. Note that these evaluate to 1 or 0 (not bit operations). |
+|               `-`               | Unary  | Negation. This is only supported on constants at this time.                  |
+|          `(` expr `)`           | Other  | Parenthesis to group subexpressions.                                         |
+|            Functions            | Other  | See Functions section.                                                       |
+|              `var`              | Other  | Variable reference.                                                          |
+|             number              | Other  | Constant integer value.                                                      |
 
 ## Functions
 
 Any built-in functions are referenced here. These may ultimately be moved into some form of library.
 
-| Function     | Notes                                |
-|:-------------|:-------------------------------------|
-| `peek(addr)` | Read by from memory location `addr`. |
+| Function            | Notes                                                              |
+|:--------------------|:-------------------------------------------------------------------|
+| `peek(addr)`        | Read by from memory location `addr`.                               |
+| `scrn(xexpr,yexpr)` | Read color of lores graphics point at `xexpr`, `yexpr` coordinate. |
 
 *** END ***

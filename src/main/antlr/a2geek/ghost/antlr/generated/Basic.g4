@@ -24,8 +24,8 @@ statement
         f=statements)?
       'end' 'if' EOL+                                                   # ifStatement
     | 'gr'                                                              # grStmt
-    | 'for' id=ID '=' a=expr 'to' b=expr ('step' c=expr)? EOL+
-        s=statements EOL*  // EOL is included in statements itself
+    | 'for' id=ID '=' a=expr 'to' b=expr ('step' c=expr)? (EOL|':')+
+        s=statements? (EOL|':')*  // EOL is included in statements itself
       'next' id2=ID                                                     # forLoop
     | 'color=' a=expr                                                   # colorStmt
     | 'plot' a=expr ',' b=expr                                          # plotStmt
@@ -51,6 +51,7 @@ expr
     | '-' a=expr                                                        # negateExpr
     | '(' a=expr ')'                                                    # parenExpr
     | 'peek' '(' a=expr ')'                                             # peekExpr
+    | 'scrn' '(' a=expr ',' b=expr ')'                                  # scrnExpr
     | a=ID                                                              # identifier
     | a=INT                                                             # intConstant
     ;

@@ -88,7 +88,12 @@ public class RewriteVisitor extends Visitor {
 
     @Override
     public Expression visit(FunctionExpression expression) {
-        dispatch(expression.getExpr()).ifPresent(expression::setExpr);
+        Expression[] exprs = expression.getExpr();
+        for (int i=0; i<exprs.length; i++) {
+            Expression expr = exprs[i];
+            final int idx = i;
+            dispatch(expr).ifPresent(e -> exprs[idx] = e);
+        }
 
         return null;
     }

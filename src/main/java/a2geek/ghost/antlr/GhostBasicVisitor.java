@@ -95,9 +95,11 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
         StatementBlock oldStatementBlock = this.statementBlock;
         ForStatement forStatement = new ForStatement(id, start, end, step);
-        statementBlock = forStatement;
-        visit(ctx.s);
-        statementBlock = oldStatementBlock;
+        if (ctx.s != null) {
+            statementBlock = forStatement;
+            visit(ctx.s);
+            statementBlock = oldStatementBlock;
+        }
         statementBlock.addStatement(forStatement);
         return null;
     }
@@ -291,5 +293,12 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     public Expression visitPeekExpr(BasicParser.PeekExprContext ctx) {
         Expression e = visit(ctx.a);
         return new FunctionExpression("peek", e);
+    }
+
+    @Override
+    public Expression visitScrnExpr(BasicParser.ScrnExprContext ctx) {
+        Expression x = visit(ctx.a);
+        Expression y = visit(ctx.b);
+        return new FunctionExpression("scrn", x, y);
     }
 }
