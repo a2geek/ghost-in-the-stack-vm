@@ -122,9 +122,10 @@ The following operations are currently supported. They are listed in order of pr
 
 Any built-in functions are referenced here. These may ultimately be moved into some form of library.
 
-| Function            | Notes                                                              |
-|:--------------------|:-------------------------------------------------------------------|
-| `peek(addr)`        | Read by from memory location `addr`.                               |
-| `scrn(xexpr,yexpr)` | Read color of lores graphics point at `xexpr`, `yexpr` coordinate. |
+| Function            | Notes                                                                           |
+|:--------------------|:--------------------------------------------------------------------------------|
+| `asc(string)`       | Returns the ASCII value of the first character of the string with high bit set. |
+| `peek(addr)`        | Read by from memory location `addr`.                                            |
+| `scrn(xexpr,yexpr)` | Read color of lores graphics point at `xexpr`, `yexpr` coordinate.              |
 
 *** END ***
