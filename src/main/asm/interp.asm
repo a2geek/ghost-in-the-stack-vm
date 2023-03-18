@@ -232,6 +232,7 @@ brtable:
     .addr _iftrue-1
     .addr _iffalse-1
     .addr _loadc-1
+    .addr _loada-1
 brlen = *-brtable
 
 _break:
@@ -251,12 +252,12 @@ _add:
 ; SUB:  (B) (A) => (B-A)
 _sub:
     sec
-    lda stackB+1,x
-    sbc stackA+1,x
-    sta stackB+1,x
     lda stackB,x
     sbc stackA,x
     sta stackB,x
+    lda stackB+1,x
+    sbc stackA+1,x
+    sta stackB+1,x
     jmp poploop
 
 ; MUL:  (B) (A) => (B*A)
@@ -465,6 +466,21 @@ _dup:
     lda stackA,x
     pha
     jmp loop
+
+; LOADA <int>: () => (addr + int)
+_loada:
+    jsr fetch2Args  ; Acc = arg+1
+    clc
+    lda arg
+    adc baseip
+    tay
+    lda arg+1
+    adc baseip+1
+    pha ; high value on stack first
+    tya
+    pha ; low value second
+    tsx
+    ; Fall through to INCR. BASEIP is -1 from address.
 
 _incr:
     inc stackA,x

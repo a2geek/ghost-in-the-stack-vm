@@ -33,7 +33,7 @@ statement
     | 'hlin' a=expr ',' b=expr 'at' y=expr                              # hlinStmt
     | 'end'                                                             # endStmt
     | 'home'                                                            # homeStmt
-    | 'print' (expr | ',' | ';')*                                       # printStmt
+    | 'print' (expr | sexpr | ',' | ';')*                               # printStmt
     | 'poke' a=expr ',' b=expr                                          # pokeStmt
     | 'call' a=expr                                                     # callStmt
     | op=( 'goto' | 'gosub' ) l=ID                                      # gotoGosubStmt

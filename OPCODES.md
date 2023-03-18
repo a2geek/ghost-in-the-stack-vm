@@ -52,5 +52,6 @@ Therefore, the `Opcode.java` and `interp.asm` just need to be ordered the same.
 | `IFTRUE`  |   3    | If TOS is non-zero, goto given address. See `GOTO`.                                                                                                                                                           |
 | `IFFALSE` |   3    | If TOS is zero, goto given address. See `GOTO`.                                                                                                                                                               |
 | `LOADC`   |   3    | Load 16-bit value to TOS.                                                                                                                                                                                     |
+| `LOADA`   |   3    | Load physical address for given interpreter address. Used to support embedded constant values such as strings.                                                                                                |
 
 *** END ***

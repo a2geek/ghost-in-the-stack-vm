@@ -33,7 +33,9 @@ public enum Opcode {
     GOSUB(2),
     IFTRUE(2),
     IFFALSE(2),
-    LOADC(2);
+    LOADC(2),
+    LOADA(2);
+
 
     int argc;
 

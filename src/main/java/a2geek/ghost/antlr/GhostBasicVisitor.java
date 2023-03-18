@@ -172,7 +172,11 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             }
             else {
                 Expression expr = pt.accept(this);
-                printStatement.addIntegerAction(expr);
+                switch (expr.getType()) {
+                    case INTEGER -> printStatement.addIntegerAction(expr);
+                    case STRING -> printStatement.addStringAction(expr);
+                    default -> throw new RuntimeException("Unsupported PRINT type: " + expr.getType());
+                }
             }
         }
         if (!semiColonAtEnd) {

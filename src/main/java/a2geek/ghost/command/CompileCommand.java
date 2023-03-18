@@ -103,22 +103,22 @@ public class CompileCommand implements Callable<Integer> {
             byte[] data = instruction.assemble(addrs);
             out.writeBytes(data);
             //
-            String bytes = null;
-            switch (data.length) {
-                case 0:
-                    bytes = "";
-                    break;
-                case 1:
-                    bytes = String.format("%02x", data[0]);
-                    break;
-                case 2:
-                    bytes = String.format("%02x %02x", data[0], data[1]);
-                    break;
-                case 3:
-                    bytes = String.format("%02x %02x %02x", data[0], data[1], data[2]);
-                    break;
+            ByteFormatter bf = ByteFormatter.from(data);
+            if (instruction.opcode() != null) {
+                pw.printf("%04x: %-10.10s  %s\n", addr, bf.get(data.length), instruction);
             }
-            pw.printf("%04x: %-10.10s  %s\n", addr, bytes, instruction);
+            else if (instruction.directive() != null) {
+                int lineaddr = addr;
+                pw.printf("%04x: %-10.10s  %s\n", lineaddr, bf.get(3), instruction);
+                lineaddr+= 3;
+                while (bf.hasMore()) {
+                    pw.printf("%04x: %s\n", lineaddr, bf.get(8));
+                    lineaddr += 8;
+                }
+            }
+            else {
+                pw.printf("%04x: %-10.10s  %s\n", addr, "", instruction);
+            }
             //
             addr += instruction.size();
         }
@@ -151,5 +151,29 @@ public class CompileCommand implements Callable<Integer> {
                 .dataFork(baos.toByteArray())
                 .build()
                 .save(outputFile);
+    }
+
+    public static class ByteFormatter {
+        private ByteArrayInputStream data;
+        public static ByteFormatter from(byte[] bytes) {
+            ByteFormatter bf = new ByteFormatter();
+            bf.data = new ByteArrayInputStream(bytes);
+            return bf;
+        }
+
+        public boolean hasMore() {
+            return data.available() > 0;
+        }
+
+        public String get(int nBytes) {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            for (int i=0; i<nBytes; i++) {
+                int b = data.read();
+                if (b == -1) break;
+                pw.printf("%02x ", b);
+            }
+            return sw.toString();
+        }
     }
 }

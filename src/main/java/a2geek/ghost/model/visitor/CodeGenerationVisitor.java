@@ -99,6 +99,16 @@ public class CodeGenerationVisitor extends Visitor {
                 code.emit(Opcode.LOADC, 0xdb3a);    // STROUT
                 code.emit(Opcode.CALL);
             }
+            else if (action instanceof PrintStatement.PrintStringAction a) {
+                dispatch(a.getExpr());
+                code.emit(Opcode.DUP);
+                code.emit(Opcode.SETACC);
+                code.emit(Opcode.LOADC, 0x100);
+                code.emit(Opcode.DIV);
+                code.emit(Opcode.SETYREG);
+                code.emit(Opcode.LOADC, 0xdb3a);    // STROUT
+                code.emit(Opcode.CALL);
+            }
             else if (action instanceof PrintStatement.PrintNewlineAction a) {
                 code.emit(Opcode.LOADC, 0xfd8e);
                 code.emit(Opcode.CALL);
@@ -341,6 +351,14 @@ public class CodeGenerationVisitor extends Visitor {
 
     public Expression visit(IntegerConstant expression) {
         code.emit(Opcode.LOADC, expression.getValue());
+        return null;
+    }
+
+    @Override
+    public Expression visit(StringConstant expression) {
+        var label = label("STRCONST");
+        String actual = code.emitConstant(label.get(0), expression.getValue());
+        code.emit(Opcode.LOADA, actual);
         return null;
     }
 

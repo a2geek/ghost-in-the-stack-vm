@@ -81,14 +81,14 @@ next var
 
 ### Output
 
-Output is very rudimentary at this time. Only the low byte is printed for `expr` and it is printed in hex.
+Text screen support matching Applesoft/Integer BASIC.
 
 ```
 text
 home
 vtab expr
 htab expr
-print [ expr | ',' | ';' ]
+print [ expr | sexpr | ',' | ';' ]
 ```
 
 ### Miscellaneous

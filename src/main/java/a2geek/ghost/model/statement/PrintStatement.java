@@ -23,9 +23,14 @@ public class PrintStatement implements Statement {
     public void addIntegerAction(Expression expr) {
         actions.add(new PrintIntegerAction(expr));
     }
+    public void addStringAction(Expression expr) {
+        actions.add(new PrintStringAction(expr));
+    }
     @Override
     public String toString() {
-        return "PRINT " + actions.stream().map(Action::toString).collect(Collectors.joining(""));
+        return String.format("PRINT %s%s",
+            actions.stream().map(Action::toString).collect(Collectors.joining("")),
+            actions.stream().filter(a -> a instanceof PrintNewlineAction).count() > 0 ? "" : ";");
     }
 
     public interface Action {
@@ -55,6 +60,26 @@ public class PrintStatement implements Statement {
         }
         public void setExpr(Expression expr) {
             expr.mustBe(Expression.Type.INTEGER);
+            this.expr = expr;
+        }
+
+        @Override
+        public String toString() {
+            return expr.toString();
+        }
+    }
+    public class PrintStringAction implements Action {
+        private Expression expr;
+
+        public PrintStringAction(Expression expr) {
+            setExpr(expr);
+        }
+
+        public Expression getExpr() {
+            return expr;
+        }
+        public void setExpr(Expression expr) {
+            expr.mustBe(Expression.Type.STRING);
             this.expr = expr;
         }
 
