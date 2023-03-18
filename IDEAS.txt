@@ -1,12 +1,15 @@
 Capturing ideas
 ===============
 
-Strings. Constant strings can just point at end of program.
 Review generated code and look for alternates with new opcodes.
+Add ELSEIF to IF statement.
+Revisit the single line IF -- see what appears to be more standard (dislike Integer Basic variant).
 Unit tests?
+CONST for named constants.
 Interpreter for use in tests.
 Structure assembly project; it's gonna get messier.
 WHILE loop
+REPEAT loop
 ProDOS commands (OPEN, READ, WRITE, CLOSE). Is this SUB and/or FUNCTION?
 HGR
 Bit shifting, bit anding, bit oring, bit xoring?
