@@ -32,7 +32,7 @@ public class IfStatement implements Statement {
     }
 
     public boolean hasFalseStatements() {
-        return falseStatements != null && falseStatements.isEmpty();
+        return falseStatements != null && !falseStatements.isEmpty();
     }
 
     @Override
