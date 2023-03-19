@@ -1,11 +1,11 @@
 ' Test of GOSUB/RETURN
 
 main:
-    print 5
+    print "BEFORE"
     gosub sub1
-    print 6
+    print "AFTER"
     end
 
 sub1:
-    print 15
+    print "SUB"
     return

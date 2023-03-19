@@ -1,21 +1,57 @@
-gr
+' Perform comparison within IF statements
+
+print "COMPARISONS"
+print
+print "<  <= >  >= =  <> A B"
 
 a = 1
 b = 2
-if a < b then
-    color=1
-    plot 30,1
-else
-    color=15
-    plot 1,30
-end if
+gosub compare
 
-if b < a then
-    color=2
-    plot 30,2
-else
-    color=14
-    plot 2,30
-end if
+a = 2
+gosub compare
+
+a = 3
+gosub compare
 
 end
+
+compare:
+    if a < b then
+        print "T  ";
+    else
+        print "F  ";
+    end if
+
+    if a <= b then
+        print "T  ";
+    else
+        print "F  ";
+    end if
+
+    if a > b then
+        print "T  ";
+    else
+        print "F  ";
+    end if
+
+    if a >= b then
+        print "T  ";
+    else
+        print "F  ";
+    end if
+
+    if a = b then
+        print "T  ";
+    else
+        print "F  ";
+    end if
+
+    if a <> b then
+        print "T  ";
+    else
+        print "F  ";
+    end if
+
+    print A,B
+    return

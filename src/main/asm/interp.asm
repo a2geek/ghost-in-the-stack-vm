@@ -2,22 +2,18 @@
 
     .zeropage
 
-;            .res $40    ; moving variable locations to free $00-$1F for those pesky Integer BASIC apps.
-;                        ; cannot use .org since that changes the entire app.
-
 ip:        .addr 0
-arg:       .res 2
 temp:      .byte 0
+workptr:   .word 0
 acc:       .byte 0
 yreg:      .byte 0
 xreg:      .byte 0
 locals:    .byte 0
 baseip:    .addr 0
 basesp:    .byte 0
-remainder: .word 0
-ptr:       .addr 0
 .ifdef DEBUG
 flags:     .byte 0
+traceptr:  .addr 0
 .endif
 
 stack = $100
@@ -82,8 +78,8 @@ fetch:
     lda (ip),y
     rts
 
-callarg:
-    jmp (arg)
+callworkptr:
+    jmp (workptr)
 
 compareAB:
     lda stackB+1,x
@@ -94,23 +90,13 @@ compareAB:
 @done:
     rts
 
-fetch1Arg:
-    jsr fetch
-    sta arg
-    rts
-fetch2Args:
-    jsr fetch
-    sta arg
-    jsr fetch
-    sta arg+1
-    rts
-
 ; See https://codebase64.org/doku.php?id=base:16bit_division_16-bit_result
 ; Note: quotient = stackB, remainder = remainder (in ZP)
 .proc div16
 divisor = stackA
 dividend = stackB
 result = dividend
+remainder = workptr
 
 	lda #0	        ;preset remainder to 0
 	sta remainder
@@ -153,9 +139,8 @@ loop:
     jmp @noflag
 :   jsr print
     .byte "IP=",$82,ip
-    .byte ", ARG=",$82,arg
     .byte ", A/Y/X=",$81,acc,$81,yreg,$81,xreg
-    .byte ",",$d,"PTR=",$82,ptr
+    .byte ",",$d,"WORKPTR=",$82,workptr
     .byte ", LOCALS=",$81,locals,", S=",0
     tsx
     txa
@@ -264,27 +249,27 @@ _sub:
 ; See http://6502.org/users/obelisk/ for original source
 _mul:
     lda #0
-    sta arg
-    sta arg+1
+    sta workptr
+    sta workptr+1
     ldy #16
 @loop:
-    asl arg
-    rol arg+1
+    asl workptr
+    rol workptr+1
     asl stackA,x
     rol stackA+1,x
     bcc @next
     clc
     lda stackB,x
-    adc arg
-    sta arg
+    adc workptr
+    sta workptr
     lda stackB+1,x
-    adc arg+1
-    sta arg+1
+    adc workptr+1
+    sta workptr+1
 @next:
     dey
     bne @loop
-    lda arg
-    ldy arg+1
+    lda workptr
+    ldy workptr+1
     jmp setbpoploop
 
 ; DIV: (B) (A) => (B/A)
@@ -297,32 +282,32 @@ _div:
 ; MOD: (B) (A) => (B MOD A)
 _mod:
     jsr div16
-    lda remainder
-    ldy remainder+1
+    lda workptr
+    ldy workptr+1
     jmp setbpoploop
 
 ; ILOAD: (A) => (B); B = byte(*A)
 _iload:
     pla
-    sta ptr
+    sta workptr
     pla
-    sta ptr+1
+    sta workptr+1
     ldy #0
     tya
     pha     ; high byte = 0
-    lda (ptr),y
+    lda (workptr),y
     pha
     jmp loop
 
 ; ISTORE: (B) (A) => (); *A = byte(B)
 _istore:
     pla
-    sta ptr
+    sta workptr
     pla
-    sta ptr+1
+    sta workptr+1
     pla
     ldy #0
-    sta (ptr),y
+    sta (workptr),y
     jmp tossHighByteLoop
 
 ; LT: (B) (A) => (B<A)
@@ -418,13 +403,13 @@ _getyreg:
 ; CALL: (A) => (); PC=A
 _call:
     pla
-    sta arg
+    sta workptr
     pla
-    sta arg+1
+    sta workptr+1
     ldx xreg
     ldy yreg
     lda acc
-    jsr callarg
+    jsr callworkptr
     sta acc
     stx xreg
     sty yreg
@@ -432,7 +417,7 @@ _call:
 
 ; RESERVE <n>: () => (0 ...); locals=SP
 _reserve:
-    jsr fetch1Arg   ; Acc = arg
+    jsr fetch
     tay
     lda #0
 @0: pha
@@ -445,15 +430,17 @@ _reserve:
 
 ; LOADC <int>: () => (int)
 _loadc:
-    jsr fetch2Args  ; Acc = arg+1
+    jsr fetch       ; low byte
+    tax
+    jsr fetch       ; high byte
     pha
-    lda arg
+    txa
     pha
     jmp loop
 
 ; LOAD <offset>: () => *(locals+offset)
 _load:
-    jsr fetch1Arg   ; Acc = arg
+    jsr fetch
     clc
     adc locals
     tax
@@ -467,15 +454,23 @@ _dup:
     pha
     jmp loop
 
+; Take following virtual address and adjust by base IP to get real address.
+; Returns with (A=hi,Y=lo)
+fetch2PlusAddBaseIP:
+    jsr fetch
+    clc
+    adc baseip
+    sta temp
+    php
+    jsr fetch
+    plp
+    adc baseip+1
+    ldy temp
+    rts
+
 ; LOADA <int>: () => (addr + int)
 _loada:
-    jsr fetch2Args  ; Acc = arg+1
-    clc
-    lda arg
-    adc baseip
-    tay
-    lda arg+1
-    adc baseip+1
+    jsr fetch2PlusAddBaseIP
     pha ; high value on stack first
     tya
     pha ; low value second
@@ -499,7 +494,7 @@ _decr:
 
 ; STORE <offset>: (A) => (); *(locals+offset)=A
 _store:
-    jsr fetch1Arg   ; Acc = arg
+    jsr fetch
     clc
     adc locals
     tay
@@ -511,24 +506,21 @@ _store:
 
 ; GOSUB <addr>; () => (IP); IP=addr
 _gosub:
-    jsr fetch2Args  ; Acc = arg+1
-    lda ip+1
+    jsr fetch2PlusAddBaseIP     ; A=hi,Y=lo
+    tax                         ; a little bit more juggling here
+    lda ip+1                    ; to push old IP on stack (after
+    pha                         ; the 2 byte read) and store the
+    lda ip                      ; new IP. Ick!
     pha
-    lda ip
-    pha
-    jmp argtoip
+    stx ip+1
+    sty ip
+    jmp loop
 
 ; GOTO <addr>: IP=addr
 _goto:
-    jsr fetch2Args  ; Acc = arg+1
-argtoip:
-    lda arg
-    clc
-    adc baseip
-    sta ip
-    lda arg+1
-    adc baseip+1
+    jsr fetch2PlusAddBaseIP
     sta ip+1
+    sty ip
     jmp loop
 
 ; RETURN; (TOS) => (); IP=TOS
@@ -546,7 +538,9 @@ _iftrue:
     lda stackA,x
     ora stackA+1,x
     bne _goto   ; non-zero == true
-    jsr fetch2Args  ; need to toss these away
+tossAddrAndLoop:
+    jsr fetch   ; need to toss these away
+    jsr fetch
     jmp loop
 
 ; IFFALSE <addr>: (A) => (); A == 0 => IP=addr
@@ -556,8 +550,7 @@ _iffalse:
     lda stackA,x
     ora stackA+1,x
     beq _goto   ; zero == false
-    jsr fetch2Args  ; need to toss these away
-    jmp loop
+    bne tossAddrAndLoop
 
 ; EXIT: restore back to original SP
 _exit: 
@@ -568,9 +561,9 @@ _exit:
 .ifdef DEBUG
 .proc print
     pla
-    sta ptr
+    sta traceptr
     pla
-    sta ptr+1
+    sta traceptr+1
     txa
     pha
     tya
@@ -587,9 +580,9 @@ done:
     tay
     pla
     tax
-    lda ptr+1
+    lda traceptr+1
     pha
-    lda ptr
+    lda traceptr
     pha
     rts
 subcommands:
@@ -599,7 +592,7 @@ subcommands:
 @printhex:
     tax
     ldy #1
-    adc (ptr),y
+    adc (traceptr),y
     tay
     dex
     dey
@@ -612,12 +605,12 @@ subcommands:
 @not123:
     jmp loop
 getch:
-    inc ptr
+    inc traceptr
     bne @skip
-    inc ptr+1
+    inc traceptr+1
 @skip:
     ldy #0
-    lda (ptr),y
+    lda (traceptr),y
     rts
 .endproc
 .endif
