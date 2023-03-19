@@ -421,7 +421,6 @@ _reserve:
     tay
     lda #0
 @0: pha
-    pha
     dey
     bne @0
     tsx

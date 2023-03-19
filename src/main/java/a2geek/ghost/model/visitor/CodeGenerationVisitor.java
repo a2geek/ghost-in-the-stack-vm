@@ -25,6 +25,7 @@ public class CodeGenerationVisitor extends Visitor {
     }
 
     int varOffset(String var) {
+        // TODO: this will need to be fixed when more than integer are supported!
         var num = variables.indexOf(var);
         if (num == -1) {
             throw new RuntimeException("Variable is unknown: " + var);
@@ -44,7 +45,8 @@ public class CodeGenerationVisitor extends Visitor {
     @Override
     public void visit(Program program) {
         if (!variables.isEmpty()) {
-            code.emit(Opcode.RESERVE, variables.size());
+            // TODO: this will need to be fixed when more than integer are supported!
+            code.emit(Opcode.RESERVE, variables.size() * 2);
         }
         super.visit(program);
     }
@@ -145,7 +147,7 @@ public class CodeGenerationVisitor extends Visitor {
         code.emit(labels.get(0));
 
         // Note: We don't have a GE at this time.
-        // FIXME: If STEP is a variable, code generated will be incoorect.
+        // FIXME: If STEP is a variable, code generated will be incorrect.
         boolean stepIsNegative = statement.getStep() instanceof IntegerConstant e && e.getValue() < 0;
         if (stepIsNegative) {
             dispatch(statement.getEnd());
