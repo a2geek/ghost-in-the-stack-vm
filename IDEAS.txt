@@ -1,6 +1,8 @@
 Capturing ideas
 ===============
 
+Look at how bytecode is created - feels like Opcode and Directive can support Instruction more directly.
+Need to review negative number handling. Specifically MUL/DIV/MOD. Expect to require NEG operator to be implemented!
 Review generated code and look for alternates with new opcodes.
 Add ELSEIF to IF statement.
 Revisit the single line IF -- see what appears to be more standard (dislike Integer Basic variant).
@@ -13,6 +15,7 @@ REPEAT loop
 ProDOS commands (OPEN, READ, WRITE, CLOSE). Is this SUB and/or FUNCTION?
 HGR
 Bit shifting, bit anding, bit oring, bit xoring?
+Constant arrays - can replace all those silly POKE statements with a loop and likely help with DATA statements.
 Arrays - need heap. Where? $200? but that is input and ProDOS can use it. If they are hard-coded, then they can just go into code!
 Function libraries (with inline?) - can a function return more than one value?
 Optimization - strength reduction (MOD 16 can be AND #$0F, MUL x2 can be shift left)
