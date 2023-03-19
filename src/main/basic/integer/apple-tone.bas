@@ -1,8 +1,18 @@
 ' Use the number keys to change tones
 
 initialize:
-    POKE 2,173: POKE 3,48: POKE 4,192: POKE 5,136: POKE 6,208: POKE 7,4: POKE 8,198: POKE 9,1: POKE 10,240
-    POKE 11,8: POKE 12,202: POKE 13,208: POKE 14,246: POKE 15,166: POKE 16,0: POKE 17,76: POKE 18,2: POKE 19,0: POKE 20,96
+    ' Moved this to $300 to not conflict with interpreter
+    AD=768
+    POKE AD+2,173: POKE AD+3,48: POKE AD+4,192      ' 0302-   AD 30 C0    LDA   $C030
+    POKE AD+5,136                                   ' 0305-   88          DEY
+    POKE AD+6,208: POKE AD+7,5                      ' 0306-   D0 05       BNE   $030D
+    POKE AD+8,206: POKE AD+9,1: POKE AD+10,3        ' 0308-   CE 01 03    DEC   $0301
+    POKE AD+11,240: POKE AD+12,9                    ' 030B-   F0 09       BEQ   $0316
+    POKE AD+13,202                                  ' 030D-   CA          DEX
+    POKE AD+14,208: POKE AD+15,245                  ' 030E-   D0 F5       BNE   $0305
+    POKE AD+16,174: POKE AD+17,0: POKE AD+18,3      ' 0310-   AE 00 03    LDX   $0300
+    POKE AD+19,76: POKE AD+20,2: POKE AD+21,3       ' 0313-   4C 02 03    JMP   $0302
+    POKE AD+22,96                                   ' 0316-   60          RTS
 
 reset:
     A=0
@@ -50,4 +60,4 @@ keyloop:
     GOTO repeat
 
 tone:
-    POKE 0,P: POKE 1,D:CALL 2:RETURN
+    POKE AD+0,P: POKE AD+1,D:CALL AD+2:RETURN
