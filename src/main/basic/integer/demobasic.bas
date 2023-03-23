@@ -21,4 +21,5 @@ forever:
     IF PEEK (-16384) < 128 THEN
         GOTO forever
     END IF
+    poke -16368,0
     END
