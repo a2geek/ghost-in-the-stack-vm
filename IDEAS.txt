@@ -2,6 +2,11 @@ Capturing ideas
 ===============
 
 Look at how bytecode is created - feels like Opcode and Directive can support Instruction more directly.
+Add EXIT (FOR/SUB/FUNCTION). Where to validate? Maybe in some visitor to be certain EXIT and RETURN in correct places.
+Should CALL => NATIVE or NCALL to make it obvious?
+How to make reusable libraries which use inline interpreted code? Looks like there can be "nested" grammars!
+Once SUB and FUNCTION in place, most of the model can be reduced to CallSub and CallFunction to simplify the model.
+Binary and Unary operations can be merged into one model element if they aren't already.
 Need to review negative number handling. Specifically MUL/DIV/MOD. Expect to require NEG operator to be implemented!
 Review generated code and look for alternates with new opcodes.
 Add ELSEIF to IF statement.
@@ -12,6 +17,7 @@ Interpreter for use in tests.
 Structure assembly project; it's gonna get messier.
 WHILE loop
 REPEAT loop
+DEF FN == Function
 ProDOS commands (OPEN, READ, WRITE, CLOSE). Is this SUB and/or FUNCTION?
 HGR
 Bit shifting, bit anding, bit oring, bit xoring?
