@@ -1,17 +1,23 @@
 package a2geek.ghost.model;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public interface StatementBlock {
-    public List<Statement> getStatements();
-    public void addStatement(Statement statement);
+public class StatementBlock {
+    private List<Statement> statements = new ArrayList<>();
 
-    default boolean isEmpty() {
-        return getStatements() != null && getStatements().isEmpty();
+    public List<Statement> getStatements() {
+        return statements;
+    }
+    public void addStatement(Statement statement) {
+        this.statements.add(statement);
+    }
+    public boolean isEmpty() {
+        return statements.isEmpty();
     }
 
-    default public String statementsAsString() {
-        return getStatements().stream().map(Statement::toString).collect(Collectors.joining(" : "));
+    public String statementsAsString() {
+        return statements.stream().map(Statement::toString).collect(Collectors.joining(" : "));
     }
 }

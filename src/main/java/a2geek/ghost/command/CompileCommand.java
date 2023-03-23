@@ -3,7 +3,7 @@ package a2geek.ghost.command;
 import a2geek.ghost.antlr.GhostBasicVisitor;
 import a2geek.ghost.antlr.generated.BasicLexer;
 import a2geek.ghost.antlr.generated.BasicParser;
-import a2geek.ghost.model.Program;
+import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.code.Instruction;
 import a2geek.ghost.model.visitor.CodeGenerationVisitor;
 import a2geek.ghost.model.visitor.FixCaseVisitor;

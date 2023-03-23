@@ -5,25 +5,44 @@ import a2geek.ghost.antlr.generated.BasicParser;
 import a2geek.ghost.antlr.generated.BasicParser.CompExprContext;
 import a2geek.ghost.antlr.generated.BasicParser.IfStatementContext;
 import a2geek.ghost.model.Expression;
-import a2geek.ghost.model.Program;
+import a2geek.ghost.model.Scope;
+import a2geek.ghost.model.Statement;
 import a2geek.ghost.model.StatementBlock;
 import a2geek.ghost.model.expression.*;
+import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.statement.*;
 import org.antlr.v4.runtime.tree.ParseTree;
 
+import java.util.Stack;
+
 public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
-    private Program program;
-    private StatementBlock statementBlock;
+    private Stack<Scope> scope = new Stack<>();
+    private Stack<StatementBlock> statementBlock = new Stack<>();
 
     public Program getProgram() {
-        return program;
+        if (scope.size() == 1 && scope.peek() instanceof Program program) {
+            return program;
+        }
+        throw new RuntimeException("Unexpected scope state at end of evaluation. " +
+                "Should be 1 but is " + scope.size());
     }
 
     @Override
     public Expression visitProgram(BasicParser.ProgramContext ctx) {
-        this.program = new Program();
-        this.statementBlock = this.program;
+        Program program = new Program();
+        this.scope.push(program);
+        this.statementBlock.push(program);
         return super.visitProgram(ctx);
+    }
+
+    public void addStatement(Statement statement) {
+        this.statementBlock.peek().addStatement(statement);
+    }
+    public StatementBlock pushStatementBlock(StatementBlock statementBlock) {
+        return this.statementBlock.push(statementBlock);
+    }
+    public StatementBlock popStatementBlock() {
+        return this.statementBlock.pop();
     }
 
     @Override
@@ -31,13 +50,13 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         String id = ctx.id.getText();
         Expression expr = visit(ctx.a);
         AssignmentStatement assignmentStatement = new AssignmentStatement(id, expr);
-        statementBlock.addStatement(assignmentStatement);
+        addStatement(assignmentStatement);
         return null;
     }
 
     @Override
     public Expression visitGrStmt(BasicParser.GrStmtContext ctx) {
-        statementBlock.addStatement(new GrStatement());
+        addStatement(new GrStatement());
         return null;
     }
 
@@ -45,15 +64,12 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     public Expression visitIfShortStatement(BasicParser.IfShortStatementContext ctx) {
         Expression expr = visit(ctx.a);
 
-        StatementBlock oldStatementBlock = this.statementBlock;
-        StatementBlock trueStatements = new BaseStatementBlock();
-
-        statementBlock = trueStatements;
+        StatementBlock trueStatements = pushStatementBlock(new StatementBlock());
         visit(ctx.t);
-        statementBlock = oldStatementBlock;
+        popStatementBlock();
 
         IfStatement statement = new IfStatement(expr, trueStatements, null);
-        statementBlock.addStatement(statement);
+        addStatement(statement);
         return null;
     }
 
@@ -61,21 +77,19 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     public Expression visitIfStatement(IfStatementContext ctx) {
         Expression expr = visit(ctx.a);
 
-        StatementBlock oldStatementBlock = this.statementBlock;
-        StatementBlock trueStatements = new BaseStatementBlock();
-        StatementBlock falseStatements = null;
-
-        statementBlock = trueStatements;
+        StatementBlock trueStatements = pushStatementBlock(new StatementBlock());
         visit(ctx.t);
+        popStatementBlock();
+
+        StatementBlock falseStatements = null;
         if (ctx.f != null) {
-            falseStatements = new BaseStatementBlock();
-            statementBlock = falseStatements;
+            falseStatements = pushStatementBlock(new StatementBlock());
             visit(ctx.f);
+            popStatementBlock();
         }
-        statementBlock = oldStatementBlock;
 
         IfStatement statement = new IfStatement(expr, trueStatements, falseStatements);
-        statementBlock.addStatement(statement);
+        addStatement(statement);
         return null;
     }
 
@@ -93,14 +107,13 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             step = visit(ctx.c);
         }
 
-        StatementBlock oldStatementBlock = this.statementBlock;
         ForStatement forStatement = new ForStatement(id, start, end, step);
         if (ctx.s != null) {
-            statementBlock = forStatement;
+            pushStatementBlock(forStatement);
             visit(ctx.s);
-            statementBlock = oldStatementBlock;
+            popStatementBlock();
         }
-        statementBlock.addStatement(forStatement);
+        addStatement(forStatement);
         return null;
     }
 
@@ -108,7 +121,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     public Expression visitColorStmt(BasicParser.ColorStmtContext ctx) {
         Expression expr = visit(ctx.a);
         ColorStatement colorStatement = new ColorStatement(expr);
-        statementBlock.addStatement(colorStatement);
+        addStatement(colorStatement);
         return null;
     }
 
@@ -117,7 +130,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         Expression x = visit(ctx.a);
         Expression y = visit(ctx.b);
         PlotStatement plotStatement = new PlotStatement(x, y);
-        statementBlock.addStatement(plotStatement);
+        addStatement(plotStatement);
         return null;
     }
 
@@ -127,7 +140,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         var b = visit(ctx.b);
         var y = visit(ctx.y);
         HlinStatement hlinStatement = new HlinStatement(a, b, y);
-        statementBlock.addStatement(hlinStatement);
+        addStatement(hlinStatement);
         return null;
     }
 
@@ -137,19 +150,19 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         var b = visit(ctx.b);
         var x = visit(ctx.x);
         VlinStatement vlinStatement = new VlinStatement(a, b, x);
-        statementBlock.addStatement(vlinStatement);
+        addStatement(vlinStatement);
         return null;
     }
 
     @Override
     public Expression visitEndStmt(BasicParser.EndStmtContext ctx) {
-        statementBlock.addStatement(new EndStatement());
+        addStatement(new EndStatement());
         return null;
     }
 
     @Override
     public Expression visitHomeStmt(BasicParser.HomeStmtContext ctx) {
-        statementBlock.addStatement(new HomeStatement());
+        addStatement(new HomeStatement());
         return null;
     }
 
@@ -183,14 +196,14 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             printStatement.addNewlineAction();
         }
 
-        statementBlock.addStatement(printStatement);
+        addStatement(printStatement);
         return null;
     }
 
     public Expression visitCallStmt(BasicParser.CallStmtContext ctx) {
         Expression expr = visit(ctx.a);
         CallStatement callStatement = new CallStatement(expr);
-        statementBlock.addStatement(callStatement);
+        addStatement(callStatement);
         return null;
     }
 
@@ -198,45 +211,45 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     public Expression visitPokeStmt(BasicParser.PokeStmtContext ctx) {
         var a = visit(ctx.a);
         var b = visit(ctx.b);
-        statementBlock.addStatement(new PokeStatement(a, b));
+        addStatement(new PokeStatement(a, b));
         return null;
     }
 
     @Override
     public Expression visitLabel(BasicParser.LabelContext ctx) {
-        statementBlock.addStatement(new LabelStatement(ctx.id.getText()));
+        addStatement(new LabelStatement(ctx.id.getText()));
         return null;
     }
 
     @Override
     public Expression visitGotoGosubStmt(BasicParser.GotoGosubStmtContext ctx) {
-        statementBlock.addStatement(new GotoGosubStatement(ctx.op.getText().toLowerCase(), ctx.l.getText()));
+        addStatement(new GotoGosubStatement(ctx.op.getText().toLowerCase(), ctx.l.getText()));
         return null;
     }
 
     @Override
     public Expression visitReturnStmt(BasicParser.ReturnStmtContext ctx) {
-        statementBlock.addStatement(new ReturnStatement());
+        addStatement(new ReturnStatement());
         return null;
     }
 
     @Override
     public Expression visitTextStmt(BasicParser.TextStmtContext ctx) {
-        statementBlock.addStatement(new TextStatement());
+        addStatement(new TextStatement());
         return null;
     }
 
     @Override
     public Expression visitHtabStmt(BasicParser.HtabStmtContext ctx) {
         var a = visit(ctx.a);
-        statementBlock.addStatement(new HtabStatement(a));
+        addStatement(new HtabStatement(a));
         return null;
     }
 
     @Override
     public Expression visitVtabStmt(BasicParser.VtabStmtContext ctx) {
         var a = visit(ctx.a);
-        statementBlock.addStatement(new VtabStatement(a));
+        addStatement(new VtabStatement(a));
         return null;
     }
 

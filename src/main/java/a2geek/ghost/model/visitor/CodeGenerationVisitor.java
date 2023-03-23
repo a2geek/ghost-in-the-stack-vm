@@ -1,7 +1,7 @@
 package a2geek.ghost.model.visitor;
 
 import a2geek.ghost.model.Expression;
-import a2geek.ghost.model.Program;
+import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.Visitor;
 import a2geek.ghost.model.code.CodeBlock;
 import a2geek.ghost.model.code.Instruction;

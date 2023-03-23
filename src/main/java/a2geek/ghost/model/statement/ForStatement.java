@@ -7,12 +7,11 @@ import a2geek.ghost.model.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ForStatement implements Statement, StatementBlock {
+public class ForStatement extends StatementBlock implements Statement {
     private String id;
     private Expression start;
     private Expression end;
     private Expression step;
-    private List<Statement> statements = new ArrayList<>();
 
     public ForStatement(String id, Expression start, Expression end, Expression step) {
         this.id = id;
@@ -51,15 +50,6 @@ public class ForStatement implements Statement, StatementBlock {
     public void setStep(Expression step) {
         step.mustBe(Expression.Type.INTEGER);
         this.step = step;
-    }
-
-    public void addStatement(Statement statement) {
-        this.statements.add(statement);
-    }
-
-    @Override
-    public List<Statement> getStatements() {
-        return statements;
     }
 
     @Override

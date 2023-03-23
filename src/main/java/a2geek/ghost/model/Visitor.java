@@ -1,6 +1,7 @@
 package a2geek.ghost.model;
 
 import a2geek.ghost.model.expression.*;
+import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.statement.*;
 
 import java.util.Optional;
