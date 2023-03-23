@@ -2,7 +2,6 @@ package a2geek.ghost.model.visitor;
 
 import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.Scope;
-import a2geek.ghost.model.Scope.Reference;
 import a2geek.ghost.model.Visitor;
 import a2geek.ghost.model.code.CodeBlock;
 import a2geek.ghost.model.code.Instruction;
@@ -20,12 +19,6 @@ public class CodeGenerationVisitor extends Visitor {
 
     public List<Instruction> getInstructions() {
         return code.getInstructions();
-    }
-
-    public Reference findVariable(String name) {
-        return this.scopes.peek().findVariable(name).orElseGet(() -> {
-            throw new RuntimeException("variable not found: " + name);
-        });
     }
 
     List<String> label(final String... names) {
@@ -50,7 +43,7 @@ public class CodeGenerationVisitor extends Visitor {
     @Override
     public void visit(AssignmentStatement statement) {
         dispatch(statement.getExpr());
-        code.emit(Opcode.STORE, findVariable(statement.getId()).offset());
+        code.emit(Opcode.STORE, statement.getRef().offset());
     }
 
     public void visit(ColorStatement statement) {
@@ -139,7 +132,7 @@ public class CodeGenerationVisitor extends Visitor {
 
     public void visit(ForStatement statement) {
         var labels = label("FOR", "FORX");
-        visit(new AssignmentStatement(statement.getId(), statement.getStart()));
+        visit(new AssignmentStatement(statement.getRef(), statement.getStart()));
         code.emit(labels.get(0));
 
         // Note: We don't have a GE at this time.
@@ -147,10 +140,10 @@ public class CodeGenerationVisitor extends Visitor {
         boolean stepIsNegative = statement.getStep() instanceof IntegerConstant e && e.getValue() < 0;
         if (stepIsNegative) {
             dispatch(statement.getEnd());
-            code.emit(Opcode.LOAD, findVariable(statement.getId()).offset());
+            code.emit(Opcode.LOAD, statement.getRef().offset());
         }
         else {
-            code.emit(Opcode.LOAD, findVariable(statement.getId()).offset());
+            code.emit(Opcode.LOAD, statement.getRef().offset());
             dispatch(statement.getEnd());
         }
         code.emit(Opcode.LE);
@@ -160,11 +153,11 @@ public class CodeGenerationVisitor extends Visitor {
 
         // Lean on the binary expression processor to setup an optimized STEP increment.
         BinaryExpression stepIncrementExpr = new BinaryExpression(
-            new IdentifierExpression(statement.getId()),
+            new IdentifierExpression(statement.getRef()),
             statement.getStep(), "+");
         visit(stepIncrementExpr);
 
-        code.emit(Opcode.STORE, findVariable(statement.getId()).offset());
+        code.emit(Opcode.STORE, statement.getRef().offset());
         code.emit(Opcode.GOTO, labels.get(0));
         code.emit(labels.get(1));
     }
@@ -343,7 +336,7 @@ public class CodeGenerationVisitor extends Visitor {
     }
 
     public Expression visit(IdentifierExpression expression) {
-        code.emit(Opcode.LOAD, findVariable(expression.getId()).offset());
+        code.emit(Opcode.LOAD, expression.getRef().offset());
         return null;
     }
 

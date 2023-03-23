@@ -1,24 +1,21 @@
 package a2geek.ghost.model.statement;
 
 import a2geek.ghost.model.Expression;
+import a2geek.ghost.model.Reference;
 import a2geek.ghost.model.Statement;
 
 public class AssignmentStatement implements Statement {
-    private String id;
+    private Reference ref;
     private Expression expr;
 
-    public AssignmentStatement(String id, Expression expr) {
-        this.id = id;
+    public AssignmentStatement(Reference ref, Expression expr) {
+        this.ref = ref;
         this.expr = expr;
         expr.mustBe(Expression.Type.INTEGER);
     }
 
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
+    public Reference getRef() {
+        return ref;
     }
 
     public Expression getExpr() {
@@ -31,6 +28,6 @@ public class AssignmentStatement implements Statement {
 
     @Override
     public String toString() {
-        return String.format("%s = %s", id, expr);
+        return String.format("%s = %s", ref.name(), expr);
     }
 }

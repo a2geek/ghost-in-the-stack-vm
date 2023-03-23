@@ -3,11 +3,10 @@ package a2geek.ghost.command;
 import a2geek.ghost.antlr.GhostBasicVisitor;
 import a2geek.ghost.antlr.generated.BasicLexer;
 import a2geek.ghost.antlr.generated.BasicParser;
-import a2geek.ghost.model.Scope;
+import a2geek.ghost.model.Reference;
 import a2geek.ghost.model.code.Instruction;
 import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.visitor.CodeGenerationVisitor;
-import a2geek.ghost.model.visitor.FixCaseVisitor;
 import a2geek.ghost.model.visitor.RewriteVisitor;
 import io.github.applecommander.applesingle.AppleSingle;
 import org.antlr.v4.runtime.*;
@@ -58,21 +57,17 @@ public class CompileCommand implements Callable<Integer> {
         parser.addErrorListener(ConsoleErrorListener.INSTANCE);
 
         BasicParser.ProgramContext context = parser.program();
-        GhostBasicVisitor visitor = new GhostBasicVisitor();
+        GhostBasicVisitor visitor = new GhostBasicVisitor(caseSensitive ?
+                s -> s : String::toUpperCase);
         visitor.visit(context);
 
         Program program = visitor.getProgram();
-
-        if (!caseSensitive) {
-            FixCaseVisitor fixCaseVisitor = new FixCaseVisitor();
-            fixCaseVisitor.visit(program);
-        }
 
         System.out.println("=== MODEL ===");
         System.out.println(program);
         System.out.println("=== VARIABLES ===");
         System.out.println(program.getLocalVariables().stream()
-                .map(Scope.Reference::name)
+                .map(Reference::name)
                 .collect(Collectors.toList()));
 
         RewriteVisitor rewriteVisitor = new RewriteVisitor();

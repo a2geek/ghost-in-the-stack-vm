@@ -1,46 +1,43 @@
 package a2geek.ghost.model.expression;
 
 import a2geek.ghost.model.Expression;
+import a2geek.ghost.model.Reference;
 
 import java.util.Objects;
 
 public class IdentifierExpression implements Expression {
     private Type type = Type.INTEGER;   // Default for now
-    private String id;
+    private Reference ref;
 
     @Override
     public Type getType() {
         return type;
     }
 
-    public String getId() {
-        return id;
+    public Reference getRef() {
+        return ref;
     }
 
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public IdentifierExpression(String id) {
-        this.id = id;
+    public IdentifierExpression(Reference ref) {
+        this.ref = ref;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o instanceof IdentifierExpression that) {
-            return Objects.equals(id, that.id);
+            return Objects.equals(ref, that.ref);
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return Objects.hash(ref);
     }
 
     @Override
     public String toString() {
-        return id;
+        return ref.name();
     }
 }

@@ -1,28 +1,25 @@
 package a2geek.ghost.model.statement;
 
 import a2geek.ghost.model.Expression;
+import a2geek.ghost.model.Reference;
 import a2geek.ghost.model.Statement;
 import a2geek.ghost.model.StatementBlock;
 
 public class ForStatement extends StatementBlock implements Statement {
-    private String id;
+    private Reference ref;
     private Expression start;
     private Expression end;
     private Expression step;
 
-    public ForStatement(String id, Expression start, Expression end, Expression step) {
-        this.id = id;
+    public ForStatement(Reference ref, Expression start, Expression end, Expression step) {
+        this.ref = ref;
         setStart(start);
         setEnd(end);
         setStep(step);
     }
 
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
+    public Reference getRef() {
+        return ref;
     }
 
     public Expression getStart() {
@@ -56,6 +53,7 @@ public class ForStatement extends StatementBlock implements Statement {
             stepText = String.format("STEP %s ", step);
         }
         return String.format("FOR %s = %s TO %s %s: %s : NEXT %s",
-                id, start, end, stepText, statementsAsString(), id);
+                ref.name(), start, end, stepText, statementsAsString(),
+                ref.name());
     }
 }

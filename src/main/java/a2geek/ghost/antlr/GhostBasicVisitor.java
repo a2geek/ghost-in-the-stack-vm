@@ -4,20 +4,23 @@ import a2geek.ghost.antlr.generated.BasicBaseVisitor;
 import a2geek.ghost.antlr.generated.BasicParser;
 import a2geek.ghost.antlr.generated.BasicParser.CompExprContext;
 import a2geek.ghost.antlr.generated.BasicParser.IfStatementContext;
-import a2geek.ghost.model.Expression;
-import a2geek.ghost.model.Scope;
-import a2geek.ghost.model.Statement;
-import a2geek.ghost.model.StatementBlock;
+import a2geek.ghost.model.*;
 import a2geek.ghost.model.expression.*;
 import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.statement.*;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.util.Stack;
+import java.util.function.Function;
 
 public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
+    private Function<String,String> caseStrategy;
     private Stack<Scope> scope = new Stack<>();
     private Stack<StatementBlock> statementBlock = new Stack<>();
+
+    public GhostBasicVisitor(Function<String,String> caseStrategy) {
+        this.caseStrategy = caseStrategy;
+    }
 
     public Program getProgram() {
         if (scope.size() == 1 && scope.peek() instanceof Program program) {
@@ -29,7 +32,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
     @Override
     public Expression visitProgram(BasicParser.ProgramContext ctx) {
-        Program program = new Program();
+        Program program = new Program(caseStrategy);
         this.scope.push(program);
         this.statementBlock.push(program);
         return super.visitProgram(ctx);
@@ -45,16 +48,15 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         return this.statementBlock.pop();
     }
 
-    public void addVariable(String name) {
-        this.scope.peek().addLocalVariable(name);
+    public Reference addVariable(String name) {
+        return this.scope.peek().addLocalVariable(name);
     }
 
     @Override
     public Expression visitAssignment(BasicParser.AssignmentContext ctx) {
-        String id = ctx.id.getText();
-        addVariable(id);
+        Reference ref = addVariable(ctx.id.getText());
         Expression expr = visit(ctx.a);
-        AssignmentStatement assignmentStatement = new AssignmentStatement(id, expr);
+        AssignmentStatement assignmentStatement = new AssignmentStatement(ref, expr);
         addStatement(assignmentStatement);
         return null;
     }
@@ -100,8 +102,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
     @Override
     public Expression visitForLoop(BasicParser.ForLoopContext ctx) {
-        String id = ctx.id.getText();
-        addVariable(id);
+        Reference ref = addVariable(ctx.id.getText());
         Expression start = visit(ctx.a);
         Expression end = visit(ctx.b);
         Expression step = null;
@@ -113,7 +114,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             step = visit(ctx.c);
         }
 
-        ForStatement forStatement = new ForStatement(id, start, end, step);
+        ForStatement forStatement = new ForStatement(ref, start, end, step);
         if (ctx.s != null) {
             pushStatementBlock(forStatement);
             visit(ctx.s);
@@ -261,9 +262,8 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
     @Override
     public Expression visitIdentifier(BasicParser.IdentifierContext ctx) {
-        String id = ctx.a.getText();
-        addVariable(id);
-        return new IdentifierExpression(id);
+        Reference ref = addVariable(ctx.a.getText());
+        return new IdentifierExpression(ref);
     }
 
     @Override
