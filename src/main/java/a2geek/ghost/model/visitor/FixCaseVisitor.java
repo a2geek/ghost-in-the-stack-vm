@@ -8,9 +8,6 @@ import a2geek.ghost.model.statement.ForStatement;
 import a2geek.ghost.model.statement.GotoGosubStatement;
 import a2geek.ghost.model.statement.LabelStatement;
 
-import java.util.HashSet;
-import java.util.Set;
-
 /**
  * The ANTLR grammar has been configured to be case-insensitive.
  * However, that does not have any impact on the identifiers specified

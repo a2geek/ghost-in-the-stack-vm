@@ -1,11 +1,8 @@
 package a2geek.ghost.model.statement;
 
-import a2geek.ghost.model.StatementBlock;
 import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.Statement;
-
-import java.util.ArrayList;
-import java.util.List;
+import a2geek.ghost.model.StatementBlock;
 
 public class ForStatement extends StatementBlock implements Statement {
     private String id;

@@ -3,7 +3,6 @@ package a2geek.ghost.model;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 public class Scope extends StatementBlock {
     private String name;

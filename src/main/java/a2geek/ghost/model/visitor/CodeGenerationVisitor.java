@@ -3,15 +3,14 @@ package a2geek.ghost.model.visitor;
 import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.Scope;
 import a2geek.ghost.model.Scope.Reference;
-import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.Visitor;
 import a2geek.ghost.model.code.CodeBlock;
 import a2geek.ghost.model.code.Instruction;
 import a2geek.ghost.model.code.Opcode;
 import a2geek.ghost.model.expression.*;
+import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.statement.*;
 
-import java.sql.Ref;
 import java.util.*;
 
 public class CodeGenerationVisitor extends Visitor {

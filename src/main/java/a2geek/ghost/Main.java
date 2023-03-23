@@ -1,9 +1,9 @@
 package a2geek.ghost;
 
-import java.io.IOException;
-
 import a2geek.ghost.command.CompileCommand;
 import picocli.CommandLine;
+
+import java.io.IOException;
 
 public class Main {
     public static int main(String[] args) throws IOException {
