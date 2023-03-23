@@ -3,11 +3,11 @@ package a2geek.ghost.command;
 import a2geek.ghost.antlr.GhostBasicVisitor;
 import a2geek.ghost.antlr.generated.BasicLexer;
 import a2geek.ghost.antlr.generated.BasicParser;
+import a2geek.ghost.model.Scope;
 import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.code.Instruction;
 import a2geek.ghost.model.visitor.CodeGenerationVisitor;
 import a2geek.ghost.model.visitor.FixCaseVisitor;
-import a2geek.ghost.model.visitor.MetadataVisitor;
 import a2geek.ghost.model.visitor.RewriteVisitor;
 import io.github.applecommander.applesingle.AppleSingle;
 import org.antlr.v4.runtime.*;
@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 
 @Command(name = "compile", mixinStandardHelpOptions = true, 
     description = "Compile Ghost BASIC program.")
@@ -67,13 +68,12 @@ public class CompileCommand implements Callable<Integer> {
             fixCaseVisitor.visit(program);
         }
 
-        MetadataVisitor metadataVisitor = new MetadataVisitor();
-        metadataVisitor.visit(program);
-
         System.out.println("=== MODEL ===");
         System.out.println(program);
         System.out.println("=== VARIABLES ===");
-        System.out.println(metadataVisitor.getVariables());
+        System.out.println(program.getLocalVariables().stream()
+                .map(Scope.Reference::name)
+                .collect(Collectors.toList()));
 
         RewriteVisitor rewriteVisitor = new RewriteVisitor();
         rewriteVisitor.visit(program);
@@ -81,7 +81,7 @@ public class CompileCommand implements Callable<Integer> {
         System.out.println("=== REWRITTEN ===");
         System.out.println(program);
 
-        CodeGenerationVisitor codeGenerationVisitor = new CodeGenerationVisitor(metadataVisitor.getVariables());
+        CodeGenerationVisitor codeGenerationVisitor = new CodeGenerationVisitor();
         codeGenerationVisitor.visit(program);
 
         // Assembly first pass: Figure out label values

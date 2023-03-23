@@ -1,6 +1,8 @@
 package a2geek.ghost.model.visitor;
 
 import a2geek.ghost.model.Expression;
+import a2geek.ghost.model.Scope;
+import a2geek.ghost.model.Scope.Reference;
 import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.Visitor;
 import a2geek.ghost.model.code.CodeBlock;
@@ -9,28 +11,22 @@ import a2geek.ghost.model.code.Opcode;
 import a2geek.ghost.model.expression.*;
 import a2geek.ghost.model.statement.*;
 
+import java.sql.Ref;
 import java.util.*;
 
 public class CodeGenerationVisitor extends Visitor {
-    private List<String> variables = new ArrayList<>();
+    private Stack<Scope> scopes = new Stack<>();
     private CodeBlock code = new CodeBlock();
     private int labelNumber;
-
-    public CodeGenerationVisitor(Collection<String> variables) {
-        this.variables.addAll(variables);
-    }
 
     public List<Instruction> getInstructions() {
         return code.getInstructions();
     }
 
-    int varOffset(String var) {
-        // TODO: this will need to be fixed when more than integer are supported!
-        var num = variables.indexOf(var);
-        if (num == -1) {
-            throw new RuntimeException("Variable is unknown: " + var);
-        }
-        return num * 2;
+    public Reference findVariable(String name) {
+        return this.scopes.peek().findVariable(name).orElseGet(() -> {
+            throw new RuntimeException("variable not found: " + name);
+        });
     }
 
     List<String> label(final String... names) {
@@ -44,9 +40,10 @@ public class CodeGenerationVisitor extends Visitor {
 
     @Override
     public void visit(Program program) {
-        if (!variables.isEmpty()) {
+        this.scopes.add(program);
+        if (!this.scopes.peek().isEmpty()) {
             // TODO: this will need to be fixed when more than integer are supported!
-            code.emit(Opcode.RESERVE, variables.size() * 2);
+            code.emit(Opcode.RESERVE, this.scopes.peek().getVarOffset());
         }
         super.visit(program);
     }
@@ -54,7 +51,7 @@ public class CodeGenerationVisitor extends Visitor {
     @Override
     public void visit(AssignmentStatement statement) {
         dispatch(statement.getExpr());
-        code.emit(Opcode.STORE, varOffset(statement.getId()));
+        code.emit(Opcode.STORE, findVariable(statement.getId()).offset());
     }
 
     public void visit(ColorStatement statement) {
@@ -151,10 +148,10 @@ public class CodeGenerationVisitor extends Visitor {
         boolean stepIsNegative = statement.getStep() instanceof IntegerConstant e && e.getValue() < 0;
         if (stepIsNegative) {
             dispatch(statement.getEnd());
-            code.emit(Opcode.LOAD, varOffset(statement.getId()));
+            code.emit(Opcode.LOAD, findVariable(statement.getId()).offset());
         }
         else {
-            code.emit(Opcode.LOAD, varOffset(statement.getId()));
+            code.emit(Opcode.LOAD, findVariable(statement.getId()).offset());
             dispatch(statement.getEnd());
         }
         code.emit(Opcode.LE);
@@ -168,7 +165,7 @@ public class CodeGenerationVisitor extends Visitor {
             statement.getStep(), "+");
         visit(stepIncrementExpr);
 
-        code.emit(Opcode.STORE, varOffset(statement.getId()));
+        code.emit(Opcode.STORE, findVariable(statement.getId()).offset());
         code.emit(Opcode.GOTO, labels.get(0));
         code.emit(labels.get(1));
     }
@@ -347,7 +344,7 @@ public class CodeGenerationVisitor extends Visitor {
     }
 
     public Expression visit(IdentifierExpression expression) {
-        code.emit(Opcode.LOAD, varOffset(expression.getId()));
+        code.emit(Opcode.LOAD, findVariable(expression.getId()).offset());
         return null;
     }
 

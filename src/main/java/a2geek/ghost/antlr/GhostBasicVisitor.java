@@ -45,9 +45,14 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         return this.statementBlock.pop();
     }
 
+    public void addVariable(String name) {
+        this.scope.peek().addLocalVariable(name);
+    }
+
     @Override
     public Expression visitAssignment(BasicParser.AssignmentContext ctx) {
         String id = ctx.id.getText();
+        addVariable(id);
         Expression expr = visit(ctx.a);
         AssignmentStatement assignmentStatement = new AssignmentStatement(id, expr);
         addStatement(assignmentStatement);
@@ -96,6 +101,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     @Override
     public Expression visitForLoop(BasicParser.ForLoopContext ctx) {
         String id = ctx.id.getText();
+        addVariable(id);
         Expression start = visit(ctx.a);
         Expression end = visit(ctx.b);
         Expression step = null;
@@ -255,7 +261,9 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
     @Override
     public Expression visitIdentifier(BasicParser.IdentifierContext ctx) {
-        return new IdentifierExpression(ctx.a.getText());
+        String id = ctx.a.getText();
+        addVariable(id);
+        return new IdentifierExpression(id);
     }
 
     @Override
