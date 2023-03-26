@@ -73,7 +73,7 @@ public class RewriteVisitor extends Visitor {
     }
 
     @Override
-    public Expression visit(NegateExpression expression) {
+    public Expression visit(UnaryExpression expression) {
         dispatch(expression.getExpr()).ifPresent(expression::setExpr);
 
         if (expression.getExpr() instanceof IntegerConstant e) {

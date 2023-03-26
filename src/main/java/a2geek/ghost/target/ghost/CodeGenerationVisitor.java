@@ -421,7 +421,7 @@ public class CodeGenerationVisitor extends Visitor {
         return null;
     }
     @Override
-    public Expression visit(NegateExpression expression) {
+    public Expression visit(UnaryExpression expression) {
         throw new RuntimeException("Negate is not implemented yet.");
     }
 }

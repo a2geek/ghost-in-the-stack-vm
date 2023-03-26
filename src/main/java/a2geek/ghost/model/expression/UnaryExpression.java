@@ -4,15 +4,17 @@ import a2geek.ghost.model.Expression;
 
 import java.util.Objects;
 
-public class NegateExpression implements Expression {
+public class UnaryExpression implements Expression {
     private Type type;
     private Expression expr;
+    private String op;
 
-    public NegateExpression(Expression expr) {
+    public UnaryExpression(String op, Expression expr) {
         this.expr = expr;
+        this.op = op;
         this.type = Type.INTEGER;
         if (!expr.isType(type)) {
-            throw new RuntimeException("Negation must be of type " + type);
+            throw new RuntimeException("Unary operation must be of type " + type);
         }
     }
 
@@ -29,18 +31,21 @@ public class NegateExpression implements Expression {
         this.expr = expr;
     }
 
+    public String getOp() {
+        return op;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o instanceof NegateExpression that) {
-            return Objects.equals(expr, that.expr);
-        }
-        return false;
+        if (o == null || getClass() != o.getClass()) return false;
+        UnaryExpression that = (UnaryExpression) o;
+        return type == that.type && Objects.equals(expr, that.expr) && Objects.equals(op, that.op);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(expr);
+        return Objects.hash(type, expr, op);
     }
 
     @Override

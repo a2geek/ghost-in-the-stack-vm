@@ -6,7 +6,6 @@ Add EXIT (FOR/SUB/FUNCTION). Where to validate? Maybe in some visitor to be cert
 Should CALL => NATIVE or NCALL to make it obvious?
 How to make reusable libraries which use inline interpreted code? Looks like there can be "nested" grammars!
 Once SUB and FUNCTION in place, most of the model can be reduced to CallSub and CallFunction to simplify the model.
-Binary and Unary operations can be merged into one model element if they aren't already.
 Need to review negative number handling. Specifically MUL/DIV/MOD. Expect to require NEG operator to be implemented!
 Review generated code and look for alternates with new opcodes.
 Add ELSEIF to IF statement.

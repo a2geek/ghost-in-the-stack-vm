@@ -61,11 +61,11 @@ parameters
     ;
 
 expr
-    : a=expr op=( '*' | '/' | 'mod' ) b=expr                            # mulDivModExpr
-    | a=expr op=( '+' | '-' ) b=expr                                    # addSubExpr
-    | a=expr op=( '<' | '<=' | '>' | '>=' | '=' | '<>' ) b=expr         # compExpr
-    | a=expr op=( 'or' | 'and' ) b=expr                                 # logicalExpr
-    | '-' a=expr                                                        # negateExpr
+    : a=expr op=( '*' | '/' | 'mod' ) b=expr                            # binaryExpr
+    | a=expr op=( '+' | '-' ) b=expr                                    # binaryExpr
+    | a=expr op=( '<' | '<=' | '>' | '>=' | '=' | '<>' ) b=expr         # binaryExpr
+    | a=expr op=( 'or' | 'and' ) b=expr                                 # binaryExpr
+    | op='-' a=expr                                                     # unaryExpr
     | '(' a=expr ')'                                                    # parenExpr
     | 'peek' '(' a=expr ')'                                             # peekExpr
     | 'scrn' '(' a=expr ',' b=expr ')'                                  # scrnExpr

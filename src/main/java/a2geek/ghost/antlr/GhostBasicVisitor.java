@@ -2,7 +2,6 @@ package a2geek.ghost.antlr;
 
 import a2geek.ghost.antlr.generated.BasicBaseVisitor;
 import a2geek.ghost.antlr.generated.BasicParser;
-import a2geek.ghost.antlr.generated.BasicParser.CompExprContext;
 import a2geek.ghost.antlr.generated.BasicParser.IfStatementContext;
 import a2geek.ghost.model.*;
 import a2geek.ghost.model.expression.*;
@@ -323,26 +322,10 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     }
 
     @Override
-    public Expression visitCompExpr(CompExprContext ctx) {
+    public Expression visitBinaryExpr(BasicParser.BinaryExprContext ctx) {
         Expression l = visit(ctx.a);
         Expression r = visit(ctx.b);
         String op = ctx.op.getText();
-        return new BinaryExpression(l, r, op);
-    }
-
-    @Override
-    public Expression visitAddSubExpr(BasicParser.AddSubExprContext ctx) {
-        Expression l = visit(ctx.a);
-        Expression r = visit(ctx.b);
-        String op = ctx.op.getText();
-        return new BinaryExpression(l, r, op);
-    }
-
-    @Override
-    public Expression visitMulDivModExpr(BasicParser.MulDivModExprContext ctx) {
-        Expression l = visit(ctx.a);
-        Expression r = visit(ctx.b);
-        String op = ctx.op.getText().toLowerCase();
         return new BinaryExpression(l, r, op);
     }
 
@@ -353,16 +336,10 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     }
 
     @Override
-    public Expression visitNegateExpr(BasicParser.NegateExprContext ctx) {
+    public Expression visitUnaryExpr(BasicParser.UnaryExprContext ctx) {
         Expression e = visit(ctx.a);
-        return new NegateExpression(e);
-    }
-
-    @Override
-    public Expression visitLogicalExpr(BasicParser.LogicalExprContext ctx) {
-        var l = visit(ctx.a);
-        var r = visit(ctx.b);
-        return new BinaryExpression(l, r, ctx.op.getText());
+        String op = ctx.op.getText();
+        return new UnaryExpression(op, e);
     }
 
     @Override

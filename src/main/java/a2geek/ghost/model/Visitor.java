@@ -104,7 +104,7 @@ public abstract class Visitor {
         else if (expression instanceof ParenthesisExpression e) {
             return Optional.ofNullable(visit(e));
         }
-        else if (expression instanceof NegateExpression e) {
+        else if (expression instanceof UnaryExpression e) {
             return Optional.ofNullable(visit(e));
         }
         else if (expression instanceof FunctionExpression e) {
@@ -285,7 +285,7 @@ public abstract class Visitor {
         return null;
     }
 
-    public Expression visit(NegateExpression expression) {
+    public Expression visit(UnaryExpression expression) {
         var e = dispatch(expression.getExpr());
         if (e.isPresent()) {
             e.ifPresent(expression::setExpr);
