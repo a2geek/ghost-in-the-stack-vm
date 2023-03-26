@@ -1,4 +1,4 @@
-package a2geek.ghost.model.code;
+package a2geek.ghost.target.ghost;
 
 public enum Opcode {
     EXIT(0),

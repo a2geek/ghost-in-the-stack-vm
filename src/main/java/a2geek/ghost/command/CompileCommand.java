@@ -3,12 +3,10 @@ package a2geek.ghost.command;
 import a2geek.ghost.antlr.GhostBasicVisitor;
 import a2geek.ghost.antlr.generated.BasicLexer;
 import a2geek.ghost.antlr.generated.BasicParser;
-import a2geek.ghost.model.Reference;
 import a2geek.ghost.model.Scope;
-import a2geek.ghost.model.code.Instruction;
+import a2geek.ghost.target.ghost.Instruction;
 import a2geek.ghost.model.scope.Program;
-import a2geek.ghost.model.scope.Subroutine;
-import a2geek.ghost.model.visitor.CodeGenerationVisitor;
+import a2geek.ghost.target.ghost.CodeGenerationVisitor;
 import a2geek.ghost.model.visitor.RewriteVisitor;
 import io.github.applecommander.applesingle.AppleSingle;
 import org.antlr.v4.runtime.*;
@@ -22,7 +20,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.Callable;
-import java.util.stream.Collectors;
 
 @Command(name = "compile", mixinStandardHelpOptions = true, 
     description = "Compile Ghost BASIC program.")

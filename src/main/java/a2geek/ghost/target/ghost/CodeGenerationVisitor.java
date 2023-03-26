@@ -1,12 +1,8 @@
-package a2geek.ghost.model.visitor;
+package a2geek.ghost.target.ghost;
 
 import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.Reference;
-import a2geek.ghost.model.Scope;
 import a2geek.ghost.model.Visitor;
-import a2geek.ghost.model.code.CodeBlock;
-import a2geek.ghost.model.code.Instruction;
-import a2geek.ghost.model.code.Opcode;
 import a2geek.ghost.model.expression.*;
 import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.scope.Subroutine;
@@ -34,49 +30,17 @@ public class CodeGenerationVisitor extends Visitor {
 
     @Override
     public void visit(Program program) {
-        Map<Reference,Integer> varOffsets = new HashMap<>();
-        int varOffset = 0;
-        int reservation = 0;
-        // program treats global variables as local, so need to assign those as well
-        for (var ref : program.findByType(Scope.Type.GLOBAL)) {
-            varOffsets.put(ref, varOffset);
-            varOffset += 2;
-            reservation += 2;
-        }
-        var frame = new Frame(program, varOffsets, reservation, varOffset);
-
-        this.frames.push(frame);
-        code.emit(Opcode.GLOBAL_RESERVE, frames.peek().localSize);
+        var frame = this.frames.push(Frame.create(program));
+        code.emit(Opcode.GLOBAL_RESERVE, frame.localSize());
         super.visit(program);
+        // Note we don't have a GLOBAL_FREE; EXIT restores stack for us
         code.emit(Opcode.EXIT);
         this.frames.pop();
     }
 
-    public Frame createFrame(Scope scope) {
-        // FIXME these references will need to be fixed once more types are introduced
-        Map<Reference,Integer> varOffsets = new HashMap<>();
-        int varOffset = 0;
-        int reservation = 0;
-        // local variables are at TOS
-        for (var ref : scope.findByType(Scope.Type.LOCAL)) {
-            varOffsets.put(ref, varOffset);
-            varOffset += 2;
-            reservation += 2;
-        }
-        // frame overhead: return address (2 bytes) + stack index (1 byte)
-        varOffset += 3;
-        // parameters are above the frame details
-        for (var ref : scope.findByType(Scope.Type.PARAMETER)) {
-            varOffsets.put(ref, varOffset);
-            varOffset += 2;
-        }
-        // FIXME: We don't track/declare variables, so cannot handle globals yet.
-        return new Frame(scope, varOffsets, reservation, varOffset);
-    }
-
     public int frameOffset(Reference ref) {
-        if (this.frames.peek().offsets.containsKey(ref)) {
-            return this.frames.peek().offsets.get(ref);
+        if (this.frames.peek().offsets().containsKey(ref)) {
+            return this.frames.peek().offsets().get(ref);
         }
        throw new RuntimeException("reference not in frame: " + ref);
     }
@@ -319,13 +283,13 @@ public class CodeGenerationVisitor extends Visitor {
 
     @Override
     public void visit(Subroutine subroutine) {
-        frames.push(createFrame(subroutine));
+        var frame = frames.push(Frame.create(subroutine));
         code.emit(subroutine.getName());
-        code.emit(Opcode.LOCAL_RESERVE, frames.peek().localSize());
+        code.emit(Opcode.LOCAL_RESERVE, frame.localSize());
         if (subroutine.getStatements() != null) {
             subroutine.getStatements().forEach(this::dispatch);
         }
-        code.emit(Opcode.LOCAL_FREE, frames.peek().localSize());
+        code.emit(Opcode.LOCAL_FREE, frame.localSize());
         code.emit(Opcode.RETURN);
         frames.pop();
     }
@@ -373,7 +337,6 @@ public class CodeGenerationVisitor extends Visitor {
         }
         return false;
     }
-
 
     public Expression visit(BinaryExpression expression) {
         boolean optimized = switch (expression.getOp()) {
@@ -460,13 +423,5 @@ public class CodeGenerationVisitor extends Visitor {
     @Override
     public Expression visit(NegateExpression expression) {
         throw new RuntimeException("Negate is not implemented yet.");
-    }
-
-    public record Frame(
-            Scope scope,
-            Map<Reference,Integer> offsets,
-            Integer localSize,
-            Integer frameSize) {
-
     }
 }
