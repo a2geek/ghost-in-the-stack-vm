@@ -2,15 +2,21 @@ package a2geek.ghost.model.scope;
 
 import a2geek.ghost.model.Scope;
 
+import java.util.ArrayList;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class Program extends Scope {
     public Program(Function<String,String> caseStrategy) {
-        super(caseStrategy, "_main");
+        super(caseStrategy, "main");
     }
 
     @Override
     public String toString() {
-        return statementsAsString();
+        var allScopes = new ArrayList<>(getScopes());
+        allScopes.add(this);
+        return allScopes.stream()
+            .map(scope -> String.format("%s: %s", scope.getName(), scope.statementsAsString()))
+            .collect(Collectors.joining("\n"));
     }
 }

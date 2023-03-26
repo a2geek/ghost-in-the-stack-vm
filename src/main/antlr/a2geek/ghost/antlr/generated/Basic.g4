@@ -7,7 +7,15 @@ package a2geek.ghost.antlr.generated;
 }
 
 program
-    : statements EOF
+    : declarations*
+      statements
+      EOF
+    ;
+
+declarations
+    : 'sub' id=ID p=paramDecl? EOL+
+        (s=statements)?
+      'end' 'sub'                                                       # subDecl
     ;
 
 statements
@@ -41,6 +49,15 @@ statement
     | 'text'                                                            # textStmt
     | 'vtab' a=expr                                                     # vtabStmt
     | 'htab' a=expr                                                     # htabStmt
+    | 'call'? id=ID p=parameters?                                       # callSub
+    ;
+
+paramDecl
+    : '(' ( ID ( ',' ID )* )? ')'
+    ;
+
+parameters
+    : '(' ( expr ( ',' expr )* )? ')'
     ;
 
 expr

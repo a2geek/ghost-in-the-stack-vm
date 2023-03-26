@@ -7,9 +7,12 @@ import a2geek.ghost.antlr.generated.BasicParser.IfStatementContext;
 import a2geek.ghost.model.*;
 import a2geek.ghost.model.expression.*;
 import a2geek.ghost.model.scope.Program;
+import a2geek.ghost.model.scope.Subroutine;
 import a2geek.ghost.model.statement.*;
 import org.antlr.v4.runtime.tree.ParseTree;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Stack;
 import java.util.function.Function;
 
@@ -46,6 +49,15 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     }
     public StatementBlock popStatementBlock() {
         return this.statementBlock.pop();
+    }
+    public void addScope(Scope scope) {
+        this.scope.peek().addScope(scope);
+    }
+    public Scope pushScope(Scope scope) {
+        return this.scope.push(scope);
+    }
+    public Scope popScope() {
+        return this.scope.pop();
     }
 
     public Reference addVariable(String name) {
@@ -257,6 +269,40 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     public Expression visitVtabStmt(BasicParser.VtabStmtContext ctx) {
         var a = visit(ctx.a);
         addStatement(new VtabStatement(a));
+        return null;
+    }
+
+    @Override
+    public Expression visitSubDecl(BasicParser.SubDeclContext ctx) {
+        String name = caseStrategy.apply(ctx.id.getText());
+        List<String> params = new ArrayList<>();
+        if (ctx.p != null) {
+            ctx.p.ID().stream().map(ParseTree::getText).forEach(params::add);
+        }
+
+        Subroutine sub = new Subroutine(scope.peek(), name, params);
+        addScope(sub);
+
+        pushScope(sub);
+        pushStatementBlock(sub);
+        visit(ctx.s);
+        popScope();
+        popStatementBlock();
+
+        return null;
+    }
+
+    @Override
+    public Expression visitCallSub(BasicParser.CallSubContext ctx) {
+        String name = caseStrategy.apply(ctx.id.getText());
+        List<Expression> params = new ArrayList<>();
+        if (ctx.p != null) {
+            ctx.p.expr().stream().map(this::visit).forEach(params::add);
+        }
+
+        CallSubroutine callSubroutine = new CallSubroutine(name, params);
+        addStatement(callSubroutine);
+
         return null;
     }
 

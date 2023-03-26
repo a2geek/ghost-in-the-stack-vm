@@ -4,8 +4,10 @@ import a2geek.ghost.antlr.GhostBasicVisitor;
 import a2geek.ghost.antlr.generated.BasicLexer;
 import a2geek.ghost.antlr.generated.BasicParser;
 import a2geek.ghost.model.Reference;
+import a2geek.ghost.model.Scope;
 import a2geek.ghost.model.code.Instruction;
 import a2geek.ghost.model.scope.Program;
+import a2geek.ghost.model.scope.Subroutine;
 import a2geek.ghost.model.visitor.CodeGenerationVisitor;
 import a2geek.ghost.model.visitor.RewriteVisitor;
 import io.github.applecommander.applesingle.AppleSingle;
@@ -18,9 +20,7 @@ import picocli.CommandLine.Parameters;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
@@ -66,9 +66,11 @@ public class CompileCommand implements Callable<Integer> {
         System.out.println("=== MODEL ===");
         System.out.println(program);
         System.out.println("=== VARIABLES ===");
-        System.out.println(program.getLocalVariables().stream()
-                .map(Reference::name)
-                .collect(Collectors.toList()));
+        var allScopes = new ArrayList<>(program.getScopes());
+        allScopes.add(program);
+        for (Scope scope : allScopes) {
+            System.out.printf("%s - %s\n", scope.getName(), scope.getLocalVariables());
+        }
 
         RewriteVisitor rewriteVisitor = new RewriteVisitor();
         rewriteVisitor.visit(program);

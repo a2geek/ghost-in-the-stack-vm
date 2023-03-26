@@ -1,6 +1,7 @@
 package a2geek.ghost.model.visitor;
 
 import a2geek.ghost.model.Expression;
+import a2geek.ghost.model.Reference;
 import a2geek.ghost.model.Scope;
 import a2geek.ghost.model.Visitor;
 import a2geek.ghost.model.code.CodeBlock;
@@ -8,12 +9,13 @@ import a2geek.ghost.model.code.Instruction;
 import a2geek.ghost.model.code.Opcode;
 import a2geek.ghost.model.expression.*;
 import a2geek.ghost.model.scope.Program;
+import a2geek.ghost.model.scope.Subroutine;
 import a2geek.ghost.model.statement.*;
 
 import java.util.*;
 
 public class CodeGenerationVisitor extends Visitor {
-    private Stack<Scope> scopes = new Stack<>();
+    private Stack<Frame> frames = new Stack<>();
     private CodeBlock code = new CodeBlock();
     private int labelNumber;
 
@@ -32,18 +34,73 @@ public class CodeGenerationVisitor extends Visitor {
 
     @Override
     public void visit(Program program) {
-        this.scopes.add(program);
-        if (!this.scopes.peek().isEmpty()) {
-            // TODO: this will need to be fixed when more than integer are supported!
-            code.emit(Opcode.RESERVE, this.scopes.peek().getVarOffset());
+        Map<Reference,Integer> varOffsets = new HashMap<>();
+        int varOffset = 0;
+        int reservation = 0;
+        // program treats global variables as local, so need to assign those as well
+        for (var ref : program.findByType(Scope.Type.GLOBAL)) {
+            varOffsets.put(ref, varOffset);
+            varOffset += 2;
+            reservation += 2;
         }
+        var frame = new Frame(program, varOffsets, reservation, varOffset);
+
+        this.frames.push(frame);
+        code.emit(Opcode.GLOBAL_RESERVE, frames.peek().localSize);
         super.visit(program);
+        code.emit(Opcode.EXIT);
+        this.frames.pop();
     }
+
+    public Frame createFrame(Scope scope) {
+        // FIXME these references will need to be fixed once more types are introduced
+        Map<Reference,Integer> varOffsets = new HashMap<>();
+        int varOffset = 0;
+        int reservation = 0;
+        // local variables are at TOS
+        for (var ref : scope.findByType(Scope.Type.LOCAL)) {
+            varOffsets.put(ref, varOffset);
+            varOffset += 2;
+            reservation += 2;
+        }
+        // frame overhead: return address (2 bytes) + stack index (1 byte)
+        varOffset += 3;
+        // parameters are above the frame details
+        for (var ref : scope.findByType(Scope.Type.PARAMETER)) {
+            varOffsets.put(ref, varOffset);
+            varOffset += 2;
+        }
+        // FIXME: We don't track/declare variables, so cannot handle globals yet.
+        return new Frame(scope, varOffsets, reservation, varOffset);
+    }
+
+    public int frameOffset(Reference ref) {
+        if (this.frames.peek().offsets.containsKey(ref)) {
+            return this.frames.peek().offsets.get(ref);
+        }
+       throw new RuntimeException("reference not in frame: " + ref);
+    }
+
+    public void emitLoad(Reference ref) {
+        var opcode = switch (ref.type()) {
+            case LOCAL, PARAMETER -> Opcode.LOCAL_LOAD;
+            case GLOBAL -> Opcode.GLOBAL_LOAD;
+        };
+        this.code.emit(opcode, frameOffset(ref));
+    }
+    public void emitStore(Reference ref) {
+        var opcode = switch (ref.type()) {
+            case LOCAL, PARAMETER -> Opcode.LOCAL_STORE;
+            case GLOBAL -> Opcode.GLOBAL_STORE;
+        };
+        this.code.emit(opcode, frameOffset(ref));
+    }
+
 
     @Override
     public void visit(AssignmentStatement statement) {
         dispatch(statement.getExpr());
-        code.emit(Opcode.STORE, statement.getRef().offset());
+        emitStore(statement.getRef());
     }
 
     public void visit(ColorStatement statement) {
@@ -140,10 +197,10 @@ public class CodeGenerationVisitor extends Visitor {
         boolean stepIsNegative = statement.getStep() instanceof IntegerConstant e && e.getValue() < 0;
         if (stepIsNegative) {
             dispatch(statement.getEnd());
-            code.emit(Opcode.LOAD, statement.getRef().offset());
+            emitLoad(statement.getRef());
         }
         else {
-            code.emit(Opcode.LOAD, statement.getRef().offset());
+            emitLoad(statement.getRef());
             dispatch(statement.getEnd());
         }
         code.emit(Opcode.LE);
@@ -157,7 +214,7 @@ public class CodeGenerationVisitor extends Visitor {
             statement.getStep(), "+");
         visit(stepIncrementExpr);
 
-        code.emit(Opcode.STORE, statement.getRef().offset());
+        emitStore(statement.getRef());
         code.emit(Opcode.GOTO, labels.get(0));
         code.emit(labels.get(1));
     }
@@ -250,6 +307,29 @@ public class CodeGenerationVisitor extends Visitor {
         code.emit(Opcode.CALL);
     }
 
+    @Override
+    public void visit(CallSubroutine statement) {
+        for (Expression expr : statement.getParameters()) {
+            dispatch(expr);
+        }
+        code.emit(Opcode.GOSUB, statement.getName());
+        // FIXME when we have more datatypes this will be incorrect
+        code.emit(Opcode.POPN, statement.getParameters().size() * 2);
+    }
+
+    @Override
+    public void visit(Subroutine subroutine) {
+        frames.push(createFrame(subroutine));
+        code.emit(subroutine.getName());
+        code.emit(Opcode.LOCAL_RESERVE, frames.peek().localSize());
+        if (subroutine.getStatements() != null) {
+            subroutine.getStatements().forEach(this::dispatch);
+        }
+        code.emit(Opcode.LOCAL_FREE, frames.peek().localSize());
+        code.emit(Opcode.RETURN);
+        frames.pop();
+    }
+
     public boolean emitBinaryAddOptimizations(Expression left, Expression right) {
         // left + 1 => left++
         if (Objects.equals(left, IntegerConstant.ONE)) {
@@ -336,7 +416,7 @@ public class CodeGenerationVisitor extends Visitor {
     }
 
     public Expression visit(IdentifierExpression expression) {
-        code.emit(Opcode.LOAD, expression.getRef().offset());
+        emitLoad(expression.getRef());
         return null;
     }
 
@@ -380,5 +460,13 @@ public class CodeGenerationVisitor extends Visitor {
     @Override
     public Expression visit(NegateExpression expression) {
         throw new RuntimeException("Negate is not implemented yet.");
+    }
+
+    public record Frame(
+            Scope scope,
+            Map<Reference,Integer> offsets,
+            Integer localSize,
+            Integer frameSize) {
+
     }
 }

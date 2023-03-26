@@ -10,6 +10,19 @@ Notes:
 * Code is case insensitive. `MYVAR` is the same as `myvar` is the same as `MyVar`.
   You may use `goto` or `GoTo` or `GOTO`.
 
+## Subroutines
+
+Subroutines may be declared at the top of the program. They have their own variable scope and, at this time,
+do not share any access to global variables.
+
+```
+sub name(a,b,c)
+    ...
+end sub
+```
+
+If there are no parameters the parenthesis can be dropped as well.
+
 ## Statements
 
 Generally, statements probably can be chained together with colons (':') but use separate lines if it doesn't 
@@ -31,6 +44,16 @@ label:
    gosub label
    return
 ```
+
+### Subroutines
+
+To call a subroutine, invoke it as follows:
+
+```
+call name(x,y)
+```
+
+Note the `call` is optional and if there are no parameters, the parenthesis can also be left off.
 
 ### Lores graphics
 

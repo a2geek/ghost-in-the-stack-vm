@@ -9,9 +9,11 @@ acc:       .byte 0
 yreg:      .byte 0
 xreg:      .byte 0
 locals:    .byte 0
+globals:   .byte 0
 baseip:    .addr 0
 basesp:    .byte 0
 .ifdef DEBUG
+           .res 11      ; I can't do math to get to $17?
 flags:     .byte 0
 traceptr:  .addr 0
 .endif
@@ -138,32 +140,23 @@ loop:
     bmi :+
     jmp @noflag
 :   jsr print
-    .byte "IP=",$82,ip
-    .byte ", A/Y/X=",$81,acc,$81,yreg,$81,xreg
-    .byte ",",$d,"WORKPTR=",$82,workptr
-    .byte ", LOCALS=",$81,locals,", S=",0
+    .byte "IP=",$82,ip,", A/Y/X=",$81,acc,$81,yreg,$81,xreg,",",$d
+    .byte "WP=",$82,workptr,", LCL=",$81,locals,", GBL=",$81,globals,", S=",0
     tsx
     txa
     jsr prbyte
     jsr print
     .byte $d,"STACK=",0
     tsx
-    lda stackA+1,x
-    jsr prbyte
+    ldy #10
+@printstack:
     lda stackA,x
     jsr prbyte
     lda #' '|$80
     jsr cout
-    lda stackB+1,x
-    jsr prbyte
-    lda stackB,x
-    jsr prbyte
-    lda #' '|$80
-    jsr cout
-    lda stackC+1,x
-    jsr prbyte
-    lda stackC,x
-    jsr prbyte
+    inx
+    dey
+    bne @printstack
     jsr rdkey
     cmp #$9b
     bne :+
@@ -209,9 +202,14 @@ brtable:
     .addr _dup-1
     .addr _incr-1
     .addr _decr-1
-    .addr _reserve-1
-    .addr _load-1
-    .addr _store-1
+    .addr _global_reserve-1
+    .addr _local_reserve-1
+    .addr _local_free-1
+    .addr _local_load-1
+    .addr _local_store-1
+    .addr _global_load-1
+    .addr _global_store-1
+    .addr _popn-1
     .addr _goto-1
     .addr _gosub-1
     .addr _iftrue-1
@@ -415,16 +413,64 @@ _call:
     sty yreg
     jmp loop
 
-; RESERVE <n>: () => (0 ...); locals=SP
-_reserve:
+; GLOBAL_RESERVE <n>: () => (0 ...); globals=SP
+_global_reserve:
     jsr fetch
+    beq @noglobals
     tay
     lda #0
-@0: pha
+@pushloop:
+    pha
     dey
-    bne @0
+    bne @pushloop
+@noglobals:
+    tsx
+    stx globals
+    stx locals      ; for safety?
+    jmp loop
+
+; LOCAL_RESERVE <n> <m>: () => (<old locals> 0 ...); locals=SP
+_local_reserve:
+    lda locals
+    pha
+    ; "n" => number of bytes to reserve on stack
+    jsr fetch
+    beq @nolocals
+    tay
+    lda #0
+@pushloop:
+    pha
+    dey
+    bne @pushloop
+@nolocals:
     tsx
     stx locals
+    jmp loop
+
+; LOCAL_FREE <n>: (<old locals> 0 ...) => (); locals=old locals
+_local_free:
+    jsr fetch
+    beq @nolocals
+    tay
+@poploop:
+    pla
+    dey
+    bne @poploop
+@nolocals:
+    pla
+    sta locals
+    jmp loop
+
+; POPN <n>: (TOS-n ... TOS-1 TOS) => ()
+_popn:
+    jsr fetch
+    beq @nothingtodo    ; TODO: is this a code generation bug or not?
+    tay
+@poploop:
+    pla
+    dey
+    bne @poploop
+@nothingtodo:
     jmp loop
 
 ; LOADC <int>: () => (int)
@@ -437,11 +483,20 @@ _loadc:
     pha
     jmp loop
 
-; LOAD <offset>: () => *(locals+offset)
-_load:
+; LOCAL_LOAD <offset>: () => *(locals+offset)
+_local_load:
     jsr fetch
     clc
     adc locals
+    tax
+    ; duplicating this address into TOS via DUP
+    jmp _dup
+
+; GLOBAL_LOAD <offset>: () => *(globals+offset)
+_global_load:
+    jsr fetch
+    clc
+    adc globals
     tax
     ; duplicating this address into TOS via DUP
 
@@ -491,11 +546,19 @@ _decr:
     dec stackA,x
     jmp loop
 
-; STORE <offset>: (A) => (); *(locals+offset)=A
-_store:
+; GLOBAL_STORE <offset>: (A) => (); *(globals+offset)=A
+_global_store:
+    jsr fetch
+    clc
+    adc globals
+    bne store_common
+
+; LOCAL_STORE <offset>: (A) => (); *(locals+offset)=A
+_local_store:
     jsr fetch
     clc
     adc locals
+store_common:
     tay
     pla
     sta stackA,y

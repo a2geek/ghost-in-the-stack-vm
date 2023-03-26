@@ -2,13 +2,25 @@ package a2geek.ghost.model;
 
 import a2geek.ghost.model.expression.*;
 import a2geek.ghost.model.scope.Program;
+import a2geek.ghost.model.scope.Subroutine;
 import a2geek.ghost.model.statement.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 public abstract class Visitor {
-    public void visit(Program program) {
-        program.getStatements().forEach(this::dispatch);
+    public void dispatch(Scope scope) {
+        if (scope instanceof Program s) {
+            visit(s);
+        }
+        else if (scope instanceof Subroutine s) {
+            visit(s);
+        }
+        else {
+            throw new RuntimeException("scope type not supported: " +
+                    scope.getClass().getName());
+        }
     }
     public void dispatch(Statement statement) {
         if (statement instanceof AssignmentStatement s) {
@@ -68,6 +80,9 @@ public abstract class Visitor {
         else if (statement instanceof VtabStatement s) {
             visit(s);
         }
+        else if (statement instanceof CallSubroutine s) {
+            visit(s);
+        }
         else {
             throw new RuntimeException("statement type not supported: " +
                     statement.getClass().getName());
@@ -99,6 +114,15 @@ public abstract class Visitor {
             throw new RuntimeException("expression type not supported: " +
                     expression.getClass().getName());
         }
+    }
+
+    public void visit(Program program) {
+        program.getStatements().forEach(this::dispatch);
+        program.getScopes().forEach(this::dispatch);
+    }
+    public void visit(Subroutine subroutine) {
+        subroutine.getStatements().forEach(this::dispatch);
+        // We assume there are no additional scopes for BASIC.
     }
 
     public void visit(AssignmentStatement statement) {
@@ -210,6 +234,23 @@ public abstract class Visitor {
     public void visit(VtabStatement statement) {
         var expr = dispatch(statement.getExpr());
         expr.ifPresent(statement::setExpr);
+    }
+
+    public void visit(CallSubroutine statement) {
+        boolean changed = false;
+        List<Expression> exprs = new ArrayList<>();
+        for (Expression expr : statement.getParameters()) {
+            var newExpr = dispatch(expr);
+            if (newExpr.isPresent()) {
+                changed = true;
+                exprs.add(newExpr.get());
+            } else {
+                exprs.add(expr);
+            }
+        }
+        if (changed) {
+            statement.setParameters(exprs);
+        }
     }
 
     public Expression visit(BinaryExpression expression) {
