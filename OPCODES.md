@@ -59,4 +59,21 @@ Therefore, the `Opcode.java` and `interp.asm` just need to be ordered the same.
 | `LOADC`          |   3    | Load 16-bit value to TOS.                                                                                                                                                                                     |
 | `LOADA`          |   3    | Load physical address for given interpreter address. Used to support embedded constant values such as strings.                                                                                                |
 
+
+### Stack Frame
+
+The calling sequence for a procedure or fucntion in Ghost is as follows:
+
+```
+|       ...       | Bytes | Opcodes...  
+|-----------------|-------|-------------
+| return value    |   2   | LOADC #0000
+| argument 1      |   2   | LOAD A
+|  ... argument n |   2   | LOAD B
+| return address  |   2   | GOSUB function
+| prior local ptr |   1   | LOCAL_RESERVE n
+| ... local vars  |       | ...
+| ... expr stack  |       | LOCAL_FREE n
+```
+
 *** END ***
