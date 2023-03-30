@@ -434,7 +434,7 @@ public class CodeGenerationVisitor extends Visitor {
                 dispatch(expr);
             }
         };
-        switch (function.getName()) {
+        switch (function.getName().toLowerCase()) {
             case "peek" -> {
                 emitParameters.run();
                 code.emit(Opcode.ILOAD);

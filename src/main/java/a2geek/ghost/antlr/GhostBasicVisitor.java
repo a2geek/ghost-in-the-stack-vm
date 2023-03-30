@@ -370,6 +370,9 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                 return new FunctionExpression(fn, params);
             }
         }
+        else if (FunctionExpression.isIntrinsicFunction(id)) {
+            return new FunctionExpression(id, params);
+        }
 
         throw new RuntimeException("Expecting a function named " + id);
     }

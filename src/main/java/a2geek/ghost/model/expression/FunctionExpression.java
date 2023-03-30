@@ -6,15 +6,21 @@ import a2geek.ghost.model.scope.Function;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 public class FunctionExpression implements Expression {
-    private static final Map<String,Descriptor> FUNCS = Map.of(
-        "peek", new Descriptor(Type.INTEGER, Type.INTEGER),
-        "scrn", new Descriptor(Type.INTEGER,Type.INTEGER, Type.INTEGER),
-        "asc", new Descriptor(Type.INTEGER, Type.STRING)
-
-    );
+    private static final Map<String,Descriptor> FUNCS = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    static {
+        FUNCS.putAll(Map.of(
+            "peek", new Descriptor(Type.INTEGER, Type.INTEGER),
+            "scrn", new Descriptor(Type.INTEGER,Type.INTEGER, Type.INTEGER),
+            "asc", new Descriptor(Type.INTEGER, Type.STRING)
+        ));
+    }
+    public static boolean isIntrinsicFunction(String name) {
+        return FUNCS.containsKey(name);
+    }
 
     private String name;
     private Function function;
