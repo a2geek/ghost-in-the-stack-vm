@@ -10,9 +10,7 @@ import a2geek.ghost.model.scope.Subroutine;
 import a2geek.ghost.model.statement.*;
 import org.antlr.v4.runtime.tree.ParseTree;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Stack;
+import java.util.*;
 import java.util.function.Function;
 
 public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
@@ -30,6 +28,14 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         }
         throw new RuntimeException("Unexpected scope state at end of evaluation. " +
                 "Should be 1 but is " + scope.size());
+    }
+    Program findProgram() {
+        for (Scope s : scope) {
+            if (s instanceof Program program) {
+                return program;
+            }
+        }
+        throw new RuntimeException("Did not find Program!");
     }
 
     @Override
@@ -247,7 +253,13 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
     @Override
     public Expression visitReturnStmt(BasicParser.ReturnStmtContext ctx) {
-        addStatement(new ReturnStatement());
+        if (ctx.e != null) {
+            var expr = visit(ctx.e);
+            addStatement(new ReturnStatement(expr));
+        }
+        else {
+            addStatement(new ReturnStatement());
+        }
         return null;
     }
 
@@ -292,6 +304,28 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     }
 
     @Override
+    public Expression visitFuncDecl(BasicParser.FuncDeclContext ctx) {
+        String name = caseStrategy.apply(ctx.id.getText());
+        List<String> params = new ArrayList<>();
+        if (ctx.p != null) {
+            ctx.p.ID().stream().map(ParseTree::getText).forEach(params::add);
+        }
+
+        // FIXME? naming is really awkward due to naming conflicts!
+        a2geek.ghost.model.scope.Function func =
+                new a2geek.ghost.model.scope.Function(scope.peek(), name, params);
+        addScope(func);
+
+        pushScope(func);
+        pushStatementBlock(func);
+        visit(ctx.s);
+        popScope();
+        popStatementBlock();
+
+        return null;
+    }
+
+    @Override
     public Expression visitCallSub(BasicParser.CallSubContext ctx) {
         String name = caseStrategy.apply(ctx.id.getText());
         List<Expression> params = new ArrayList<>();
@@ -307,8 +341,37 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
     @Override
     public Expression visitIdentifier(BasicParser.IdentifierContext ctx) {
-        Reference ref = addVariable(ctx.a.getText());
+        // The ID could possibly be a function call with zero arguments.
+        String id = caseStrategy.apply(ctx.id.getText());
+        Optional<Scope> scope = findProgram().findScope(id);
+        if (scope.isPresent()) {
+            if (scope.get() instanceof a2geek.ghost.model.scope.Function fn) {
+                return new FunctionExpression(fn, Collections.emptyList());
+            }
+            else {
+                throw new RuntimeException("Expecting a function named " + id);
+            }
+        }
+        Reference ref = addVariable(id);
         return new IdentifierExpression(ref);
+    }
+
+    @Override
+    public Expression visitFuncExpr(BasicParser.FuncExprContext ctx) {
+        String id = caseStrategy.apply(ctx.id.getText());
+        List<Expression> params = new ArrayList<>();
+        if (ctx.p != null) {
+            ctx.p.expr().stream().map(this::visit).forEach(params::add);
+        }
+
+        Optional<Scope> scope = findProgram().findScope(id);
+        if (scope.isPresent()) {
+            if (scope.get() instanceof a2geek.ghost.model.scope.Function fn) {
+                return new FunctionExpression(fn, params);
+            }
+        }
+
+        throw new RuntimeException("Expecting a function named " + id);
     }
 
     @Override
@@ -340,24 +403,5 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         Expression e = visit(ctx.a);
         String op = ctx.op.getText();
         return new UnaryExpression(op, e);
-    }
-
-    @Override
-    public Expression visitPeekExpr(BasicParser.PeekExprContext ctx) {
-        Expression e = visit(ctx.a);
-        return new FunctionExpression("peek", e);
-    }
-
-    @Override
-    public Expression visitScrnExpr(BasicParser.ScrnExprContext ctx) {
-        Expression x = visit(ctx.a);
-        Expression y = visit(ctx.b);
-        return new FunctionExpression("scrn", x, y);
-    }
-
-    @Override
-    public Expression visitAscExpr(BasicParser.AscExprContext ctx) {
-        Expression e = visit(ctx.s);
-        return new FunctionExpression("asc", e);
     }
 }

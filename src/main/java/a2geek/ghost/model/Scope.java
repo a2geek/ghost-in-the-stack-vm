@@ -84,10 +84,14 @@ public class Scope extends StatementBlock {
     public List<Scope> getScopes() {
         return scopes;
     }
+    public Optional<Scope> findScope(String name) {
+        return scopes.stream().filter(s -> s.getName().equals(name)).findFirst();
+    }
 
     public enum Type {
         GLOBAL,
         LOCAL,
-        PARAMETER
+        PARAMETER,
+        RETURN_VALUE
     }
 }

@@ -16,6 +16,9 @@ declarations
     : 'sub' id=ID p=paramDecl? EOL+
         (s=statements)?
       'end' 'sub'                                                       # subDecl
+    | 'function' id=ID p=paramDecl? EOL+
+        (s=statements)?
+      'end' 'function'                                                  # funcDecl
     ;
 
 statements
@@ -45,7 +48,7 @@ statement
     | 'poke' a=expr ',' b=expr                                          # pokeStmt
     | 'call' a=expr                                                     # callStmt
     | op=( 'goto' | 'gosub' ) l=ID                                      # gotoGosubStmt
-    | 'return'                                                          # returnStmt
+    | 'return' e=expr?                                                  # returnStmt
     | 'text'                                                            # textStmt
     | 'vtab' a=expr                                                     # vtabStmt
     | 'htab' a=expr                                                     # htabStmt
@@ -67,10 +70,8 @@ expr
     | a=expr op=( 'or' | 'and' ) b=expr                                 # binaryExpr
     | op='-' a=expr                                                     # unaryExpr
     | '(' a=expr ')'                                                    # parenExpr
-    | 'peek' '(' a=expr ')'                                             # peekExpr
-    | 'scrn' '(' a=expr ',' b=expr ')'                                  # scrnExpr
-    | 'asc' '(' s=sexpr ')'                                             # ascExpr
-    | a=ID                                                              # identifier
+    | id=ID p=parameters                                                # funcExpr
+    | id=ID                                                             # identifier
     | a=INT                                                             # intConstant
     ;
 

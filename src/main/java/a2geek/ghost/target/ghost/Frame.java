@@ -2,6 +2,7 @@ package a2geek.ghost.target.ghost;
 
 import a2geek.ghost.model.Reference;
 import a2geek.ghost.model.Scope;
+import a2geek.ghost.model.scope.Function;
 import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.scope.Subroutine;
 
@@ -43,6 +44,16 @@ public record Frame(
         for (var ref : subroutine.findByType(Scope.Type.PARAMETER)) {
             varOffsets.put(ref, varOffset);
             varOffset += 2;
+        }
+        if (subroutine instanceof Function fn) {
+            var refs = fn.findByType(Scope.Type.RETURN_VALUE);
+            if (refs.size() != 1) {
+                throw new RuntimeException("Expecting function to have 1 return value but have " + refs.size());
+            }
+            for (var ref : refs) {
+                varOffsets.put(ref, varOffset);
+                varOffset += 2;
+            }
         }
         // FIXME: We don't track/declare variables, so cannot handle globals yet.
         return new Frame(subroutine, varOffsets, reservation, varOffset);

@@ -10,15 +10,24 @@ Notes:
 * Code is case insensitive. `MYVAR` is the same as `myvar` is the same as `MyVar`.
   You may use `goto` or `GoTo` or `GOTO`.
 
-## Subroutines
+## Subroutines / Functions
 
 Subroutines may be declared at the top of the program. They have their own variable scope and, at this time,
 do not share any access to global variables.
 
-```
+```basic
 sub name(a,b,c)
     ...
 end sub
+```
+
+Function definitions are similar. At this time, as with everything else, the return value is assumed to be integer.
+
+```basic
+function name(a,b)
+  ...
+  return n
+end function
 ```
 
 If there are no parameters the parenthesis can be dropped as well.

@@ -1,6 +1,7 @@
 package a2geek.ghost.model;
 
 import a2geek.ghost.model.expression.*;
+import a2geek.ghost.model.scope.Function;
 import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.scope.Subroutine;
 import a2geek.ghost.model.statement.*;
@@ -12,6 +13,9 @@ import java.util.Optional;
 public abstract class Visitor {
     public void dispatch(Scope scope) {
         if (scope instanceof Program s) {
+            visit(s);
+        }
+        else if (scope instanceof Function s) {
             visit(s);
         }
         else if (scope instanceof Subroutine s) {
@@ -123,6 +127,9 @@ public abstract class Visitor {
     public void visit(Subroutine subroutine) {
         subroutine.getStatements().forEach(this::dispatch);
         // We assume there are no additional scopes for BASIC.
+    }
+    public void visit(Function function) {
+        function.getStatements().forEach(this::dispatch);
     }
 
     public void visit(AssignmentStatement statement) {
@@ -296,16 +303,14 @@ public abstract class Visitor {
 
     public Expression visit(FunctionExpression expression) {
         boolean changed = false;
-        Expression[] exprs = expression.getExpr();
-        for (int i=0; i<exprs.length; i++) {
-            var e = dispatch(exprs[i]);
-            if (e.isPresent()) {
-                exprs[i] = e.get();
-                changed = true;
-            }
+        var exprs = new ArrayList<Expression>();
+        for (var expr : expression.getParameters()) {
+            var e = dispatch(expr);
+            changed |= e.isPresent();
+            exprs.add(e.orElse(expr));
         }
         if (changed) {
-            expression.setExpr(exprs);
+            expression.setParameters(exprs);
             return expression;
         }
         return null;

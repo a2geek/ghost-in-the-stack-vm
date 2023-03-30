@@ -1,8 +1,9 @@
 package a2geek.ghost.model.expression;
 
 import a2geek.ghost.model.Expression;
+import a2geek.ghost.model.scope.Function;
 
-import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -15,59 +16,74 @@ public class FunctionExpression implements Expression {
 
     );
 
-    private Descriptor descriptor;
     private String name;
-    private Expression[] expr;
+    private Function function;
+    private List<Expression> parameters;
+    private Type returnType;
 
-    public FunctionExpression(String name, Expression ...expr) {
+    public FunctionExpression(String name, List<Expression> parameters) {
         this.name = name;
-        this.expr = expr;
-        this.descriptor = FUNCS.get(name);
-        if (this.descriptor == null) {
+        this.parameters = parameters;
+        var descriptor = FUNCS.get(name);
+        if (descriptor == null) {
             throw new RuntimeException("Unknown function: " + name);
-        };
-        if (this.expr.length != this.descriptor.parameterTypes.length) {
+        }
+        if (this.parameters.size() != descriptor.parameterTypes.length) {
             throw new RuntimeException("Wrong number of arguments to: " + name);
         }
-        for (int i=0; i<this.expr.length; i++) {
-            this.expr[i].mustBe(this.descriptor.parameterTypes[i]);
+        for (int i = 0; i<this.parameters.size(); i++) {
+            this.parameters.get(i).mustBe(descriptor.parameterTypes[i]);
         }
+        this.returnType = descriptor.returnType;
+    }
+    public FunctionExpression(Function function, List<Expression> expr) {
+        this.name = function.getName();
+        this.function = function;
+        this.parameters = expr;
+        // FIXME once we get real types!
+        this.returnType = Type.INTEGER;
     }
 
     @Override
     public Type getType() {
-        return descriptor.returnType;
+        return returnType;
     }
 
     public String getName() {
         return name;
     }
 
-    public Expression[] getExpr() {
-        return expr;
+    public Function getFunction() {
+        return function;
     }
 
-    public void setExpr(Expression[] expr) {
-        this.expr = expr;
+    public List<Expression> getParameters() {
+        return parameters;
+    }
+
+    public void setParameters(List<Expression> parameters) {
+        this.parameters = parameters;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o instanceof FunctionExpression that) {
-            return Objects.equals(name, that.name) && Objects.equals(expr, that.expr);
-        }
-        return false;
+        if (o == null || getClass() != o.getClass()) return false;
+        FunctionExpression that = (FunctionExpression) o;
+        return Objects.equals(name, that.name) &&
+                Objects.equals(function, that.function) &&
+                Objects.equals(parameters, that.parameters) &&
+                returnType == that.returnType;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, expr);
+        return Objects.hash(name, function, parameters, returnType);
     }
 
     @Override
     public String toString() {
-        String args = Arrays.asList(expr).stream().map(Expression::toString).collect(Collectors.joining(", "));
+        String args = this.parameters.stream().map(Expression::toString).collect(Collectors.joining(", "));
         return String.format("%s(%s)", name, args);
     }
 

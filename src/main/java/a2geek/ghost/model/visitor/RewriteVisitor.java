@@ -5,6 +5,7 @@ import a2geek.ghost.model.Visitor;
 import a2geek.ghost.model.expression.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
 
@@ -85,15 +86,15 @@ public class RewriteVisitor extends Visitor {
 
     @Override
     public Expression visit(FunctionExpression expression) {
-        Expression[] exprs = expression.getExpr();
-        for (int i=0; i<exprs.length; i++) {
-            Expression expr = exprs[i];
+        List<Expression> exprs = expression.getParameters();
+        for (int i=0; i<exprs.size(); i++) {
+            Expression expr = exprs.get(i);
             final int idx = i;
-            dispatch(expr).ifPresent(e -> exprs[idx] = e);
+            dispatch(expr).ifPresent(e -> exprs.set(idx,e));
         }
 
-        if ("asc".equalsIgnoreCase(expression.getName()) && exprs.length == 1 &&
-                exprs[0] instanceof StringConstant s) {
+        if ("asc".equalsIgnoreCase(expression.getName()) && exprs.size() == 1 &&
+                exprs.get(0) instanceof StringConstant s) {
             return new IntegerConstant(s.getValue().charAt(0)|0x80);
         }
 

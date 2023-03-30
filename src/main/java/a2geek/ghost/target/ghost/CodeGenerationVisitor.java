@@ -2,8 +2,10 @@ package a2geek.ghost.target.ghost;
 
 import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.Reference;
+import a2geek.ghost.model.Scope;
 import a2geek.ghost.model.Visitor;
 import a2geek.ghost.model.expression.*;
+import a2geek.ghost.model.scope.Function;
 import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.scope.Subroutine;
 import a2geek.ghost.model.statement.*;
@@ -47,14 +49,14 @@ public class CodeGenerationVisitor extends Visitor {
 
     public void emitLoad(Reference ref) {
         var opcode = switch (ref.type()) {
-            case LOCAL, PARAMETER -> Opcode.LOCAL_LOAD;
+            case LOCAL, PARAMETER, RETURN_VALUE -> Opcode.LOCAL_LOAD;
             case GLOBAL -> Opcode.GLOBAL_LOAD;
         };
         this.code.emit(opcode, frameOffset(ref));
     }
     public void emitStore(Reference ref) {
         var opcode = switch (ref.type()) {
-            case LOCAL, PARAMETER -> Opcode.LOCAL_STORE;
+            case LOCAL, PARAMETER, RETURN_VALUE -> Opcode.LOCAL_STORE;
             case GLOBAL -> Opcode.GLOBAL_STORE;
         };
         this.code.emit(opcode, frameOffset(ref));
@@ -247,7 +249,17 @@ public class CodeGenerationVisitor extends Visitor {
 
     @Override
     public void visit(ReturnStatement statement) {
-        code.emit(Opcode.RETURN);
+        boolean hasReturnValue = statement.getExpr() != null;
+        var refs = this.frames.peek().scope().findByType(Scope.Type.RETURN_VALUE);
+        if (refs.size() == 1 && hasReturnValue) {
+            visit(new AssignmentStatement(refs.get(0), statement.getExpr()));
+        }
+        else if (refs.size() != 0 || hasReturnValue) {
+            throw new RuntimeException("function return mismatch");
+        }
+        else {
+            code.emit(Opcode.RETURN);
+        }
     }
 
     public void visit(TextStatement statement) {
@@ -288,6 +300,19 @@ public class CodeGenerationVisitor extends Visitor {
         code.emit(Opcode.LOCAL_RESERVE, frame.localSize());
         if (subroutine.getStatements() != null) {
             subroutine.getStatements().forEach(this::dispatch);
+        }
+        code.emit(Opcode.LOCAL_FREE, frame.localSize());
+        code.emit(Opcode.RETURN);
+        frames.pop();
+    }
+
+    @Override
+    public void visit(Function function) {
+        var frame = frames.push(Frame.create(function));
+        code.emit(function.getName());
+        code.emit(Opcode.LOCAL_RESERVE, frame.localSize());
+        if (function.getStatements() != null) {
+            function.getStatements().forEach(this::dispatch);
         }
         code.emit(Opcode.LOCAL_FREE, frame.localSize());
         code.emit(Opcode.RETURN);
@@ -403,20 +428,36 @@ public class CodeGenerationVisitor extends Visitor {
     }
 
     @Override
-    public Expression visit(FunctionExpression expression) {
-        for (Expression expr : expression.getExpr()) {
-            dispatch(expr);
-        }
-        switch (expression.getName()) {
-            case "peek" -> code.emit(Opcode.ILOAD);
+    public Expression visit(FunctionExpression function) {
+        Runnable emitParameters = () -> {
+            for (Expression expr : function.getParameters()) {
+                dispatch(expr);
+            }
+        };
+        switch (function.getName()) {
+            case "peek" -> {
+                emitParameters.run();
+                code.emit(Opcode.ILOAD);
+            }
             case "scrn" -> {
+                emitParameters.run();
                 code.emit(Opcode.SETACC);
                 code.emit(Opcode.SETYREG);
                 code.emit(Opcode.LOADC, 0xf871);
                 code.emit(Opcode.CALL);
                 code.emit(Opcode.GETACC);
             }
-            default -> throw new RuntimeException("Function unknown: " + expression.getName());
+            default -> {
+                if (function.getFunction() == null) {
+                    throw new RuntimeException("unimplemented standard function: " + function.getName());
+                }
+                // FIXME need to reserve by return type when types are in place!
+                code.emit(Opcode.LOADC, 0);
+                emitParameters.run();
+                code.emit(Opcode.GOSUB, function.getName());
+                // FIXME when we have more datatypes this will be incorrect
+                code.emit(Opcode.POPN, function.getParameters().size() * 2);
+            }
         }
         return null;
     }
