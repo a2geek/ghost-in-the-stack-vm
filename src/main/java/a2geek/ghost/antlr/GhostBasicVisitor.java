@@ -12,6 +12,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     private Function<String,String> caseStrategy;
@@ -68,10 +69,25 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     public Reference addVariable(String name) {
         return this.scope.peek().addLocalVariable(name);
     }
+    public Reference addVariable(String name, Scope.Type type) {
+        return this.scope.peek().addLocalVariable(name, type);
+    }
 
     @Override
     public Expression visitAssignment(BasicParser.AssignmentContext ctx) {
-        Reference ref = addVariable(ctx.id.getText());
+        String id = ctx.id.getText();
+        Reference ref = switch (id.toLowerCase()) {
+            case Intrinsic.CPU_REGISTER_A,
+                 Intrinsic.CPU_REGISTER_X,
+                 Intrinsic.CPU_REGISTER_Y -> addVariable(id, Scope.Type.INTRINSIC);
+            default -> {
+                if (id.contains(".")) {
+                    throw new RuntimeException("invalid identifier: " + id);
+                }
+                yield addVariable(id);
+            }
+        };
+
         Expression expr = visit(ctx.a);
         AssignmentStatement assignmentStatement = new AssignmentStatement(ref, expr);
         addStatement(assignmentStatement);
@@ -352,7 +368,18 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                 throw new RuntimeException("Expecting a function named " + id);
             }
         }
-        Reference ref = addVariable(id);
+
+        Reference ref = switch (id.toLowerCase()) {
+            case Intrinsic.CPU_REGISTER_A,
+                    Intrinsic.CPU_REGISTER_X,
+                    Intrinsic.CPU_REGISTER_Y -> addVariable(id, Scope.Type.INTRINSIC);
+            default -> {
+                if (id.contains(".")) {
+                    throw new RuntimeException("invalid identifier: " + id);
+                }
+                yield addVariable(id);
+            }
+        };
         return new IdentifierExpression(ref);
     }
 
@@ -362,6 +389,14 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         List<Expression> params = new ArrayList<>();
         if (ctx.p != null) {
             ctx.p.expr().stream().map(this::visit).forEach(params::add);
+        }
+
+        if (Intrinsic.CPU_REGISTERS.contains(id.toLowerCase())) {
+            if (params.size() > 0) {
+                throw new RuntimeException("Intrinsic reference takes no arguments: " + id);
+            }
+            Reference ref = addVariable(id, Scope.Type.INTRINSIC);
+            return new IdentifierExpression(ref);
         }
 
         Optional<Scope> scope = findProgram().findScope(id);

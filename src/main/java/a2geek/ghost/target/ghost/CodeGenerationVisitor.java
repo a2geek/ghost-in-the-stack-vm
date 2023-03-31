@@ -1,9 +1,6 @@
 package a2geek.ghost.target.ghost;
 
-import a2geek.ghost.model.Expression;
-import a2geek.ghost.model.Reference;
-import a2geek.ghost.model.Scope;
-import a2geek.ghost.model.Visitor;
+import a2geek.ghost.model.*;
 import a2geek.ghost.model.expression.*;
 import a2geek.ghost.model.scope.Function;
 import a2geek.ghost.model.scope.Program;
@@ -48,18 +45,40 @@ public class CodeGenerationVisitor extends Visitor {
     }
 
     public void emitLoad(Reference ref) {
-        var opcode = switch (ref.type()) {
-            case LOCAL, PARAMETER, RETURN_VALUE -> Opcode.LOCAL_LOAD;
-            case GLOBAL -> Opcode.GLOBAL_LOAD;
-        };
-        this.code.emit(opcode, frameOffset(ref));
+        switch (ref.type()) {
+            case LOCAL, PARAMETER, RETURN_VALUE -> {
+                this.code.emit(Opcode.LOCAL_LOAD, frameOffset(ref));
+            }
+            case GLOBAL -> {
+                this.code.emit(Opcode.GLOBAL_LOAD, frameOffset(ref));
+            }
+            case INTRINSIC -> {
+                switch (ref.name().toLowerCase()) {
+                    case Intrinsic.CPU_REGISTER_A -> this.code.emit(Opcode.GETACC);
+                    case Intrinsic.CPU_REGISTER_X -> this.code.emit(Opcode.GETXREG);
+                    case Intrinsic.CPU_REGISTER_Y -> this.code.emit(Opcode.GETYREG);
+                    default -> throw new RuntimeException("unknown intrinsic: " + ref.name());
+                }
+            }
+        }
     }
     public void emitStore(Reference ref) {
-        var opcode = switch (ref.type()) {
-            case LOCAL, PARAMETER, RETURN_VALUE -> Opcode.LOCAL_STORE;
-            case GLOBAL -> Opcode.GLOBAL_STORE;
-        };
-        this.code.emit(opcode, frameOffset(ref));
+        switch (ref.type()) {
+            case LOCAL, PARAMETER, RETURN_VALUE -> {
+                this.code.emit(Opcode.LOCAL_STORE, frameOffset(ref));
+            }
+            case GLOBAL -> {
+                this.code.emit(Opcode.GLOBAL_STORE, frameOffset(ref));
+            }
+            case INTRINSIC -> {
+                switch (ref.name().toLowerCase()) {
+                    case Intrinsic.CPU_REGISTER_A -> this.code.emit(Opcode.SETACC);
+                    case Intrinsic.CPU_REGISTER_X -> this.code.emit(Opcode.SETXREG);
+                    case Intrinsic.CPU_REGISTER_Y -> this.code.emit(Opcode.SETYREG);
+                    default -> throw new RuntimeException("unknown intrinsic: " + ref.name());
+                }
+            }
+        }
     }
 
 

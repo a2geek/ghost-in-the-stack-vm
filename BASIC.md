@@ -46,7 +46,7 @@ parse correctly (most likely is a compiler error).
 Labels replace line numbers and `GOTO`/`GOSUB` targets those labels. `GOSUB` pushes the old code
 position on the stack and `RETURN` restores that position.
 
-```
+```basic
 label:
    ' ...
    goto label
@@ -58,7 +58,7 @@ label:
 
 To call a subroutine, invoke it as follows:
 
-```
+```basic
 call name(x,y)
 ```
 
@@ -69,7 +69,7 @@ Note the `call` is optional and if there are no parameters, the parenthesis can 
 The usual commands are available for lores graphics.  Note that `color=` needs to be together as `color =` is 
 interpreted as variable assignment.
 
-```
+```basic
 gr
 color= n
 plot x,y
@@ -83,7 +83,7 @@ c = scrn(x,y)
 The traditional If/Then/Else statement. Note that generally, `if` end with `end if`. `expr` is considered true if the 
 expression evaluates to non-zero and false if it evaluates to zero.
 
-```
+```basic
 if expr then
   ' true statements
 else
@@ -92,8 +92,9 @@ end if
 ```
 
 There is also a single line if statement similar to Integer BASIC's - meaning only a single statement follows.
+(Do not expect this to remain too long. It is useful for some of the sources being used to vet the compiler.)
 
-```
+```basic
 if expr then true_statement : statement2 : statement3 
 ```
 
@@ -105,7 +106,7 @@ There is one caveat with the `for` statement. `step` is optional and defaults to
 computed and is negative, the code generated will be incorrect. Positive increments will be fine. Negative 
 constants will also be fine.
 
-```
+```basic
 for var = expr to expr step expr
    ' ...
 next var
@@ -115,7 +116,7 @@ next var
 
 Text screen support matching Applesoft/Integer BASIC.
 
-```
+```basic
 text
 home
 vtab expr
@@ -123,14 +124,32 @@ htab expr
 print [ expr | sexpr | ',' | ';' ]
 ```
 
+### Native interactions
+
+Many old BASIC programs utilized machine language routines (ROM or otherwise) to enhance an application.
+To support these interactions the following statements and constructs are available:
+
+```basic
+poke addr,expr
+value = peek(addr)
+cpu.register.a = expr
+cpu.register.x = expr
+cpu.register.y = expr
+call addr
+value = cpu.register.a
+value = cpu.register.x
+value = cpu.register.y
+```
+
+The `cpu.register.[axy]` constructs are intended to be used with the `call` statement. Alone, they just 
+store (or get) a value. The `call` statement will setup and store these values.
+
 ### Miscellaneous
 
 Note that `end` should be placed at the end of all code. It is not automatically inserted by the compiler at this time.
 
-```
+```basic
 end
-poke addr,expr
-value = peek(addr)
 ```
 
 ## Expressions

@@ -92,6 +92,7 @@ public class Scope extends StatementBlock {
         GLOBAL,
         LOCAL,
         PARAMETER,
-        RETURN_VALUE
+        RETURN_VALUE,
+        INTRINSIC
     }
 }

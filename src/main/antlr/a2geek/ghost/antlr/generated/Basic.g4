@@ -26,7 +26,7 @@ statements
     ;
 
 statement
-    : id=ID '=' a=expr                                                  # assignment
+    : id=extendedID '=' a=expr                                          # assignment
     | id=ID ':'                                                         # label
     | 'if' a=expr 'then' t=statement                                    # ifShortStatement
     | 'if' a=expr 'then' EOL+
@@ -55,6 +55,10 @@ statement
     | 'call'? id=ID p=parameters?                                       # callSub
     ;
 
+extendedID
+    : ID ('.' ID)*
+    ;
+
 paramDecl
     : '(' ( ID ( ',' ID )* )? ')'
     ;
@@ -70,8 +74,8 @@ expr
     | a=expr op=( 'or' | 'and' ) b=expr                                 # binaryExpr
     | op='-' a=expr                                                     # unaryExpr
     | '(' a=expr ')'                                                    # parenExpr
-    | id=ID p=parameters                                                # funcExpr
-    | id=ID                                                             # identifier
+    | id=extendedID p=parameters                                        # funcExpr
+    | id=extendedID                                                     # identifier
     | a=INT                                                             # intConstant
     ;
 
