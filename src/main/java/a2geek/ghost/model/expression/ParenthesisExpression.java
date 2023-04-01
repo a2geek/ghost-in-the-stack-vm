@@ -1,5 +1,6 @@
 package a2geek.ghost.model.expression;
 
+import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.Expression;
 
 import java.util.Objects;
@@ -12,7 +13,7 @@ public class ParenthesisExpression implements Expression {
     }
 
     @Override
-    public Type getType() {
+    public DataType getType() {
         return expr.getType();
     }
 

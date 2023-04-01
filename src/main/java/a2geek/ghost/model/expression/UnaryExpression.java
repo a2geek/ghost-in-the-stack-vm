@@ -1,25 +1,26 @@
 package a2geek.ghost.model.expression;
 
+import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.Expression;
 
 import java.util.Objects;
 
 public class UnaryExpression implements Expression {
-    private Type type;
+    private DataType type;
     private Expression expr;
     private String op;
 
     public UnaryExpression(String op, Expression expr) {
         this.expr = expr;
         this.op = op;
-        this.type = Type.INTEGER;
+        this.type = DataType.INTEGER;
         if (!expr.isType(type)) {
             throw new RuntimeException("Unary operation must be of type " + type);
         }
     }
 
     @Override
-    public Type getType() {
+    public DataType getType() {
         return type;
     }
 

@@ -1,5 +1,6 @@
 package a2geek.ghost.model.statement;
 
+import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.Statement;
 
@@ -15,7 +16,7 @@ public class ColorStatement implements Statement {
     }
 
     public void setExpr(Expression expr) {
-        expr.mustBe(Expression.Type.INTEGER);
+        expr.mustBe(DataType.INTEGER);
         this.expr = expr;
     }
 

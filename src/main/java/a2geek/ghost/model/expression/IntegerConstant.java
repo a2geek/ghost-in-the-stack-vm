@@ -1,5 +1,6 @@
 package a2geek.ghost.model.expression;
 
+import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.Expression;
 
 import java.util.Objects;
@@ -11,8 +12,8 @@ public class IntegerConstant implements Expression {
     private int value;
 
     @Override
-    public Type getType() {
-        return Type.INTEGER;    // Always
+    public DataType getType() {
+        return DataType.INTEGER;    // Always
     }
 
     public int getValue() {

@@ -1,5 +1,6 @@
 package a2geek.ghost.model.statement;
 
+import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.Statement;
 
@@ -8,7 +9,7 @@ public class CallStatement implements Statement {
 
     public CallStatement(Expression expr) {
         this.expr = expr;
-        expr.mustBe(Expression.Type.INTEGER);
+        expr.mustBe(DataType.INTEGER);
     }
 
     public Expression getExpr() {

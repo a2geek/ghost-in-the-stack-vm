@@ -1,5 +1,6 @@
 package a2geek.ghost.model.statement;
 
+import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.Statement;
 import a2geek.ghost.model.StatementBlock;
@@ -19,7 +20,7 @@ public class IfStatement implements Statement {
         return expression;
     }
     public void setExpression(Expression expression) {
-        expression.mustBe(Expression.Type.INTEGER);
+        expression.mustBe(DataType.INTEGER, DataType.BOOLEAN);
         this.expression = expression;
     }
 

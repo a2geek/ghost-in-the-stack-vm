@@ -64,7 +64,13 @@ paramDecl
     ;
 
 parameters
-    : '(' ( expr ( ',' expr )* )? ')'
+    : '(' ( anyExpr ( ',' anyExpr )* )? ')'
+    ;
+
+// Needed to make parameter parsing possible - the different subexpressions can cause problems
+anyExpr
+    : expr
+    | sexpr
     ;
 
 expr
@@ -77,6 +83,7 @@ expr
     | id=extendedID p=parameters                                        # funcExpr
     | id=extendedID                                                     # identifier
     | a=INT                                                             # intConstant
+    | b=('true' | 'false')                                              # boolConstant
     ;
 
 sexpr

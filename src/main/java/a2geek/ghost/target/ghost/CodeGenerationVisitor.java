@@ -132,6 +132,27 @@ public class CodeGenerationVisitor extends Visitor {
                 code.emit(Opcode.LOADC, 0xdb3a);    // STROUT
                 code.emit(Opcode.CALL);
             }
+            else if (action instanceof PrintStatement.PrintBooleanAction a) {
+                var label = label("STRTRUE", "STRFALSE", "PRINTTRUE", "PRINTFALSE");
+                String lblTrue = code.emitConstant(label.get(0), "True");
+                String lblFalse = code.emitConstant(label.get(1), "False");
+
+                dispatch(a.getExpr());
+                code.emit(Opcode.IFTRUE, label.get(2));
+                code.emit(Opcode.LOADA, lblFalse);
+                code.emit(Opcode.GOTO, label.get(3));
+                code.emit(label.get(2));
+                code.emit(Opcode.LOADA, lblTrue);
+                code.emit(label.get(3));
+                // duplicating print string code here
+                code.emit(Opcode.DUP);
+                code.emit(Opcode.SETACC);
+                code.emit(Opcode.LOADC, 0x100);
+                code.emit(Opcode.DIV);
+                code.emit(Opcode.SETYREG);
+                code.emit(Opcode.LOADC, 0xdb3a);    // STROUT
+                code.emit(Opcode.CALL);
+            }
             else if (action instanceof PrintStatement.PrintStringAction a) {
                 dispatch(a.getExpr());
                 code.emit(Opcode.DUP);

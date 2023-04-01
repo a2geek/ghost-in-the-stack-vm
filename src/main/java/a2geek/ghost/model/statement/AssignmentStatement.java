@@ -1,5 +1,6 @@
 package a2geek.ghost.model.statement;
 
+import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.Reference;
 import a2geek.ghost.model.Statement;
@@ -11,7 +12,7 @@ public class AssignmentStatement implements Statement {
     public AssignmentStatement(Reference ref, Expression expr) {
         this.ref = ref;
         this.expr = expr;
-        expr.mustBe(Expression.Type.INTEGER);
+        expr.mustBe(DataType.INTEGER, DataType.BOOLEAN);
     }
 
     public Reference getRef() {

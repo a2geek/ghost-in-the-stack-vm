@@ -10,6 +10,16 @@ Notes:
 * Code is case insensitive. `MYVAR` is the same as `myvar` is the same as `MyVar`.
   You may use `goto` or `GoTo` or `GOTO`.
 
+## Data types
+
+All variables are assumed to be 16 bit integers. Other data types exist in expressions.
+
+| Data Type | Notes                                                                                                                              |
+|:---------:|:-----------------------------------------------------------------------------------------------------------------------------------|
+|  Integer  | 16-bit integer (-32768..32767).                                                                                                    |
+|  Boolean  | True/False. All inequalities resolve to a Boolean. When added to an Integer, a Boolean is valued as `0` for False or `1` for True. |
+|  String   | String constants. Enclosed in quotes (`"`). Mostly used by `print` statement or `asc(..)` function.                                |
+
 ## Subroutines / Functions
 
 Subroutines may be declared at the top of the program. They have their own variable scope and, at this time,
@@ -157,17 +167,21 @@ end
 The following operations are currently supported. They are listed in order of precedence.
 (This has been done on the fly. Likely to change ... feel free to correct what is wrong.)
 
-|            Operator             | Type   | Notes                                                                        |
-|:-------------------------------:|:-------|:-----------------------------------------------------------------------------|
-|         `*`, `/`, `mod`         | Binary | Multiplication, division, modulus.                                           |
-|            `+`, `-`             | Binary | Addition, subtraction.                                                       |
-| `<`, `<=`, `>`, `>=`, `=`, `<>` | Binary | Inequalities. Note `<=`, `>=` and `<>` do not exist.                         |
-|           `or`, `and`           | Binary | Logical operations. Note that these evaluate to 1 or 0 (not bit operations). |
-|               `-`               | Unary  | Negation. This is only supported on constants at this time.                  |
-|          `(` expr `)`           | Other  | Parenthesis to group subexpressions.                                         |
-|            Functions            | Other  | See Functions section.                                                       |
-|              `var`              | Other  | Variable reference.                                                          |
-|             number              | Other  | Constant integer value.                                                      |
+|            Operator             | Type   | Input               | Result        | Notes                                                                        |
+|:-------------------------------:|:-------|:--------------------|:--------------|:-----------------------------------------------------------------------------|
+|         `*`, `/`, `mod`         | Binary | Integer, Boolean    | Integer       | Multiplication, division, modulus.                                           |
+|            `+`, `-`             | Binary | Integer, Boolean    | Integer       | Addition, subtraction.                                                       |
+| `<`, `<=`, `>`, `>=`, `=`, `<>` | Binary | Integer/Boolean[^1] | Boolean       | Inequalities. Note `<=`, `>=` and `<>` do not exist.                         |
+|           `or`, `and`           | Binary | Integer/Boolean[^1] | Boolean       | Logical operations. Note that these evaluate to 1 or 0 (not bit operations). |
+|               `-`               | Unary  | Integer             | Integer       | Negation. This is only supported on constants at this time.                  |
+|          `(` expr `)`           | Other  | Any                 | Same as input | Parenthesis to group subexpressions.                                         |
+|            Functions            | Other  | See Functions       | See Functions | See Functions section.                                                       |
+|              `var`              | Other  | Integer             | Integer       | Variable reference.                                                          |
+|             number              | Other  | Integer             | Integer       | Constant integer value.                                                      |
+|           `"string"`            | Other  | String              | String        | Constant string value.                                                       |
+|         `true`, `false`         | Other  | Boolean             | Boolean       | Constant boolean value.                                                      |
+
+[^1]: Types must match (that is you cannot compare an Integer to a Boolean).
 
 ## Functions
 

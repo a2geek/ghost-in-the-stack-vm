@@ -1,16 +1,17 @@
 package a2geek.ghost.model.expression;
 
+import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.Reference;
 
 import java.util.Objects;
 
 public class IdentifierExpression implements Expression {
-    private Type type = Type.INTEGER;   // Default for now
+    private DataType type = DataType.INTEGER;   // Default for now
     private Reference ref;
 
     @Override
-    public Type getType() {
+    public DataType getType() {
         return type;
     }
 

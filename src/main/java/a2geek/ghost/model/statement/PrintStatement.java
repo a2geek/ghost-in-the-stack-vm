@@ -1,5 +1,6 @@
 package a2geek.ghost.model.statement;
 
+import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.Statement;
 
@@ -23,6 +24,9 @@ public class PrintStatement implements Statement {
     public void addIntegerAction(Expression expr) {
         actions.add(new PrintIntegerAction(expr));
     }
+    public void addBooleanAction(Expression expr) {
+        actions.add(new PrintBooleanAction(expr));
+    }
     public void addStringAction(Expression expr) {
         actions.add(new PrintStringAction(expr));
     }
@@ -36,19 +40,19 @@ public class PrintStatement implements Statement {
     public interface Action {
 
     }
-    public class PrintNewlineAction implements Action {
+    public static class PrintNewlineAction implements Action {
         @Override
         public String toString() {
             return "";
         }
     }
-    public class PrintCommaAction implements Action {
+    public static class PrintCommaAction implements Action {
         @Override
         public String toString() {
             return ",";
         }
     }
-    public class PrintIntegerAction implements Action {
+    public static class PrintIntegerAction implements Action {
         private Expression expr;
 
         public PrintIntegerAction(Expression expr) {
@@ -59,7 +63,7 @@ public class PrintStatement implements Statement {
             return expr;
         }
         public void setExpr(Expression expr) {
-            expr.mustBe(Expression.Type.INTEGER);
+            expr.mustBe(DataType.INTEGER);
             this.expr = expr;
         }
 
@@ -68,7 +72,28 @@ public class PrintStatement implements Statement {
             return expr.toString();
         }
     }
-    public class PrintStringAction implements Action {
+    public static class PrintBooleanAction implements Action {
+        private Expression expr;
+
+        public PrintBooleanAction(Expression expr) {
+            setExpr(expr);
+        }
+
+        public Expression getExpr() {
+            return expr;
+        }
+
+        public void setExpr(Expression expr) {
+            expr.mustBe(DataType.BOOLEAN);
+            this.expr = expr;
+        }
+
+        @Override
+        public String toString() {
+            return expr.toString();
+        }
+    }
+    public static class PrintStringAction implements Action {
         private Expression expr;
 
         public PrintStringAction(Expression expr) {
@@ -79,7 +104,7 @@ public class PrintStatement implements Statement {
             return expr;
         }
         public void setExpr(Expression expr) {
-            expr.mustBe(Expression.Type.STRING);
+            expr.mustBe(DataType.STRING);
             this.expr = expr;
         }
 

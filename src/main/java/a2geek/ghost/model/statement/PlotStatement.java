@@ -1,5 +1,6 @@
 package a2geek.ghost.model.statement;
 
+import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.Statement;
 
@@ -17,7 +18,7 @@ public class PlotStatement implements Statement {
     }
 
     public void setX(Expression x) {
-        x.mustBe(Expression.Type.INTEGER);
+        x.mustBe(DataType.INTEGER);
         this.x = x;
     }
 
@@ -26,7 +27,7 @@ public class PlotStatement implements Statement {
     }
 
     public void setY(Expression y) {
-        y.mustBe(Expression.Type.INTEGER);
+        y.mustBe(DataType.INTEGER);
         this.y = y;
     }
 

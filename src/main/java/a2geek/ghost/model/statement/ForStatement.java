@@ -1,9 +1,6 @@
 package a2geek.ghost.model.statement;
 
-import a2geek.ghost.model.Expression;
-import a2geek.ghost.model.Reference;
-import a2geek.ghost.model.Statement;
-import a2geek.ghost.model.StatementBlock;
+import a2geek.ghost.model.*;
 
 public class ForStatement extends StatementBlock implements Statement {
     private Reference ref;
@@ -26,7 +23,7 @@ public class ForStatement extends StatementBlock implements Statement {
         return start;
     }
     public void setStart(Expression start) {
-        start.mustBe(Expression.Type.INTEGER);
+        start.mustBe(DataType.INTEGER);
         this.start = start;
     }
 
@@ -34,7 +31,7 @@ public class ForStatement extends StatementBlock implements Statement {
         return end;
     }
     public void setEnd(Expression end) {
-        end.mustBe(Expression.Type.INTEGER);
+        end.mustBe(DataType.INTEGER);
         this.end = end;
     }
 
@@ -42,7 +39,7 @@ public class ForStatement extends StatementBlock implements Statement {
         return step;
     }
     public void setStep(Expression step) {
-        step.mustBe(Expression.Type.INTEGER);
+        step.mustBe(DataType.INTEGER);
         this.step = step;
     }
 

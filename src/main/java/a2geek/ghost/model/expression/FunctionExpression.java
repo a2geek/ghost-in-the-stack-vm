@@ -1,5 +1,6 @@
 package a2geek.ghost.model.expression;
 
+import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.scope.Function;
 
@@ -13,9 +14,9 @@ public class FunctionExpression implements Expression {
     private static final Map<String,Descriptor> FUNCS = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     static {
         FUNCS.putAll(Map.of(
-            "peek", new Descriptor(Type.INTEGER, Type.INTEGER),
-            "scrn", new Descriptor(Type.INTEGER,Type.INTEGER, Type.INTEGER),
-            "asc", new Descriptor(Type.INTEGER, Type.STRING)
+            "peek", new Descriptor(DataType.INTEGER, DataType.INTEGER),
+            "scrn", new Descriptor(DataType.INTEGER, DataType.INTEGER, DataType.INTEGER),
+            "asc", new Descriptor(DataType.INTEGER, DataType.STRING)
         ));
     }
     public static boolean isIntrinsicFunction(String name) {
@@ -25,7 +26,7 @@ public class FunctionExpression implements Expression {
     private String name;
     private Function function;
     private List<Expression> parameters;
-    private Type returnType;
+    private DataType returnType;
 
     public FunctionExpression(String name, List<Expression> parameters) {
         this.name = name;
@@ -47,11 +48,11 @@ public class FunctionExpression implements Expression {
         this.function = function;
         this.parameters = expr;
         // FIXME once we get real types!
-        this.returnType = Type.INTEGER;
+        this.returnType = DataType.INTEGER;
     }
 
     @Override
-    public Type getType() {
+    public DataType getType() {
         return returnType;
     }
 
@@ -94,8 +95,8 @@ public class FunctionExpression implements Expression {
     }
 
     public record Descriptor(
-            Type returnType,
-            Type... parameterTypes
+            DataType returnType,
+            DataType... parameterTypes
     ) {
 
     }

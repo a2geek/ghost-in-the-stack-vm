@@ -1,5 +1,6 @@
 package a2geek.ghost.model.visitor;
 
+import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.Visitor;
 import a2geek.ghost.model.expression.*;
@@ -7,13 +8,14 @@ import a2geek.ghost.model.expression.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.function.BiFunction;
 
 public class RewriteVisitor extends Visitor {
     private static final Map<String, BiFunction<Integer,Integer,Integer>> BINOPS;
     static {
         // 'Map.of(...)' maxes out at 10 items.
-        BINOPS = new HashMap<>();
+        BINOPS = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         BINOPS.putAll(Map.of(
                 "+",   (a,b) -> a+b,
                 "-",   (a,b) -> a-b,
@@ -38,13 +40,32 @@ public class RewriteVisitor extends Visitor {
         dispatch(expression.getL()).ifPresent(expression::setL);
         dispatch(expression.getR()).ifPresent(expression::setR);
 
+        BinaryExpression.Descriptor desc = BinaryExpression.OPS.get(expression.getOp());
+        // Re-applying the validation -- expecting rewrite might mess something up!
+        if (desc == null) {
+            throw new RuntimeException("unknown binary operator: " + expression.getOp());
+        }
+        if (!desc.validateArgTypes(expression.getL().getType(), expression.getR().getType())) {
+            String message = String.format("argument types not supported for '%s': %s, %s",
+                    expression.getOp(), expression.getL().getType(), expression.getR().getType());
+            throw new RuntimeException(message);
+        }
+
         // Handle constant reduction
-        if (expression.getL() instanceof IntegerConstant l
-                && expression.getR() instanceof IntegerConstant r) {
-            if (BINOPS.containsKey(expression.getOp())) {
-                BiFunction<Integer,Integer,Integer> f = BINOPS.get(expression.getOp());
-                return new IntegerConstant(f.apply(l.getValue(), r.getValue()));
-            }
+        boolean lconst = expression.getL() instanceof IntegerConstant || expression.getL() instanceof BooleanConstant;
+        boolean rconst = expression.getR() instanceof IntegerConstant || expression.getR() instanceof BooleanConstant;
+        if (lconst && rconst && BINOPS.containsKey(expression.getOp())) {
+            BiFunction<Integer,Integer,Integer> f = BINOPS.get(expression.getOp());
+            int l = toInteger(expression.getL());
+            int r = toInteger(expression.getR());
+            int value = f.apply(l, r);
+            return switch (desc.returnType()) {
+                case INTEGER -> new IntegerConstant(value);
+                case BOOLEAN -> new BooleanConstant(value != 0);
+                default -> {
+                    throw new RuntimeException("unexpected datatype in constant reduction: " + desc.returnType());
+                }
+            };
         }
 
         // Special cases
@@ -71,6 +92,18 @@ public class RewriteVisitor extends Visitor {
         }
 
         throw new RuntimeException("Operation not supported: " + expression);
+    }
+
+    public int toInteger(Expression expr) {
+        if (expr instanceof IntegerConstant e) {
+            return e.getValue();
+        }
+        else if (expr instanceof BooleanConstant e) {
+            return e.getValue() ? 1 : 0;
+        }
+        else {
+            throw new RuntimeException("unable to convert to integer: " + expr.getClass().getName());
+        }
     }
 
     @Override

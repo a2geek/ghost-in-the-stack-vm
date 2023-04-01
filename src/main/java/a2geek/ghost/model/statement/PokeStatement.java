@@ -1,5 +1,6 @@
 package a2geek.ghost.model.statement;
 
+import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.Statement;
 
@@ -17,7 +18,7 @@ public class PokeStatement implements Statement {
     }
 
     public void setA(Expression a) {
-        a.mustBe(Expression.Type.INTEGER);
+        a.mustBe(DataType.INTEGER);
         this.a = a;
     }
 
@@ -26,7 +27,7 @@ public class PokeStatement implements Statement {
     }
 
     public void setB(Expression b) {
-        b.mustBe(Expression.Type.INTEGER);
+        b.mustBe(DataType.INTEGER);
         this.b = b;
     }
 

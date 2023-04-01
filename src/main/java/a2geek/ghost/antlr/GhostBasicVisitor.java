@@ -227,6 +227,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                 Expression expr = pt.accept(this);
                 switch (expr.getType()) {
                     case INTEGER -> printStatement.addIntegerAction(expr);
+                    case BOOLEAN -> printStatement.addBooleanAction(expr);
                     case STRING -> printStatement.addStringAction(expr);
                     default -> throw new RuntimeException("Unsupported PRINT type: " + expr.getType());
                 }
@@ -346,7 +347,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         String name = caseStrategy.apply(ctx.id.getText());
         List<Expression> params = new ArrayList<>();
         if (ctx.p != null) {
-            ctx.p.expr().stream().map(this::visit).forEach(params::add);
+            ctx.parameters().anyExpr().stream().map(this::visit).forEach(params::add);
         }
 
         CallSubroutine callSubroutine = new CallSubroutine(name, params);
@@ -388,7 +389,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         String id = caseStrategy.apply(ctx.id.getText());
         List<Expression> params = new ArrayList<>();
         if (ctx.p != null) {
-            ctx.p.expr().stream().map(this::visit).forEach(params::add);
+            ctx.parameters().anyExpr().stream().map(this::visit).forEach(params::add);
         }
 
         if (Intrinsic.CPU_REGISTERS.contains(id.toLowerCase())) {
@@ -428,6 +429,11 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         Expression r = visit(ctx.b);
         String op = ctx.op.getText();
         return new BinaryExpression(l, r, op);
+    }
+
+    @Override
+    public Expression visitBoolConstant(BasicParser.BoolConstantContext ctx) {
+        return new BooleanConstant(Boolean.parseBoolean(ctx.b.getText()));
     }
 
     @Override
