@@ -1,11 +1,9 @@
 package a2geek.ghost.model.visitor;
 
-import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.Visitor;
 import a2geek.ghost.model.expression.*;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -16,22 +14,33 @@ public class RewriteVisitor extends Visitor {
     static {
         // 'Map.of(...)' maxes out at 10 items.
         BINOPS = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        // Arithmetic
         BINOPS.putAll(Map.of(
-                "+",   (a,b) -> a+b,
-                "-",   (a,b) -> a-b,
-                "*",   (a,b) -> a*b,
-                "/",   (a,b) -> a/b,
-                "mod", (a,b) -> a%b
+            "+",   (a,b) -> a+b,
+            "-",   (a,b) -> a-b,
+            "*",   (a,b) -> a*b,
+            "/",   (a,b) -> a/b,
+            "mod", (a,b) -> a%b
         ));
+        // Comparison
         BINOPS.putAll(Map.of(
-                "<",   (a,b) -> (a<b) ? 1 : 0,
-                "<=",  (a,b) -> (a<=b) ? 1 : 0,
-                ">",   (a,b) -> (a>b) ? 1 : 0,
-                ">=",  (a,b) -> (a>=b) ? 1 : 0,
-                "=",   (a,b) -> (a==b) ? 1 : 0,
-                "<>",  (a,b) -> (a!=b) ? 1 : 0,
-                "or",  (a,b) -> ((a!=0) || (b!=0)) ? 1 : 0,
-                "and", (a,b) -> ((a!=0) && (b!=0)) ? 1 : 0
+            "<",   (a,b) -> (a<b) ? 1 : 0,
+            "<=",  (a,b) -> (a<=b) ? 1 : 0,
+            ">",   (a,b) -> (a>b) ? 1 : 0,
+            ">=",  (a,b) -> (a>=b) ? 1 : 0,
+            "=",   (a,b) -> (a==b) ? 1 : 0,
+            "<>",  (a,b) -> (a!=b) ? 1 : 0
+        ));
+        // Logical/Bit
+        BINOPS.putAll(Map.of(
+            "or",  (a,b) -> a|b,
+            "and", (a,b) -> a&b,
+            "xor", (a,b) -> a^b
+        ));
+        // Bit
+        BINOPS.putAll(Map.of(
+           "<<", (a,b) -> a<<b,
+           ">>", (a,b) -> a>>b
         ));
     }
 
@@ -40,16 +49,11 @@ public class RewriteVisitor extends Visitor {
         dispatch(expression.getL()).ifPresent(expression::setL);
         dispatch(expression.getR()).ifPresent(expression::setR);
 
-        BinaryExpression.Descriptor desc = BinaryExpression.OPS.get(expression.getOp());
-        // Re-applying the validation -- expecting rewrite might mess something up!
-        if (desc == null) {
-            throw new RuntimeException("unknown binary operator: " + expression.getOp());
-        }
-        if (!desc.validateArgTypes(expression.getL().getType(), expression.getR().getType())) {
+        var desc = BinaryExpression.findDescriptor(expression.getOp(), expression.getL().getType(), expression.getR().getType()).orElseGet(() -> {
             String message = String.format("argument types not supported for '%s': %s, %s",
                     expression.getOp(), expression.getL().getType(), expression.getR().getType());
             throw new RuntimeException(message);
-        }
+        });
 
         // Handle constant reduction
         boolean lconst = expression.getL() instanceof IntegerConstant || expression.getL() instanceof BooleanConstant;
@@ -70,9 +74,6 @@ public class RewriteVisitor extends Visitor {
 
         // Special cases
         switch (expression.getOp()) {
-            case "+", "-", "<", "<=", ">", ">=", "<>", "=", "/", "mod", "or", "and" -> {
-                return null;
-            }
             case "*" -> {
                 // Strength reduction
                 if (expression.getL() instanceof IntegerConstant l) {
@@ -91,7 +92,7 @@ public class RewriteVisitor extends Visitor {
             }
         }
 
-        throw new RuntimeException("Operation not supported: " + expression);
+        return null;
     }
 
     public int toInteger(Expression expr) {

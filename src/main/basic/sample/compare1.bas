@@ -1,8 +1,6 @@
 text
 home
 
-' no strings yet - just need to remember!
-
 ' cannot use a constant since those get optimized away!
 a = 1
 b = 2
@@ -21,7 +19,13 @@ print
 a = 0
 b = 1
 
-print "OR ", (A or A),  (A or B),  (B or A),  (B or B)
-print "AND", (A and A), (A and B), (B and A), (B and B)
+' The crazy comparisons are to get a Boolean since we don't
+' have that as an independent data type!
+print "==>   F op F  F op T   T op F   T op T"
+print
+print "OR ", ((A=1) or (A=1)),  ((A=1) or (B=1)),  ((B=1) or (A=1)),  ((B=1) or (B=1))
+print "AND", ((A=1) and (A=1)), ((A=1) and (B=1)), ((B=1) and (A=1)), ((B=1) and (B=1))
+print "XOR", ((A=1) xor (A=1)), ((A=1) xor (B=1)), ((B=1) xor (A=1)), ((B=1) xor (B=1))
+print
 
 end

@@ -77,7 +77,8 @@ expr
     : a=expr op=( '*' | '/' | 'mod' ) b=expr                            # binaryExpr
     | a=expr op=( '+' | '-' ) b=expr                                    # binaryExpr
     | a=expr op=( '<' | '<=' | '>' | '>=' | '=' | '<>' ) b=expr         # binaryExpr
-    | a=expr op=( 'or' | 'and' ) b=expr                                 # binaryExpr
+    | a=expr op=( '<<' | '>>' ) b=expr                                  # binaryExpr
+    | a=expr op=( 'or' | 'and' | 'xor' ) b=expr                         # binaryExpr
     | op='-' a=expr                                                     # unaryExpr
     | '(' a=expr ')'                                                    # parenExpr
     | id=extendedID p=parameters                                        # funcExpr

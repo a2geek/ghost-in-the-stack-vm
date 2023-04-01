@@ -167,19 +167,20 @@ end
 The following operations are currently supported. They are listed in order of precedence.
 (This has been done on the fly. Likely to change ... feel free to correct what is wrong.)
 
-|            Operator             | Type   | Input               | Result        | Notes                                                                        |
-|:-------------------------------:|:-------|:--------------------|:--------------|:-----------------------------------------------------------------------------|
-|         `*`, `/`, `mod`         | Binary | Integer, Boolean    | Integer       | Multiplication, division, modulus.                                           |
-|            `+`, `-`             | Binary | Integer, Boolean    | Integer       | Addition, subtraction.                                                       |
-| `<`, `<=`, `>`, `>=`, `=`, `<>` | Binary | Integer/Boolean[^1] | Boolean       | Inequalities. Note `<=`, `>=` and `<>` do not exist.                         |
-|           `or`, `and`           | Binary | Integer/Boolean[^1] | Boolean       | Logical operations. Note that these evaluate to 1 or 0 (not bit operations). |
-|               `-`               | Unary  | Integer             | Integer       | Negation. This is only supported on constants at this time.                  |
-|          `(` expr `)`           | Other  | Any                 | Same as input | Parenthesis to group subexpressions.                                         |
-|            Functions            | Other  | See Functions       | See Functions | See Functions section.                                                       |
-|              `var`              | Other  | Integer             | Integer       | Variable reference.                                                          |
-|             number              | Other  | Integer             | Integer       | Constant integer value.                                                      |
-|           `"string"`            | Other  | String              | String        | Constant string value.                                                       |
-|         `true`, `false`         | Other  | Boolean             | Boolean       | Constant boolean value.                                                      |
+|            Operator             | Type   | Input               | Result        | Notes                                                                                                                                             |
+|:-------------------------------:|:-------|:--------------------|:--------------|:--------------------------------------------------------------------------------------------------------------------------------------------------|
+|         `*`, `/`, `mod`         | Binary | Integer, Boolean    | Integer       | Multiplication, division, modulus.                                                                                                                |
+|            `+`, `-`             | Binary | Integer, Boolean    | Integer       | Addition, subtraction.                                                                                                                            |
+| `<`, `<=`, `>`, `>=`, `=`, `<>` | Binary | Integer/Boolean[^1] | Boolean       | Inequalities. Note `<=`, `>=` and `<>` do not exist.                                                                                              |
+|           `<<`, `>>`            | Binary | Integer/Boolean     | Integer       | Left and right bit shifts. If booleans are supplied, they are evaluated as 1 or 0.                                                                |
+|       `or`, `and`, `xor`        | Binary | Integer/Boolean[^1] | Boolean       | Bit and Logical operations. If arguments are booleans, this is a logical true/false evaluation. If this is integer, this is a bitwise evaluation. |
+|               `-`               | Unary  | Integer             | Integer       | Negation. This is only supported on constants at this time.                                                                                       |
+|          `(` expr `)`           | Other  | Any                 | Same as input | Parenthesis to group subexpressions.                                                                                                              |
+|            Functions            | Other  | See Functions       | See Functions | See Functions section.                                                                                                                            |
+|              `var`              | Other  | Integer             | Integer       | Variable reference.                                                                                                                               |
+|             number              | Other  | Integer             | Integer       | Constant integer value.                                                                                                                           |
+|           `"string"`            | Other  | String              | String        | Constant string value.                                                                                                                            |
+|         `true`, `false`         | Other  | Boolean             | Boolean       | Constant boolean value.                                                                                                                           |
 
 [^1]: Types must match (that is you cannot compare an Integer to a Boolean).
 

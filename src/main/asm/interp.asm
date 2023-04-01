@@ -191,6 +191,9 @@ brtable:
     .addr _ne-1
     .addr _or-1
     .addr _and-1
+    .addr _xor-1
+    .addr _shiftl-1
+    .addr _shiftr-1
     .addr _setacc-1
     .addr _getacc-1
     .addr _setxreg-1
@@ -339,24 +342,60 @@ _ne:
     bne setBto1
     beq setBto0
 
-; OR: (B) (A) => (B OR A); at least one is true
+; OR: (B) (A) => (B OR A); bitwise OR (booleans are essentially 1 bit)
 _or:
-    lda stackB,x
+    lda stackA+1,x
     ora stackB+1,x
-    ora stackA,x
-    ora stackA+1,x
-    bne setBto1
-    beq setBto0
-
-; AND: (B) (A) => (B AND A); both are true
-_and:
-    lda stackB,x
-    ora stackB+1,x
-    beq setBto0
+    tay
     lda stackA,x
-    ora stackA+1,x
-    beq setBto0
-    bne setBto1
+    ora stackB,x
+    jmp setbpoploop
+
+; AND: (B) (A) => (B AND A); bitwise AND (booleans are essentially 1 bit)
+_and:
+    lda stackA+1,x
+    and stackB+1,x
+    tay
+    lda stackA,x
+    and stackB,x
+    jmp setbpoploop
+
+; XOR: (B) (A) => (B XOR A); bitwise XOR (booleans are essentially 1 bit)
+_xor:
+    lda stackA+1,x
+    eor stackB+1,x
+    tay
+    lda stackA,x
+    eor stackB,x
+    jmp setbpoploop
+
+; SHIFTL: (B) (A) => (B << A); bitwise left shift (masked to max of 15 shifts)
+_shiftl:
+    lda stackA,x
+    and #$f
+    beq @done
+    tay
+@loop:
+    asl stackB,x
+    rol stackB+1,x
+    dey
+    bne @loop
+@done:
+    jmp poploop
+
+; SHIFTR: (B) (A) => (B >> A); bitwise right shift (masked to max of 15 shifts)
+_shiftr:
+    lda stackA,x
+    and #$f
+    beq @done
+    tay
+@loop:
+    lsr stackB+1,x
+    ror stackB,x
+    dey
+    bne @loop
+@done:
+    jmp poploop
 
 ; SETACC: (A) => (); Acc=byte(A)
 _setacc:

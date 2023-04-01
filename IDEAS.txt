@@ -19,7 +19,6 @@ REPEAT loop
 DEF FN == Function
 ProDOS commands (OPEN, READ, WRITE, CLOSE). Is this SUB and/or FUNCTION?
 HGR
-Bit shifting, bit anding, bit oring, bit xoring?
 Constant arrays - can replace all those silly POKE statements with a loop and likely help with DATA statements.
 Arrays - need heap. Where? $200? but that is input and ProDOS can use it. If they are hard-coded, then they can just go into code!
 Function libraries (with inline?) - can a function return more than one value?

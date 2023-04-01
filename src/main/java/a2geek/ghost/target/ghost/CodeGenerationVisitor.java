@@ -120,8 +120,8 @@ public class CodeGenerationVisitor extends Visitor {
                 dispatch(a.getExpr());
                 code.emit(Opcode.DUP);
                 code.emit(Opcode.SETYREG);
-                code.emit(Opcode.LOADC, 0x100);
-                code.emit(Opcode.DIV);
+                code.emit(Opcode.LOADC, 8);
+                code.emit(Opcode.SHIFTR);
                 code.emit(Opcode.SETACC);
                 code.emit(Opcode.LOADC, 0xe2f2);    // GIVAYF
                 code.emit(Opcode.CALL);
@@ -147,8 +147,8 @@ public class CodeGenerationVisitor extends Visitor {
                 // duplicating print string code here
                 code.emit(Opcode.DUP);
                 code.emit(Opcode.SETACC);
-                code.emit(Opcode.LOADC, 0x100);
-                code.emit(Opcode.DIV);
+                code.emit(Opcode.LOADC, 8);
+                code.emit(Opcode.SHIFTR);
                 code.emit(Opcode.SETYREG);
                 code.emit(Opcode.LOADC, 0xdb3a);    // STROUT
                 code.emit(Opcode.CALL);
@@ -157,8 +157,8 @@ public class CodeGenerationVisitor extends Visitor {
                 dispatch(a.getExpr());
                 code.emit(Opcode.DUP);
                 code.emit(Opcode.SETACC);
-                code.emit(Opcode.LOADC, 0x100);
-                code.emit(Opcode.DIV);
+                code.emit(Opcode.LOADC, 8);
+                code.emit(Opcode.SHIFTR);
                 code.emit(Opcode.SETYREG);
                 code.emit(Opcode.LOADC, 0xdb3a);    // STROUT
                 code.emit(Opcode.CALL);
@@ -438,6 +438,9 @@ public class CodeGenerationVisitor extends Visitor {
             case "<>" -> code.emit(Opcode.NE);
             case "or" -> code.emit(Opcode.OR);
             case "and" -> code.emit(Opcode.AND);
+            case "xor" -> code.emit(Opcode.XOR);
+            case "<<" -> code.emit(Opcode.SHIFTL);
+            case ">>" -> code.emit(Opcode.SHIFTR);
             default -> throw new RuntimeException("Operation not supported: " + expression.getOp());
         }
         return null;
