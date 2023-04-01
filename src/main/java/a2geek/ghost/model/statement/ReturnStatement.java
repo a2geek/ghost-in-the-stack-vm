@@ -7,7 +7,6 @@ public class ReturnStatement implements Statement {
     private Expression expr;
 
     public ReturnStatement() {
-        this.expr = expr;
     }
     public ReturnStatement(Expression expr) {
         this.expr = expr;
