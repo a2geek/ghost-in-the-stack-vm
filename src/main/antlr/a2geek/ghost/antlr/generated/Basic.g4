@@ -19,6 +19,7 @@ declarations
     | 'function' id=ID p=paramDecl? EOL+
         (s=statements)?
       'end' 'function'                                                  # funcDecl
+    | EOL                                                               # emptyDecl
     ;
 
 statements
