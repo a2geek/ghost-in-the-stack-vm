@@ -1,7 +1,6 @@
 Capturing ideas
 ===============
 
-Add alternate number specs (0x for hex would help).
 CONST for named constants.
 How to make reusable libraries which use inline interpreted code? Looks like there can be "nested" grammars!
 Look at how bytecode is created - feels like Opcode and Directive can support Instruction more directly.

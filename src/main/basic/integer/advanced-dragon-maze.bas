@@ -11,11 +11,11 @@ end function
 ' See http://www.retroprogramming.com/2017/07/xorshift-pseudorandom-numbers-in-z80.html
 function random()
     ' 78-79   | $4E-$4F     | Random-Number Field
-    r = peekw(78)
+    r = peekw(0x4e)
     r = r xor (r << 7)
     r = r xor (r >> 9)
     r = r xor (r << 8)
-    pokew(78, r)
+    pokew(0x4e, r)
     return r
 end function
 
@@ -32,7 +32,7 @@ end function
 
 '  * ADVANCED DRAGON MAZE *
 
-    ADDR = 768  ' moving machine code to $300
+    ADDR = 0x300  ' moving machine code to $300
 
 L100:   ' Note that code referenced line 15 which did not exist. Guessing as to Integer BASIC behavior
     CALL -936:VTAB 4:HTAB 16:PRINT "ADVANCED":HTAB 14:PRINT "DRAGON MAZE":PRINT :HTAB 11:PRINT "BY GARY J. SHANNON":PRINT :PRINT
@@ -100,10 +100,10 @@ L3022:
 L3025:
     Q= PEEK (-16384): POKE -16368,0:IF Q=155 THEN GOTO L100
     IF Q<127 THEN GOTO L3028
-    IF Q= ASC("U") THEN GOTO L3038
-    IF Q= ASC("D") THEN GOTO L3039
-    IF Q= ASC("L") THEN GOTO L3040
-    IF Q= ASC("R") THEN GOTO L3041
+    IF Q= ASC("U") OR Q=ASC("A") THEN GOTO L3038
+    IF Q= ASC("D") OR Q=ASC("Z") THEN GOTO L3039
+    IF Q= ASC("L") OR Q=0x88 THEN GOTO L3040
+    IF Q= ASC("R") OR Q=0x95 THEN GOTO L3041
 L3027:
     IF PX=LPX AND PY=LPY THEN GOTO L3021
     COLOR= 0:PLOT LPX,LPY:COLOR= P:PLOT PX,PY:LPX=PX:LPY=PY:GOTO L3021

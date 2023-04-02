@@ -415,6 +415,13 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
     @Override
     public Expression visitIntConstant(BasicParser.IntConstantContext ctx) {
+        var a = ctx.a.getText();
+        if (a.startsWith("0x")) {
+            return new IntegerConstant(Integer.parseInt(a.substring(2), 16));
+        }
+        else if (a.startsWith("0b")) {
+            return new IntegerConstant(Integer.parseInt(a.substring(2), 2));
+        }
         return new IntegerConstant(Integer.parseInt(ctx.a.getText()));
     }
 
