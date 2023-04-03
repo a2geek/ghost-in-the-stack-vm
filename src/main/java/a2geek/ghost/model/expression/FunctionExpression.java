@@ -4,10 +4,7 @@ import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.scope.Function;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class FunctionExpression implements Expression {
@@ -70,6 +67,23 @@ public class FunctionExpression implements Expression {
 
     public void setParameters(List<Expression> parameters) {
         this.parameters = parameters;
+    }
+
+    @Override
+    public boolean isConstant() {
+        if ("asc".equalsIgnoreCase(name) && parameters.size() == 1) {
+            return parameters.get(0).isConstant();
+        }
+        return false;
+    }
+
+    @Override
+    public Optional<Integer> asInteger() {
+        if ("asc".equalsIgnoreCase(name) && parameters.size() == 1 &&
+                parameters.get(0) instanceof StringConstant s) {
+            return Optional.of(s.getValue().charAt(0)|0x80);
+        }
+        return Optional.empty();
     }
 
     @Override

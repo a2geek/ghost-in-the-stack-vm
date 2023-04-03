@@ -1,5 +1,7 @@
 package a2geek.ghost.model;
 
+import java.util.Optional;
+
 public interface Expression {
     public DataType getType();
 
@@ -17,4 +19,17 @@ public interface Expression {
         throw new RuntimeException(message);
     }
 
+    public default boolean isConstant() {
+        return false;
+    }
+
+    public default Optional<Integer> asInteger() {
+        return Optional.empty();
+    }
+    public default Optional<Boolean> asBoolean() {
+        return Optional.empty();
+    }
+    public default Optional<String> asString() {
+        return Optional.empty();
+    }
 }

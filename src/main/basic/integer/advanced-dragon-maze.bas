@@ -32,7 +32,7 @@ end function
 
 '  * ADVANCED DRAGON MAZE *
 
-    ADDR = 0x300  ' moving machine code to $300
+    const ADDR = 0x300  ' moving machine code to $300
 
 L100:   ' Note that code referenced line 15 which did not exist. Guessing as to Integer BASIC behavior
     CALL -936:VTAB 4:HTAB 16:PRINT "ADVANCED":HTAB 14:PRINT "DRAGON MAZE":PRINT :HTAB 11:PRINT "BY GARY J. SHANNON":PRINT :PRINT
@@ -143,7 +143,7 @@ L3040:
     PX=PX-1:GOTO L3027
 L3041:
     IF  SCRN(PX+1,PY)<>0 THEN GOTO L3028
-    PX=PX+1:GOTO GOTO L3027
+    PX=PX+1:GOTO L3027
 L3042:
     PRINT "GOTCHA<CTRL-G>!<CTRL-G>!<CTRL-G>!<CTRL-G>":FOR T=1 TO 500:NEXT T
     GOTO L100

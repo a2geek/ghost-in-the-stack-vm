@@ -29,6 +29,7 @@ statements
 statement
     : id=extendedID '=' a=expr                                          # assignment
     | id=ID ':'                                                         # label
+    | 'const' constantDecl ( ',' constantDecl )*                        # constant
     | 'if' a=expr 'then' t=statement                                    # ifShortStatement
     | 'if' a=expr 'then' EOL+
         t=statements 
@@ -54,6 +55,10 @@ statement
     | 'vtab' a=expr                                                     # vtabStmt
     | 'htab' a=expr                                                     # htabStmt
     | 'call'? id=ID p=parameters?                                       # callSub
+    ;
+
+constantDecl
+    : id=ID '=' e=expr
     ;
 
 extendedID

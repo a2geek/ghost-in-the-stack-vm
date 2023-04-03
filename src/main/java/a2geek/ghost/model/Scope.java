@@ -1,6 +1,5 @@
 package a2geek.ghost.model;
 
-import java.sql.Array;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -55,6 +54,16 @@ public class Scope extends StatementBlock {
             return ref;
         });
     }
+    public Reference addLocalConstant(String name, Expression expr) {
+        if (findLocalVariable(name).isPresent()) {
+            String msg = String.format("name already exists in scope, cannot add twice: %s", name);
+            throw new RuntimeException(msg);
+        }
+        var fixedName = caseStrategy.apply(name);
+        var ref = new Reference(fixedName, expr);
+        variables.add(ref);
+        return ref;
+    }
 
     public Optional<Reference> findLocalVariable(String name) {
         var fixedName = caseStrategy.apply(name);
@@ -93,6 +102,7 @@ public class Scope extends StatementBlock {
         LOCAL,
         PARAMETER,
         RETURN_VALUE,
-        INTRINSIC
+        INTRINSIC,
+        CONSTANT
     }
 }

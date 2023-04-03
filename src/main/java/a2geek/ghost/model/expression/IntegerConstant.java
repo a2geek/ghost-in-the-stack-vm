@@ -4,12 +4,33 @@ import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.Expression;
 
 import java.util.Objects;
+import java.util.Optional;
 
 public class IntegerConstant implements Expression {
     public static final IntegerConstant ONE = new IntegerConstant(1);
     public static final IntegerConstant NEGATIVE_ONE = new IntegerConstant(-1);
 
     private int value;
+
+    @Override
+    public boolean isConstant() {
+        return true;
+    }
+
+    @Override
+    public Optional<Integer> asInteger() {
+        return Optional.of(value);
+    }
+
+    @Override
+    public Optional<Boolean> asBoolean() {
+        return Optional.of(value != 0);
+    }
+
+    @Override
+    public Optional<String> asString() {
+        return Optional.of(Integer.toString(value));
+    }
 
     @Override
     public DataType getType() {

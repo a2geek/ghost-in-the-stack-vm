@@ -47,9 +47,15 @@ If there are no parameters the parenthesis can be dropped as well.
 Generally, statements probably can be chained together with colons (':') but use separate lines if it doesn't 
 parse correctly (most likely is a compiler error). 
 
-### Assignment
+### Assignment / Constants
 
-`var = expr`
+The `let` keyword is optional (as usual). `const` declares a constant which is handy and can be reduced by the compiler before execution.
+
+```basic
+const addr = 0x300
+var = expr
+let var = expr
+```
 
 ### Traditional control flow
 
@@ -181,6 +187,8 @@ The following operations are currently supported. They are listed in order of pr
 |             number              | Other  | Integer             | Integer       | Constant integer value.                                                                                                                           |
 |           `"string"`            | Other  | String              | String        | Constant string value.                                                                                                                            |
 |         `true`, `false`         | Other  | Boolean             | Boolean       | Constant boolean value.                                                                                                                           |
+
+Note that a number can be defined in decimal (`1234`), hexadecimal (`0x12ed`), or binary (`0b1010`).
 
 [^1]: Types must match (that is you cannot compare an Integer to a Boolean).
 

@@ -4,6 +4,7 @@ import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.Expression;
 
 import java.util.Objects;
+import java.util.Optional;
 
 public class UnaryExpression implements Expression {
     private DataType type;
@@ -17,6 +18,26 @@ public class UnaryExpression implements Expression {
         if (!expr.isType(type)) {
             throw new RuntimeException("Unary operation must be of type " + type);
         }
+    }
+
+    @Override
+    public boolean isConstant() {
+        return expr.isConstant();
+    }
+
+    @Override
+    public Optional<Integer> asInteger() {
+        return expr.asInteger().map(i -> -i);
+    }
+
+    @Override
+    public Optional<Boolean> asBoolean() {
+        return asInteger().map(i -> i!=0);
+    }
+
+    @Override
+    public Optional<String> asString() {
+        return asInteger().map(i -> Integer.toString(i));
     }
 
     @Override

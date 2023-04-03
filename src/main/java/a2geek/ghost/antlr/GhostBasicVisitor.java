@@ -12,7 +12,6 @@ import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.util.*;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     private Function<String,String> caseStrategy;
@@ -354,6 +353,24 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         addStatement(callSubroutine);
 
         return null;
+    }
+
+    @Override
+    public Expression visitConstant(BasicParser.ConstantContext ctx) {
+        if (ctx.constantDecl() != null) {
+            for (var decl : ctx.constantDecl()) {
+                var id = caseStrategy.apply(decl.id.getText());
+                var e = visit(decl.e);
+                if (e.isConstant()) {
+                    this.scope.peek().addLocalConstant(id, e);
+                }
+                else {
+                    String msg = String.format("'%s' is not a constant: %s", id, e);
+                    throw new RuntimeException(msg);
+                }
+            }
+        }
+        return super.visitConstant(ctx);
     }
 
     @Override

@@ -4,9 +4,10 @@ import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.Expression;
 
 import java.util.*;
+import java.util.function.BiFunction;
 
 public class BinaryExpression implements Expression {
-    private static final List<Descriptor> OPS = List.of(
+    private static final List<Descriptor> DESCRIPTORS = List.of(
         // Arithmetic
         new Descriptor("+", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN),
         new Descriptor("-", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN),
@@ -32,7 +33,7 @@ public class BinaryExpression implements Expression {
         new Descriptor(">>", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN)
     );
     public static Optional<Descriptor> findDescriptor(String operator, DataType left, DataType right) {
-        for (var d : OPS) {
+        for (var d : DESCRIPTORS) {
             if (d.operator().equalsIgnoreCase(operator) && d.validateArgTypes(left, right)) {
                 return Optional.of(d);
             }
@@ -40,7 +41,50 @@ public class BinaryExpression implements Expression {
         return Optional.empty();
     }
 
-    private DataType type;
+    private static final Map<String, BiFunction<Integer,Integer,Integer>> INTEGER_OPS;
+    static {
+        // 'Map.of(...)' maxes out at 10 items.
+        INTEGER_OPS = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        // Arithmetic
+        INTEGER_OPS.putAll(Map.of(
+            "+",   (a,b) -> a+b,
+            "-",   (a,b) -> a-b,
+            "*",   (a,b) -> a*b,
+            "/",   (a,b) -> a/b,
+            "mod", (a,b) -> a%b
+        ));
+        // Comparison
+        INTEGER_OPS.putAll(Map.of(
+            "<",   (a,b) -> (a<b) ? 1 : 0,
+            "<=",  (a,b) -> (a<=b) ? 1 : 0,
+            ">",   (a,b) -> (a>b) ? 1 : 0,
+            ">=",  (a,b) -> (a>=b) ? 1 : 0,
+            "=",   (a,b) -> (a==b) ? 1 : 0,
+            "<>",  (a,b) -> (a!=b) ? 1 : 0
+        ));
+        // Bit
+        INTEGER_OPS.putAll(Map.of(
+            "or",  (a,b) -> a|b,
+            "and", (a,b) -> a&b,
+            "xor", (a,b) -> a^b,
+            "<<", (a,b) -> a<<b,
+            ">>", (a,b) -> a>>b
+        ));
+    }
+
+    private static final Map<String, BiFunction<Boolean,Boolean,Boolean>> LOGICAL_OPS;
+    static {
+        // 'Map.of(...)' maxes out at 10 items.
+        LOGICAL_OPS = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        // Logical
+        LOGICAL_OPS.putAll(Map.of(
+            "or",  (a,b) -> a || b,
+            "and", (a,b) -> a && b,
+            "xor", (a,b) -> a ^ b
+        ));
+    }
+
+    private Descriptor descriptor;
     private Expression l;
     private Expression r;
     private String op;
@@ -67,20 +111,60 @@ public class BinaryExpression implements Expression {
 
     @Override
     public DataType getType() {
-        return type;
+        return descriptor.returnType();
+    }
+
+    public Descriptor getDescriptor() {
+        return descriptor;
+    }
+
+    @Override
+    public boolean isConstant() {
+        return getL().isConstant() && getR().isConstant();
     }
 
     public BinaryExpression(Expression l, Expression r, String op) {
-        Descriptor d = findDescriptor(op, l.getType(), r.getType()).orElseGet(() -> {
-            String message = String.format("argument types not supported for '%s': %s, %s",
-                    op, l.getType(), r.getType());
-            throw new RuntimeException(message);
-        });
+        Descriptor d = findDescriptor(op, l.getType(), r.getType()).orElseThrow(() ->
+            new RuntimeException(String.format("argument types not supported for '%s': %s, %s",
+                    op, l.getType(), r.getType()))
+        );
 
         this.l = l;
         this.r = r;
         this.op = op.toLowerCase();
-        this.type = d.returnType();
+        this.descriptor = d;
+    }
+
+    @Override
+    public Optional<Boolean> asBoolean() {
+        if (INTEGER_OPS.containsKey(op)) {
+            return asInteger().map(i -> i!=0);
+        }
+        if (LOGICAL_OPS.containsKey(op)) {
+            Boolean left = this.getL().asBoolean().orElseThrow(() -> new RuntimeException("expecting a left boolean constant: " + toString()));
+            Boolean right = this.getR().asBoolean().orElseThrow(() -> new RuntimeException("expecting a right boolean constant: " + toString()));
+            return Optional.of(LOGICAL_OPS.get(op).apply(left, right));
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    public Optional<Integer> asInteger() {
+        if (INTEGER_OPS.containsKey(op)) {
+            Integer left = this.getL().asInteger().orElseThrow(() -> new RuntimeException("expecting a left integer constant: " + toString()));
+            Integer right = this.getR().asInteger().orElseThrow(() -> new RuntimeException("expecting a right integer constant: " + toString()));
+            return Optional.of(INTEGER_OPS.get(op).apply(left, right));
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    public Optional<String> asString() {
+        return switch (descriptor.returnType()) {
+            case BOOLEAN -> asBoolean().map(b -> b ? "True" : "False");
+            case INTEGER -> asInteger().map(i -> Integer.toString(i));
+            case STRING -> throw new RuntimeException("unable to evaluate string expressions at this time");
+        };
     }
 
     @Override

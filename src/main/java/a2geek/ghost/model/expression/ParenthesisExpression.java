@@ -4,12 +4,33 @@ import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.Expression;
 
 import java.util.Objects;
+import java.util.Optional;
 
 public class ParenthesisExpression implements Expression {
     private Expression expr;
 
     public ParenthesisExpression(Expression expr) {
         this.expr = expr;
+    }
+
+    @Override
+    public boolean isConstant() {
+        return expr.isConstant();
+    }
+
+    @Override
+    public Optional<Boolean> asBoolean() {
+        return expr.asBoolean();
+    }
+
+    @Override
+    public Optional<Integer> asInteger() {
+        return expr.asInteger();
+    }
+
+    @Override
+    public Optional<String> asString() {
+        return expr.asString();
     }
 
     @Override
