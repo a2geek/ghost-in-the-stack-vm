@@ -5,8 +5,6 @@ import a2geek.ghost.model.Reference;
 import a2geek.ghost.model.Scope;
 import org.javatuples.Pair;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;

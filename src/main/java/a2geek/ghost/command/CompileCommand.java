@@ -4,10 +4,10 @@ import a2geek.ghost.antlr.GhostBasicVisitor;
 import a2geek.ghost.antlr.generated.BasicLexer;
 import a2geek.ghost.antlr.generated.BasicParser;
 import a2geek.ghost.model.Scope;
-import a2geek.ghost.target.ghost.Instruction;
 import a2geek.ghost.model.scope.Program;
-import a2geek.ghost.target.ghost.CodeGenerationVisitor;
 import a2geek.ghost.model.visitor.RewriteVisitor;
+import a2geek.ghost.target.ghost.CodeGenerationVisitor;
+import a2geek.ghost.target.ghost.Instruction;
 import io.github.applecommander.applesingle.AppleSingle;
 import org.antlr.v4.runtime.*;
 import picocli.CommandLine.Command;
@@ -18,7 +18,10 @@ import picocli.CommandLine.Parameters;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 
 @Command(name = "compile", mixinStandardHelpOptions = true, 
