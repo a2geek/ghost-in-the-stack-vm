@@ -1,7 +1,9 @@
 package a2geek.ghost.model.scope;
 
+import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.Reference;
 import a2geek.ghost.model.Scope;
+import org.javatuples.Pair;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -10,11 +12,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class Subroutine extends Scope {
-    public Subroutine(Scope parent, String name, List<String> parameters) {
+    public Subroutine(Scope parent, String name, List<Pair<String, DataType>> parameters) {
         super(parent, name);
         parameters.sort(Collections.reverseOrder());
-        for (String param : parameters) {
-            addLocalVariable(param, Type.PARAMETER);
+        for (var param : parameters) {
+            addLocalVariable(param.getValue0(), Type.PARAMETER, param.getValue1());
         }
     }
 

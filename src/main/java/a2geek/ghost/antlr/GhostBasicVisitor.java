@@ -9,6 +9,8 @@ import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.scope.Subroutine;
 import a2geek.ghost.model.statement.*;
 import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.TerminalNode;
+import org.javatuples.Pair;
 
 import java.util.*;
 import java.util.function.Function;
@@ -65,29 +67,31 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         return this.scope.pop();
     }
 
-    public Reference addVariable(String name) {
-        return this.scope.peek().addLocalVariable(name);
+    public Reference addVariable(String name, DataType dataType) {
+        name = caseStrategy.apply(name);
+        return this.scope.peek().addLocalVariable(name, dataType);
     }
-    public Reference addVariable(String name, Scope.Type type) {
-        return this.scope.peek().addLocalVariable(name, type);
+    public Reference addVariable(String name, Scope.Type type, DataType dataType) {
+        name = caseStrategy.apply(name);
+        return this.scope.peek().addLocalVariable(name, type, dataType);
     }
 
     @Override
     public Expression visitAssignment(BasicParser.AssignmentContext ctx) {
-        String id = ctx.id.getText();
+        String id = caseStrategy.apply(ctx.id.getText());
+        Expression expr = visit(ctx.a);
         Reference ref = switch (id.toLowerCase()) {
             case Intrinsic.CPU_REGISTER_A,
                  Intrinsic.CPU_REGISTER_X,
-                 Intrinsic.CPU_REGISTER_Y -> addVariable(id, Scope.Type.INTRINSIC);
+                 Intrinsic.CPU_REGISTER_Y -> addVariable(id, Scope.Type.INTRINSIC, expr.getType());
             default -> {
                 if (id.contains(".")) {
                     throw new RuntimeException("invalid identifier: " + id);
                 }
-                yield addVariable(id);
+                yield addVariable(id, expr.getType());
             }
         };
 
-        Expression expr = visit(ctx.a);
         AssignmentStatement assignmentStatement = new AssignmentStatement(ref, expr);
         addStatement(assignmentStatement);
         return null;
@@ -134,7 +138,8 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
     @Override
     public Expression visitForLoop(BasicParser.ForLoopContext ctx) {
-        Reference ref = addVariable(ctx.id.getText());
+        String id = caseStrategy.apply(ctx.id.getText());
+        Reference ref = addVariable(id, DataType.INTEGER);
         Expression start = visit(ctx.a);
         Expression end = visit(ctx.b);
         Expression step = null;
@@ -257,13 +262,15 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
     @Override
     public Expression visitLabel(BasicParser.LabelContext ctx) {
-        addStatement(new LabelStatement(ctx.id.getText()));
+        String id = caseStrategy.apply(ctx.id.getText());
+        addStatement(new LabelStatement(id));
         return null;
     }
 
     @Override
     public Expression visitGotoGosubStmt(BasicParser.GotoGosubStmtContext ctx) {
-        addStatement(new GotoGosubStatement(ctx.op.getText().toLowerCase(), ctx.l.getText()));
+        String label = caseStrategy.apply(ctx.l.getText());
+        addStatement(new GotoGosubStatement(ctx.op.getText().toLowerCase(), label));
         return null;
     }
 
@@ -299,13 +306,34 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         return null;
     }
 
+    List<Pair<String,DataType>> buildDeclarationList(List<BasicParser.IdDeclContext> params) {
+        var refs = new ArrayList<Pair<String,DataType>>();
+        var names = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        if (params != null) {
+            params.forEach(idDecl -> {
+                String id = caseStrategy.apply(idDecl.ID().getText());
+                DataType dt = buildDataType(idDecl.datatype());
+                if (names.contains(id)) {
+                    throw new RuntimeException("parameter already defined: " + id);
+                }
+                names.add(id);
+                refs.add(Pair.with(id,dt));
+            });
+        }
+        return refs;
+    }
+    DataType buildDataType(BasicParser.DatatypeContext ctx) {
+        DataType dt = DataType.INTEGER;
+        if (ctx != null) {
+            dt = DataType.valueOf(ctx.getText().toUpperCase());
+        }
+        return dt;
+    }
+
     @Override
     public Expression visitSubDecl(BasicParser.SubDeclContext ctx) {
         String name = caseStrategy.apply(ctx.id.getText());
-        List<String> params = new ArrayList<>();
-        if (ctx.p != null) {
-            ctx.p.ID().stream().map(ParseTree::getText).forEach(params::add);
-        }
+        var params = buildDeclarationList(ctx.paramDecl().idDecl());
 
         Subroutine sub = new Subroutine(scope.peek(), name, params);
         addScope(sub);
@@ -322,14 +350,12 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     @Override
     public Expression visitFuncDecl(BasicParser.FuncDeclContext ctx) {
         String name = caseStrategy.apply(ctx.id.getText());
-        List<String> params = new ArrayList<>();
-        if (ctx.p != null) {
-            ctx.p.ID().stream().map(ParseTree::getText).forEach(params::add);
-        }
+        var params = buildDeclarationList(ctx.paramDecl().idDecl());
+        DataType dt = buildDataType(ctx.datatype());
 
         // FIXME? naming is really awkward due to naming conflicts!
         a2geek.ghost.model.scope.Function func =
-                new a2geek.ghost.model.scope.Function(scope.peek(), name, params);
+                new a2geek.ghost.model.scope.Function(scope.peek(), Pair.with(name,dt), params);
         addScope(func);
 
         pushScope(func);
@@ -356,6 +382,14 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     }
 
     @Override
+    public Expression visitDimStmt(BasicParser.DimStmtContext ctx) {
+        buildDeclarationList(ctx.idDecl()).forEach(d -> {
+           addVariable(d.getValue0(), d.getValue1());
+        });
+        return null;
+    }
+
+    @Override
     public Expression visitConstant(BasicParser.ConstantContext ctx) {
         if (ctx.constantDecl() != null) {
             for (var decl : ctx.constantDecl()) {
@@ -370,7 +404,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                 }
             }
         }
-        return super.visitConstant(ctx);
+        return null;
     }
 
     @Override
@@ -390,12 +424,12 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         Reference ref = switch (id.toLowerCase()) {
             case Intrinsic.CPU_REGISTER_A,
                     Intrinsic.CPU_REGISTER_X,
-                    Intrinsic.CPU_REGISTER_Y -> addVariable(id, Scope.Type.INTRINSIC);
+                    Intrinsic.CPU_REGISTER_Y -> addVariable(id, Scope.Type.INTRINSIC, DataType.INTEGER);
             default -> {
                 if (id.contains(".")) {
                     throw new RuntimeException("invalid identifier: " + id);
                 }
-                yield addVariable(id);
+                yield addVariable(id, DataType.INTEGER);
             }
         };
         return new IdentifierExpression(ref);
@@ -413,7 +447,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             if (params.size() > 0) {
                 throw new RuntimeException("Intrinsic reference takes no arguments: " + id);
             }
-            Reference ref = addVariable(id, Scope.Type.INTRINSIC);
+            Reference ref = addVariable(id, Scope.Type.INTRINSIC, DataType.INTEGER);
             return new IdentifierExpression(ref);
         }
 

@@ -44,8 +44,7 @@ public class FunctionExpression implements Expression {
         this.name = function.getName();
         this.function = function;
         this.parameters = expr;
-        // FIXME once we get real types!
-        this.returnType = DataType.INTEGER;
+        this.returnType = function.getType();
     }
 
     @Override

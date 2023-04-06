@@ -9,12 +9,11 @@ import java.util.Objects;
 import java.util.Optional;
 
 public class IdentifierExpression implements Expression {
-    private DataType type = DataType.INTEGER;   // Default for now
     private Reference ref;
 
     @Override
     public DataType getType() {
-        return type;
+        return ref.dataType();
     }
 
     public Reference getRef() {

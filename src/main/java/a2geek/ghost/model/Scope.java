@@ -43,13 +43,13 @@ public class Scope extends StatementBlock {
     public List<Reference> getLocalVariables() {
         return variables;
     }
-    public Reference addLocalVariable(String name) {
-        return addLocalVariable(name, this.type);
+    public Reference addLocalVariable(String name, DataType dataType) {
+        return addLocalVariable(name, this.type, dataType);
     }
-    public Reference addLocalVariable(String name, Type type) {
+    public Reference addLocalVariable(String name, Type type, DataType dataType) {
         return findLocalVariable(name).orElseGet(() -> {
             var fixedName = caseStrategy.apply(name);
-            var ref = new Reference(fixedName, type);
+            var ref = Reference.builder(name, type).dataType(dataType).build();
             variables.add(ref);
             return ref;
         });
@@ -60,7 +60,7 @@ public class Scope extends StatementBlock {
             throw new RuntimeException(msg);
         }
         var fixedName = caseStrategy.apply(name);
-        var ref = new Reference(fixedName, expr);
+        var ref = Reference.builder(fixedName, expr).build();
         variables.add(ref);
         return ref;
     }

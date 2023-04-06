@@ -16,7 +16,7 @@ declarations
     : 'sub' id=ID p=paramDecl? EOL+
         (s=statements)?
       'end' 'sub'                                                       # subDecl
-    | 'function' id=ID p=paramDecl? EOL+
+    | 'function' id=ID p=paramDecl? ('as' datatype)? EOL+
         (s=statements)?
       'end' 'function'                                                  # funcDecl
     | EOL                                                               # emptyDecl
@@ -27,7 +27,8 @@ statements
     ;
 
 statement
-    : id=extendedID '=' a=expr                                          # assignment
+    : 'dim' idDecl (',' idDecl)*                                        # dimStmt
+    | id=extendedID '=' a=expr                                          # assignment
     | id=ID ':'                                                         # label
     | 'const' constantDecl ( ',' constantDecl )*                        # constant
     | 'if' a=expr 'then' t=statement                                    # ifShortStatement
@@ -66,7 +67,16 @@ extendedID
     ;
 
 paramDecl
-    : '(' ( ID ( ',' ID )* )? ')'
+    : '(' ( idDecl ( ',' idDecl )* )? ')'
+    ;
+
+idDecl
+    : ID ( 'as' datatype )?
+    ;
+
+datatype
+    : 'integer'
+    | 'boolean'
     ;
 
 parameters
