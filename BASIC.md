@@ -9,6 +9,9 @@ Notes:
   Valid variable names begin with a letter and continue with letters or digits.
 * Code is case insensitive. `MYVAR` is the same as `myvar` is the same as `MyVar`.
   You may use `goto` or `GoTo` or `GOTO`.
+* Long term expectation is that BASIC language will fork. With types starting to be
+  available, the untyped usage (and assumption of being an integer) will move towards  
+  a legacy compiler.
 
 ## Data types
 
@@ -20,13 +23,21 @@ All variables are assumed to be 16 bit integers. Other data types exist in expre
 |  Boolean  | True/False. All inequalities resolve to a Boolean. When added to an Integer, a Boolean is valued as `0` for False or `1` for True. |
 |  String   | String constants. Enclosed in quotes (`"`). Mostly used by `print` statement or `asc(..)` function.                                |
 
-## Subroutines / Functions
+## Declarations
 
 Subroutines may be declared at the top of the program. They have their own variable scope and, at this time,
 do not share any access to global variables.
 
 ```basic
 sub name(a,b,c)
+    ...
+end sub
+```
+
+Subroutines may also be declared fully typed as follows:
+
+```basic
+sub name(a as integer, b as boolean)
     ...
 end sub
 ```
@@ -40,7 +51,22 @@ function name(a,b)
 end function
 ```
 
+Functions may also be declared fully typed as follows:
+
+```basic
+function name(a as integer,b as boolean) as integer
+  ...
+  return n
+end function
+```
+
 If there are no parameters the parenthesis can be dropped as well.
+
+Variables may be declared with the `dim` statement:
+
+```basic
+dim a as integer, b as boolean
+```
 
 ## Statements
 
