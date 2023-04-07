@@ -290,12 +290,17 @@ public class CodeGenerationVisitor extends Visitor {
     @Override
     public void visit(ReturnStatement statement) {
         boolean hasReturnValue = statement.getExpr() != null;
-        var refs = this.frames.peek().scope().findByType(Scope.Type.RETURN_VALUE);
-        if (refs.size() == 1 && hasReturnValue) {
-            visit(new AssignmentStatement(refs.get(0), statement.getExpr()));
+        if (this.frames.peek().scope() instanceof Function f){
+            var refs = this.frames.peek().scope().findByType(Scope.Type.RETURN_VALUE);
+            if (refs.size() == 1 && hasReturnValue) {
+                visit(new AssignmentStatement(refs.get(0), statement.getExpr()));
+            } else if (refs.size() != 0 || hasReturnValue) {
+                throw new RuntimeException("function return mismatch");
+            }
+            code.emit(Opcode.GOTO, f.getExitLabel());
         }
-        else if (refs.size() != 0 || hasReturnValue) {
-            throw new RuntimeException("function return mismatch");
+        else if (hasReturnValue) {
+            throw new RuntimeException("cannot return value from a subroutine");
         }
         else {
             code.emit(Opcode.RETURN);
@@ -349,11 +354,15 @@ public class CodeGenerationVisitor extends Visitor {
     @Override
     public void visit(Function function) {
         var frame = frames.push(Frame.create(function));
+        var labels = label("FUNCXIT");
+        var exitLabel = labels.get(0);
+        function.setExitLabel(exitLabel);
         code.emit(function.getName());
         code.emit(Opcode.LOCAL_RESERVE, frame.localSize());
         if (function.getStatements() != null) {
             function.getStatements().forEach(this::dispatch);
         }
+        code.emit(exitLabel);
         code.emit(Opcode.LOCAL_FREE, frame.localSize());
         code.emit(Opcode.RETURN);
         frames.pop();
@@ -506,6 +515,14 @@ public class CodeGenerationVisitor extends Visitor {
     }
     @Override
     public Expression visit(UnaryExpression expression) {
-        throw new RuntimeException("Negate is not implemented yet.");
+        if ("-".equals(expression.getOp())) {
+            code.emit(Opcode.LOADC, 0);
+            dispatch(expression.getExpr());
+            code.emit(Opcode.SUB);
+        }
+        else {
+            throw new RuntimeException("unknown unary operator: " + expression.getOp());
+        }
+        return null;
     }
 }

@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 public class Function extends Subroutine {
     private DataType type;
+    private String exitLabel;
 
     public Function(Scope parent, Pair<String,DataType> func, List<Pair<String,DataType>> parameters) {
         super(parent, func.getValue0(), parameters);
@@ -19,6 +20,14 @@ public class Function extends Subroutine {
 
     public DataType getType() {
         return type;
+    }
+
+    public String getExitLabel() {
+        return exitLabel;
+    }
+
+    public void setExitLabel(String exitLabel) {
+        this.exitLabel = exitLabel;
     }
 
     @Override

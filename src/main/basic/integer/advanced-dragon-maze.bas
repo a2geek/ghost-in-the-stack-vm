@@ -25,7 +25,7 @@ end function
 
 function abs(n)
     if n < 0 then
-        return 0 - n
+        return - n
     end if
     return n
 end function
