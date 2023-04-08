@@ -7,13 +7,20 @@ package a2geek.ghost.antlr.generated;
 }
 
 program
-    : declarations*
+    : directives*
+      declarations*
       statements
       EOF
     ;
 
+directives
+    : ('use' | 'uses') STR ( ',' STR )* EOL+                            # useDirective
+    | EOL                                                               # emptyDirective
+    ;
+
 declarations
-    : 'sub' id=ID p=paramDecl? EOL+
+    : 'const' constantDecl ( ',' constantDecl )*                        # constant
+    | 'sub' id=ID p=paramDecl? EOL+
         (s=statements)?
       'end' 'sub'                                                       # subDecl
     | 'function' id=ID p=paramDecl? ('as' datatype)? EOL+
@@ -30,7 +37,6 @@ statement
     : 'dim' idDecl (',' idDecl)*                                        # dimStmt
     | id=extendedID '=' a=expr                                          # assignment
     | id=ID ':'                                                         # label
-    | 'const' constantDecl ( ',' constantDecl )*                        # constant
     | 'if' a=expr 'then' t=statement                                    # ifShortStatement
     | 'if' a=expr 'then' EOL+
         t=statements 
@@ -55,7 +61,7 @@ statement
     | 'text'                                                            # textStmt
     | 'vtab' a=expr                                                     # vtabStmt
     | 'htab' a=expr                                                     # htabStmt
-    | 'call'? id=ID p=parameters?                                       # callSub
+    | id=ID p=parameters?                                               # callSub
     ;
 
 constantDecl
@@ -77,6 +83,7 @@ idDecl
 datatype
     : 'integer'
     | 'boolean'
+    | 'string'
     ;
 
 parameters
@@ -107,7 +114,7 @@ sexpr
     : s=STR                                                             # stringConstant
     ;
 
-ID : [a-z] ([a-z0-9])* ;
+ID : [a-z] ([_a-z0-9])* ;
 INT : [0-9]+ | '0x' [0-9a-f]+ | '0b' [01]+ ;
 STR : '"' ~["]* '"' ;
 

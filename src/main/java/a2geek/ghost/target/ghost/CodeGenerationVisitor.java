@@ -60,6 +60,17 @@ public class CodeGenerationVisitor extends Visitor {
                     default -> throw new RuntimeException("unknown intrinsic: " + ref.name());
                 }
             }
+            case CONSTANT -> {
+                if (ref.expr() instanceof IntegerConstant c) {
+                    visit(c);
+                }
+                else if (ref.expr() instanceof StringConstant s) {
+                    visit(s);
+                }
+                else {
+                    throw new RuntimeException("unable to generate code for constant expression: " + ref);
+                }
+            }
         }
     }
     public void emitStore(Reference ref) {
@@ -77,6 +88,9 @@ public class CodeGenerationVisitor extends Visitor {
                     case Intrinsic.CPU_REGISTER_Y -> this.code.emit(Opcode.SETYREG);
                     default -> throw new RuntimeException("unknown intrinsic: " + ref.name());
                 }
+            }
+            case CONSTANT -> {
+                throw new RuntimeException("cannot store to a constant value");
             }
         }
     }

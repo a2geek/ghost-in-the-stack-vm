@@ -3,6 +3,7 @@ package a2geek.ghost.model;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -26,8 +27,18 @@ public class Scope extends StatementBlock {
         this.type = Type.LOCAL;
     }
 
+    @Override
+    public boolean isEmpty() {
+        return super.isEmpty() && variables.isEmpty() && scopes.isEmpty();
+    }
+
     public String getName() {
         return name;
+    }
+
+    public void setName(String name) {
+        // Renaming is needed for libraries (prefix library name to the method name)
+        this.name = name;
     }
 
     public List<Reference> getAllVariables() {
@@ -49,7 +60,7 @@ public class Scope extends StatementBlock {
     public Reference addLocalVariable(String name, Type type, DataType dataType) {
         return findLocalVariable(name).orElseGet(() -> {
             var fixedName = caseStrategy.apply(name);
-            var ref = Reference.builder(name, type).dataType(dataType).build();
+            var ref = Reference.builder(fixedName, type).dataType(dataType).build();
             variables.add(ref);
             return ref;
         });
@@ -87,8 +98,11 @@ public class Scope extends StatementBlock {
     }
 
     public void addScope(Scope scope) {
-        System.out.printf("Adding scope %s to %s\n", scope.getName(), this.getName());
-        this.scopes.add(scope);
+        Consumer<Scope> alreadyExists = s -> {
+            throw new RuntimeException(s.getName() + " already exists");
+        };
+        Runnable addNew = () -> this.scopes.add(scope);
+        findScope(scope.getName()).ifPresentOrElse(alreadyExists, addNew);
     }
     public List<Scope> getScopes() {
         return scopes;

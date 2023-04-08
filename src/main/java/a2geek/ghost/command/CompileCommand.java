@@ -1,8 +1,6 @@
 package a2geek.ghost.command;
 
-import a2geek.ghost.antlr.GhostBasicVisitor;
-import a2geek.ghost.antlr.generated.BasicLexer;
-import a2geek.ghost.antlr.generated.BasicParser;
+import a2geek.ghost.antlr.GhostBasicUtil;
 import a2geek.ghost.model.Scope;
 import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.visitor.RewriteVisitor;
@@ -50,18 +48,8 @@ public class CompileCommand implements Callable<Integer> {
     @Override
     public Integer call() throws Exception {
         CharStream stream = CharStreams.fromPath(sourceCode);
-        BasicLexer lexer = new BasicLexer(stream);
-        lexer.addErrorListener(ConsoleErrorListener.INSTANCE);
-        TokenStream tokens = new CommonTokenStream(lexer);
-        BasicParser parser = new BasicParser(tokens);
-        parser.addErrorListener(ConsoleErrorListener.INSTANCE);
-
-        BasicParser.ProgramContext context = parser.program();
-        GhostBasicVisitor visitor = new GhostBasicVisitor(caseSensitive ?
+        Program program = GhostBasicUtil.toModel(stream, caseSensitive ?
                 s -> s : String::toUpperCase);
-        visitor.visit(context);
-
-        Program program = visitor.getProgram();
 
         System.out.println("=== MODEL ===");
         System.out.println(program);

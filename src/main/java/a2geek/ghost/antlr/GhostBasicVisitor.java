@@ -8,11 +8,17 @@ import a2geek.ghost.model.expression.*;
 import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.scope.Subroutine;
 import a2geek.ghost.model.statement.*;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.javatuples.Pair;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.StreamSupport;
 
 public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     private Function<String,String> caseStrategy;
@@ -73,6 +79,38 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     public Reference addVariable(String name, Scope.Type type, DataType dataType) {
         name = caseStrategy.apply(name);
         return this.scope.peek().addLocalVariable(name, type, dataType);
+    }
+
+    @Override
+    public Expression visitUseDirective(BasicParser.UseDirectiveContext ctx) {
+        for (var str : ctx.STR()) {
+            String libname = str.getText().replaceAll("^\"|\"$", "");
+            String name = String.format("/library/%s.bas", libname);
+            try (InputStream inputStream = getClass().getResourceAsStream(name)) {
+                if (inputStream == null) {
+                    throw new RuntimeException("unknown library: " + libname);
+                }
+                Program library = GhostBasicUtil.toModel(CharStreams.fromStream(inputStream), caseStrategy);
+                // at this time a library is simply a collection of subroutines and functions.
+                boolean noStatements = library.getStatements().isEmpty();
+                boolean onlyConstants = library.getLocalVariables().stream().noneMatch(ref -> ref.type() != Scope.Type.CONSTANT);
+                if (!noStatements || !onlyConstants) {
+                    throw new RuntimeException("a library may only contain subroutines, functions, and constants");
+                }
+                // add subroutines and functions to our program!
+                // constants are intentionally left off -- the included code has the reference and we don't want to clutter the namespace
+                Program program = findProgram();
+                library.getScopes().forEach(s -> {
+                    s.setName(caseStrategy.apply(String.format("%s_%s", libname, s.getName())));
+                    System.out.printf("Adding '%s' from library '%s'\n", s.getName(), libname);
+                    program.addScope(s);
+                });
+            }
+            catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        }
+        return null;
     }
 
     @Override
@@ -332,7 +370,10 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     @Override
     public Expression visitSubDecl(BasicParser.SubDeclContext ctx) {
         String name = caseStrategy.apply(ctx.id.getText());
-        var params = buildDeclarationList(ctx.paramDecl().idDecl());
+        List<Pair<String,DataType>> params = Collections.emptyList();
+        if (ctx.paramDecl() != null) {
+            params = buildDeclarationList(ctx.paramDecl().idDecl());
+        }
 
         Subroutine sub = new Subroutine(scope.peek(), name, params);
         addScope(sub);
@@ -420,6 +461,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             }
         }
 
+        // Look for a likely reference - and it might already exist
         Reference ref = switch (id.toLowerCase()) {
             case Intrinsic.CPU_REGISTER_A,
                     Intrinsic.CPU_REGISTER_X,
@@ -428,7 +470,9 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                 if (id.contains(".")) {
                     throw new RuntimeException("invalid identifier: " + id);
                 }
-                yield addVariable(id, DataType.INTEGER);
+                // Look through local and parent scopes; otherwise assume it's a new integer
+                var existing = this.scope.peek().findVariable(id);
+                yield existing.orElseGet(() -> addVariable(id, DataType.INTEGER));
             }
         };
         return new IdentifierExpression(ref);
