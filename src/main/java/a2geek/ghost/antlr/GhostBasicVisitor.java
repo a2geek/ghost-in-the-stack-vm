@@ -390,7 +390,10 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     @Override
     public Expression visitFuncDecl(BasicParser.FuncDeclContext ctx) {
         String name = caseStrategy.apply(ctx.id.getText());
-        var params = buildDeclarationList(ctx.paramDecl().idDecl());
+        List<Pair<String,DataType>> params = Collections.emptyList();
+        if (ctx.paramDecl() != null) {
+            params = buildDeclarationList(ctx.paramDecl().idDecl());
+        }
         DataType dt = buildDataType(ctx.datatype());
 
         // FIXME? naming is really awkward due to naming conflicts!
