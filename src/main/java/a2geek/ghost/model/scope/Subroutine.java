@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 public class Subroutine extends Scope {
     public Subroutine(Scope parent, String name, List<Pair<String, DataType>> parameters) {
         super(parent, name);
-        parameters.sort(Collections.reverseOrder());
+        Collections.reverse(parameters);
         for (var param : parameters) {
             addLocalVariable(param.getValue0(), Type.PARAMETER, param.getValue1());
         }
