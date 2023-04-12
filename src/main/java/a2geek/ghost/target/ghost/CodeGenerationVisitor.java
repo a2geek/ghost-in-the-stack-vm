@@ -207,7 +207,7 @@ public class CodeGenerationVisitor extends Visitor {
         code.emit(labels.get(1));
     }
 
-    public void visit(ForStatement statement) {
+    public void visit(ForNextStatement statement) {
         var labels = label("FOR", "FORX");
         visit(new AssignmentStatement(statement.getRef(), statement.getStart()));
         code.emit(labels.get(0));

@@ -8,7 +8,6 @@ import a2geek.ghost.model.expression.*;
 import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.scope.Subroutine;
 import a2geek.ghost.model.statement.*;
-import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.javatuples.Pair;
@@ -18,7 +17,6 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.util.*;
 import java.util.function.Function;
-import java.util.stream.StreamSupport;
 
 public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     private Function<String,String> caseStrategy;
@@ -188,7 +186,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             step = visit(ctx.c);
         }
 
-        ForStatement forStatement = new ForStatement(ref, start, end, step);
+        ForNextStatement forStatement = new ForNextStatement(ref, start, end, step);
         if (ctx.s != null) {
             pushStatementBlock(forStatement);
             visit(ctx.s);

@@ -2,13 +2,13 @@ package a2geek.ghost.model.statement;
 
 import a2geek.ghost.model.*;
 
-public class ForStatement extends StatementBlock implements Statement {
+public class ForNextStatement extends StatementBlock implements Statement {
     private Reference ref;
     private Expression start;
     private Expression end;
     private Expression step;
 
-    public ForStatement(Reference ref, Expression start, Expression end, Expression step) {
+    public ForNextStatement(Reference ref, Expression start, Expression end, Expression step) {
         this.ref = ref;
         setStart(start);
         setEnd(end);

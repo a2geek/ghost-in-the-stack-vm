@@ -39,7 +39,7 @@ public abstract class Visitor {
         else if (statement instanceof IfStatement s) {
             visit(s);
         }
-        else if (statement instanceof ForStatement s) {
+        else if (statement instanceof ForNextStatement s) {
             visit(s);
         }
         else if (statement instanceof GrStatement s) {
@@ -174,7 +174,7 @@ public abstract class Visitor {
         expr.ifPresent(statement::setExpression);
     }
 
-    public void visit(ForStatement statement) {
+    public void visit(ForNextStatement statement) {
         var start = dispatch(statement.getStart());
         var end = dispatch(statement.getEnd());
         var step = dispatch(statement.getStep());   // Always set by GhostBasicVisitor
