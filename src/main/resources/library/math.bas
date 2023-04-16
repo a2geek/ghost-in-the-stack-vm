@@ -24,7 +24,7 @@ end function
 
 function math_abs(n as integer) as integer
     if n < 0 then
-        return 0 - n
+        return -n
     end if
     return n
 end function
