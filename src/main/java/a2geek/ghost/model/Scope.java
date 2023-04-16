@@ -1,6 +1,7 @@
 package a2geek.ghost.model;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -91,9 +92,10 @@ public class Scope extends StatementBlock {
         }
         return Optional.empty();
     }
-    public List<Reference> findByType(Type type) {
+    public List<Reference> findByType(Type... types) {
+        final var typesList = Arrays.asList(types);
         return variables.stream()
-                .filter(ref -> ref.type() == type)
+                .filter(ref -> typesList.contains(ref.type()))
                 .collect(Collectors.toList());
     }
 

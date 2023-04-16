@@ -196,40 +196,45 @@ public class CodeGenerationVisitor extends Visitor {
 
     @Override
     public void visit(CallSubroutine statement) {
+        boolean hasParameters = statement.getParameters().size() != 0;
         for (Expression expr : statement.getParameters()) {
             dispatch(expr);
         }
         code.emit(Opcode.GOSUB, statement.getName());
-        // FIXME when we have more datatypes this will be incorrect
-        code.emit(Opcode.POPN, statement.getParameters().size() * 2);
+        if (hasParameters) {
+            // FIXME when we have more datatypes this will be incorrect
+            code.emit(Opcode.POPN, statement.getParameters().size() * 2);
+        }
     }
 
     @Override
     public void visit(Subroutine subroutine) {
+        var hasLocalScope = subroutine.findByType(Scope.Type.PARAMETER, Scope.Type.LOCAL).size() != 0;
         var frame = frames.push(Frame.create(subroutine));
         code.emit(subroutine.getName());
-        code.emit(Opcode.LOCAL_RESERVE, frame.localSize());
+        if (hasLocalScope) code.emit(Opcode.LOCAL_RESERVE, frame.localSize());
         if (subroutine.getStatements() != null) {
             subroutine.getStatements().forEach(this::dispatch);
         }
-        code.emit(Opcode.LOCAL_FREE, frame.localSize());
+        if (hasLocalScope) code.emit(Opcode.LOCAL_FREE, frame.localSize());
         code.emit(Opcode.RETURN);
         frames.pop();
     }
 
     @Override
     public void visit(Function function) {
+        var hasLocalScope = function.findByType(Scope.Type.PARAMETER, Scope.Type.LOCAL).size() != 0;
         var frame = frames.push(Frame.create(function));
         var labels = label("FUNCXIT");
         var exitLabel = labels.get(0);
         function.setExitLabel(exitLabel);
         code.emit(function.getName());
-        code.emit(Opcode.LOCAL_RESERVE, frame.localSize());
+        if (hasLocalScope) code.emit(Opcode.LOCAL_RESERVE, frame.localSize());
         if (function.getStatements() != null) {
             function.getStatements().forEach(this::dispatch);
         }
         code.emit(exitLabel);
-        code.emit(Opcode.LOCAL_FREE, frame.localSize());
+        if (hasLocalScope) code.emit(Opcode.LOCAL_FREE, frame.localSize());
         code.emit(Opcode.RETURN);
         frames.pop();
     }
@@ -373,8 +378,11 @@ public class CodeGenerationVisitor extends Visitor {
                 code.emit(Opcode.LOADC, 0);
                 emitParameters.run();
                 code.emit(Opcode.GOSUB, function.getName());
-                // FIXME when we have more datatypes this will be incorrect
-                code.emit(Opcode.POPN, function.getParameters().size() * 2);
+                var hasParameters = function.getParameters().size() != 0;
+                if (hasParameters) {
+                    // FIXME when we have more datatypes this will be incorrect
+                    code.emit(Opcode.POPN, function.getParameters().size() * 2);
+                }
             }
         }
         return null;
