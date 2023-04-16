@@ -6,10 +6,7 @@ Looks like usage of Reference may need to be checked? There is no constraint tha
 Look at how bytecode is created - feels like Opcode and Directive can support Instruction more directly.
 Track constants. Do they need to persist in library declarations or can they be thrown out?
 Add EXIT (FOR/SUB/FUNCTION). Where to validate? Maybe in some visitor to be certain EXIT and RETURN in correct places.
-Should CALL => NATIVE or NCALL to make it obvious?
-Procedures with 0 parameters and 0 local variables can drop calling sequence and just do GOSUB (fastcall?)
 Need to figure out how to handle processor status register in CPU interactions; ProDOS functions use C. Probably only want get. (Otherwise state probably will get carried between calls accidentally.)
-Once SUB and FUNCTION in place, most of the model can be reduced to CallSub and CallFunction to simplify the model.
 Need to review negative number handling. Specifically MUL/DIV/MOD. Expect to require NEG operator to be implemented!
 Review generated code and look for alternates with new opcodes.
 Add ELSEIF to IF statement.
