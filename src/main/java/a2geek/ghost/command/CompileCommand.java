@@ -37,6 +37,9 @@ public class CompileCommand implements Callable<Integer> {
     @Option(names = { "--debug" }, description = "use the debugging interpreter")
     private boolean debugFlag;
 
+    @Option(names = { "--quiet" }, description = "reduce output")
+    private boolean quietFlag;
+
     @Option(names = { "--case-sensitive" },
             defaultValue = "false", showDefaultValue = Visibility.ALWAYS,
             description = "allow identifiers to be case sensitive (A is different from a)")
@@ -51,20 +54,24 @@ public class CompileCommand implements Callable<Integer> {
         Program program = GhostBasicUtil.toModel(stream, caseSensitive ?
                 s -> s : String::toUpperCase);
 
-        System.out.println("=== MODEL ===");
-        System.out.println(program);
-        System.out.println("=== VARIABLES ===");
-        var allScopes = new ArrayList<>(program.getScopes());
-        allScopes.add(program);
-        for (Scope scope : allScopes) {
-            System.out.printf("%s - %s\n", scope.getName(), scope.getLocalVariables());
+        if (!quietFlag) {
+            System.out.println("=== MODEL ===");
+            System.out.println(program);
+            System.out.println("=== VARIABLES ===");
+            var allScopes = new ArrayList<>(program.getScopes());
+            allScopes.add(program);
+            for (Scope scope : allScopes) {
+                System.out.printf("%s - %s\n", scope.getName(), scope.getLocalVariables());
+            }
         }
 
         RewriteVisitor rewriteVisitor = new RewriteVisitor();
         rewriteVisitor.visit(program);
 
-        System.out.println("=== REWRITTEN ===");
-        System.out.println(program);
+        if (!quietFlag) {
+            System.out.println("=== REWRITTEN ===");
+            System.out.println(program);
+        }
 
         CodeGenerationVisitor codeGenerationVisitor = new CodeGenerationVisitor();
         codeGenerationVisitor.visit(program);
