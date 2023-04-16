@@ -3,6 +3,7 @@ package a2geek.ghost.target.ghost;
 
 import java.io.ByteArrayOutputStream;
 import java.util.Map;
+import java.util.Objects;
 
 public record Instruction (String label, Opcode opcode, Directive directive, Integer arg, String string) {
     public boolean isLabelOnly() {
@@ -29,10 +30,14 @@ public record Instruction (String label, Opcode opcode, Directive directive, Int
     byte[] handleOpcode(Map<String,Integer> addrs) {
         byte[] data = new byte[size()];
         data[0] = opcode.getByteCode();
+        if (data.length == 1) {
+            return data;
+        }
         Integer value = arg;
         if (value == null) {
             value = addrs.get(label);
         }
+        Objects.requireNonNull(value, "arg or label: " + this);
         switch (opcode.getArgumentCount()) {
             case 1:
                 data[1] = value.byteValue();
