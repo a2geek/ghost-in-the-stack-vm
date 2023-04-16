@@ -12,36 +12,36 @@ const MON_SETCOL = 0xf864
 const MON_SCRN = 0xf871
 const MON_SETGR = 0xfb40
 
-sub color(c as integer)
+sub lores_color(c as integer)
     cpu.register.a = c
     call MON_SETCOL
 end sub
 
-sub logr
+sub lores_gr
     call MON_SETGR
 end sub
 
-sub loplot(x as integer, y as integer)
+sub lores_plot(x as integer, y as integer)
     cpu.register.y = x
     cpu.register.a = y
     call MON_PLOT
 end sub
 
-sub lohlin(x0 as integer, x1 as integer, y as integer)
+sub lores_hlin(x0 as integer, x1 as integer, y as integer)
     cpu.register.y = x0
     poke MON_H2, x1
     cpu.register.a = y
     call MON_HLINE
 end sub
 
-sub lovlin(y0 as integer, y1 as integer, x as integer)
+sub lores_vlin(y0 as integer, y1 as integer, x as integer)
     cpu.register.a = y0
     poke MON_V2, y1
     cpu.register.y = x
     call MON_VLINE
 end sub
 
-function loscrn(x as integer, y as integer) as integer
+function lores_scrn(x as integer, y as integer) as integer
     cpu.register.y = x
     cpu.register.a = y
     call MON_SCRN

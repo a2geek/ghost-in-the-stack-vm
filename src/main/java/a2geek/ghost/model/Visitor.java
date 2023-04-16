@@ -30,9 +30,6 @@ public abstract class Visitor {
         if (statement instanceof AssignmentStatement s) {
             visit(s);
         }
-        else if (statement instanceof ColorStatement s) {
-            visit(s);
-        }
         else if (statement instanceof EndStatement s) {
             visit(s);
         }
@@ -40,24 +37,6 @@ public abstract class Visitor {
             visit(s);
         }
         else if (statement instanceof ForNextStatement s) {
-            visit(s);
-        }
-        else if (statement instanceof GrStatement s) {
-            visit(s);
-        }
-        else if (statement instanceof PlotStatement s) {
-            visit(s);
-        }
-        else if (statement instanceof HlinStatement s) {
-            visit(s);
-        }
-        else if (statement instanceof VlinStatement s) {
-            visit(s);
-        }
-        else if (statement instanceof HomeStatement s) {
-            visit(s);
-        }
-        else if (statement instanceof PrintStatement s) {
             visit(s);
         }
         else if (statement instanceof PokeStatement s) {
@@ -73,15 +52,6 @@ public abstract class Visitor {
             visit(s);
         }
         else if (statement instanceof ReturnStatement s) {
-            visit(s);
-        }
-        else if (statement instanceof TextStatement s) {
-            visit(s);
-        }
-        else if (statement instanceof HtabStatement s) {
-            visit(s);
-        }
-        else if (statement instanceof VtabStatement s) {
             visit(s);
         }
         else if (statement instanceof CallSubroutine s) {
@@ -140,24 +110,7 @@ public abstract class Visitor {
         expr.ifPresent(statement::setExpr);
     }
 
-    public void visit(ColorStatement statement) {
-        var expr = dispatch(statement.getExpr());
-        expr.ifPresent(statement::setExpr);
-    }
-
     public void visit(EndStatement statement) {
-    }
-
-    public void visit(HomeStatement statement) {
-    }
-
-    public void visit(PrintStatement statement) {
-        for (PrintStatement.Action action : statement.getActions()) {
-            if (action instanceof PrintStatement.PrintIntegerAction a) {
-                var expr = dispatch(a.getExpr());
-                expr.ifPresent(a::setExpr);
-            }
-        }
     }
 
     public void visit(CallStatement statement) {
@@ -184,35 +137,6 @@ public abstract class Visitor {
         step.ifPresent(statement::setStep);
     }
 
-    public void visit(GrStatement statement) {
-
-    }
-
-    public void visit(PlotStatement statement) {
-        var x = dispatch(statement.getX());
-        var y = dispatch(statement.getY());
-        x.ifPresent(statement::setX);
-        y.ifPresent(statement::setY);
-    }
-
-    public void visit(HlinStatement statement) {
-        var a = dispatch(statement.getA());
-        var b = dispatch(statement.getB());
-        var y = dispatch(statement.getY());
-        a.ifPresent(statement::setA);
-        b.ifPresent(statement::setB);
-        y.ifPresent(statement::setY);
-    }
-
-    public void visit(VlinStatement statement) {
-        var a = dispatch(statement.getA());
-        var b = dispatch(statement.getB());
-        var x = dispatch(statement.getX());
-        a.ifPresent(statement::setA);
-        b.ifPresent(statement::setB);
-        x.ifPresent(statement::setX);
-    }
-
     public void visit(PokeStatement statement) {
         var a = dispatch(statement.getA());
         var b = dispatch(statement.getB());
@@ -230,20 +154,6 @@ public abstract class Visitor {
 
     public void visit(ReturnStatement statement) {
 
-    }
-
-    public void visit(TextStatement statement) {
-
-    }
-
-    public void visit(HtabStatement statement) {
-        var expr = dispatch(statement.getExpr());
-        expr.ifPresent(statement::setExpr);
-    }
-
-    public void visit(VtabStatement statement) {
-        var expr = dispatch(statement.getExpr());
-        expr.ifPresent(statement::setExpr);
     }
 
     public void visit(CallSubroutine statement) {

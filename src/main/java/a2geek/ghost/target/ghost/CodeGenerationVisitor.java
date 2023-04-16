@@ -102,89 +102,8 @@ public class CodeGenerationVisitor extends Visitor {
         emitStore(statement.getRef());
     }
 
-    public void visit(ColorStatement statement) {
-        dispatch(statement.getExpr());
-        code.emit(Opcode.SETACC);
-        code.emit(Opcode.LOADC, 0xf864);
-        code.emit(Opcode.CALL);
-    }
-
     public void visit(EndStatement statement) {
         code.emit(Opcode.EXIT);
-    }
-
-    @Override
-    public void visit(HomeStatement statement) {
-        code.emit(Opcode.LOADC, 0xfc58);
-        code.emit(Opcode.CALL);
-    }
-
-    @Override
-    public void visit(PrintStatement statement) {
-        for (PrintStatement.Action action : statement.getActions()) {
-            if (action instanceof PrintStatement.PrintCommaAction a) {
-                // FIXME. Just spacing between.
-                code.emit(Opcode.LOADC, 0xa0);
-                code.emit(Opcode.SETACC);
-                code.emit(Opcode.LOADC, 0xfded);
-                code.emit(Opcode.CALL);
-            }
-            else if (action instanceof PrintStatement.PrintIntegerAction a) {
-                // Defer to Applesoft for printing
-                dispatch(a.getExpr());
-                code.emit(Opcode.DUP);
-                code.emit(Opcode.SETYREG);
-                code.emit(Opcode.LOADC, 8);
-                code.emit(Opcode.SHIFTR);
-                code.emit(Opcode.SETACC);
-                code.emit(Opcode.LOADC, 0xe2f2);    // GIVAYF
-                code.emit(Opcode.CALL);
-                code.emit(Opcode.LOADC, 0xed34);    // FOUT
-                code.emit(Opcode.CALL);
-                // Note that we are "trusting" the interpreter
-                // to preserve Y,A from FOUT for STROUT...
-                code.emit(Opcode.LOADC, 0xdb3a);    // STROUT
-                code.emit(Opcode.CALL);
-            }
-            else if (action instanceof PrintStatement.PrintBooleanAction a) {
-                var label = label("STRTRUE", "STRFALSE", "PRINTTRUE", "PRINTFALSE");
-                String lblTrue = code.emitConstant(label.get(0), "True");
-                String lblFalse = code.emitConstant(label.get(1), "False");
-
-                dispatch(a.getExpr());
-                code.emit(Opcode.IFTRUE, label.get(2));
-                code.emit(Opcode.LOADA, lblFalse);
-                code.emit(Opcode.GOTO, label.get(3));
-                code.emit(label.get(2));
-                code.emit(Opcode.LOADA, lblTrue);
-                code.emit(label.get(3));
-                // duplicating print string code here
-                code.emit(Opcode.DUP);
-                code.emit(Opcode.SETACC);
-                code.emit(Opcode.LOADC, 8);
-                code.emit(Opcode.SHIFTR);
-                code.emit(Opcode.SETYREG);
-                code.emit(Opcode.LOADC, 0xdb3a);    // STROUT
-                code.emit(Opcode.CALL);
-            }
-            else if (action instanceof PrintStatement.PrintStringAction a) {
-                dispatch(a.getExpr());
-                code.emit(Opcode.DUP);
-                code.emit(Opcode.SETACC);
-                code.emit(Opcode.LOADC, 8);
-                code.emit(Opcode.SHIFTR);
-                code.emit(Opcode.SETYREG);
-                code.emit(Opcode.LOADC, 0xdb3a);    // STROUT
-                code.emit(Opcode.CALL);
-            }
-            else if (action instanceof PrintStatement.PrintNewlineAction a) {
-                code.emit(Opcode.LOADC, 0xfd8e);
-                code.emit(Opcode.CALL);
-            }
-            else {
-                throw new RuntimeException("Unexpected action class: " + action.getClass().getName());
-            }
-        }
     }
 
     @Override
@@ -239,52 +158,6 @@ public class CodeGenerationVisitor extends Visitor {
         code.emit(labels.get(1));
     }
 
-    public void visit(GrStatement statement) {
-        code.emit(Opcode.LOADC, 0xfb40);
-        code.emit(Opcode.CALL);
-    }
-
-    public void visit(PlotStatement statement) {
-        if (statement.getY().equals(statement.getX())) {
-            // Minor optimization if X=Y (aka PLOT 10,10)
-            dispatch(statement.getY());
-            code.emit(Opcode.DUP);
-        } else {
-            dispatch(statement.getY());
-            dispatch(statement.getX());
-        }
-        code.emit(Opcode.SETYREG);  // X coordinate
-        code.emit(Opcode.SETACC);   // Y coordinate
-        code.emit(Opcode.LOADC, 0xf800);
-        code.emit(Opcode.CALL);
-    }
-
-    @Override
-    public void visit(HlinStatement statement) {
-        dispatch(statement.getA());
-        code.emit(Opcode.SETYREG);
-        dispatch(statement.getB());
-        code.emit(Opcode.LOADC, 0x2c);
-        code.emit(Opcode.ISTORE);
-        dispatch(statement.getY());
-        code.emit(Opcode.SETACC);
-        code.emit(Opcode.LOADC, 0xf819);
-        code.emit(Opcode.CALL);
-    }
-
-    @Override
-    public void visit(VlinStatement statement) {
-        dispatch(statement.getA());
-        code.emit(Opcode.SETACC);
-        dispatch(statement.getB());
-        code.emit(Opcode.LOADC, 0x2d);
-        code.emit(Opcode.ISTORE);
-        dispatch(statement.getX());
-        code.emit(Opcode.SETYREG);
-        code.emit(Opcode.LOADC, 0xf828);
-        code.emit(Opcode.CALL);
-    }
-
     @Override
     public void visit(PokeStatement statement) {
         dispatch(statement.getB());
@@ -319,27 +192,6 @@ public class CodeGenerationVisitor extends Visitor {
         else {
             code.emit(Opcode.RETURN);
         }
-    }
-
-    public void visit(TextStatement statement) {
-        code.emit(Opcode.LOADC, 0xfb2f);
-        code.emit(Opcode.CALL);
-    }
-
-    @Override
-    public void visit(HtabStatement statement) {
-        dispatch(statement.getExpr());
-        code.emit(Opcode.DECR);
-        code.emit(Opcode.LOADC, 0x24);
-        code.emit(Opcode.ISTORE);
-    }
-
-    @Override
-    public void visit(VtabStatement statement) {
-        dispatch(statement.getExpr());
-        code.emit(Opcode.SETACC);
-        code.emit(Opcode.LOADC, 0xfb5b);
-        code.emit(Opcode.CALL);
     }
 
     @Override

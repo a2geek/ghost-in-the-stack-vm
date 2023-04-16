@@ -18,18 +18,18 @@ function random() as integer
 end function
 
 ' Note: Simulated Integer BASIC random generator
-function rnd(n as integer) as integer
+function math_rnd(n as integer) as integer
     return random() mod n
 end function
 
-function abs(n as integer) as integer
+function math_abs(n as integer) as integer
     if n < 0 then
         return 0 - n
     end if
     return n
 end function
 
-function sgn(n as integer) as integer
+function math_sgn(n as integer) as integer
     if n < 0 then
         return -1
     else

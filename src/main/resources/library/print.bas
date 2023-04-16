@@ -26,9 +26,9 @@ end sub
 
 sub print_boolean(b as boolean)
     if b then
-        print "True"
+        print "True";
     else
-        print "False"
+        print "False";
     end if
 end sub
 

@@ -30,7 +30,8 @@ public class BinaryExpression implements Expression {
         new Descriptor("and", DataType.INTEGER, DataType.INTEGER),
         new Descriptor("xor", DataType.INTEGER, DataType.INTEGER),
         new Descriptor("<<", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN),
-        new Descriptor(">>", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN)
+        // FIXME: STRING needs to be replaced here
+        new Descriptor(">>", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN, DataType.STRING)
     );
     public static Optional<Descriptor> findDescriptor(String operator, DataType left, DataType right) {
         for (var d : DESCRIPTORS) {

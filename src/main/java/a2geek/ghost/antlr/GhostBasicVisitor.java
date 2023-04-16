@@ -19,12 +19,22 @@ import java.util.*;
 import java.util.function.Function;
 
 public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
+    private final String LORES_LIBRARY = "lores";
+    private final String PRINT_LIBRARY = "print";
+    private final String TEXT_LIBRARY = "text";
+
     private Function<String,String> caseStrategy;
     private Stack<Scope> scope = new Stack<>();
     private Stack<StatementBlock> statementBlock = new Stack<>();
+    private Set<String> librariesIncluded = new HashSet<>();
+    private boolean includeLibraries = true;
 
     public GhostBasicVisitor(Function<String,String> caseStrategy) {
         this.caseStrategy = caseStrategy;
+    }
+
+    public void setIncludeLibraries(boolean includeLibraries) {
+        this.includeLibraries = includeLibraries;
     }
 
     public Program getProgram() {
@@ -79,34 +89,38 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         return this.scope.peek().addLocalVariable(name, type, dataType);
     }
 
+    public void uses(String libname) {
+        if (!includeLibraries || librariesIncluded.contains(libname)) {
+            return;
+        }
+        librariesIncluded.add(libname);
+        String name = String.format("/library/%s.bas", libname);
+        try (InputStream inputStream = getClass().getResourceAsStream(name)) {
+            if (inputStream == null) {
+                throw new RuntimeException("unknown library: " + libname);
+            }
+            Program library = GhostBasicUtil.toModel(CharStreams.fromStream(inputStream), caseStrategy, v -> v.setIncludeLibraries(false));
+            // at this time a library is simply a collection of subroutines and functions.
+            boolean noStatements = library.getStatements().isEmpty();
+            boolean onlyConstants = library.getLocalVariables().stream().noneMatch(ref -> ref.type() != Scope.Type.CONSTANT);
+            if (!noStatements || !onlyConstants) {
+                throw new RuntimeException("a library may only contain subroutines, functions, and constants");
+            }
+            // add subroutines and functions to our program!
+            // constants are intentionally left off -- the included code has the reference and we don't want to clutter the namespace
+            Program program = findProgram();
+            library.getScopes().forEach(program::addScope);
+        }
+        catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
     @Override
     public Expression visitUseDirective(BasicParser.UseDirectiveContext ctx) {
         for (var str : ctx.STR()) {
             String libname = str.getText().replaceAll("^\"|\"$", "");
-            String name = String.format("/library/%s.bas", libname);
-            try (InputStream inputStream = getClass().getResourceAsStream(name)) {
-                if (inputStream == null) {
-                    throw new RuntimeException("unknown library: " + libname);
-                }
-                Program library = GhostBasicUtil.toModel(CharStreams.fromStream(inputStream), caseStrategy);
-                // at this time a library is simply a collection of subroutines and functions.
-                boolean noStatements = library.getStatements().isEmpty();
-                boolean onlyConstants = library.getLocalVariables().stream().noneMatch(ref -> ref.type() != Scope.Type.CONSTANT);
-                if (!noStatements || !onlyConstants) {
-                    throw new RuntimeException("a library may only contain subroutines, functions, and constants");
-                }
-                // add subroutines and functions to our program!
-                // constants are intentionally left off -- the included code has the reference and we don't want to clutter the namespace
-                Program program = findProgram();
-                library.getScopes().forEach(s -> {
-                    s.setName(caseStrategy.apply(String.format("%s_%s", libname, s.getName())));
-                    System.out.printf("Adding '%s' from library '%s'\n", s.getName(), libname);
-                    program.addScope(s);
-                });
-            }
-            catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
+            uses(libname);
         }
         return null;
     }
@@ -132,9 +146,16 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         return null;
     }
 
+    public void callLibrarySubroutine(String library, String name, Expression... params) {
+        uses(library);
+        var subName = caseStrategy.apply(String.format("%s_%s", library, name));
+        CallSubroutine callSubroutine = new CallSubroutine(subName, Arrays.asList(params));
+        addStatement(callSubroutine);
+    }
+
     @Override
     public Expression visitGrStmt(BasicParser.GrStmtContext ctx) {
-        addStatement(new GrStatement());
+        callLibrarySubroutine(LORES_LIBRARY, "gr");
         return null;
     }
 
@@ -199,8 +220,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     @Override
     public Expression visitColorStmt(BasicParser.ColorStmtContext ctx) {
         Expression expr = visit(ctx.a);
-        ColorStatement colorStatement = new ColorStatement(expr);
-        addStatement(colorStatement);
+        callLibrarySubroutine(LORES_LIBRARY, "color", expr);
         return null;
     }
 
@@ -208,8 +228,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     public Expression visitPlotStmt(BasicParser.PlotStmtContext ctx) {
         Expression x = visit(ctx.a);
         Expression y = visit(ctx.b);
-        PlotStatement plotStatement = new PlotStatement(x, y);
-        addStatement(plotStatement);
+        callLibrarySubroutine(LORES_LIBRARY, "plot", x, y);
         return null;
     }
 
@@ -218,8 +237,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         var a = visit(ctx.a);
         var b = visit(ctx.b);
         var y = visit(ctx.y);
-        HlinStatement hlinStatement = new HlinStatement(a, b, y);
-        addStatement(hlinStatement);
+        callLibrarySubroutine(LORES_LIBRARY, "hlin", a, b, y);
         return null;
     }
 
@@ -228,8 +246,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         var a = visit(ctx.a);
         var b = visit(ctx.b);
         var x = visit(ctx.x);
-        VlinStatement vlinStatement = new VlinStatement(a, b, x);
-        addStatement(vlinStatement);
+        callLibrarySubroutine(LORES_LIBRARY, "vlin", a, b, x);
         return null;
     }
 
@@ -241,15 +258,15 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
     @Override
     public Expression visitHomeStmt(BasicParser.HomeStmtContext ctx) {
-        addStatement(new HomeStatement());
+        callLibrarySubroutine(TEXT_LIBRARY, "home");
         return null;
     }
 
     @Override
     public Expression visitPrintStmt(BasicParser.PrintStmtContext ctx) {
-        PrintStatement printStatement = new PrintStatement();
         // Print is a little bit different in that we need to pay attention to syntax,
         // so this tortured code handles that.
+        // Note that PRINT devolves into a bunch of subroutine calls as well.
         boolean semiColonAtEnd = false;
         for (ParseTree pt : ctx.children) {
             semiColonAtEnd = false;
@@ -260,23 +277,21 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                 semiColonAtEnd = true;
             }
             else if (",".equals(pt.getText())) {
-                printStatement.addCommaAction();
+                callLibrarySubroutine(PRINT_LIBRARY, "comma");
             }
             else {
                 Expression expr = pt.accept(this);
                 switch (expr.getType()) {
-                    case INTEGER -> printStatement.addIntegerAction(expr);
-                    case BOOLEAN -> printStatement.addBooleanAction(expr);
-                    case STRING -> printStatement.addStringAction(expr);
+                    case INTEGER -> callLibrarySubroutine(PRINT_LIBRARY, "integer", expr);
+                    case BOOLEAN -> callLibrarySubroutine(PRINT_LIBRARY, "boolean", expr);
+                    case STRING -> callLibrarySubroutine(PRINT_LIBRARY, "string", expr);
                     default -> throw new RuntimeException("Unsupported PRINT type: " + expr.getType());
                 }
             }
         }
         if (!semiColonAtEnd) {
-            printStatement.addNewlineAction();
+            callLibrarySubroutine(PRINT_LIBRARY, "newline");
         }
-
-        addStatement(printStatement);
         return null;
     }
 
@@ -323,21 +338,21 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
     @Override
     public Expression visitTextStmt(BasicParser.TextStmtContext ctx) {
-        addStatement(new TextStatement());
+        callLibrarySubroutine(TEXT_LIBRARY, "text");
         return null;
     }
 
     @Override
     public Expression visitHtabStmt(BasicParser.HtabStmtContext ctx) {
         var a = visit(ctx.a);
-        addStatement(new HtabStatement(a));
+        callLibrarySubroutine(TEXT_LIBRARY, "htab", a);
         return null;
     }
 
     @Override
     public Expression visitVtabStmt(BasicParser.VtabStmtContext ctx) {
         var a = visit(ctx.a);
-        addStatement(new VtabStatement(a));
+        callLibrarySubroutine(TEXT_LIBRARY, "vtab", a);
         return null;
     }
 

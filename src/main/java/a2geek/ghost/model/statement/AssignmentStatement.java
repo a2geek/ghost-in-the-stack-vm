@@ -12,7 +12,7 @@ public class AssignmentStatement implements Statement {
     public AssignmentStatement(Reference ref, Expression expr) {
         this.ref = ref;
         this.expr = expr;
-        expr.mustBe(DataType.INTEGER, DataType.BOOLEAN);
+        expr.mustBe(DataType.INTEGER, DataType.BOOLEAN, DataType.STRING);
     }
 
     public Reference getRef() {
