@@ -21,10 +21,11 @@ do
 
   for source in $(find src/main/basic/${dir} -name "*.bas")
   do
+    echo "Building file ${source} in ${dir}..."
     file=$(basename ${source})
     justname=${file/\.bas}
     target=${justname//-/}
-    ${GHOST} $source -o ${target}
+    ${GHOST} $source --output=${target} --quiet
     ${ACX} import --dir=${dir} ${target} --as -a 0x803 -f
     rm ${target}
   done
