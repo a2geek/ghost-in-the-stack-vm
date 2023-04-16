@@ -510,6 +510,12 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             return new IdentifierExpression(ref);
         }
 
+        if (FunctionExpression.isLibraryFunction(id)) {
+            FunctionExpression.Descriptor descriptor = FunctionExpression.getDescriptor(id).orElseThrow();
+            uses(descriptor.library());
+            id = caseStrategy.apply(String.format("%s_%s", descriptor.library(), id));
+        }
+
         Optional<Scope> scope = findProgram().findScope(id);
         if (scope.isPresent()) {
             if (scope.get() instanceof a2geek.ghost.model.scope.Function fn) {

@@ -8,16 +8,29 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class FunctionExpression implements Expression {
+    private static final String LORES_LIBRARY = "lores";
+    private static final String MISC_LIBRARY = "misc";
+    private static final String MATH_LIBRARY = "math";
     private static final Map<String,Descriptor> FUNCS = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     static {
         FUNCS.putAll(Map.of(
-            "peek", new Descriptor(DataType.INTEGER, DataType.INTEGER),
-            "scrn", new Descriptor(DataType.INTEGER, DataType.INTEGER, DataType.INTEGER),
-            "asc", new Descriptor(DataType.INTEGER, DataType.STRING)
+            "peek", new Descriptor(null, DataType.INTEGER, DataType.INTEGER),
+            "scrn", new Descriptor(LORES_LIBRARY, DataType.INTEGER, DataType.INTEGER, DataType.INTEGER),
+            "asc", new Descriptor(null, DataType.INTEGER, DataType.STRING),
+            "rnd", new Descriptor(MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER),
+            "abs", new Descriptor(MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER),
+            "sgn", new Descriptor(MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER),
+            "pdl", new Descriptor(MISC_LIBRARY, DataType.INTEGER, DataType.INTEGER)
         ));
     }
     public static boolean isIntrinsicFunction(String name) {
-        return FUNCS.containsKey(name);
+        return getDescriptor(name).map(Descriptor::library).isEmpty();
+    }
+    public static boolean isLibraryFunction(String name) {
+        return getDescriptor(name).map(Descriptor::library).isPresent();
+    }
+    public static Optional<Descriptor> getDescriptor(String name) {
+        return Optional.ofNullable(FUNCS.get(name));
     }
 
     private String name;
@@ -108,6 +121,7 @@ public class FunctionExpression implements Expression {
     }
 
     public record Descriptor(
+            String library,
             DataType returnType,
             DataType... parameterTypes
     ) {

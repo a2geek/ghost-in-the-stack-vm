@@ -1,35 +1,3 @@
-sub pokew(addr,value)
-    poke addr,value
-    poke addr+1,value >> 8
-end sub
-
-function peekw(addr)
-    return (peek(addr+1) << 8) + peek(addr)
-end function
-
-' See https://en.wikipedia.org/wiki/Linear-feedback_shift_register
-' See http://www.retroprogramming.com/2017/07/xorshift-pseudorandom-numbers-in-z80.html
-function random()
-    ' 78-79   | $4E-$4F     | Random-Number Field
-    r = peekw(0x4e)
-    r = r xor (r << 7)
-    r = r xor (r >> 9)
-    r = r xor (r << 8)
-    pokew(0x4e, r)
-    return r
-end function
-
-function rnd(n)
-    return random() mod n
-end function
-
-function abs(n)
-    if n < 0 then
-        return - n
-    end if
-    return n
-end function
-
 '  * ADVANCED DRAGON MAZE *
 
     const ADDR = 0x300  ' moving machine code to $300

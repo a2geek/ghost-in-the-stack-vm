@@ -362,14 +362,6 @@ public class CodeGenerationVisitor extends Visitor {
                 emitParameters.run();
                 code.emit(Opcode.ILOAD);
             }
-            case "scrn" -> {
-                emitParameters.run();
-                code.emit(Opcode.SETACC);
-                code.emit(Opcode.SETYREG);
-                code.emit(Opcode.LOADC, 0xf871);
-                code.emit(Opcode.CALL);
-                code.emit(Opcode.GETACC);
-            }
             default -> {
                 if (function.getFunction() == null) {
                     throw new RuntimeException("unimplemented standard function: " + function.getName());
