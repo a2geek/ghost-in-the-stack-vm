@@ -1,6 +1,8 @@
 package a2geek.ghost.model;
 
+import java.util.Arrays;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public interface Expression {
     public DataType getType();
@@ -15,7 +17,9 @@ public interface Expression {
     public default void mustBe(DataType...types) {
         if (isType(types)) return;
 
-        String message = String.format("Must be type %s but is %s", types, getType());
+        String message = String.format("Must be type %s but is %s",
+                Arrays.stream(types).map(DataType::toString).collect(Collectors.joining(",")),
+                getType());
         throw new RuntimeException(message);
     }
 
