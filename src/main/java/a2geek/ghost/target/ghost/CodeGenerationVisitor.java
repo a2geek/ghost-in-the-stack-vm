@@ -159,12 +159,63 @@ public class CodeGenerationVisitor extends Visitor {
 
     @Override
     public void visit(ForStatement statement) {
-        // TODO
+        var labels = label(String.format("do_%s_for", statement.getRef().name()));
+        // initialize loop variables
+        // - start value
+        dispatch(statement.getStart());
+        emitStore(statement.getRef());
+        // - end value
+        dispatch(statement.getEnd());
+        emitStore(statement.getFrame().getEndRef());
+        // - step value
+        dispatch(statement.getStep());
+        emitStore(statement.getFrame().getStepRef());
+        // - next address-1 (can be multiple FOR loops with this variable)
+        code.emit(Opcode.LOADA, statement.getFrame().getNextLabel());
+        code.emit(Opcode.DECR);
+        emitStore(statement.getFrame().getNextRef());
+        // skip around the next logic
+        code.emit(Opcode.GOTO, labels.get(0));
+
+        // FOR NEXT logic here
+        // - add step value
+        code.emit(statement.getFrame().getNextLabel());
+        emitLoad(statement.getRef());
+        emitLoad(statement.getFrame().getStepRef());
+        code.emit(Opcode.ADD);
+        emitStore(statement.getRef());
+        // - test end value (same bugs as FOR above!)  FIXME
+        //   step is:
+        //     neg: IF X < END THEN EXIT LOOP
+        //     pos: IF X > END THEN EXIT LOOP
+        boolean stepIsNegative = statement.getStep() instanceof IntegerConstant e && e.getValue() < 0;
+        if (stepIsNegative) {
+            emitLoad(statement.getRef());
+            emitLoad(statement.getFrame().getEndRef());
+        }
+        else {
+            emitLoad(statement.getFrame().getEndRef());
+            emitLoad(statement.getRef());
+        }
+        code.emit(Opcode.LT);
+        code.emit(Opcode.IFFALSE, labels.get(0));
+        emitLoad(statement.getFrame().getExitRef());
+        code.emit(Opcode.RETURN);
+
+        // do the for statements!
+        code.emit(labels.get(0));
     }
 
     @Override
     public void visit(NextStatement statement) {
-        // TODO
+        // save our exit address-1
+        code.emit(Opcode.LOADA, statement.getExitLabel());
+        code.emit(Opcode.DECR);
+        emitStore(statement.getFrame().getExitRef());
+        // dynamic GOTO
+        emitLoad(statement.getFrame().getNextRef());
+        code.emit(Opcode.RETURN);
+        code.emit(statement.getExitLabel());
     }
 
     @Override

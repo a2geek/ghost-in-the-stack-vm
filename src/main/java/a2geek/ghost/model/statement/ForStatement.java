@@ -4,15 +4,18 @@ import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.Reference;
 import a2geek.ghost.model.Statement;
+import a2geek.ghost.model.scope.ForFrame;
 
 public class ForStatement implements Statement {
     private Reference ref;
     private Expression start;
     private Expression end;
     private Expression step;
+    private ForFrame frame;
 
-    public ForStatement(Reference ref, Expression start, Expression end, Expression step) {
+    public ForStatement(Reference ref, Expression start, Expression end, Expression step, ForFrame frame) {
         this.ref = ref;
+        this.frame = frame;
         setStart(start);
         setEnd(end);
         setStep(step);
@@ -20,6 +23,9 @@ public class ForStatement implements Statement {
 
     public Reference getRef() {
         return ref;
+    }
+    public ForFrame getFrame() {
+        return frame;
     }
 
     public Expression getStart() {

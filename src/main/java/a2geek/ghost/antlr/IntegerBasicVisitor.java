@@ -2,11 +2,9 @@ package a2geek.ghost.antlr;
 
 import a2geek.ghost.antlr.generated.IntegerBaseVisitor;
 import a2geek.ghost.antlr.generated.IntegerParser;
-import a2geek.ghost.model.DataType;
-import a2geek.ghost.model.Expression;
-import a2geek.ghost.model.Scope;
-import a2geek.ghost.model.StatementBlock;
+import a2geek.ghost.model.*;
 import a2geek.ghost.model.expression.*;
+import a2geek.ghost.model.scope.ForFrame;
 import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.statement.*;
 import org.antlr.v4.runtime.CharStreams;
@@ -26,7 +24,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     private Stack<StatementBlock> blocks = new Stack<>();
     private Set<String> alreadyIncluded = new TreeSet<>();
-    private int labelNumber;
+    private Map<Reference,ForFrame> forFrames = new HashMap<>();
 
     @Override
     public Expression visitProgram(IntegerParser.ProgramContext ctx) {
@@ -44,6 +42,10 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         }
         throw new RuntimeException("Unexpected scope state at end of evaluation. " +
                 "Should be 1 but is " + blocks.size());
+    }
+
+    public ForFrame forFrame(Reference ref) {
+        return forFrames.computeIfAbsent(ref, r -> new ForFrame(r, currentScope()));
     }
 
     Scope currentScope() {
@@ -160,8 +162,9 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         var first = visit(ctx.first);
         var last = visit(ctx.last);
         Expression step = visitOrDefault(ctx.step, IntegerConstant.ONE);
+        ForFrame frame = forFrame(ref);
 
-        blocks.peek().addStatement(new ForStatement(ref, first, last, step));
+        blocks.peek().addStatement(new ForStatement(ref, first, last, step, frame));
         return null;
     }
 
@@ -169,7 +172,8 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     public Expression visitNextStatement(IntegerParser.NextStatementContext ctx) {
         for (var ivar : ctx.ivar()) {
             var ref = currentScope().addLocalVariable(ivar.getText(), DataType.INTEGER);
-            blocks.peek().addStatement(new NextStatement(ref));
+            ForFrame frame = forFrame(ref);
+            blocks.peek().addStatement(new NextStatement(ref, frame));
         }
         return null;
     }
