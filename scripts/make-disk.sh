@@ -19,14 +19,20 @@ for dir in $(ls src/main/basic)
 do
   ${ACX} mkdir ${dir}
 
-  for source in $(find src/main/basic/${dir} -name "*.bas")
+  for source in $(find src/main/basic/${dir} -name "*.bas" -o -name "*.int")
   do
     echo "Building file ${source} in ${dir}..."
-    file=$(basename ${source})
-    justname=${file/\.bas}
-    target=${justname//-/}
-    ${GHOST} $source --output=${target} --quiet
-    ${ACX} import --dir=${dir} ${target} --as -a 0x803 -f
-    rm ${target}
+
+    filename=$(basename ${source})
+    extension="${filename##*.}"
+    filename="${filename%.*}"
+    filename="${filename//-/}"
+
+    FLAGS=""
+    [ "${extension}" == "int" ] && FLAGS="--integer"
+
+    ${GHOST} $source ${FLAGS} --output=${filename} --quiet
+    ${ACX} import --dir=${dir} ${filename} --as -a 0x803 -f
+    rm ${filename}
   done
 done

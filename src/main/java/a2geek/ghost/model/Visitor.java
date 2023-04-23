@@ -39,6 +39,12 @@ public abstract class Visitor {
         else if (statement instanceof ForNextStatement s) {
             visit(s);
         }
+        else if (statement instanceof ForStatement s) {
+            visit(s);
+        }
+        else if (statement instanceof NextStatement s) {
+            visit(s);
+        }
         else if (statement instanceof PokeStatement s) {
             visit(s);
         }
@@ -135,6 +141,19 @@ public abstract class Visitor {
         start.ifPresent(statement::setStart);
         end.ifPresent(statement::setEnd);
         step.ifPresent(statement::setStep);
+    }
+
+    public void visit(ForStatement statement) {
+        var start = dispatch(statement.getStart());
+        var end = dispatch(statement.getEnd());
+        var step = dispatch(statement.getStep());   // Always set by GhostBasicVisitor
+        start.ifPresent(statement::setStart);
+        end.ifPresent(statement::setEnd);
+        step.ifPresent(statement::setStep);
+    }
+
+    public void visit(NextStatement statement) {
+
     }
 
     public void visit(PokeStatement statement) {

@@ -1,0 +1,7 @@
+10 x = 5: gosub 100
+20 x = 10: gosub 100
+30 x = 15: gosub 100
+40 REM for x=5 to 20 step 5: gosub 100: next x
+50 end
+
+100 if x < 10 then print x;" < 10" : if x = 10 then print x;" = 10" : if x > 10 then print x; " > 10" : return

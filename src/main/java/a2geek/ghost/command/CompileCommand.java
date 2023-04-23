@@ -1,6 +1,6 @@
 package a2geek.ghost.command;
 
-import a2geek.ghost.antlr.GhostBasicUtil;
+import a2geek.ghost.antlr.ParseUtil;
 import a2geek.ghost.model.Scope;
 import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.visitor.RewriteVisitor;
@@ -30,6 +30,12 @@ public class CompileCommand implements Callable<Integer> {
     @Parameters(index = "0", description = "program to compile")
     private Path sourceCode;
 
+    private Language language = Language.BASIC;
+    @Option(names = { "--integer" }, description = "integer basic program")
+    private void selectInteger(boolean flag) {
+        language = Language.INTEGER_BASIC;
+    }
+
     @Option(names = { "-o", "--output" }, description = "output file name",
             defaultValue = "a.out", showDefaultValue = Visibility.ALWAYS)
     private Path outputFile;
@@ -51,8 +57,11 @@ public class CompileCommand implements Callable<Integer> {
     @Override
     public Integer call() throws Exception {
         CharStream stream = CharStreams.fromPath(sourceCode);
-        Program program = GhostBasicUtil.toModel(stream, caseSensitive ?
-                s -> s : String::toUpperCase);
+        Program program = switch (language) {
+            case INTEGER_BASIC -> ParseUtil.integerToModel(stream);
+            case BASIC -> ParseUtil.basicToModel(stream, caseSensitive ?
+                    s -> s : String::toUpperCase);
+        };
 
         if (!quietFlag) {
             System.out.println("=== MODEL ===");
@@ -143,6 +152,11 @@ public class CompileCommand implements Callable<Integer> {
                 .dataFork(baos.toByteArray())
                 .build()
                 .save(outputFile);
+    }
+
+    private enum Language {
+        BASIC,
+        INTEGER_BASIC
     }
 
     public static class ByteFormatter {

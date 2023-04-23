@@ -12,6 +12,7 @@ public class AssignmentStatement implements Statement {
     public AssignmentStatement(Reference ref, Expression expr) {
         this.ref = ref;
         this.expr = expr;
+        // TODO string is really being evaluated as a pointer to a string.
         expr.mustBe(DataType.INTEGER, DataType.BOOLEAN, DataType.STRING);
     }
 

@@ -99,7 +99,8 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             if (inputStream == null) {
                 throw new RuntimeException("unknown library: " + libname);
             }
-            Program library = GhostBasicUtil.toModel(CharStreams.fromStream(inputStream), caseStrategy, v -> v.setIncludeLibraries(false));
+            Program library = ParseUtil.basicToModel(CharStreams.fromStream(inputStream),
+                    caseStrategy, v -> v.setIncludeLibraries(false));
             // at this time a library is simply a collection of subroutines and functions.
             boolean noStatements = library.getStatements().isEmpty();
             boolean onlyConstants = library.getLocalVariables().stream().noneMatch(ref -> ref.type() != Scope.Type.CONSTANT);

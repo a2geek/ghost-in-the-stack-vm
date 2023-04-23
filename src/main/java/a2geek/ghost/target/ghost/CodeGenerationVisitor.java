@@ -95,7 +95,6 @@ public class CodeGenerationVisitor extends Visitor {
         }
     }
 
-
     @Override
     public void visit(AssignmentStatement statement) {
         dispatch(statement.getExpr());
@@ -156,6 +155,16 @@ public class CodeGenerationVisitor extends Visitor {
         emitStore(statement.getRef());
         code.emit(Opcode.GOTO, labels.get(0));
         code.emit(labels.get(1));
+    }
+
+    @Override
+    public void visit(ForStatement statement) {
+        // TODO
+    }
+
+    @Override
+    public void visit(NextStatement statement) {
+        // TODO
     }
 
     @Override
