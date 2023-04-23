@@ -2,7 +2,10 @@ package a2geek.ghost.antlr;
 
 import a2geek.ghost.antlr.generated.IntegerBaseVisitor;
 import a2geek.ghost.antlr.generated.IntegerParser;
-import a2geek.ghost.model.*;
+import a2geek.ghost.model.DataType;
+import a2geek.ghost.model.Expression;
+import a2geek.ghost.model.Scope;
+import a2geek.ghost.model.StatementBlock;
 import a2geek.ghost.model.expression.*;
 import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.statement.*;
