@@ -8,7 +8,10 @@ The original BASIC for the Apple II!
 
 ## Extensions
 
-Line continuation can be done if the line ends with a space and an underscore.
+* Line continuation can be done if the line ends with a space and an underscore.
+* Numbers can be declared with hex notation (`0xabc`).
+
+Sample:
 ```basic
 10  POKE 0x302,0xad: POKE 0x303,0x30: POKE 0x304,0xc0: _
     POKE 0x305,0x88: _
@@ -54,7 +57,7 @@ Notes:
 | `poke <iexpr>,<iexpr>`                          | Intrinsic. Evaluates to native instructions.                             |
 | `pop`                                           | N/A?                                                                     |
 | `pr#<iexpr>`                                    | -                                                                        |
-| `print [<iexpr>\|<sexpr>\|;\|,]*`               | Tab calculation not implemented.                                         |
+| `print [<iexpr>\|<sexpr>\|;\|,]*`               | Tab calculation not implemented. TODO                                    |
 | `rem ...`                                       | -                                                                        |
 | `return`                                        | -                                                                        |
 | `run [<iexpr>]`                                 | N/A                                                                      |
@@ -84,15 +87,15 @@ Notes:
 
 ## Functions
 
-| Function                | Input   | Output  | Notes                                            |
-|:------------------------|:--------|---------|--------------------------------------------------|
-| `abs(<iexpr>)`          | Integer | Integer | -                                                |
-| `pdl(<iexpr>)`          | Integer | Integer | -                                                |
-| `peek(<iexpr>)`         | Integer | Integer | Intrinsic; this evaluates to native instruction. |
-| `rnd(<iexpr>)`          | Integer | Integer | -                                                |
-| `sgn(<iexpr>)`          | Integer | Integer | -                                                |
-| `asc(<sexpr>)`          | String  | Integer | -                                                |
-| `len(<sexpr>)`          | String  | Integer | -                                                |
-| `scrn(<iexpr>,<iexpr>)` | Integer | Integer | -                                                |
+| Function                | Input   | Output  | Notes                                             |
+|:------------------------|:--------|---------|---------------------------------------------------|
+| `abs(<iexpr>)`          | Integer | Integer | -                                                 |
+| `pdl(<iexpr>)`          | Integer | Integer | -                                                 |
+| `peek(<iexpr>)`         | Integer | Integer | Intrinsic; this evaluates to native instructions. |
+| `rnd(<iexpr>)`          | Integer | Integer | -                                                 |
+| `sgn(<iexpr>)`          | Integer | Integer | -                                                 |
+| `asc(<sexpr>)`          | String  | Integer | -                                                 |
+| `len(<sexpr>)`          | String  | Integer | -                                                 |
+| `scrn(<iexpr>,<iexpr>)` | Integer | Integer | -                                                 |
 
 *** END ***
