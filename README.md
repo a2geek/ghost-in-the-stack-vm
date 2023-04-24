@@ -26,6 +26,7 @@ instructive and enjoyable to write.
 ## More project information
 
 * [BASIC language](BASIC.md)
+* [Integer BASIC language](INTEGER.md)
 * [Compiler](COMPILER.md)
 * [Interpreter opcodes](OPCODES.md)
 
