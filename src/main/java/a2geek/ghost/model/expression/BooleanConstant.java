@@ -3,6 +3,7 @@ package a2geek.ghost.model.expression;
 import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.Expression;
 
+import java.util.Objects;
 import java.util.Optional;
 
 public class BooleanConstant implements Expression {
@@ -39,6 +40,19 @@ public class BooleanConstant implements Expression {
 
     public boolean getValue() {
         return value;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        BooleanConstant that = (BooleanConstant) o;
+        return value == that.value;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(value);
     }
 
     @Override
