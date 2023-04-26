@@ -207,7 +207,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         var expr = visit(ctx.e);
         StatementBlock block = new StatementBlock();
         blocks.push(block);
-        gotoGosub("goto", ctx.l);
+        gotoGosub("GOTO", ctx.l);
         blocks.pop();
 
         blocks.peek().addStatement(new IfStatement(expr, block, null));
