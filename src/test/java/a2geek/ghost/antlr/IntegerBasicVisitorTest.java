@@ -5,14 +5,11 @@ import a2geek.ghost.model.Scope;
 import org.junit.jupiter.api.Test;
 
 import static a2geek.ghost.antlr.ExpressionBuilder.*;
+import static a2geek.ghost.antlr.StatementTester.expect;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class IntegerBasicVisitorTest {
-    public ProgramTester expect(String source) {
-        return new ProgramTester(source);
-    }
-
     @Test
     public void testCallStatement() {
         expect("10 CALL 0x300")
@@ -121,9 +118,32 @@ public class IntegerBasicVisitorTest {
     }
 
     @Test
-    public void testIf() {
-        // TODO
-        // 2 IF statement types!
+    public void testIfGoto() {
+        var aRef = identifier("A",DataType.INTEGER, Scope.Type.GLOBAL);
+        expect("10 IF A=1 THEN 50: PRINT \"OUTSIDE OF IF\"")
+            .hasVariable(aRef)
+            .lineNumber(10)
+            .ifStmt(binary("=", aRef, constant(1)))
+                .gotoStmt(50)
+            .endIf()
+            .callSub("string", constant("OUTSIDE OF IF"))
+            .callSub("newline")
+            .atEnd();
+    }
+
+    @Test
+    public void testIfWithStatement() {
+        var aRef = identifier("A",DataType.INTEGER, Scope.Type.GLOBAL);
+        expect("10 IF A=1 THEN PRINT \"IN IF\": PRINT \"OUTSIDE OF IF\"")
+            .hasVariable(aRef)
+            .lineNumber(10)
+            .ifStmt(binary("=", aRef, constant(1)))
+                .callSub("string", constant("IN IF"))
+                .callSub("newline")
+            .endIf()
+            .callSub("string", constant("OUTSIDE OF IF"))
+            .callSub("newline")
+            .atEnd();
     }
 
     @Test
