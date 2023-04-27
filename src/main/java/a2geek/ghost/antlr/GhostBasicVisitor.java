@@ -514,7 +514,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         if (FunctionExpression.isLibraryFunction(id)) {
             FunctionExpression.Descriptor descriptor = FunctionExpression.getDescriptor(id).orElseThrow();
             uses(descriptor.library());
-            id = caseStrategy.apply(String.format("%s_%s", descriptor.library(), id));
+            id = caseStrategy.apply(descriptor.fullName());
         }
 
         Optional<Scope> scope = findProgram().findScope(id);

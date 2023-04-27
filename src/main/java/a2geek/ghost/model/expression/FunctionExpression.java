@@ -13,15 +13,17 @@ public class FunctionExpression implements Expression {
     private static final String MATH_LIBRARY = "math";
     private static final Map<String,Descriptor> FUNCS = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     static {
-        FUNCS.putAll(Map.of(
-            "peek", new Descriptor(null, DataType.INTEGER, DataType.INTEGER),
-            "scrn", new Descriptor(LORES_LIBRARY, DataType.INTEGER, DataType.INTEGER, DataType.INTEGER),
-            "asc", new Descriptor(null, DataType.INTEGER, DataType.STRING),
-            "rnd", new Descriptor(MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER),
-            "abs", new Descriptor(MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER),
-            "sgn", new Descriptor(MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER),
-            "pdl", new Descriptor(MISC_LIBRARY, DataType.INTEGER, DataType.INTEGER)
-        ));
+        Arrays.asList(
+            new Descriptor("peek", null, DataType.INTEGER, DataType.INTEGER),
+            new Descriptor("scrn", LORES_LIBRARY, DataType.INTEGER, DataType.INTEGER, DataType.INTEGER),
+            new Descriptor("asc", null, DataType.INTEGER, DataType.STRING),
+            new Descriptor("rnd", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER),
+            new Descriptor("abs", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER),
+            new Descriptor("sgn", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER),
+            new Descriptor("pdl", MISC_LIBRARY, DataType.INTEGER, DataType.INTEGER)
+        ).forEach(d -> {
+            FUNCS.put(d.name(), d);
+        });
     }
     public static boolean isIntrinsicFunction(String name) {
         return getDescriptor(name).map(Descriptor::library).isEmpty();
@@ -121,10 +123,16 @@ public class FunctionExpression implements Expression {
     }
 
     public record Descriptor(
-            String library,
-            DataType returnType,
-            DataType... parameterTypes
+        String name,
+        String library,
+        DataType returnType,
+        DataType... parameterTypes
     ) {
-
+        public String fullName() {
+            if (library() == null) {
+                throw new RuntimeException("fullName does not apply " + this);
+            }
+            return String.format("%s_%s", library(), name());
+        }
     }
 }
