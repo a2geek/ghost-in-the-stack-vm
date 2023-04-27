@@ -19,10 +19,6 @@ import java.util.*;
 import java.util.function.Function;
 
 public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
-    private final String LORES_LIBRARY = "lores";
-    private final String PRINT_LIBRARY = "print";
-    private final String TEXT_LIBRARY = "text";
-
     private Function<String,String> caseStrategy;
     private Stack<Scope> scope = new Stack<>();
     private Stack<StatementBlock> statementBlock = new Stack<>();
@@ -147,16 +143,17 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         return null;
     }
 
-    public void callLibrarySubroutine(String library, String name, Expression... params) {
-        uses(library);
-        var subName = caseStrategy.apply(String.format("%s_%s", library, name));
+    public void callLibrarySubroutine(String name, Expression... params) {
+        var descriptor = CallSubroutine.getDescriptor(name).orElseThrow();
+        uses(descriptor.library());
+        var subName = caseStrategy.apply(descriptor.fullName());
         CallSubroutine callSubroutine = new CallSubroutine(subName, Arrays.asList(params));
         addStatement(callSubroutine);
     }
 
     @Override
     public Expression visitGrStmt(BasicParser.GrStmtContext ctx) {
-        callLibrarySubroutine(LORES_LIBRARY, "gr");
+        callLibrarySubroutine("gr");
         return null;
     }
 
@@ -221,7 +218,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     @Override
     public Expression visitColorStmt(BasicParser.ColorStmtContext ctx) {
         Expression expr = visit(ctx.a);
-        callLibrarySubroutine(LORES_LIBRARY, "color", expr);
+        callLibrarySubroutine("color", expr);
         return null;
     }
 
@@ -229,7 +226,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     public Expression visitPlotStmt(BasicParser.PlotStmtContext ctx) {
         Expression x = visit(ctx.a);
         Expression y = visit(ctx.b);
-        callLibrarySubroutine(LORES_LIBRARY, "plot", x, y);
+        callLibrarySubroutine("plot", x, y);
         return null;
     }
 
@@ -238,7 +235,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         var a = visit(ctx.a);
         var b = visit(ctx.b);
         var y = visit(ctx.y);
-        callLibrarySubroutine(LORES_LIBRARY, "hlin", a, b, y);
+        callLibrarySubroutine("hlin", a, b, y);
         return null;
     }
 
@@ -247,7 +244,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         var a = visit(ctx.a);
         var b = visit(ctx.b);
         var x = visit(ctx.x);
-        callLibrarySubroutine(LORES_LIBRARY, "vlin", a, b, x);
+        callLibrarySubroutine("vlin", a, b, x);
         return null;
     }
 
@@ -259,7 +256,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
     @Override
     public Expression visitHomeStmt(BasicParser.HomeStmtContext ctx) {
-        callLibrarySubroutine(TEXT_LIBRARY, "home");
+        callLibrarySubroutine("home");
         return null;
     }
 
@@ -278,20 +275,20 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                 semiColonAtEnd = true;
             }
             else if (",".equals(pt.getText())) {
-                callLibrarySubroutine(PRINT_LIBRARY, "comma");
+                callLibrarySubroutine("comma");
             }
             else {
                 Expression expr = pt.accept(this);
                 switch (expr.getType()) {
-                    case INTEGER -> callLibrarySubroutine(PRINT_LIBRARY, "integer", expr);
-                    case BOOLEAN -> callLibrarySubroutine(PRINT_LIBRARY, "boolean", expr);
-                    case STRING -> callLibrarySubroutine(PRINT_LIBRARY, "string", expr);
+                    case INTEGER -> callLibrarySubroutine("integer", expr);
+                    case BOOLEAN -> callLibrarySubroutine("boolean", expr);
+                    case STRING -> callLibrarySubroutine("string", expr);
                     default -> throw new RuntimeException("Unsupported PRINT type: " + expr.getType());
                 }
             }
         }
         if (!semiColonAtEnd) {
-            callLibrarySubroutine(PRINT_LIBRARY, "newline");
+            callLibrarySubroutine("newline");
         }
         return null;
     }
@@ -339,21 +336,21 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
     @Override
     public Expression visitTextStmt(BasicParser.TextStmtContext ctx) {
-        callLibrarySubroutine(TEXT_LIBRARY, "text");
+        callLibrarySubroutine("text");
         return null;
     }
 
     @Override
     public Expression visitHtabStmt(BasicParser.HtabStmtContext ctx) {
         var a = visit(ctx.a);
-        callLibrarySubroutine(TEXT_LIBRARY, "htab", a);
+        callLibrarySubroutine("htab", a);
         return null;
     }
 
     @Override
     public Expression visitVtabStmt(BasicParser.VtabStmtContext ctx) {
         var a = visit(ctx.a);
-        callLibrarySubroutine(TEXT_LIBRARY, "vtab", a);
+        callLibrarySubroutine("vtab", a);
         return null;
     }
 

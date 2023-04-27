@@ -4,10 +4,7 @@ import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.Statement;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class CallSubroutine implements Statement {
@@ -17,33 +14,33 @@ public class CallSubroutine implements Statement {
     private static final String TEXT_LIBRARY = "text";
     private static final Map<String, Descriptor> SUBS = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     static {
-        SUBS.putAll(Map.of(
-            "color", new Descriptor(LORES_LIBRARY, DataType.INTEGER),
-            "gr", new Descriptor(LORES_LIBRARY),
-            "hlin", new Descriptor(LORES_LIBRARY, DataType.INTEGER, DataType.INTEGER, DataType.INTEGER),
-            "plot", new Descriptor(LORES_LIBRARY, DataType.INTEGER, DataType.INTEGER),
-            "vlin", new Descriptor(LORES_LIBRARY, DataType.INTEGER, DataType.INTEGER, DataType.INTEGER)
-        ));
-        SUBS.putAll(Map.of(
-            "innum", new Descriptor(MISC_LIBRARY, DataType.INTEGER),
-            "prnum", new Descriptor(MISC_LIBRARY, DataType.INTEGER)
-        ));
-        SUBS.putAll(Map.of(
-            "boolean", new Descriptor(PRINT_LIBRARY, DataType.BOOLEAN),
-            "comma", new Descriptor(PRINT_LIBRARY),
-            "integer", new Descriptor(PRINT_LIBRARY, DataType.INTEGER),
-            "newline", new Descriptor(PRINT_LIBRARY),
-            "string", new Descriptor(PRINT_LIBRARY, DataType.STRING)
-        ));
-        SUBS.putAll(Map.of(
-            "flash", new Descriptor(TEXT_LIBRARY),
-            "home", new Descriptor(TEXT_LIBRARY),
-            "htab", new Descriptor(TEXT_LIBRARY, DataType.INTEGER),
-            "inverse", new Descriptor(TEXT_LIBRARY),
-            "normal", new Descriptor(TEXT_LIBRARY),
-            "text", new Descriptor(TEXT_LIBRARY),
-            "vtab", new Descriptor(TEXT_LIBRARY, DataType.INTEGER)
-        ));
+        Arrays.asList(
+            // lores
+            new Descriptor("color", LORES_LIBRARY, DataType.INTEGER),
+            new Descriptor("gr", LORES_LIBRARY),
+            new Descriptor("hlin", LORES_LIBRARY, DataType.INTEGER, DataType.INTEGER, DataType.INTEGER),
+            new Descriptor("plot", LORES_LIBRARY, DataType.INTEGER, DataType.INTEGER),
+            new Descriptor("vlin", LORES_LIBRARY, DataType.INTEGER, DataType.INTEGER, DataType.INTEGER),
+            // misc
+            new Descriptor("innum", MISC_LIBRARY, DataType.INTEGER),
+            new Descriptor("prnum", MISC_LIBRARY, DataType.INTEGER),
+            // print
+            new Descriptor("boolean", PRINT_LIBRARY, DataType.BOOLEAN),
+            new Descriptor("comma", PRINT_LIBRARY),
+            new Descriptor("integer", PRINT_LIBRARY, DataType.INTEGER),
+            new Descriptor("newline", PRINT_LIBRARY),
+            new Descriptor("string", PRINT_LIBRARY, DataType.STRING),
+            // text
+            new Descriptor("flash", TEXT_LIBRARY),
+            new Descriptor("home", TEXT_LIBRARY),
+            new Descriptor("htab", TEXT_LIBRARY, DataType.INTEGER),
+            new Descriptor("inverse", TEXT_LIBRARY),
+            new Descriptor("normal", TEXT_LIBRARY),
+            new Descriptor("text", TEXT_LIBRARY),
+            new Descriptor("vtab", TEXT_LIBRARY, DataType.INTEGER)
+        ).forEach(d -> {
+            SUBS.put(d.name(), d);
+        });
     }
     public static Optional<Descriptor> getDescriptor(String name) {
         return Optional.ofNullable(SUBS.get(name));
@@ -78,9 +75,12 @@ public class CallSubroutine implements Statement {
     }
 
     public record Descriptor(
-            String library,
-            DataType... parameterTypes
+        String name,
+        String library,
+        DataType... parameterTypes
     ) {
-
+        public String fullName() {
+            return String.format("%s_%s", library(), name());
+        }
     }
 }

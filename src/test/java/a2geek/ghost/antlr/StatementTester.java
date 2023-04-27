@@ -89,7 +89,7 @@ public abstract class StatementTester {
         var descriptor = CallSubroutine.getDescriptor(name);
         assertTrue(descriptor.isPresent(), "subroutine not found: " + name);
         var stmt = nextStatement(CallSubroutine.class);
-        var fullName = String.format("%s_%s", descriptor.get().library(), name).toUpperCase();
+        var fullName = descriptor.get().fullName().toUpperCase();
         assertEquals(fullName, stmt.getName());
         assertEquals(descriptor.get().parameterTypes().length, exprs.length);
         for (int i=0; i<exprs.length; i++) {

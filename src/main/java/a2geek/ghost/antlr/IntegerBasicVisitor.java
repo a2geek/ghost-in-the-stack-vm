@@ -17,11 +17,6 @@ import java.io.UncheckedIOException;
 import java.util.*;
 
 public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
-    private static final String LORES_LIBRARY = "lores";
-    private static final String MISC_LIBRARY = "misc";
-    private static final String PRINT_LIBRARY = "print";
-    private static final String TEXT_LIBRARY = "text";
-
     private Stack<StatementBlock> blocks = new Stack<>();
     private Set<String> alreadyIncluded = new TreeSet<>();
     private Map<Reference,ForFrame> forFrames = new HashMap<>();
@@ -87,13 +82,14 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         }
     }
 
-    void callSubroutine(String libraryName, String subName, ParseTree... expressions) {
-        uses(libraryName);
+    void callSubroutine(String subName, ParseTree... expressions) {
+        var descriptor = CallSubroutine.getDescriptor(subName).orElseThrow();
+        uses(descriptor.library());
         var exprs = new ArrayList<Expression>();
         for (var expression : expressions) {
             exprs.add(visit(expression));
         }
-        var name = String.format("%s_%s", libraryName, subName).toUpperCase();
+        var name = descriptor.fullName().toUpperCase();
         blocks.peek().addStatement(new CallSubroutine(name, exprs));
     }
 
@@ -125,7 +121,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     @Override
     public Expression visitColorStatement(IntegerParser.ColorStatementContext ctx) {
-        callSubroutine(LORES_LIBRARY, "color", ctx.e);
+        callSubroutine("color", ctx.e);
         return null;
     }
 
@@ -186,7 +182,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     @Override
     public Expression visitGrStatement(IntegerParser.GrStatementContext ctx) {
-        callSubroutine(LORES_LIBRARY, "gr");
+        callSubroutine("gr");
         return null;
     }
 
@@ -198,7 +194,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     @Override
     public Expression visitHlinStatement(IntegerParser.HlinStatementContext ctx) {
-        callSubroutine(LORES_LIBRARY, "hlin", ctx.x0, ctx.x1, ctx.y);
+        callSubroutine("hlin", ctx.x0, ctx.x1, ctx.y);
         return null;
     }
 
@@ -228,7 +224,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     @Override
     public Expression visitInNumStatement(IntegerParser.InNumStatementContext ctx) {
-        callSubroutine(MISC_LIBRARY, "innum", ctx.slot);
+        callSubroutine("innum", ctx.slot);
         return null;
     }
 
@@ -271,7 +267,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     @Override
     public Expression visitPlotStatement(IntegerParser.PlotStatementContext ctx) {
-        callSubroutine(LORES_LIBRARY, "plot", ctx.x, ctx.y);
+        callSubroutine("plot", ctx.x, ctx.y);
         return null;
     }
 
@@ -292,7 +288,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     @Override
     public Expression visitPrNumStatement(IntegerParser.PrNumStatementContext ctx) {
-        callSubroutine(MISC_LIBRARY,"prnum", ctx.slot);
+        callSubroutine("prnum", ctx.slot);
         return null;
     }
 
@@ -310,19 +306,19 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
                 semiColonAtEnd = true;
             }
             else if (",".equals(pt.getText())) {
-                callSubroutine(PRINT_LIBRARY, "comma");
+                callSubroutine("comma");
             }
             else {
                 Expression expr = pt.accept(this);
                 switch (expr.getType()) {
-                    case INTEGER -> callSubroutine(PRINT_LIBRARY, "integer", pt);
-                    case STRING -> callSubroutine(PRINT_LIBRARY, "string", pt);
+                    case INTEGER -> callSubroutine("integer", pt);
+                    case STRING -> callSubroutine("string", pt);
                     default -> throw new RuntimeException("Unsupported PRINT type: " + expr.getType());
                 }
             }
         }
         if (!semiColonAtEnd) {
-            callSubroutine(PRINT_LIBRARY, "newline");
+            callSubroutine("newline");
         }
         return null;
     }
@@ -345,7 +341,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     @Override
     public Expression visitTabStatement(IntegerParser.TabStatementContext ctx) {
-        callSubroutine(TEXT_LIBRARY, "htab", ctx.x);
+        callSubroutine("htab", ctx.x);
         return null;
     }
 
@@ -357,19 +353,19 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     @Override
     public Expression visitTextStatement(IntegerParser.TextStatementContext ctx) {
-        callSubroutine(TEXT_LIBRARY, "text");
+        callSubroutine("text");
         return null;
     }
 
     @Override
     public Expression visitVlinStatement(IntegerParser.VlinStatementContext ctx) {
-        callSubroutine(LORES_LIBRARY, "vlin", ctx.y0, ctx.y1, ctx.x);
+        callSubroutine("vlin", ctx.y0, ctx.y1, ctx.x);
         return null;
     }
 
     @Override
     public Expression visitVtabStatement(IntegerParser.VtabStatementContext ctx) {
-        callSubroutine(TEXT_LIBRARY, "vtab", ctx.y);
+        callSubroutine("vtab", ctx.y);
         return null;
     }
 
