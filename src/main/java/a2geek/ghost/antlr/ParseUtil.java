@@ -43,6 +43,6 @@ public class ParseUtil {
         IntegerParser.ProgramContext context = parser.program();
         IntegerBasicVisitor visitor = new IntegerBasicVisitor();
         visitor.visit(context);
-        return visitor.getProgram();
+        return visitor.getModel().getProgram();
     }
 }

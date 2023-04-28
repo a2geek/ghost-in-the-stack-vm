@@ -2,6 +2,7 @@ package a2geek.ghost.model;
 
 import a2geek.ghost.antlr.ParseUtil;
 import a2geek.ghost.model.expression.FunctionExpression;
+import a2geek.ghost.model.scope.ForFrame;
 import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.scope.Subroutine;
 import a2geek.ghost.model.statement.*;
@@ -23,6 +24,9 @@ public class ModelBuilder {
     private Stack<StatementBlock> statementBlock = new Stack<>();
     private Set<String> librariesIncluded = new HashSet<>();
     private boolean includeLibraries = true;
+    /** Traditional FOR/NEXT statement frame. */
+    private Map<Reference, ForFrame> forFrames = new HashMap<>();
+
 
     public ModelBuilder(Function<String,String> caseStrategy) {
         this.caseStrategy = caseStrategy;
@@ -79,6 +83,10 @@ public class ModelBuilder {
     }
     public Reference addConstant(String name, Expression value) {
         return this.scope.peek().addLocalConstant(fixCase(name), value);
+    }
+
+    public ForFrame forFrame(Reference ref) {
+        return forFrames.computeIfAbsent(ref, r -> new ForFrame(r, scope.peek()));
     }
 
     public void uses(String libname) {

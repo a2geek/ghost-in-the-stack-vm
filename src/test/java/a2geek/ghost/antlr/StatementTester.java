@@ -114,14 +114,14 @@ public abstract class StatementTester {
 
     public StatementTester gosub(int lineNumber) {
         var stmt = nextStatement(GotoGosubStatement.class);
-        assertEquals("GOSUB", stmt.getOp());
+        assertEquals("gosub", stmt.getOp());
         assertEquals(lineNumberLabel(lineNumber), stmt.getId());
         return this;
     }
 
     public StatementTester gotoStmt(int lineNumber) {
         var stmt = nextStatement(GotoGosubStatement.class);
-        assertEquals("GOTO", stmt.getOp());
+        assertEquals("goto", stmt.getOp());
         assertEquals(lineNumberLabel(lineNumber), stmt.getId());
         return this;
     }

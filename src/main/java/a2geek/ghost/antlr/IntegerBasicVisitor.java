@@ -17,91 +17,42 @@ import java.io.UncheckedIOException;
 import java.util.*;
 
 public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
-    private Stack<StatementBlock> blocks = new Stack<>();
-    private Set<String> alreadyIncluded = new TreeSet<>();
-    private Map<Reference,ForFrame> forFrames = new HashMap<>();
+    private ModelBuilder model;
+
+    public IntegerBasicVisitor() {
+        model = new ModelBuilder(String::toUpperCase);
+    }
+
+    public ModelBuilder getModel() {
+        return model;
+    }
 
     @Override
     public Expression visitProgram(IntegerParser.ProgramContext ctx) {
-        blocks.push(new Program(String::toUpperCase));
         super.visitProgram(ctx);
-        if (!blocks.peek().isLastStatement(EndStatement.class)) {
-            blocks.peek().addStatement(new EndStatement());
+        if (!model.getProgram().isLastStatement(EndStatement.class)) {
+            model.endStmt();
         }
         return null;
     }
 
-    public Program getProgram() {
-        if (blocks.size() == 1 && blocks.peek() instanceof Program program) {
-            return program;
-        }
-        throw new RuntimeException("Unexpected scope state at end of evaluation. " +
-                "Should be 1 but is " + blocks.size());
-    }
-
-    public ForFrame forFrame(Reference ref) {
-        return forFrames.computeIfAbsent(ref, r -> new ForFrame(r, currentScope()));
-    }
-
-    Scope currentScope() {
-        for (int i=blocks.size()-1; i>=0; i--) {
-            if (blocks.get(i) instanceof Scope s) {
-                return s;
-            }
-        }
-        throw new RuntimeException("scope not found");
-    }
-
-    void uses(String libraryName) {
-        if (alreadyIncluded.contains(libraryName)) {
-            return;
-        }
-
-        String name = String.format("/library/%s.bas", libraryName);
-        try (InputStream inputStream = getClass().getResourceAsStream(name)) {
-            if (inputStream == null) {
-                throw new RuntimeException("unknown library: " + libraryName);
-            }
-            Program library = ParseUtil.basicToModel(CharStreams.fromStream(inputStream),
-                    String::toUpperCase, v -> v.getModel().setIncludeLibraries(false));
-            // at this time a library is simply a collection of subroutines and functions.
-            boolean noStatements = library.getStatements().isEmpty();
-            boolean onlyConstants = library.getLocalReferences().stream().noneMatch(ref -> ref.type() != Scope.Type.CONSTANT);
-            if (!noStatements || !onlyConstants) {
-                throw new RuntimeException("a library may only contain subroutines, functions, and constants");
-            }
-            // add subroutines and functions to our program!
-            // constants are intentionally left off -- the included code has the reference and we don't want to clutter the namespace
-            alreadyIncluded.add(libraryName);
-            library.getScopes().forEach(s -> {
-                currentScope().addScope(s);
-            });
-        }
-        catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-    }
-
-    void callSubroutine(String subName, ParseTree... expressions) {
-        var descriptor = CallSubroutine.getDescriptor(subName).orElseThrow();
-        uses(descriptor.library());
+    void callSubroutine(String name, ParseTree... expressions) {
         var exprs = new ArrayList<Expression>();
         for (var expression : expressions) {
             exprs.add(visit(expression));
         }
-        var name = descriptor.fullName().toUpperCase();
-        blocks.peek().addStatement(new CallSubroutine(name, exprs));
+        model.callLibrarySubroutine(name, exprs.toArray(new Expression[0]));
     }
 
     void gotoGosub(String command, Token token) {
         var linenum = Integer.parseInt(token.getText());
         String label = String.format("L%d", linenum);
-        blocks.peek().addStatement(new GotoGosubStatement(command, label));
+        model.gotoGosubStmt(command, label);
     }
 
     @Override
     public Expression visitProgramLine(IntegerParser.ProgramLineContext ctx) {
-        blocks.peek().addStatement(new LabelStatement("L" + ctx.INTEGER().getText()));
+        model.labelStmt("L" + ctx.INTEGER().getText());
         visit(ctx.statements());
         return null;
     }
@@ -109,7 +60,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     @Override
     public Expression visitCallStatement(IntegerParser.CallStatementContext ctx) {
         var expr = visit(ctx.e);
-        blocks.peek().addStatement(new CallStatement(expr));
+        model.callAddr(expr);
         return null;
     }
 
@@ -121,7 +72,8 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     @Override
     public Expression visitColorStatement(IntegerParser.ColorStatementContext ctx) {
-        callSubroutine("color", ctx.e);
+        var expr = visit(ctx.e);
+        model.callLibrarySubroutine("color", expr);
         return null;
     }
 
@@ -144,7 +96,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     @Override
     public Expression visitEndStatement(IntegerParser.EndStatementContext ctx) {
-        blocks.peek().addStatement(new EndStatement());
+        model.endStmt();
         return null;
     }
 
@@ -154,22 +106,22 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     @Override
     public Expression visitForStatement(IntegerParser.ForStatementContext ctx) {
-        var ref = currentScope().addLocalVariable(ctx.ivar().getText(), DataType.INTEGER);
+        var ref = model.addVariable(ctx.ivar().getText(), DataType.INTEGER);
         var first = visit(ctx.first);
         var last = visit(ctx.last);
         Expression step = visitOrDefault(ctx.step, IntegerConstant.ONE);
-        ForFrame frame = forFrame(ref);
+        ForFrame frame = model.forFrame(ref);
 
-        blocks.peek().addStatement(new ForStatement(ref, first, last, step, frame));
+        model.addStatement(new ForStatement(ref, first, last, step, frame));
         return null;
     }
 
     @Override
     public Expression visitNextStatement(IntegerParser.NextStatementContext ctx) {
         for (var ivar : ctx.ivar()) {
-            var ref = currentScope().addLocalVariable(ivar.getText(), DataType.INTEGER);
-            ForFrame frame = forFrame(ref);
-            blocks.peek().addStatement(new NextStatement(ref, frame));
+            var ref = model.addVariable(ivar.getText(), DataType.INTEGER);
+            ForFrame frame = model.forFrame(ref);
+            model.addStatement(new NextStatement(ref, frame));
         }
         return null;
     }
@@ -201,24 +153,20 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     @Override
     public Expression visitIfLineStatement(IntegerParser.IfLineStatementContext ctx) {
         var expr = visit(ctx.e);
-        StatementBlock block = new StatementBlock();
-        blocks.push(block);
-        gotoGosub("GOTO", ctx.l);
-        blocks.pop();
-
-        blocks.peek().addStatement(new IfStatement(expr, block, null));
+        StatementBlock block = model.pushStatementBlock(new StatementBlock());
+        gotoGosub("goto", ctx.l);
+        model.popStatementBlock();
+        model.ifStmt(expr, block, null);
         return null;
     }
 
     @Override
     public Expression visitIfStatement(IntegerParser.IfStatementContext ctx) {
         var expr = visit(ctx.e);
-        StatementBlock block = new StatementBlock();
-        blocks.push(block);
+        StatementBlock block = model.pushStatementBlock(new StatementBlock());
         visit(ctx.s);
-        blocks.pop();
-
-        blocks.peek().addStatement(new IfStatement(expr, block, null));
+        model.popStatementBlock();
+        model.ifStmt(expr, block, null);
         return null;
     }
 
@@ -237,8 +185,8 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     public Expression visitIntegerAssignment(IntegerParser.IntegerAssignmentContext ctx) {
         var expr = visit(ctx.iexpr());
         // FIXME needs to support arrays
-        var ref = currentScope().addLocalVariable(ctx.ivar().getText(), DataType.INTEGER);
-        blocks.peek().addStatement(new AssignmentStatement(ref, expr));
+        var ref = model.addVariable(ctx.ivar().getText(), DataType.INTEGER);
+        model.assignStmt(ref, expr);
         return null;
     }
 
@@ -275,7 +223,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     public Expression visitPokeStatement(IntegerParser.PokeStatementContext ctx) {
         var addr = visit(ctx.addr);
         var e = visit(ctx.e);
-        blocks.peek().addStatement(new PokeStatement(addr, e));
+        model.pokeStmt(addr, e);
         return null;
     }
 
@@ -330,7 +278,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     @Override
     public Expression visitReturnStatement(IntegerParser.ReturnStatementContext ctx) {
-        blocks.peek().addStatement(new ReturnStatement());
+        model.returnStmt(null);
         return null;
     }
 
@@ -422,27 +370,21 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     public Expression visitIntArgFunc(IntegerParser.IntArgFuncContext ctx) {
         var f = ctx.f.getText();
         var e = visit(ctx.e);
-        var libraryName = Optional.ofNullable(switch (f) {
-            case "abs", "rnd", "sgn" -> "math";
-            case "pdl" -> "misc";
-            default -> null;
-        });
-        libraryName.ifPresent(this::uses);
-        return new FunctionExpression(f, Arrays.asList(e));
+        return model.callFunction(f, Arrays.asList(e));
     }
 
     @Override
     public Expression visitStrArgFunc(IntegerParser.StrArgFuncContext ctx) {
         var f = ctx.f.getText();
         var s = visit(ctx.s);
-        return new FunctionExpression(f, Arrays.asList(s));
+        return model.callFunction(f, Arrays.asList(s));
     }
 
     @Override
     public Expression visitScrnFunc(IntegerParser.ScrnFuncContext ctx) {
         var x = visit(ctx.x);
         var y = visit(ctx.y);
-        return new FunctionExpression("scrn", Arrays.asList(x, y));
+        return model.callFunction("scrn", Arrays.asList(x, y));
     }
 
     @Override
@@ -457,7 +399,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     @Override
     public Expression visitIntVar(IntegerParser.IntVarContext ctx) {
-        var ref = currentScope().addLocalVariable(ctx.n.getText(), DataType.INTEGER);
+        var ref = model.addVariable(ctx.n.getText(), DataType.INTEGER);
         return new IdentifierExpression(ref);
     }
 
