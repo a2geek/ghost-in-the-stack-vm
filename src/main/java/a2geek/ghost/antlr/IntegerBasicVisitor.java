@@ -63,7 +63,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
                 throw new RuntimeException("unknown library: " + libraryName);
             }
             Program library = ParseUtil.basicToModel(CharStreams.fromStream(inputStream),
-                    String::toUpperCase, v -> v.setIncludeLibraries(false));
+                    String::toUpperCase, v -> v.getModel().setIncludeLibraries(false));
             // at this time a library is simply a collection of subroutines and functions.
             boolean noStatements = library.getStatements().isEmpty();
             boolean onlyConstants = library.getLocalVariables().stream().noneMatch(ref -> ref.type() != Scope.Type.CONSTANT);

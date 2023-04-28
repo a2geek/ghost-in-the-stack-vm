@@ -30,7 +30,7 @@ public class ParseUtil {
         GhostBasicVisitor visitor = new GhostBasicVisitor(caseStrategy);
         configurer.accept(visitor);
         visitor.visit(context);
-        return visitor.getProgram();
+        return visitor.getModel().getProgram();
     }
 
     public static Program integerToModel(CharStream stream) {

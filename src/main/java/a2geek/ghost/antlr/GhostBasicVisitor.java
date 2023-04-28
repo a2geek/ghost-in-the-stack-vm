@@ -5,155 +5,64 @@ import a2geek.ghost.antlr.generated.BasicParser;
 import a2geek.ghost.antlr.generated.BasicParser.IfStatementContext;
 import a2geek.ghost.model.*;
 import a2geek.ghost.model.expression.*;
-import a2geek.ghost.model.scope.Program;
-import a2geek.ghost.model.scope.Subroutine;
-import a2geek.ghost.model.statement.*;
-import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.javatuples.Pair;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
 import java.util.*;
 import java.util.function.Function;
 
 public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
-    private Function<String,String> caseStrategy;
-    private Stack<Scope> scope = new Stack<>();
-    private Stack<StatementBlock> statementBlock = new Stack<>();
-    private Set<String> librariesIncluded = new HashSet<>();
-    private boolean includeLibraries = true;
+    private ModelBuilder model;
 
     public GhostBasicVisitor(Function<String,String> caseStrategy) {
-        this.caseStrategy = caseStrategy;
+        this.model = new ModelBuilder(caseStrategy);
     }
 
-    public void setIncludeLibraries(boolean includeLibraries) {
-        this.includeLibraries = includeLibraries;
+    public ModelBuilder getModel() {
+        return model;
     }
 
-    public Program getProgram() {
-        if (scope.size() == 1 && scope.peek() instanceof Program program) {
-            return program;
-        }
-        throw new RuntimeException("Unexpected scope state at end of evaluation. " +
-                "Should be 1 but is " + scope.size());
-    }
-    Program findProgram() {
-        for (Scope s : scope) {
-            if (s instanceof Program program) {
-                return program;
-            }
-        }
-        throw new RuntimeException("Did not find Program!");
+    public Optional<Expression> optVisit(ParseTree pt) {
+        return Optional.ofNullable(pt).map(this::visit);
     }
 
     @Override
     public Expression visitProgram(BasicParser.ProgramContext ctx) {
-        Program program = new Program(caseStrategy);
-        this.scope.push(program);
-        this.statementBlock.push(program);
         return super.visitProgram(ctx);
-    }
-
-    public void addStatement(Statement statement) {
-        this.statementBlock.peek().addStatement(statement);
-    }
-    public StatementBlock pushStatementBlock(StatementBlock statementBlock) {
-        return this.statementBlock.push(statementBlock);
-    }
-    public StatementBlock popStatementBlock() {
-        return this.statementBlock.pop();
-    }
-    public void addScope(Scope scope) {
-        this.scope.peek().addScope(scope);
-    }
-    public Scope pushScope(Scope scope) {
-        return this.scope.push(scope);
-    }
-    public Scope popScope() {
-        return this.scope.pop();
-    }
-
-    public Reference addVariable(String name, DataType dataType) {
-        name = caseStrategy.apply(name);
-        return this.scope.peek().addLocalVariable(name, dataType);
-    }
-    public Reference addVariable(String name, Scope.Type type, DataType dataType) {
-        name = caseStrategy.apply(name);
-        return this.scope.peek().addLocalVariable(name, type, dataType);
-    }
-
-    public void uses(String libname) {
-        if (!includeLibraries || librariesIncluded.contains(libname)) {
-            return;
-        }
-        librariesIncluded.add(libname);
-        String name = String.format("/library/%s.bas", libname);
-        try (InputStream inputStream = getClass().getResourceAsStream(name)) {
-            if (inputStream == null) {
-                throw new RuntimeException("unknown library: " + libname);
-            }
-            Program library = ParseUtil.basicToModel(CharStreams.fromStream(inputStream),
-                    caseStrategy, v -> v.setIncludeLibraries(false));
-            // at this time a library is simply a collection of subroutines and functions.
-            boolean noStatements = library.getStatements().isEmpty();
-            boolean onlyConstants = library.getLocalVariables().stream().noneMatch(ref -> ref.type() != Scope.Type.CONSTANT);
-            if (!noStatements || !onlyConstants) {
-                throw new RuntimeException("a library may only contain subroutines, functions, and constants");
-            }
-            // add subroutines and functions to our program!
-            // constants are intentionally left off -- the included code has the reference and we don't want to clutter the namespace
-            Program program = findProgram();
-            library.getScopes().forEach(program::addScope);
-        }
-        catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
     }
 
     @Override
     public Expression visitUseDirective(BasicParser.UseDirectiveContext ctx) {
         for (var str : ctx.STR()) {
             String libname = str.getText().replaceAll("^\"|\"$", "");
-            uses(libname);
+            model.uses(libname);
         }
         return null;
     }
 
     @Override
     public Expression visitAssignment(BasicParser.AssignmentContext ctx) {
-        String id = caseStrategy.apply(ctx.id.getText());
+        String id = ctx.id.getText();
         Expression expr = visit(ctx.a);
         Reference ref = switch (id.toLowerCase()) {
             case Intrinsic.CPU_REGISTER_A,
                  Intrinsic.CPU_REGISTER_X,
-                 Intrinsic.CPU_REGISTER_Y -> addVariable(id, Scope.Type.INTRINSIC, expr.getType());
+                 Intrinsic.CPU_REGISTER_Y -> model.addVariable(id, Scope.Type.INTRINSIC, expr.getType());
             default -> {
                 if (id.contains(".")) {
                     throw new RuntimeException("invalid identifier: " + id);
                 }
-                yield addVariable(id, expr.getType());
+                yield model.addVariable(id, expr.getType());
             }
         };
 
-        AssignmentStatement assignmentStatement = new AssignmentStatement(ref, expr);
-        addStatement(assignmentStatement);
+        model.assignStmt(ref, expr);
         return null;
-    }
-
-    public void callLibrarySubroutine(String name, Expression... params) {
-        var descriptor = CallSubroutine.getDescriptor(name).orElseThrow();
-        uses(descriptor.library());
-        var subName = caseStrategy.apply(descriptor.fullName());
-        CallSubroutine callSubroutine = new CallSubroutine(subName, Arrays.asList(params));
-        addStatement(callSubroutine);
     }
 
     @Override
     public Expression visitGrStmt(BasicParser.GrStmtContext ctx) {
-        callLibrarySubroutine("gr");
+        model.callLibrarySubroutine("gr");
         return null;
     }
 
@@ -161,12 +70,11 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     public Expression visitIfShortStatement(BasicParser.IfShortStatementContext ctx) {
         Expression expr = visit(ctx.a);
 
-        StatementBlock trueStatements = pushStatementBlock(new StatementBlock());
+        StatementBlock trueStatements = model.pushStatementBlock(new StatementBlock());
         visit(ctx.t);
-        popStatementBlock();
+        model.popStatementBlock();
 
-        IfStatement statement = new IfStatement(expr, trueStatements, null);
-        addStatement(statement);
+        model.ifStmt(expr, trueStatements, null);
         return null;
     }
 
@@ -174,51 +82,38 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     public Expression visitIfStatement(IfStatementContext ctx) {
         Expression expr = visit(ctx.a);
 
-        StatementBlock trueStatements = pushStatementBlock(new StatementBlock());
+        StatementBlock trueStatements = model.pushStatementBlock(new StatementBlock());
         visit(ctx.t);
-        popStatementBlock();
+        model.popStatementBlock();
 
         StatementBlock falseStatements = null;
         if (ctx.f != null) {
-            falseStatements = pushStatementBlock(new StatementBlock());
+            falseStatements = model.pushStatementBlock(new StatementBlock());
             visit(ctx.f);
-            popStatementBlock();
+            model.popStatementBlock();
         }
 
-        IfStatement statement = new IfStatement(expr, trueStatements, falseStatements);
-        addStatement(statement);
+        model.ifStmt(expr, trueStatements, falseStatements);
         return null;
     }
 
     @Override
     public Expression visitForLoop(BasicParser.ForLoopContext ctx) {
-        String id = caseStrategy.apply(ctx.id.getText());
-        Reference ref = addVariable(id, DataType.INTEGER);
+        Reference ref = model.addVariable(ctx.id.getText(), DataType.INTEGER);
         Expression start = visit(ctx.a);
         Expression end = visit(ctx.b);
-        Expression step = null;
+        Expression step = optVisit(ctx.c).orElse(new IntegerConstant(1));
 
-        if (ctx.c == null) {
-            step = new IntegerConstant(1);
-        }
-        else {
-            step = visit(ctx.c);
-        }
-
-        ForNextStatement forStatement = new ForNextStatement(ref, start, end, step);
-        if (ctx.s != null) {
-            pushStatementBlock(forStatement);
-            visit(ctx.s);
-            popStatementBlock();
-        }
-        addStatement(forStatement);
+        model.forBegin(ref, start, end, step);
+        optVisit(ctx.s);
+        model.forEnd();
         return null;
     }
 
     @Override
     public Expression visitColorStmt(BasicParser.ColorStmtContext ctx) {
         Expression expr = visit(ctx.a);
-        callLibrarySubroutine("color", expr);
+        model.callLibrarySubroutine("color", expr);
         return null;
     }
 
@@ -226,7 +121,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     public Expression visitPlotStmt(BasicParser.PlotStmtContext ctx) {
         Expression x = visit(ctx.a);
         Expression y = visit(ctx.b);
-        callLibrarySubroutine("plot", x, y);
+        model.callLibrarySubroutine("plot", x, y);
         return null;
     }
 
@@ -235,7 +130,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         var a = visit(ctx.a);
         var b = visit(ctx.b);
         var y = visit(ctx.y);
-        callLibrarySubroutine("hlin", a, b, y);
+        model.callLibrarySubroutine("hlin", a, b, y);
         return null;
     }
 
@@ -244,19 +139,19 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         var a = visit(ctx.a);
         var b = visit(ctx.b);
         var x = visit(ctx.x);
-        callLibrarySubroutine("vlin", a, b, x);
+        model.callLibrarySubroutine("vlin", a, b, x);
         return null;
     }
 
     @Override
     public Expression visitEndStmt(BasicParser.EndStmtContext ctx) {
-        addStatement(new EndStatement());
+        model.endStmt();
         return null;
     }
 
     @Override
     public Expression visitHomeStmt(BasicParser.HomeStmtContext ctx) {
-        callLibrarySubroutine("home");
+        model.callLibrarySubroutine("home");
         return null;
     }
 
@@ -275,28 +170,27 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                 semiColonAtEnd = true;
             }
             else if (",".equals(pt.getText())) {
-                callLibrarySubroutine("comma");
+                model.callLibrarySubroutine("comma");
             }
             else {
                 Expression expr = pt.accept(this);
                 switch (expr.getType()) {
-                    case INTEGER -> callLibrarySubroutine("integer", expr);
-                    case BOOLEAN -> callLibrarySubroutine("boolean", expr);
-                    case STRING -> callLibrarySubroutine("string", expr);
+                    case INTEGER -> model.callLibrarySubroutine("integer", expr);
+                    case BOOLEAN -> model.callLibrarySubroutine("boolean", expr);
+                    case STRING -> model.callLibrarySubroutine("string", expr);
                     default -> throw new RuntimeException("Unsupported PRINT type: " + expr.getType());
                 }
             }
         }
         if (!semiColonAtEnd) {
-            callLibrarySubroutine("newline");
+            model.callLibrarySubroutine("newline");
         }
         return null;
     }
 
     public Expression visitCallStmt(BasicParser.CallStmtContext ctx) {
         Expression expr = visit(ctx.a);
-        CallStatement callStatement = new CallStatement(expr);
-        addStatement(callStatement);
+        model.callAddr(expr);
         return null;
     }
 
@@ -304,21 +198,19 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     public Expression visitPokeStmt(BasicParser.PokeStmtContext ctx) {
         var a = visit(ctx.a);
         var b = visit(ctx.b);
-        addStatement(new PokeStatement(a, b));
+        model.pokeStmt(a, b);
         return null;
     }
 
     @Override
     public Expression visitLabel(BasicParser.LabelContext ctx) {
-        String id = caseStrategy.apply(ctx.id.getText());
-        addStatement(new LabelStatement(id));
+        model.labelStmt(ctx.id.getText());
         return null;
     }
 
     @Override
     public Expression visitGotoGosubStmt(BasicParser.GotoGosubStmtContext ctx) {
-        String label = caseStrategy.apply(ctx.l.getText());
-        addStatement(new GotoGosubStatement(ctx.op.getText().toLowerCase(), label));
+        model.gotoGosubStmt(ctx.op.getText(), ctx.l.getText());
         return null;
     }
 
@@ -326,40 +218,40 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     public Expression visitReturnStmt(BasicParser.ReturnStmtContext ctx) {
         if (ctx.e != null) {
             var expr = visit(ctx.e);
-            addStatement(new ReturnStatement(expr));
+            model.returnStmt(expr);
         }
         else {
-            addStatement(new ReturnStatement());
+            model.returnStmt(null);
         }
         return null;
     }
 
     @Override
     public Expression visitTextStmt(BasicParser.TextStmtContext ctx) {
-        callLibrarySubroutine("text");
+        model.callLibrarySubroutine("text");
         return null;
     }
 
     @Override
     public Expression visitHtabStmt(BasicParser.HtabStmtContext ctx) {
         var a = visit(ctx.a);
-        callLibrarySubroutine("htab", a);
+        model.callLibrarySubroutine("htab", a);
         return null;
     }
 
     @Override
     public Expression visitVtabStmt(BasicParser.VtabStmtContext ctx) {
         var a = visit(ctx.a);
-        callLibrarySubroutine("vtab", a);
+        model.callLibrarySubroutine("vtab", a);
         return null;
     }
 
     List<Pair<String,DataType>> buildDeclarationList(List<BasicParser.IdDeclContext> params) {
         var refs = new ArrayList<Pair<String,DataType>>();
-        var names = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        var names = new HashSet<>();
         if (params != null) {
             params.forEach(idDecl -> {
-                String id = caseStrategy.apply(idDecl.ID().getText());
+                String id = model.fixCase(idDecl.ID().getText());
                 DataType dt = buildDataType(idDecl.datatype());
                 if (names.contains(id)) {
                     throw new RuntimeException("parameter already defined: " + id);
@@ -380,82 +272,59 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
     @Override
     public Expression visitSubDecl(BasicParser.SubDeclContext ctx) {
-        String name = caseStrategy.apply(ctx.id.getText());
         List<Pair<String,DataType>> params = Collections.emptyList();
         if (ctx.paramDecl() != null) {
             params = buildDeclarationList(ctx.paramDecl().idDecl());
         }
 
-        Subroutine sub = new Subroutine(scope.peek(), name, params);
-        addScope(sub);
-
-        pushScope(sub);
-        pushStatementBlock(sub);
+        model.subDeclBegin(ctx.id.getText(), params);
         visit(ctx.s);
-        popScope();
-        popStatementBlock();
-
+        model.subDeclEnd();
         return null;
     }
 
     @Override
     public Expression visitFuncDecl(BasicParser.FuncDeclContext ctx) {
-        String name = caseStrategy.apply(ctx.id.getText());
         List<Pair<String,DataType>> params = Collections.emptyList();
         if (ctx.paramDecl() != null) {
             params = buildDeclarationList(ctx.paramDecl().idDecl());
         }
         DataType dt = buildDataType(ctx.datatype());
 
-        // FIXME? naming is really awkward due to naming conflicts!
-        a2geek.ghost.model.scope.Function func =
-                new a2geek.ghost.model.scope.Function(scope.peek(), Pair.with(name,dt), params);
-        addScope(func);
-
-        pushScope(func);
-        pushStatementBlock(func);
+        model.funcDeclBegin(ctx.id.getText(), dt, params);
         visit(ctx.s);
-        popScope();
-        popStatementBlock();
-
+        model.funcDeclEnd();
         return null;
     }
 
     @Override
     public Expression visitCallSub(BasicParser.CallSubContext ctx) {
-        String name = caseStrategy.apply(ctx.id.getText());
         List<Expression> params = new ArrayList<>();
         if (ctx.p != null) {
             ctx.parameters().anyExpr().stream().map(this::visit).forEach(params::add);
         }
-
-        CallSubroutine callSubroutine = new CallSubroutine(name, params);
-        addStatement(callSubroutine);
-
+        model.callSubroutine(ctx.id.getText(), params);
         return null;
     }
 
     @Override
     public Expression visitDimStmt(BasicParser.DimStmtContext ctx) {
         buildDeclarationList(ctx.idDecl()).forEach(d -> {
-           addVariable(d.getValue0(), d.getValue1());
+           model.addVariable(d.getValue0(), d.getValue1());
         });
         return null;
     }
 
     @Override
     public Expression visitConstant(BasicParser.ConstantContext ctx) {
-        if (ctx.constantDecl() != null) {
-            for (var decl : ctx.constantDecl()) {
-                var id = caseStrategy.apply(decl.id.getText());
-                var e = visit(decl.e);
-                if (e.isConstant()) {
-                    this.scope.peek().addLocalConstant(id, e);
-                }
-                else {
-                    String msg = String.format("'%s' is not a constant: %s", id, e);
-                    throw new RuntimeException(msg);
-                }
+        for (var decl : ctx.constantDecl()) {
+            var e = visit(decl.e);
+            if (e.isConstant()) {
+                model.addConstant(decl.id.getText(), e);
+            }
+            else {
+                String msg = String.format("'%s' is not a constant: %s", decl.id.getText(), e);
+                throw new RuntimeException(msg);
             }
         }
         return null;
@@ -464,8 +333,8 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     @Override
     public Expression visitIdentifier(BasicParser.IdentifierContext ctx) {
         // The ID could possibly be a function call with zero arguments.
-        String id = caseStrategy.apply(ctx.id.getText());
-        Optional<Scope> scope = findProgram().findScope(id);
+        var id = ctx.id.getText();
+        Optional<Scope> scope = model.findScope(id);
         if (scope.isPresent()) {
             if (scope.get() instanceof a2geek.ghost.model.scope.Function fn) {
                 return new FunctionExpression(fn, Collections.emptyList());
@@ -479,14 +348,14 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         Reference ref = switch (id.toLowerCase()) {
             case Intrinsic.CPU_REGISTER_A,
                     Intrinsic.CPU_REGISTER_X,
-                    Intrinsic.CPU_REGISTER_Y -> addVariable(id, Scope.Type.INTRINSIC, DataType.INTEGER);
+                    Intrinsic.CPU_REGISTER_Y -> model.addVariable(id, Scope.Type.INTRINSIC, DataType.INTEGER);
             default -> {
                 if (id.contains(".")) {
                     throw new RuntimeException("invalid identifier: " + id);
                 }
                 // Look through local and parent scopes; otherwise assume it's a new integer
-                var existing = this.scope.peek().findVariable(id);
-                yield existing.orElseGet(() -> addVariable(id, DataType.INTEGER));
+                var existing = model.findReference(id);
+                yield existing.orElseGet(() -> model.addVariable(id, DataType.INTEGER));
             }
         };
         return new IdentifierExpression(ref);
@@ -494,7 +363,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
     @Override
     public Expression visitFuncExpr(BasicParser.FuncExprContext ctx) {
-        String id = caseStrategy.apply(ctx.id.getText());
+        String id = ctx.id.getText();
         List<Expression> params = new ArrayList<>();
         if (ctx.p != null) {
             ctx.parameters().anyExpr().stream().map(this::visit).forEach(params::add);
@@ -504,27 +373,10 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             if (params.size() > 0) {
                 throw new RuntimeException("Intrinsic reference takes no arguments: " + id);
             }
-            Reference ref = addVariable(id, Scope.Type.INTRINSIC, DataType.INTEGER);
+            Reference ref = model.addVariable(id, Scope.Type.INTRINSIC, DataType.INTEGER);
             return new IdentifierExpression(ref);
         }
-
-        if (FunctionExpression.isLibraryFunction(id)) {
-            FunctionExpression.Descriptor descriptor = FunctionExpression.getDescriptor(id).orElseThrow();
-            uses(descriptor.library());
-            id = caseStrategy.apply(descriptor.fullName());
-        }
-
-        Optional<Scope> scope = findProgram().findScope(id);
-        if (scope.isPresent()) {
-            if (scope.get() instanceof a2geek.ghost.model.scope.Function fn) {
-                return new FunctionExpression(fn, params);
-            }
-        }
-        else if (FunctionExpression.isIntrinsicFunction(id)) {
-            return new FunctionExpression(id, params);
-        }
-
-        throw new RuntimeException("Expecting a function named " + id);
+        return model.callFunction(id, params);
     }
 
     @Override

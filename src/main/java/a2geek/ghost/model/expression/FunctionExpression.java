@@ -130,7 +130,7 @@ public class FunctionExpression implements Expression {
     ) {
         public String fullName() {
             if (library() == null) {
-                throw new RuntimeException("fullName does not apply " + this);
+                return name();
             }
             return String.format("%s_%s", library(), name());
         }
