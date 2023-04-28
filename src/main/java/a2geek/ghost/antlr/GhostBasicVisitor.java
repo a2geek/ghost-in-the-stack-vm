@@ -27,11 +27,6 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     }
 
     @Override
-    public Expression visitProgram(BasicParser.ProgramContext ctx) {
-        return super.visitProgram(ctx);
-    }
-
-    @Override
     public Expression visitUseDirective(BasicParser.UseDirectiveContext ctx) {
         for (var str : ctx.STR()) {
             String libname = str.getText().replaceAll("^\"|\"$", "");
