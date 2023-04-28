@@ -66,7 +66,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
                     String::toUpperCase, v -> v.getModel().setIncludeLibraries(false));
             // at this time a library is simply a collection of subroutines and functions.
             boolean noStatements = library.getStatements().isEmpty();
-            boolean onlyConstants = library.getLocalVariables().stream().noneMatch(ref -> ref.type() != Scope.Type.CONSTANT);
+            boolean onlyConstants = library.getLocalReferences().stream().noneMatch(ref -> ref.type() != Scope.Type.CONSTANT);
             if (!noStatements || !onlyConstants) {
                 throw new RuntimeException("a library may only contain subroutines, functions, and constants");
             }

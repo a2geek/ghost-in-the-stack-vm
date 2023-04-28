@@ -13,7 +13,7 @@ public class Scope extends StatementBlock {
     private String name;
     private Scope parent;
     private Type type;
-    private List<Reference> variables = new ArrayList<>();
+    private List<Reference> references = new ArrayList<>();
     private List<Scope> scopes = new ArrayList<>();
 
     public Scope(Function<String,String> caseStrategy, String name) {
@@ -30,7 +30,7 @@ public class Scope extends StatementBlock {
 
     @Override
     public boolean isEmpty() {
-        return super.isEmpty() && variables.isEmpty() && scopes.isEmpty();
+        return super.isEmpty() && references.isEmpty() && scopes.isEmpty();
     }
 
     public String getName() {
@@ -42,59 +42,59 @@ public class Scope extends StatementBlock {
         this.name = name;
     }
 
-    public List<Reference> getAllVariables() {
+    public List<Reference> getAllReferences() {
         var allVariables = new ArrayList<Reference>();
-        allVariables.addAll(this.variables);
+        allVariables.addAll(this.references);
         if (this.parent != null) {
-            this.parent.getAllVariables().stream()
+            this.parent.getAllReferences().stream()
                     .filter(ref -> Type.GLOBAL == ref.type())
                     .forEach(allVariables::add);
         }
         return allVariables;
     }
-    public List<Reference> getLocalVariables() {
-        return variables;
+    public List<Reference> getLocalReferences() {
+        return references;
     }
     public Reference addLocalVariable(String name, DataType dataType) {
         return addLocalVariable(name, this.type, dataType);
     }
     public Reference addLocalVariable(String name, Type type, DataType dataType) {
-        return findLocalVariable(name).orElseGet(() -> {
+        return findLocalReference(name).orElseGet(() -> {
             var fixedName = caseStrategy.apply(name);
             var ref = Reference.builder(fixedName, type).dataType(dataType).build();
-            variables.add(ref);
+            references.add(ref);
             return ref;
         });
     }
     public Reference addLocalConstant(String name, Expression expr) {
-        if (findLocalVariable(name).isPresent()) {
+        if (findLocalReference(name).isPresent()) {
             String msg = String.format("name already exists in scope, cannot add twice: %s", name);
             throw new RuntimeException(msg);
         }
         var fixedName = caseStrategy.apply(name);
         var ref = Reference.builder(fixedName, expr).build();
-        variables.add(ref);
+        references.add(ref);
         return ref;
     }
 
-    public Optional<Reference> findLocalVariable(String name) {
+    public Optional<Reference> findLocalReference(String name) {
         var fixedName = caseStrategy.apply(name);
-        return variables.stream().filter(r -> fixedName.equals(r.name())).findFirst();
+        return references.stream().filter(r -> fixedName.equals(r.name())).findFirst();
     }
-    public Optional<Reference> findVariable(String name) {
+    public Optional<Reference> findReference(String name) {
         var fixedName = caseStrategy.apply(name);
-        var found = findLocalVariable(fixedName);
+        var found = findLocalReference(fixedName);
         if (found.isPresent()) {
             return found;
         }
         if (parent != null) {
-            return parent.findVariable(fixedName);
+            return parent.findReference(fixedName);
         }
         return Optional.empty();
     }
     public List<Reference> findByType(Type... types) {
         final var typesList = Arrays.asList(types);
-        return variables.stream()
+        return references.stream()
                 .filter(ref -> typesList.contains(ref.type()))
                 .collect(Collectors.toList());
     }

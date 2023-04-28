@@ -21,26 +21,26 @@ public abstract class StatementTester {
 
     private int statementNumber;
 
-    abstract Optional<Reference> findVariable(String name);
+    abstract Optional<Reference> findReference(String name);
     abstract List<Statement> getStatements();
 
     private String lineNumberLabel(int lineNumber) {
         return String.format("L%d", lineNumber);
     }
 
-    public StatementTester hasVariable(String name, DataType dataType, Scope.Type scopeType) {
-        var ref = findVariable(name);
+    public StatementTester hasReference(String name, DataType dataType, Scope.Type scopeType) {
+        var ref = findReference(name);
         assertTrue(ref.isPresent(), "variable not found: " + name);
         assertEquals(dataType, ref.get().dataType(), name);
         assertEquals(scopeType, ref.get().type(), name);
         return this;
     }
 
-    public StatementTester hasVariable(IdentifierExpression expr) {
-        return hasVariable(expr.getRef());
+    public StatementTester hasReference(IdentifierExpression expr) {
+        return hasReference(expr.getRef());
     }
-    public StatementTester hasVariable(Reference ref) {
-        return hasVariable(ref.name(), ref.dataType(), ref.type());
+    public StatementTester hasReference(Reference ref) {
+        return hasReference(ref.name(), ref.dataType(), ref.type());
     }
 
     public StatementTester atEnd() {
@@ -162,8 +162,8 @@ public abstract class StatementTester {
             this.program = program;
         }
         @Override
-        public Optional<Reference> findVariable(String name) {
-            return program.findVariable(name);
+        public Optional<Reference> findReference(String name) {
+            return program.findReference(name);
         }
         @Override
         public List<Statement> getStatements() {
@@ -183,8 +183,8 @@ public abstract class StatementTester {
         }
 
         @Override
-        public Optional<Reference> findVariable(String name) {
-            return parent.findVariable(name);
+        public Optional<Reference> findReference(String name) {
+            return parent.findReference(name);
         }
         @Override
         public List<Statement> getStatements() {

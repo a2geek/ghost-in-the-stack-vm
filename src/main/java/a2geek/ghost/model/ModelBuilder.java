@@ -1,7 +1,6 @@
 package a2geek.ghost.model;
 
 import a2geek.ghost.antlr.ParseUtil;
-import a2geek.ghost.model.*;
 import a2geek.ghost.model.expression.FunctionExpression;
 import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.scope.Subroutine;
@@ -70,7 +69,7 @@ public class ModelBuilder {
     }
 
     public Optional<Reference> findReference(String name) {
-        return this.scope.peek().findVariable(fixCase(name));
+        return this.scope.peek().findReference(fixCase(name));
     }
     public Reference addVariable(String name, DataType dataType) {
         return this.scope.peek().addLocalVariable(fixCase(name), dataType);
@@ -96,7 +95,7 @@ public class ModelBuilder {
                 caseStrategy, v -> v.getModel().setIncludeLibraries(false));
             // at this time a library is simply a collection of subroutines and functions.
             boolean noStatements = library.getStatements().isEmpty();
-            boolean onlyConstants = library.getLocalVariables().stream().noneMatch(ref -> ref.type() != Scope.Type.CONSTANT);
+            boolean onlyConstants = library.getLocalReferences().stream().noneMatch(ref -> ref.type() != Scope.Type.CONSTANT);
             if (!noStatements || !onlyConstants) {
                 throw new RuntimeException("a library may only contain subroutines, functions, and constants");
             }

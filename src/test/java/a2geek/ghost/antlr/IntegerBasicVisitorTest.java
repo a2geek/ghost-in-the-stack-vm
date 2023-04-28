@@ -71,7 +71,7 @@ public class IntegerBasicVisitorTest {
     @Test
     public void testFor() {
         expect("10 FOR X = 1 TO 10")
-            .hasVariable("X", DataType.INTEGER, Scope.Type.GLOBAL)
+            .hasReference("X", DataType.INTEGER, Scope.Type.GLOBAL)
             .lineNumber(10)
             .forStmt("X", constant(1), constant(10))
             .atEnd();
@@ -121,7 +121,7 @@ public class IntegerBasicVisitorTest {
     public void testIfGoto() {
         var aRef = identifier("A",DataType.INTEGER, Scope.Type.GLOBAL);
         expect("10 IF A=1 THEN 50: PRINT \"OUTSIDE OF IF\"")
-            .hasVariable(aRef)
+            .hasReference(aRef)
             .lineNumber(10)
             .ifStmt(binary("=", aRef, constant(1)))
                 .gotoStmt(50)
@@ -135,7 +135,7 @@ public class IntegerBasicVisitorTest {
     public void testIfWithStatement() {
         var aRef = identifier("A",DataType.INTEGER, Scope.Type.GLOBAL);
         expect("10 IF A=1 THEN PRINT \"IN IF\": PRINT \"OUTSIDE OF IF\"")
-            .hasVariable(aRef)
+            .hasReference(aRef)
             .lineNumber(10)
             .ifStmt(binary("=", aRef, constant(1)))
                 .callSub("string", constant("IN IF"))
@@ -159,8 +159,8 @@ public class IntegerBasicVisitorTest {
         assertThrows(RuntimeException.class, () -> {
             // To be implemented
             expect("10 INPUT \"PROMPT? \",X,A$")
-                .hasVariable("X", DataType.INTEGER, Scope.Type.GLOBAL)
-                .hasVariable("A$", DataType.STRING, Scope.Type.GLOBAL)
+                .hasReference("X", DataType.INTEGER, Scope.Type.GLOBAL)
+                .hasReference("A$", DataType.STRING, Scope.Type.GLOBAL)
                 // TODO
                 .atEnd();
         });
@@ -171,13 +171,13 @@ public class IntegerBasicVisitorTest {
         // TODO string assignment
         // Normal
         expect("10 A = 1")
-            .hasVariable("A", DataType.INTEGER, Scope.Type.GLOBAL)
+            .hasReference("A", DataType.INTEGER, Scope.Type.GLOBAL)
             .lineNumber(10)
             .assignment("A", constant(1))
             .atEnd();
         // LET keyword
         expect("10 LET A = 1")
-            .hasVariable("A", DataType.INTEGER, Scope.Type.GLOBAL)
+            .hasReference("A", DataType.INTEGER, Scope.Type.GLOBAL)
             .lineNumber(10)
             .assignment("A", constant(1))
             .atEnd();
@@ -210,7 +210,7 @@ public class IntegerBasicVisitorTest {
     @Test
     public void testNext() {
         expect("10 NEXT X")
-            .hasVariable("X", DataType.INTEGER, Scope.Type.GLOBAL)
+            .hasReference("X", DataType.INTEGER, Scope.Type.GLOBAL)
             .lineNumber(10)
             .nextStmt("X")
             .atEnd();
@@ -252,7 +252,7 @@ public class IntegerBasicVisitorTest {
     @Test
     public void testPrint() {
         expect("10 PRINT \"X=\",X; : PRINT \"...\"")
-            .hasVariable("X", DataType.INTEGER, Scope.Type.GLOBAL)
+            .hasReference("X", DataType.INTEGER, Scope.Type.GLOBAL)
             .lineNumber(10)
             .callSub("string", constant("X="))
             .callSub("comma")
