@@ -372,8 +372,8 @@ public class CodeGenerationVisitor extends Visitor {
             case "+" -> code.emit(Opcode.ADD);
             case "-" -> code.emit(Opcode.SUB);
             case "*" -> code.emit(Opcode.MUL);
-            case "/" -> code.emit(Opcode.DIV);
-            case "mod" -> code.emit(Opcode.MOD);
+            case "/" -> code.emit(Opcode.DIVS);
+            case "mod" -> code.emit(Opcode.MODS);
             case "<", ">" -> code.emit(Opcode.LT);      // We swapped arguments for ">" to reuse "LT"
             case "<=", ">=" -> code.emit(Opcode.LE);    // We swapped arguments for ">=" to reuse "LE"
             case "=" -> code.emit(Opcode.EQ);
@@ -444,9 +444,8 @@ public class CodeGenerationVisitor extends Visitor {
     @Override
     public Expression visit(UnaryExpression expression) {
         if ("-".equals(expression.getOp())) {
-            code.emit(Opcode.LOADC, 0);
             dispatch(expression.getExpr());
-            code.emit(Opcode.SUB);
+            code.emit(Opcode.NEG);
         }
         else {
             throw new RuntimeException("unknown unary operator: " + expression.getOp());

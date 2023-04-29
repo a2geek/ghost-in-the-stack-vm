@@ -7,7 +7,6 @@ Look at how bytecode is created - feels like Opcode and Directive can support In
 Track constants. Do they need to persist in library declarations or can they be thrown out?
 Add EXIT (FOR/SUB/FUNCTION). Where to validate? Maybe in some visitor to be certain EXIT and RETURN in correct places.
 Need to figure out how to handle processor status register in CPU interactions; ProDOS functions use C. Probably only want get. (Otherwise state probably will get carried between calls accidentally.)
-Need to review negative number handling. Specifically MUL/DIV/MOD. Expect to require NEG operator to be implemented!
 Review generated code and look for alternates with new opcodes.
 Add ELSEIF to IF statement.
 Revisit the single line IF -- see what appears to be more standard (dislike Integer Basic variant).

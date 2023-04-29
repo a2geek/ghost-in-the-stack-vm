@@ -85,11 +85,16 @@ callworkptr:
 
 compareAB:
     lda stackB+1,x
+    eor stackB+1,x
+    bmi @diffsigns
+    lda stackB+1,x
     cmp stackA+1,x
-    bne @done
     lda stackB,x
     cmp stackA,x
-@done:
+    rts
+@diffsigns:
+    lda stackA+1,x
+    cmp stackB+1,x
     rts
 
 ; See https://codebase64.org/doku.php?id=base:16bit_division_16-bit_result
@@ -125,6 +130,35 @@ skip:
 	bne divloop
 	rts
 .endproc
+
+; Adjust A and B to both be positive; track resulting sign in C
+fixSignAB:
+    lda stackA+1,x
+    eor stackB+1,x
+    asl ; C = result should be negative
+    php
+    lda stackA+1,x
+    bpl @checkB
+    sec
+    lda #0
+    sbc stackA,x
+    sta stackA,x
+    lda #0
+    sbc stackA+1,x
+    sta stackA+1,x
+@checkB:
+    lda stackB+1,x
+    bpl @exit
+    sec
+    lda #0
+    sbc stackB,x
+    sta stackB,x
+    lda #0
+    sbc stackB+1,x
+    sta stackB+1,x
+@exit:
+    plp
+    rts
 
 setbpoploop:
     sta stackB,x
@@ -181,8 +215,11 @@ brtable:
     .addr _add-1
     .addr _sub-1
     .addr _mul-1
-    .addr _div-1
-    .addr _mod-1
+    .addr _divs-1
+    .addr _mods-1
+    .addr _divu-1
+    .addr _modu-1
+    .addr _neg-1
     .addr _iload-1
     .addr _istore-1
     .addr _lt-1
@@ -273,19 +310,53 @@ _mul:
     ldy workptr+1
     jmp setbpoploop
 
-; DIV: (B) (A) => (B/A)
-_div:
+; DIVU: (B) (A) => (B/A)
+_divu:
     jsr div16
-    lda stackB,x
-    ldy stackB+1,x
-    jmp setbpoploop
+poploop2:
+    jmp poploop
 
-; MOD: (B) (A) => (B MOD A)
-_mod:
+; MODU: (B) (A) => (B MOD A)
+_modu:
     jsr div16
     lda workptr
     ldy workptr+1
     jmp setbpoploop
+
+; DIVS: (B) (A) => (B/A)
+_divs:
+    jsr fixSignAB
+    php
+    jsr div16
+unsignedCommon:
+    plp
+    bcc poploop2
+    pla ; discard A
+    pla
+    tsx
+    ; Fall through to NEG (and stackB has become stackA)
+
+; NEG: (A) = (-A)
+_neg:
+    sec
+    lda #0
+    sbc stackA,x
+    sta stackA,x
+    lda #0
+    sbc stackA+1,x
+    sta stackA+1,x
+    jmp loop
+
+; MODS: (B) (A) => (B MOD A)
+_mods:
+    jsr fixSignAB
+    php
+    jsr div16
+    lda workptr
+    sta stackB,x
+    lda workptr+1
+    sta stackB+1,x
+    jmp unsignedCommon
 
 ; ILOAD: (A) => (B); B = byte(*A)
 _iload:
@@ -311,21 +382,21 @@ _istore:
     sta (workptr),y
     jmp tossHighByteLoop
 
-; LT: (B) (A) => (B<A)
+; LT: (B) (A) => (B<A)  [signed]
 _lt:
     jsr compareAB
-    bcs setBto0
+    bpl setBto0
 setBto1:
     lda #1
     ldy #0
     jmp setbpoploop
 
-; LE: (B) (A) => (B<=A)
+; LE: (B) (A) => (B<=A) [signed]
 _le:
     jsr compareAB
     beq setBto1
-    bcc setBto1
-    bcs setBto0
+    bmi setBto1
+    bpl setBto0
 
 ; EQ: (B) (A) => (B=A)
 _eq:

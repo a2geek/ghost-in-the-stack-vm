@@ -22,5 +22,7 @@ print "XOR ", a xor b, b xor a
 print
 print "<<  ", a << b, b << a
 print ">>  ", a >> b, b >> a
+print
+print "-NEG", -a, -b
 
 end

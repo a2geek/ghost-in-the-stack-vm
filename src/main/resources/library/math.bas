@@ -19,7 +19,11 @@ end function
 
 ' Note: Simulated Integer BASIC random generator
 function math_rnd(n as integer) as integer
-    return random() mod n
+    r = random() mod n
+    if r < 0 then
+        return -r
+    end if
+    return r
 end function
 
 function math_abs(n as integer) as integer
