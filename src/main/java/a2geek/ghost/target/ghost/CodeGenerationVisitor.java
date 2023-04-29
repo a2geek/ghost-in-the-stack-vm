@@ -159,7 +159,9 @@ public class CodeGenerationVisitor extends Visitor {
 
     @Override
     public void visit(ForStatement statement) {
-        var labels = label(String.format("do_%s_for", statement.getRef().name()));
+        var labels = label(
+            String.format("do_%s_for", statement.getRef().name()),
+            String.format("do_%s_next", statement.getRef().name()));
         // initialize loop variables
         // - start value
         dispatch(statement.getStart());
@@ -171,7 +173,7 @@ public class CodeGenerationVisitor extends Visitor {
         dispatch(statement.getStep());
         emitStore(statement.getFrame().getStepRef());
         // - next address-1 (can be multiple FOR loops with this variable)
-        code.emit(Opcode.LOADA, statement.getFrame().getNextLabel());
+        code.emit(Opcode.LOADA, labels.get(1));
         code.emit(Opcode.DECR);
         emitStore(statement.getFrame().getNextRef());
         // skip around the next logic
@@ -179,7 +181,7 @@ public class CodeGenerationVisitor extends Visitor {
 
         // FOR NEXT logic here
         // - add step value
-        code.emit(statement.getFrame().getNextLabel());
+        code.emit(labels.get(1));
         emitLoad(statement.getRef());
         emitLoad(statement.getFrame().getStepRef());
         code.emit(Opcode.ADD);

@@ -9,7 +9,6 @@ public class ForFrame {
     private Reference varRef;
     private Reference endRef;
     private Reference stepRef;
-    private String nextLabel;
     private Reference nextRef;
     private Reference exitRef;
 
@@ -18,7 +17,6 @@ public class ForFrame {
         var num = forNumber++;
         this.endRef = scope.addLocalVariable(String.format("for_%s_end%d", varRef.name(), num), varRef.dataType());
         this.stepRef = scope.addLocalVariable(String.format("for_%s_step%d", varRef.name(), num), varRef.dataType());
-        this.nextLabel = String.format("do_for_%s_next%d", varRef.name(), num);
         this.nextRef = scope.addLocalVariable(String.format("for_%s_next%d", varRef.name(), num), DataType.INTEGER);
         this.exitRef = scope.addLocalVariable(String.format("for_%s_exit%d", varRef.name(), num), DataType.INTEGER);
     }
@@ -31,9 +29,6 @@ public class ForFrame {
     }
     public Reference getStepRef() {
         return stepRef;
-    }
-    public String getNextLabel() {
-        return nextLabel;
     }
     public Reference getNextRef() {
         return nextRef;
