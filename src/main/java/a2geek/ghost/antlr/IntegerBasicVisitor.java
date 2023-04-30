@@ -333,16 +333,6 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     }
 
     @Override
-    public Expression visitFuncExpr(IntegerParser.FuncExprContext ctx) {
-        return visit(ctx.func);
-    }
-
-    @Override
-    public Expression visitIntVarExpr(IntegerParser.IntVarExprContext ctx) {
-        return visit(ctx.ref);
-    }
-
-    @Override
     public Expression visitIntConstExpr(IntegerParser.IntConstExprContext ctx) {
         if (ctx.value.getText().startsWith("0x")) {
             return new IntegerConstant(Integer.parseInt(ctx.value.getText().substring(2), 16));
