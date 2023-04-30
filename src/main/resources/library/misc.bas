@@ -13,11 +13,11 @@ function misc_pdl(n as integer) as integer
 end function
 
 sub misc_prnum(n as integer)
-    cpu.register.a = n mod 0x0f
+    cpu.register.a = n and 0x0f
     call MON_OUTPORT
 end sub
 
 sub misc_innum(n as integer)
-    cpu.register.a = n mod 0x0f
+    cpu.register.a = n and 0x0f
     call MON_INPORT
 end sub
