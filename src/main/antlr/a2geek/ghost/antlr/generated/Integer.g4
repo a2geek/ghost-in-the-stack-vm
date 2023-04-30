@@ -107,7 +107,7 @@ iname
     ;
 
 ivar
-    : n=iname '(' e=iexpr ( ',' e=iexpr )* ')'    # intAryVar
+    : n=iname '(' e=iexpr ')'                     # intAryVar
     | n=iname                                     # intVar
     ;
 
