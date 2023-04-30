@@ -193,7 +193,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     public Expression visitPokeStmt(BasicParser.PokeStmtContext ctx) {
         var a = visit(ctx.a);
         var b = visit(ctx.b);
-        model.pokeStmt(a, b);
+        model.pokeStmt(ctx.op.getText(), a, b);
         return null;
     }
 

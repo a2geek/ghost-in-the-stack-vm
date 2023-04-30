@@ -8,12 +8,11 @@ const RNDH = 0x4f
 ' See https://en.wikipedia.org/wiki/Linear-feedback_shift_register
 ' See http://www.retroprogramming.com/2017/07/xorshift-pseudorandom-numbers-in-z80.html
 function random() as integer
-    r = (peek(RNDH) << 8) + peek(RNDL)
+    r = peekw(RNDL)
     r = r xor (r << 7)
     r = r xor (r >> 9)
     r = r xor (r << 8)
-    poke RNDL, r
-    poke RNDH, r >> 8
+    pokew RNDL, r
     return r
 end function
 

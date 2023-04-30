@@ -173,7 +173,9 @@ To support these interactions the following statements and constructs are availa
 
 ```basic
 poke addr,expr
+pokew addr,expr
 value = peek(addr)
+value = peekw(addr)
 cpu.register.a = expr
 cpu.register.x = expr
 cpu.register.y = expr
@@ -227,7 +229,8 @@ Any built-in functions are referenced here.
 | `abs(iexpr)`        | Math      | Returns the absolute value of `iexpr`.                                          |
 | `asc(string)`       | Intrinsic | Returns the ASCII value of the first character of the string with high bit set. |
 | `pdl(iexpr)`        | Misc      | Reads paddle specified by `iexpr`.                                              |
-| `peek(addr)`        | Intrinsic | Read by from memory location `addr`.                                            |
+| `peek(addr)`        | Intrinsic | Read byte from memory location `addr`.                                          |
+| `peekw(addr)`       | Intrinsic | Read word from memory location `addr`.                                          |
 | `random()`          | Math      | Returns a random integer between `0` and `-32768`                               |
 | `rnd(iexpr)`        | Math      | Returns a random number in the range `0` to `iexpr-1`.                          |
 | `scrn(xexpr,yexpr)` | Lores     | Read color of lores graphics point at `xexpr`, `yexpr` coordinate.              |

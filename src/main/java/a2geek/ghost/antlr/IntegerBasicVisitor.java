@@ -223,7 +223,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     public Expression visitPokeStatement(IntegerParser.PokeStatementContext ctx) {
         var addr = visit(ctx.addr);
         var e = visit(ctx.e);
-        model.pokeStmt(addr, e);
+        model.pokeStmt("poke", addr, e);
         return null;
     }
 

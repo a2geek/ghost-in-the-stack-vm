@@ -220,8 +220,10 @@ brtable:
     .addr _divu-1
     .addr _modu-1
     .addr _neg-1
-    .addr _iload-1
-    .addr _istore-1
+    .addr _iloadb-1
+    .addr _istoreb-1
+    .addr _iloadw-1
+    .addr _istorew-1
     .addr _lt-1
     .addr _le-1
     .addr _eq-1
@@ -358,8 +360,8 @@ _mods:
     sta stackB+1,x
     jmp unsignedCommon
 
-; ILOAD: (A) => (B); B = byte(*A)
-_iload:
+; ILOADB: (A) => (B); B = byte(*A)
+_iloadb:
     pla
     sta workptr
     pla
@@ -371,8 +373,8 @@ _iload:
     pha
     jmp loop
 
-; ISTORE: (B) (A) => (); *A = byte(B)
-_istore:
+; ISTOREB: (B) (A) => (); *A = byte(B)
+_istoreb:
     pla
     sta workptr
     pla
@@ -381,6 +383,34 @@ _istore:
     ldy #0
     sta (workptr),y
     jmp tossHighByteLoop
+
+; ILOADW: (A) => (B); B = word(*A)
+_iloadw:
+    pla
+    sta workptr
+    pla
+    sta workptr+1
+    ldy #1
+    lda (workptr),y
+    pha
+    dey
+    lda (workptr),y
+    pha
+    jmp loop
+
+; ISTOREW: (B) (A) => (); *A = word(B)
+_istorew:
+    pla
+    sta workptr
+    pla
+    sta workptr+1
+    ldy #0
+    pla
+    sta (workptr),y
+    iny
+    pla
+    sta (workptr),y
+    jmp loop
 
 ; LT: (B) (A) => (B<A)  [signed]
 _lt:

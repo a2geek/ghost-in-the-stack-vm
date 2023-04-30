@@ -54,7 +54,7 @@ statement
     | 'end'                                                             # endStmt
     | 'home'                                                            # homeStmt
     | 'print' (expr | sexpr | ',' | ';')*                               # printStmt
-    | 'poke' a=expr ',' b=expr                                          # pokeStmt
+    | op=( 'poke' | 'pokew' ) a=expr ',' b=expr                         # pokeStmt
     | 'call' a=expr                                                     # callStmt
     | op=( 'goto' | 'gosub' ) l=ID                                      # gotoGosubStmt
     | 'return' e=expr?                                                  # returnStmt

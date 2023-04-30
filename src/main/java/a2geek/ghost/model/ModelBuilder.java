@@ -219,8 +219,8 @@ public class ModelBuilder {
         addStatement(callStatement);
     }
 
-    public void pokeStmt(Expression addr, Expression value) {
-        PokeStatement pokeStatement = new PokeStatement(addr, value);
+    public void pokeStmt(String op, Expression addr, Expression value) {
+        PokeStatement pokeStatement = new PokeStatement(op, addr, value);
         addStatement(pokeStatement);
     }
 

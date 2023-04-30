@@ -224,7 +224,11 @@ public class CodeGenerationVisitor extends Visitor {
     public void visit(PokeStatement statement) {
         dispatch(statement.getB());
         dispatch(statement.getA());
-        code.emit(Opcode.ISTORE);
+        switch (statement.getOp().toLowerCase()) {
+            case "poke" -> code.emit(Opcode.ISTOREB);
+            case "pokew" -> code.emit(Opcode.ISTOREW);
+            default -> throw new RuntimeException("unknown poke op: " + statement.getOp());
+        }
     }
 
     public void visit(LabelStatement statement) {
@@ -422,7 +426,11 @@ public class CodeGenerationVisitor extends Visitor {
         switch (function.getName().toLowerCase()) {
             case "peek" -> {
                 emitParameters.run();
-                code.emit(Opcode.ILOAD);
+                code.emit(Opcode.ILOADB);
+            }
+            case "peekw" -> {
+                emitParameters.run();
+                code.emit(Opcode.ILOADW);
             }
             default -> {
                 if (function.getFunction() == null) {

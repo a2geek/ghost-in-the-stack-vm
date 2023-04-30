@@ -15,6 +15,7 @@ public class FunctionExpression implements Expression {
     static {
         Arrays.asList(
             new Descriptor("peek", null, DataType.INTEGER, DataType.INTEGER),
+            new Descriptor("peekw", null, DataType.INTEGER, DataType.INTEGER),
             new Descriptor("scrn", LORES_LIBRARY, DataType.INTEGER, DataType.INTEGER, DataType.INTEGER),
             new Descriptor("asc", null, DataType.INTEGER, DataType.STRING),
             new Descriptor("rnd", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER),

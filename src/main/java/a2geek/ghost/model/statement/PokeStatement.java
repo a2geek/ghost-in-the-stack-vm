@@ -5,12 +5,18 @@ import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.Statement;
 
 public class PokeStatement implements Statement {
+    private String op;
     private Expression a;
     private Expression b;
 
-    public PokeStatement(Expression a, Expression b) {
+    public PokeStatement(String op, Expression a, Expression b) {
+        this.op = op;
         setA(a);
         setB(b);
+    }
+
+    public String getOp() {
+        return op;
     }
 
     public Expression getA() {
@@ -33,6 +39,6 @@ public class PokeStatement implements Statement {
 
     @Override
     public String toString() {
-        return String.format("POKE %s,%s", a, b);
+        return String.format("%s %s,%s", op.toUpperCase(), a, b);
     }
 }

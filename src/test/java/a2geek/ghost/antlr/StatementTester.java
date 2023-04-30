@@ -145,6 +145,7 @@ public abstract class StatementTester {
 
     public StatementTester poke(Expression addr, Expression value) {
         var stmt = nextStatement(PokeStatement.class);
+        assertEquals("poke", stmt.getOp());
         assertEquals(addr, stmt.getA());
         assertEquals(value, stmt.getB());
         return this;
