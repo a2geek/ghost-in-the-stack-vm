@@ -9,13 +9,12 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.javatuples.Pair;
 
 import java.util.*;
-import java.util.function.Function;
 
 public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     private ModelBuilder model;
 
-    public GhostBasicVisitor(Function<String,String> caseStrategy) {
-        this.model = new ModelBuilder(caseStrategy);
+    public GhostBasicVisitor(ModelBuilder model) {
+        this.model = model;
     }
 
     public ModelBuilder getModel() {
@@ -388,7 +387,8 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
     @Override
     public Expression visitStringConstant(BasicParser.StringConstantContext ctx) {
-        return new StringConstant(ctx.s.getText().replaceAll("^\"|\"$", ""));
+        String value = ctx.s.getText().replaceAll("^\"|\"$", "");
+        return new StringConstant(model.fixControlChars(value));
     }
 
     @Override

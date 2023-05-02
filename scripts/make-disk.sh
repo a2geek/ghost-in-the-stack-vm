@@ -28,8 +28,8 @@ do
     filename="${filename%.*}"
     filename="${filename//-/}"
 
-    FLAGS=""
-    [ "${extension}" == "int" ] && FLAGS="--integer"
+    FLAGS="--fix-control-chars"
+    [ "${extension}" == "int" ] && FLAGS="${FLAGS} --integer"
 
     ${GHOST} $source ${FLAGS} --output=${filename} --quiet
     ${ACX} import --dir=${dir} ${filename} --as -a 0x803 -f

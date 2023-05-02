@@ -1,6 +1,7 @@
 package a2geek.ghost.command;
 
 import a2geek.ghost.antlr.ParseUtil;
+import a2geek.ghost.model.ModelBuilder;
 import a2geek.ghost.model.Scope;
 import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.visitor.RewriteVisitor;
@@ -17,11 +18,11 @@ import picocli.CommandLine.Parameters;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Command(name = "compile", mixinStandardHelpOptions = true, 
     description = "Compile Ghost BASIC program.")
@@ -52,16 +53,38 @@ public class CompileCommand implements Callable<Integer> {
             description = "allow identifiers to be case sensitive (A is different from a)")
     private boolean caseSensitive;
 
+    @Option(names = { "--fix-control-chars" },
+            defaultValue = "false",
+            description = "replace '<CONTROL-?>' with the actual control character")
+    private boolean fixControlChars;
+
     @Option(names = { "-l", "--listing" }, description = "create listing file")
     private Optional<String> programListing;
+
+    public static String convertControlCharacterMarkers(String value) {
+        Pattern pattern = Pattern.compile("<CTRL-(.)>", Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(value);
+        Set<String> letters = matcher.results()
+            .map(mr -> mr.group(1))
+            .collect(Collectors.toSet());
+        for (String letter : letters) {
+            String ctrlString = String.format("<CTRL-%s>", letter);
+            String ctrlChar = new String(Character.toChars(letter.charAt(0) - '@'));
+            value = value.replace(ctrlString, ctrlChar);
+        }
+        return value;
+    }
 
     @Override
     public Integer call() throws Exception {
         CharStream stream = CharStreams.fromPath(sourceCode);
+        ModelBuilder model = new ModelBuilder(caseSensitive ? s -> s : String::toUpperCase);
+        if (fixControlChars) {
+            model.setControlCharsFn(CompileCommand::convertControlCharacterMarkers);
+        }
         Program program = switch (language) {
-            case INTEGER_BASIC -> ParseUtil.integerToModel(stream);
-            case BASIC -> ParseUtil.basicToModel(stream, caseSensitive ?
-                    s -> s : String::toUpperCase);
+            case INTEGER_BASIC -> ParseUtil.integerToModel(stream, model);
+            case BASIC -> ParseUtil.basicToModel(stream, model);
         };
 
         if (!quietFlag) {

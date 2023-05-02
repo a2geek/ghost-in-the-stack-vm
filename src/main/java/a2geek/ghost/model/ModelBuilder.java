@@ -20,13 +20,13 @@ import java.util.function.Function;
  */
 public class ModelBuilder {
     private Function<String,String> caseStrategy;
+    private Function<String, String> controlCharsFn = s -> s;
     private Stack<Scope> scope = new Stack<>();
     private Stack<StatementBlock> statementBlock = new Stack<>();
     private Set<String> librariesIncluded = new HashSet<>();
     private boolean includeLibraries = true;
     /** Traditional FOR/NEXT statement frame. */
     private Map<Symbol, ForFrame> forFrames = new HashMap<>();
-
 
     public ModelBuilder(Function<String,String> caseStrategy) {
         this.caseStrategy = caseStrategy;
@@ -48,9 +48,15 @@ public class ModelBuilder {
     public String fixCase(String id) {
         return caseStrategy.apply(id);
     }
+    public String fixControlChars(String value) {
+        return controlCharsFn.apply(value);
+    }
 
     public void setIncludeLibraries(boolean includeLibraries) {
         this.includeLibraries = includeLibraries;
+    }
+    public void setControlCharsFn(Function<String,String> controlCharsFn) {
+        this.controlCharsFn = controlCharsFn;
     }
 
     public void addStatement(Statement statement) {
@@ -99,8 +105,9 @@ public class ModelBuilder {
             if (inputStream == null) {
                 throw new RuntimeException("unknown library: " + libname);
             }
-            Program library = ParseUtil.basicToModel(CharStreams.fromStream(inputStream),
-                caseStrategy, v -> v.getModel().setIncludeLibraries(false));
+            ModelBuilder libraryModel = new ModelBuilder(this.caseStrategy);
+            libraryModel.setIncludeLibraries(false);
+            Program library = ParseUtil.basicToModel(CharStreams.fromStream(inputStream), libraryModel);
             // at this time a library is simply a collection of subroutines and functions.
             boolean noStatements = library.getStatements().isEmpty();
             boolean onlyConstants = library.getLocalSymbols().stream().noneMatch(ref -> ref.type() != Scope.Type.CONSTANT);

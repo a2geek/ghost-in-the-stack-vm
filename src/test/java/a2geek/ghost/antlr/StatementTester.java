@@ -14,7 +14,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public abstract class StatementTester {
     public static ProgramTester expect(String source) {
-        Program program = ParseUtil.integerToModel(CharStreams.fromString(source));
+        ModelBuilder model = new ModelBuilder(String::toUpperCase);
+        Program program = ParseUtil.integerToModel(CharStreams.fromString(source), model);
         System.out.println(program);
         return new ProgramTester(program);
     }
