@@ -2,7 +2,7 @@ package a2geek.ghost.antlr;
 
 import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.Expression;
-import a2geek.ghost.model.Reference;
+import a2geek.ghost.model.Symbol;
 import a2geek.ghost.model.Scope;
 import a2geek.ghost.model.expression.*;
 
@@ -17,7 +17,7 @@ public class ExpressionBuilder {
             return new StringConstant(value);
         }
         public static IdentifierExpression identifier(String name, DataType dataType, Scope.Type scopeType) {
-            var ref = Reference.builder(name, scopeType).dataType(dataType).build();
+            var ref = Symbol.builder(name, scopeType).dataType(dataType).build();
             return new IdentifierExpression(ref);
         }
         public static BinaryExpression binary(String operator, Expression lhs, Expression rhs) {

@@ -25,7 +25,7 @@ public class ModelBuilder {
     private Set<String> librariesIncluded = new HashSet<>();
     private boolean includeLibraries = true;
     /** Traditional FOR/NEXT statement frame. */
-    private Map<Reference, ForFrame> forFrames = new HashMap<>();
+    private Map<Symbol, ForFrame> forFrames = new HashMap<>();
 
 
     public ModelBuilder(Function<String,String> caseStrategy) {
@@ -72,21 +72,21 @@ public class ModelBuilder {
         return this.scope.pop();
     }
 
-    public Optional<Reference> findReference(String name) {
-        return this.scope.peek().findReference(fixCase(name));
+    public Optional<Symbol> findSymbol(String name) {
+        return this.scope.peek().findSymbol(fixCase(name));
     }
-    public Reference addVariable(String name, DataType dataType) {
+    public Symbol addVariable(String name, DataType dataType) {
         return this.scope.peek().addLocalVariable(fixCase(name), dataType);
     }
-    public Reference addVariable(String name, Scope.Type type, DataType dataType) {
+    public Symbol addVariable(String name, Scope.Type type, DataType dataType) {
         return this.scope.peek().addLocalVariable(fixCase(name), type, dataType);
     }
-    public Reference addConstant(String name, Expression value) {
+    public Symbol addConstant(String name, Expression value) {
         return this.scope.peek().addLocalConstant(fixCase(name), value);
     }
 
-    public ForFrame forFrame(Reference ref) {
-        return forFrames.computeIfAbsent(ref, r -> new ForFrame(r, scope.peek()));
+    public ForFrame forFrame(Symbol symbol) {
+        return forFrames.computeIfAbsent(symbol, r -> new ForFrame(r, scope.peek()));
     }
 
     public void uses(String libname) {
@@ -103,7 +103,7 @@ public class ModelBuilder {
                 caseStrategy, v -> v.getModel().setIncludeLibraries(false));
             // at this time a library is simply a collection of subroutines and functions.
             boolean noStatements = library.getStatements().isEmpty();
-            boolean onlyConstants = library.getLocalReferences().stream().noneMatch(ref -> ref.type() != Scope.Type.CONSTANT);
+            boolean onlyConstants = library.getLocalSymbols().stream().noneMatch(ref -> ref.type() != Scope.Type.CONSTANT);
             if (!noStatements || !onlyConstants) {
                 throw new RuntimeException("a library may only contain subroutines, functions, and constants");
             }
@@ -159,8 +159,8 @@ public class ModelBuilder {
         throw new RuntimeException("function does not exist: " + id);
     }
 
-    public void assignStmt(Reference ref, Expression expr) {
-        AssignmentStatement assignmentStatement = new AssignmentStatement(ref, expr);
+    public void assignStmt(Symbol symbol, Expression expr) {
+        AssignmentStatement assignmentStatement = new AssignmentStatement(symbol, expr);
         addStatement(assignmentStatement);
     }
     public void ifStmt(Expression expr, StatementBlock trueStatements, StatementBlock falseStatements) {
@@ -168,8 +168,8 @@ public class ModelBuilder {
         addStatement(statement);
     }
 
-    public void forBegin(Reference ref, Expression start, Expression end, Expression step) {
-        ForNextStatement forStatement = new ForNextStatement(ref, start, end, step);
+    public void forBegin(Symbol symbol, Expression start, Expression end, Expression step) {
+        ForNextStatement forStatement = new ForNextStatement(symbol, start, end, step);
         pushStatementBlock(forStatement);
     }
     public void forEnd() {

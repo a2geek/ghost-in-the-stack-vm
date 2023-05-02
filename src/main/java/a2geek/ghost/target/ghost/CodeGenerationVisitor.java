@@ -37,56 +37,56 @@ public class CodeGenerationVisitor extends Visitor {
         this.frames.pop();
     }
 
-    public int frameOffset(Reference ref) {
-        if (this.frames.peek().offsets().containsKey(ref)) {
-            return this.frames.peek().offsets().get(ref);
+    public int frameOffset(Symbol symbol) {
+        if (this.frames.peek().offsets().containsKey(symbol)) {
+            return this.frames.peek().offsets().get(symbol);
         }
-       throw new RuntimeException("reference not in frame: " + ref);
+       throw new RuntimeException("symbol not in frame: " + symbol);
     }
 
-    public void emitLoad(Reference ref) {
-        switch (ref.type()) {
+    public void emitLoad(Symbol symbol) {
+        switch (symbol.type()) {
             case LOCAL, PARAMETER, RETURN_VALUE -> {
-                this.code.emit(Opcode.LOCAL_LOAD, frameOffset(ref));
+                this.code.emit(Opcode.LOCAL_LOAD, frameOffset(symbol));
             }
             case GLOBAL -> {
-                this.code.emit(Opcode.GLOBAL_LOAD, frameOffset(ref));
+                this.code.emit(Opcode.GLOBAL_LOAD, frameOffset(symbol));
             }
             case INTRINSIC -> {
-                switch (ref.name().toLowerCase()) {
+                switch (symbol.name().toLowerCase()) {
                     case Intrinsic.CPU_REGISTER_A -> this.code.emit(Opcode.GETACC);
                     case Intrinsic.CPU_REGISTER_X -> this.code.emit(Opcode.GETXREG);
                     case Intrinsic.CPU_REGISTER_Y -> this.code.emit(Opcode.GETYREG);
-                    default -> throw new RuntimeException("unknown intrinsic: " + ref.name());
+                    default -> throw new RuntimeException("unknown intrinsic: " + symbol.name());
                 }
             }
             case CONSTANT -> {
-                if (ref.expr() instanceof IntegerConstant c) {
+                if (symbol.expr() instanceof IntegerConstant c) {
                     visit(c);
                 }
-                else if (ref.expr() instanceof StringConstant s) {
+                else if (symbol.expr() instanceof StringConstant s) {
                     visit(s);
                 }
                 else {
-                    throw new RuntimeException("unable to generate code for constant expression: " + ref);
+                    throw new RuntimeException("unable to generate code for constant expression: " + symbol);
                 }
             }
         }
     }
-    public void emitStore(Reference ref) {
-        switch (ref.type()) {
+    public void emitStore(Symbol symbol) {
+        switch (symbol.type()) {
             case LOCAL, PARAMETER, RETURN_VALUE -> {
-                this.code.emit(Opcode.LOCAL_STORE, frameOffset(ref));
+                this.code.emit(Opcode.LOCAL_STORE, frameOffset(symbol));
             }
             case GLOBAL -> {
-                this.code.emit(Opcode.GLOBAL_STORE, frameOffset(ref));
+                this.code.emit(Opcode.GLOBAL_STORE, frameOffset(symbol));
             }
             case INTRINSIC -> {
-                switch (ref.name().toLowerCase()) {
+                switch (symbol.name().toLowerCase()) {
                     case Intrinsic.CPU_REGISTER_A -> this.code.emit(Opcode.SETACC);
                     case Intrinsic.CPU_REGISTER_X -> this.code.emit(Opcode.SETXREG);
                     case Intrinsic.CPU_REGISTER_Y -> this.code.emit(Opcode.SETYREG);
-                    default -> throw new RuntimeException("unknown intrinsic: " + ref.name());
+                    default -> throw new RuntimeException("unknown intrinsic: " + symbol.name());
                 }
             }
             case CONSTANT -> {
@@ -98,7 +98,7 @@ public class CodeGenerationVisitor extends Visitor {
     @Override
     public void visit(AssignmentStatement statement) {
         dispatch(statement.getExpr());
-        emitStore(statement.getRef());
+        emitStore(statement.getSymbol());
     }
 
     public void visit(EndStatement statement) {
@@ -127,7 +127,7 @@ public class CodeGenerationVisitor extends Visitor {
 
     public void visit(ForNextStatement statement) {
         var labels = label("FOR", "FORX");
-        visit(new AssignmentStatement(statement.getRef(), statement.getStart()));
+        visit(new AssignmentStatement(statement.getSymbol(), statement.getStart()));
         code.emit(labels.get(0));
 
         // Note: We don't have a GE at this time.
@@ -135,10 +135,10 @@ public class CodeGenerationVisitor extends Visitor {
         boolean stepIsNegative = statement.getStep() instanceof IntegerConstant e && e.getValue() < 0;
         if (stepIsNegative) {
             dispatch(statement.getEnd());
-            emitLoad(statement.getRef());
+            emitLoad(statement.getSymbol());
         }
         else {
-            emitLoad(statement.getRef());
+            emitLoad(statement.getSymbol());
             dispatch(statement.getEnd());
         }
         code.emit(Opcode.LE);
@@ -148,11 +148,11 @@ public class CodeGenerationVisitor extends Visitor {
 
         // Lean on the binary expression processor to setup an optimized STEP increment.
         BinaryExpression stepIncrementExpr = new BinaryExpression(
-            new IdentifierExpression(statement.getRef()),
+            new IdentifierExpression(statement.getSymbol()),
             statement.getStep(), "+");
         visit(stepIncrementExpr);
 
-        emitStore(statement.getRef());
+        emitStore(statement.getSymbol());
         code.emit(Opcode.GOTO, labels.get(0));
         code.emit(labels.get(1));
     }
@@ -160,12 +160,12 @@ public class CodeGenerationVisitor extends Visitor {
     @Override
     public void visit(ForStatement statement) {
         var labels = label(
-            String.format("do_%s_for", statement.getRef().name()),
-            String.format("do_%s_next", statement.getRef().name()));
+            String.format("do_%s_for", statement.getSymbol().name()),
+            String.format("do_%s_next", statement.getSymbol().name()));
         // initialize loop variables
         // - start value
         dispatch(statement.getStart());
-        emitStore(statement.getRef());
+        emitStore(statement.getSymbol());
         // - end value
         dispatch(statement.getEnd());
         emitStore(statement.getFrame().getEndRef());
@@ -182,22 +182,22 @@ public class CodeGenerationVisitor extends Visitor {
         // FOR NEXT logic here
         // - add step value
         code.emit(labels.get(1));
-        emitLoad(statement.getRef());
+        emitLoad(statement.getSymbol());
         emitLoad(statement.getFrame().getStepRef());
         code.emit(Opcode.ADD);
-        emitStore(statement.getRef());
+        emitStore(statement.getSymbol());
         // - test end value (same bugs as FOR above!)  FIXME
         //   step is:
         //     neg: IF X < END THEN EXIT LOOP
         //     pos: IF X > END THEN EXIT LOOP
         boolean stepIsNegative = statement.getStep() instanceof IntegerConstant e && e.getValue() < 0;
         if (stepIsNegative) {
-            emitLoad(statement.getRef());
+            emitLoad(statement.getSymbol());
             emitLoad(statement.getFrame().getEndRef());
         }
         else {
             emitLoad(statement.getFrame().getEndRef());
-            emitLoad(statement.getRef());
+            emitLoad(statement.getSymbol());
         }
         code.emit(Opcode.LT);
         code.emit(Opcode.IFFALSE, labels.get(0));
@@ -393,7 +393,7 @@ public class CodeGenerationVisitor extends Visitor {
     }
 
     public Expression visit(IdentifierExpression expression) {
-        emitLoad(expression.getRef());
+        emitLoad(expression.getSymbol());
         return null;
     }
 

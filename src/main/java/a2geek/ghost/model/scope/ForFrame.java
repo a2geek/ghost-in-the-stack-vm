@@ -1,18 +1,18 @@
 package a2geek.ghost.model.scope;
 
 import a2geek.ghost.model.DataType;
-import a2geek.ghost.model.Reference;
+import a2geek.ghost.model.Symbol;
 import a2geek.ghost.model.Scope;
 
 public class ForFrame {
     private static int forNumber = 0;
-    private Reference varRef;
-    private Reference endRef;
-    private Reference stepRef;
-    private Reference nextRef;
-    private Reference exitRef;
+    private Symbol varRef;
+    private Symbol endRef;
+    private Symbol stepRef;
+    private Symbol nextRef;
+    private Symbol exitRef;
 
-    public ForFrame(Reference varRef, Scope scope) {
+    public ForFrame(Symbol varRef, Scope scope) {
         this.varRef = varRef;
         var num = forNumber++;
         this.endRef = scope.addLocalVariable(String.format("for_%s_end%d", varRef.name(), num), varRef.dataType());
@@ -21,19 +21,19 @@ public class ForFrame {
         this.exitRef = scope.addLocalVariable(String.format("for_%s_exit%d", varRef.name(), num), DataType.INTEGER);
     }
 
-    public Reference getVarRef() {
+    public Symbol getVarRef() {
         return varRef;
     }
-    public Reference getEndRef() {
+    public Symbol getEndRef() {
         return endRef;
     }
-    public Reference getStepRef() {
+    public Symbol getStepRef() {
         return stepRef;
     }
-    public Reference getNextRef() {
+    public Symbol getNextRef() {
         return nextRef;
     }
-    public Reference getExitRef() {
+    public Symbol getExitRef() {
         return exitRef;
     }
 }

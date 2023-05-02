@@ -1,6 +1,6 @@
 package a2geek.ghost.target.ghost;
 
-import a2geek.ghost.model.Reference;
+import a2geek.ghost.model.Symbol;
 import a2geek.ghost.model.Scope;
 import a2geek.ghost.model.scope.Function;
 import a2geek.ghost.model.scope.Program;
@@ -11,12 +11,12 @@ import java.util.Map;
 
 public record Frame(
             Scope scope,
-            Map<Reference,Integer> offsets,
+            Map<Symbol,Integer> offsets,
             Integer localSize,
             Integer frameSize) {
 
     public static Frame create(Program program) {
-        Map<Reference,Integer> varOffsets = new HashMap<>();
+        Map<Symbol,Integer> varOffsets = new HashMap<>();
         int varOffset = 0;
         int reservation = 0;
         // program treats global variables as local
@@ -29,7 +29,7 @@ public record Frame(
     }
     public static Frame create(Subroutine subroutine) {
         // FIXME these references will need to be fixed once more types are introduced
-        Map<Reference,Integer> varOffsets = new HashMap<>();
+        Map<Symbol,Integer> varOffsets = new HashMap<>();
         int varOffset = 0;
         int reservation = 0;
         // local variables are at TOS

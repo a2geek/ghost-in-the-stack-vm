@@ -2,64 +2,64 @@ package a2geek.ghost.model.expression;
 
 import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.Expression;
-import a2geek.ghost.model.Reference;
+import a2geek.ghost.model.Symbol;
 import a2geek.ghost.model.Scope;
 
 import java.util.Objects;
 import java.util.Optional;
 
 public class IdentifierExpression implements Expression {
-    private Reference ref;
+    private Symbol symbol;
 
     @Override
     public DataType getType() {
-        return ref.dataType();
+        return symbol.dataType();
     }
 
-    public Reference getRef() {
-        return ref;
+    public Symbol getSymbol() {
+        return symbol;
     }
 
-    public IdentifierExpression(Reference ref) {
-        this.ref = ref;
+    public IdentifierExpression(Symbol symbol) {
+        this.symbol = symbol;
     }
 
     @Override
     public boolean isConstant() {
-        return ref.type() == Scope.Type.CONSTANT;
+        return symbol.type() == Scope.Type.CONSTANT;
     }
 
     @Override
     public Optional<Integer> asInteger() {
-        return ref.expr().asInteger();
+        return symbol.expr().asInteger();
     }
 
     @Override
     public Optional<Boolean> asBoolean() {
-        return ref.expr().asBoolean();
+        return symbol.expr().asBoolean();
     }
 
     @Override
     public Optional<String> asString() {
-        return ref.expr().asString();
+        return symbol.expr().asString();
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o instanceof IdentifierExpression that) {
-            return Objects.equals(ref, that.ref);
+            return Objects.equals(symbol, that.symbol);
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(ref);
+        return Objects.hash(symbol);
     }
 
     @Override
     public String toString() {
-        return ref.name();
+        return symbol.name();
     }
 }

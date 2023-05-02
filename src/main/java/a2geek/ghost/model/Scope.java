@@ -13,7 +13,7 @@ public class Scope extends StatementBlock {
     private String name;
     private Scope parent;
     private Type type;
-    private List<Reference> references = new ArrayList<>();
+    private List<Symbol> symbols = new ArrayList<>();
     private List<Scope> scopes = new ArrayList<>();
 
     public Scope(Function<String,String> caseStrategy, String name) {
@@ -30,7 +30,7 @@ public class Scope extends StatementBlock {
 
     @Override
     public boolean isEmpty() {
-        return super.isEmpty() && references.isEmpty() && scopes.isEmpty();
+        return super.isEmpty() && symbols.isEmpty() && scopes.isEmpty();
     }
 
     public String getName() {
@@ -42,59 +42,59 @@ public class Scope extends StatementBlock {
         this.name = name;
     }
 
-    public List<Reference> getAllReferences() {
-        var allVariables = new ArrayList<Reference>();
-        allVariables.addAll(this.references);
+    public List<Symbol> getAllSymbols() {
+        var allVariables = new ArrayList<Symbol>();
+        allVariables.addAll(this.symbols);
         if (this.parent != null) {
-            this.parent.getAllReferences().stream()
+            this.parent.getAllSymbols().stream()
                     .filter(ref -> Type.GLOBAL == ref.type())
                     .forEach(allVariables::add);
         }
         return allVariables;
     }
-    public List<Reference> getLocalReferences() {
-        return references;
+    public List<Symbol> getLocalSymbols() {
+        return symbols;
     }
-    public Reference addLocalVariable(String name, DataType dataType) {
+    public Symbol addLocalVariable(String name, DataType dataType) {
         return addLocalVariable(name, this.type, dataType);
     }
-    public Reference addLocalVariable(String name, Type type, DataType dataType) {
-        return findLocalReference(name).orElseGet(() -> {
+    public Symbol addLocalVariable(String name, Type type, DataType dataType) {
+        return findLocalSymbols(name).orElseGet(() -> {
             var fixedName = caseStrategy.apply(name);
-            var ref = Reference.builder(fixedName, type).dataType(dataType).build();
-            references.add(ref);
+            var ref = Symbol.builder(fixedName, type).dataType(dataType).build();
+            symbols.add(ref);
             return ref;
         });
     }
-    public Reference addLocalConstant(String name, Expression expr) {
-        if (findLocalReference(name).isPresent()) {
+    public Symbol addLocalConstant(String name, Expression expr) {
+        if (findLocalSymbols(name).isPresent()) {
             String msg = String.format("name already exists in scope, cannot add twice: %s", name);
             throw new RuntimeException(msg);
         }
         var fixedName = caseStrategy.apply(name);
-        var ref = Reference.builder(fixedName, expr).build();
-        references.add(ref);
+        var ref = Symbol.builder(fixedName, expr).build();
+        symbols.add(ref);
         return ref;
     }
 
-    public Optional<Reference> findLocalReference(String name) {
+    public Optional<Symbol> findLocalSymbols(String name) {
         var fixedName = caseStrategy.apply(name);
-        return references.stream().filter(r -> fixedName.equals(r.name())).findFirst();
+        return symbols.stream().filter(r -> fixedName.equals(r.name())).findFirst();
     }
-    public Optional<Reference> findReference(String name) {
+    public Optional<Symbol> findSymbol(String name) {
         var fixedName = caseStrategy.apply(name);
-        var found = findLocalReference(fixedName);
+        var found = findLocalSymbols(fixedName);
         if (found.isPresent()) {
             return found;
         }
         if (parent != null) {
-            return parent.findReference(fixedName);
+            return parent.findSymbol(fixedName);
         }
         return Optional.empty();
     }
-    public List<Reference> findByType(Type... types) {
+    public List<Symbol> findByType(Type... types) {
         final var typesList = Arrays.asList(types);
-        return references.stream()
+        return symbols.stream()
                 .filter(ref -> typesList.contains(ref.type()))
                 .collect(Collectors.toList());
     }

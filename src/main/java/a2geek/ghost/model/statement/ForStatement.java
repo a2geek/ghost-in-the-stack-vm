@@ -2,27 +2,27 @@ package a2geek.ghost.model.statement;
 
 import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.Expression;
-import a2geek.ghost.model.Reference;
+import a2geek.ghost.model.Symbol;
 import a2geek.ghost.model.Statement;
 import a2geek.ghost.model.scope.ForFrame;
 
 public class ForStatement implements Statement {
-    private Reference ref;
+    private Symbol symbol;
     private Expression start;
     private Expression end;
     private Expression step;
     private ForFrame frame;
 
-    public ForStatement(Reference ref, Expression start, Expression end, Expression step, ForFrame frame) {
-        this.ref = ref;
+    public ForStatement(Symbol symbol, Expression start, Expression end, Expression step, ForFrame frame) {
+        this.symbol = symbol;
         this.frame = frame;
         setStart(start);
         setEnd(end);
         setStep(step);
     }
 
-    public Reference getRef() {
-        return ref;
+    public Symbol getSymbol() {
+        return symbol;
     }
     public ForFrame getFrame() {
         return frame;
@@ -59,6 +59,6 @@ public class ForStatement implements Statement {
             stepText = String.format("STEP %s ", step);
         }
         return String.format("FOR %s = %s TO %s %s",
-                ref.name(), start, end, stepText);
+                symbol.name(), start, end, stepText);
     }
 }

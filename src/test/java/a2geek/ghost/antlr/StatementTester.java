@@ -21,26 +21,26 @@ public abstract class StatementTester {
 
     private int statementNumber;
 
-    abstract Optional<Reference> findReference(String name);
+    abstract Optional<Symbol> findSymbol(String name);
     abstract List<Statement> getStatements();
 
     private String lineNumberLabel(int lineNumber) {
         return String.format("L%d", lineNumber);
     }
 
-    public StatementTester hasReference(String name, DataType dataType, Scope.Type scopeType) {
-        var ref = findReference(name);
-        assertTrue(ref.isPresent(), "variable not found: " + name);
-        assertEquals(dataType, ref.get().dataType(), name);
-        assertEquals(scopeType, ref.get().type(), name);
+    public StatementTester hasSymbol(String name, DataType dataType, Scope.Type scopeType) {
+        var symbol = findSymbol(name);
+        assertTrue(symbol.isPresent(), "variable not found: " + name);
+        assertEquals(dataType, symbol.get().dataType(), name);
+        assertEquals(scopeType, symbol.get().type(), name);
         return this;
     }
 
-    public StatementTester hasReference(IdentifierExpression expr) {
-        return hasReference(expr.getRef());
+    public StatementTester hasSymbol(IdentifierExpression expr) {
+        return hasSymbol(expr.getSymbol());
     }
-    public StatementTester hasReference(Reference ref) {
-        return hasReference(ref.name(), ref.dataType(), ref.type());
+    public StatementTester hasSymbol(Symbol symbol) {
+        return hasSymbol(symbol.name(), symbol.dataType(), symbol.type());
     }
 
     public StatementTester atEnd() {
@@ -74,7 +74,7 @@ public abstract class StatementTester {
 
     public StatementTester assignment(String varName, Expression expr) {
         var stmt = nextStatement(AssignmentStatement.class);
-        assertEquals(varName, stmt.getRef().name());
+        assertEquals(varName, stmt.getSymbol().name());
         assertEquals(expr, stmt.getExpr());
         return this;
     }
@@ -105,7 +105,7 @@ public abstract class StatementTester {
 
     public StatementTester forStmt(String name, Expression start, Expression end) {
         var stmt = nextStatement(ForStatement.class);
-        assertEquals(name, stmt.getRef().name());
+        assertEquals(name, stmt.getSymbol().name());
         assertEquals(start, stmt.getStart());
         assertEquals(end, stmt.getEnd());
         assertEquals(constant(1), stmt.getStep());
@@ -139,7 +139,7 @@ public abstract class StatementTester {
 
     public StatementTester nextStmt(String name) {
         var stmt = nextStatement(NextStatement.class);
-        assertEquals(name, stmt.getRef().name());
+        assertEquals(name, stmt.getSymbol().name());
         return this;
     }
 
@@ -163,8 +163,8 @@ public abstract class StatementTester {
             this.program = program;
         }
         @Override
-        public Optional<Reference> findReference(String name) {
-            return program.findReference(name);
+        public Optional<Symbol> findSymbol(String name) {
+            return program.findSymbol(name);
         }
         @Override
         public List<Statement> getStatements() {
@@ -184,8 +184,8 @@ public abstract class StatementTester {
         }
 
         @Override
-        public Optional<Reference> findReference(String name) {
-            return parent.findReference(name);
+        public Optional<Symbol> findSymbol(String name) {
+            return parent.findSymbol(name);
         }
         @Override
         public List<Statement> getStatements() {

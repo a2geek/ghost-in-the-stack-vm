@@ -1,6 +1,6 @@
 package a2geek.ghost.model;
 
-public record Reference(String name, Scope.Type type, Expression expr, DataType dataType) {
+public record Symbol(String name, Scope.Type type, Expression expr, DataType dataType) {
     public static Builder builder(String name, Scope.Type type) {
         return new Builder(name, type);
     }
@@ -25,8 +25,8 @@ public record Reference(String name, Scope.Type type, Expression expr, DataType 
             this.dataType = dataType;
             return this;
         }
-        public Reference build() {
-            return new Reference(name, type, expr, dataType);
+        public Symbol build() {
+            return new Symbol(name, type, expr, dataType);
         }
     }
 }

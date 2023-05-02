@@ -39,7 +39,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     public Expression visitAssignment(BasicParser.AssignmentContext ctx) {
         String id = ctx.id.getText();
         Expression expr = visit(ctx.a);
-        Reference ref = switch (id.toLowerCase()) {
+        Symbol symbol = switch (id.toLowerCase()) {
             case Intrinsic.CPU_REGISTER_A,
                  Intrinsic.CPU_REGISTER_X,
                  Intrinsic.CPU_REGISTER_Y -> model.addVariable(id, Scope.Type.INTRINSIC, expr.getType());
@@ -51,7 +51,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             }
         };
 
-        model.assignStmt(ref, expr);
+        model.assignStmt(symbol, expr);
         return null;
     }
 
@@ -94,12 +94,12 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
     @Override
     public Expression visitForLoop(BasicParser.ForLoopContext ctx) {
-        Reference ref = model.addVariable(ctx.id.getText(), DataType.INTEGER);
+        Symbol symbol = model.addVariable(ctx.id.getText(), DataType.INTEGER);
         Expression start = visit(ctx.a);
         Expression end = visit(ctx.b);
         Expression step = optVisit(ctx.c).orElse(new IntegerConstant(1));
 
-        model.forBegin(ref, start, end, step);
+        model.forBegin(symbol, start, end, step);
         optVisit(ctx.s);
         model.forEnd();
         return null;
@@ -339,8 +339,8 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             }
         }
 
-        // Look for a likely reference - and it might already exist
-        Reference ref = switch (id.toLowerCase()) {
+        // Look for a likely symbol - and it might already exist
+        Symbol symbol = switch (id.toLowerCase()) {
             case Intrinsic.CPU_REGISTER_A,
                     Intrinsic.CPU_REGISTER_X,
                     Intrinsic.CPU_REGISTER_Y -> model.addVariable(id, Scope.Type.INTRINSIC, DataType.INTEGER);
@@ -349,11 +349,11 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                     throw new RuntimeException("invalid identifier: " + id);
                 }
                 // Look through local and parent scopes; otherwise assume it's a new integer
-                var existing = model.findReference(id);
+                var existing = model.findSymbol(id);
                 yield existing.orElseGet(() -> model.addVariable(id, DataType.INTEGER));
             }
         };
-        return new IdentifierExpression(ref);
+        return new IdentifierExpression(symbol);
     }
 
     @Override
@@ -368,8 +368,8 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             if (params.size() > 0) {
                 throw new RuntimeException("Intrinsic reference takes no arguments: " + id);
             }
-            Reference ref = model.addVariable(id, Scope.Type.INTRINSIC, DataType.INTEGER);
-            return new IdentifierExpression(ref);
+            Symbol symbol = model.addVariable(id, Scope.Type.INTRINSIC, DataType.INTEGER);
+            return new IdentifierExpression(symbol);
         }
         return model.callFunction(id, params);
     }

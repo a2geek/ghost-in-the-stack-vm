@@ -1,7 +1,7 @@
 package a2geek.ghost.model.scope;
 
 import a2geek.ghost.model.DataType;
-import a2geek.ghost.model.Reference;
+import a2geek.ghost.model.Symbol;
 import a2geek.ghost.model.Scope;
 import org.javatuples.Pair;
 
@@ -22,7 +22,7 @@ public class Subroutine extends Scope {
     public String toString() {
         return String.format("SUB %s(%s) : %s : END SUB", getName(),
                 findByType(Type.PARAMETER).stream()
-                        .map(Reference::name)
+                        .map(Symbol::name)
                         .collect(Collectors.joining(", ")),
                 statementsAsString());
     }

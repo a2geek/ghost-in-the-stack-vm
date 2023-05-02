@@ -1,8 +1,9 @@
 Capturing ideas
 ===============
 
+Many programs have control characters and the extract embedded <CTRL-G> (etc) into the file; maybe allow translation?
 How to make reusable libraries which use inline interpreted code? Looks like there can be "nested" grammars!
-Looks like usage of Reference may need to be checked? There is no constraint that a found variable is what is expected (aka a constant instead of a variable).
+Looks like usage of Symbol may need to be checked? There is no constraint that a found variable is what is expected (aka a constant instead of a variable).
 Look at how bytecode is created - feels like Opcode and Directive can support Instruction more directly.
 Track constants. Do they need to persist in library declarations or can they be thrown out?
 Add EXIT (FOR/SUB/FUNCTION). Where to validate? Maybe in some visitor to be certain EXIT and RETURN in correct places.

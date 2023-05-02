@@ -3,20 +3,20 @@ package a2geek.ghost.model.statement;
 import a2geek.ghost.model.*;
 
 public class ForNextStatement extends StatementBlock implements Statement {
-    private Reference ref;
+    private Symbol symbol;
     private Expression start;
     private Expression end;
     private Expression step;
 
-    public ForNextStatement(Reference ref, Expression start, Expression end, Expression step) {
-        this.ref = ref;
+    public ForNextStatement(Symbol symbol, Expression start, Expression end, Expression step) {
+        this.symbol = symbol;
         setStart(start);
         setEnd(end);
         setStep(step);
     }
 
-    public Reference getRef() {
-        return ref;
+    public Symbol getSymbol() {
+        return symbol;
     }
 
     public Expression getStart() {
@@ -50,7 +50,7 @@ public class ForNextStatement extends StatementBlock implements Statement {
             stepText = String.format("STEP %s ", step);
         }
         return String.format("FOR %s = %s TO %s %s: %s : NEXT %s",
-                ref.name(), start, end, stepText, statementsAsString(),
-                ref.name());
+                symbol.name(), start, end, stepText, statementsAsString(),
+                symbol.name());
     }
 }

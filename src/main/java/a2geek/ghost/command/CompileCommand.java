@@ -71,7 +71,7 @@ public class CompileCommand implements Callable<Integer> {
             var allScopes = new ArrayList<>(program.getScopes());
             allScopes.add(program);
             for (Scope scope : allScopes) {
-                System.out.printf("%s - %s\n", scope.getName(), scope.getLocalReferences());
+                System.out.printf("%s - %s\n", scope.getName(), scope.getLocalSymbols());
             }
         }
 
