@@ -138,20 +138,22 @@ public class BinaryExpression implements Expression {
 
     @Override
     public Optional<Boolean> asBoolean() {
-        if (INTEGER_OPS.containsKey(op)) {
-            return asInteger().map(i -> i!=0);
-        }
-        if (LOGICAL_OPS.containsKey(op)) {
-            Boolean left = this.getL().asBoolean().orElseThrow(() -> new RuntimeException("expecting a left boolean constant: " + toString()));
-            Boolean right = this.getR().asBoolean().orElseThrow(() -> new RuntimeException("expecting a right boolean constant: " + toString()));
-            return Optional.of(LOGICAL_OPS.get(op).apply(left, right));
+        if (isConstant()) {
+            if (INTEGER_OPS.containsKey(op)) {
+                return asInteger().map(i -> i != 0);
+            }
+            if (LOGICAL_OPS.containsKey(op)) {
+                Boolean left = this.getL().asBoolean().orElseThrow(() -> new RuntimeException("expecting a left boolean constant: " + toString()));
+                Boolean right = this.getR().asBoolean().orElseThrow(() -> new RuntimeException("expecting a right boolean constant: " + toString()));
+                return Optional.of(LOGICAL_OPS.get(op).apply(left, right));
+            }
         }
         return Optional.empty();
     }
 
     @Override
     public Optional<Integer> asInteger() {
-        if (INTEGER_OPS.containsKey(op)) {
+        if (isConstant() && INTEGER_OPS.containsKey(op)) {
             Integer left = this.getL().asInteger().orElseThrow(() -> new RuntimeException("expecting a left integer constant: " + toString()));
             Integer right = this.getR().asInteger().orElseThrow(() -> new RuntimeException("expecting a right integer constant: " + toString()));
             return Optional.of(INTEGER_OPS.get(op).apply(left, right));
@@ -161,11 +163,14 @@ public class BinaryExpression implements Expression {
 
     @Override
     public Optional<String> asString() {
-        return switch (descriptor.returnType()) {
-            case BOOLEAN -> asBoolean().map(b -> b ? "True" : "False");
-            case INTEGER -> asInteger().map(i -> Integer.toString(i));
-            case STRING -> throw new RuntimeException("unable to evaluate string expressions at this time");
-        };
+        if (isConstant()) {
+            return switch (descriptor.returnType()) {
+                case BOOLEAN -> asBoolean().map(b -> b ? "True" : "False");
+                case INTEGER -> asInteger().map(i -> Integer.toString(i));
+                case STRING -> throw new RuntimeException("unable to evaluate string expressions at this time");
+            };
+        }
+        return Optional.empty();
     }
 
     @Override
