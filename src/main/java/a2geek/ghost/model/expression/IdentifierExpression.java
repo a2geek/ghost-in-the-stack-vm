@@ -2,8 +2,8 @@ package a2geek.ghost.model.expression;
 
 import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.Expression;
-import a2geek.ghost.model.Symbol;
 import a2geek.ghost.model.Scope;
+import a2geek.ghost.model.Symbol;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -31,16 +31,19 @@ public class IdentifierExpression implements Expression {
 
     @Override
     public Optional<Integer> asInteger() {
+        if (symbol.expr() == null) return Optional.empty();
         return symbol.expr().asInteger();
     }
 
     @Override
     public Optional<Boolean> asBoolean() {
+        if (symbol.expr() == null) return Optional.empty();
         return symbol.expr().asBoolean();
     }
 
     @Override
     public Optional<String> asString() {
+        if (symbol.expr() == null) return Optional.empty();
         return symbol.expr().asString();
     }
 
