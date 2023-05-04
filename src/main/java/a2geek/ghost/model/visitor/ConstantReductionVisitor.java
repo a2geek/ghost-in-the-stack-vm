@@ -7,39 +7,13 @@ import a2geek.ghost.model.expression.*;
 import java.util.List;
 import java.util.Optional;
 
-public class RewriteVisitor extends Visitor {
-     @Override
+public class ConstantReductionVisitor extends Visitor {
+    @Override
     public Expression visit(BinaryExpression expression) {
         dispatch(expression.getL()).ifPresent(expression::setL);
         dispatch(expression.getR()).ifPresent(expression::setR);
 
-        // Handle constant reduction first
-        var opt = constantReduction(expression);
-        if (opt.isPresent()) {
-            return opt.get();
-        }
-
-        // Special cases
-        switch (expression.getOp()) {
-            case "*" -> {
-                // Strength reduction
-                if (expression.getL() instanceof IntegerConstant l) {
-                    if (l.getValue() == 2) {
-                        var right = expression.getR();
-                        return new BinaryExpression(right, right, "+");
-                    }
-                }
-                if (expression.getR() instanceof IntegerConstant r) {
-                    if (r.getValue() == 2) {
-                        var left = expression.getL();
-                        return new BinaryExpression(left, left, "+");
-                    }
-                }
-                return null;
-            }
-        }
-
-        return null;
+        return constantReduction(expression).orElse(null);
     }
 
     @Override
