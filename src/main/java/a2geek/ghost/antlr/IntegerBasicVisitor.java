@@ -335,6 +335,9 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         var left = visit(ctx.left);
         var right = visit(ctx.right);
         var op = ctx.op.getText();
+        if ("#".equals(op)) {
+            op = "<>";
+        }
         return new BinaryExpression(left, right, op);
     }
 
