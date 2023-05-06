@@ -49,6 +49,9 @@ public class CompileCommand implements Callable<Integer> {
     @Option(names = { "--quiet" }, description = "reduce output")
     private boolean quietFlag;
 
+    @Option(names = { "--trace" }, description = "enable stack traces")
+    private boolean traceFlag;
+
     @Option(names = { "--case-sensitive" },
             defaultValue = "false", showDefaultValue = Visibility.ALWAYS,
             description = "allow identifiers to be case sensitive (A is different from a)")
@@ -78,6 +81,21 @@ public class CompileCommand implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
+        try {
+            compile();
+            return 0;
+        } catch (Throwable t) {
+            if (traceFlag) {
+                t.printStackTrace();
+            }
+            else {
+                System.err.println(t.getLocalizedMessage());
+            }
+            return -1;
+        }
+    }
+
+    public void compile() throws IOException {
         CharStream stream = CharStreams.fromPath(sourceCode);
         ModelBuilder model = new ModelBuilder(caseSensitive ? s -> s : String::toUpperCase);
         if (fixControlChars) {
@@ -160,8 +178,6 @@ public class CompileCommand implements Callable<Integer> {
         });
 
         saveAsAppleSingle(out.toByteArray());
-
-        return 0;
     }
 
     public void saveAsAppleSingle(byte[] code) throws IOException {
