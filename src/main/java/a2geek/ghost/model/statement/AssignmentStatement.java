@@ -2,22 +2,22 @@ package a2geek.ghost.model.statement;
 
 import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.Expression;
-import a2geek.ghost.model.Symbol;
 import a2geek.ghost.model.Statement;
+import a2geek.ghost.model.expression.VariableReference;
 
 public class AssignmentStatement implements Statement {
-    private Symbol symbol;
+    private VariableReference var;
     private Expression expr;
 
-    public AssignmentStatement(Symbol symbol, Expression expr) {
-        this.symbol = symbol;
+    public AssignmentStatement(VariableReference var, Expression expr) {
+        this.var = var;
         this.expr = expr;
         // TODO string is really being evaluated as a pointer to a string.
         expr.mustBe(DataType.INTEGER, DataType.BOOLEAN, DataType.STRING);
     }
 
-    public Symbol getSymbol() {
-        return symbol;
+    public VariableReference getVar() {
+        return var;
     }
 
     public Expression getExpr() {
@@ -30,6 +30,6 @@ public class AssignmentStatement implements Statement {
 
     @Override
     public String toString() {
-        return String.format("%s = %s", symbol.name(), expr);
+        return String.format("%s = %s", var, expr);
     }
 }

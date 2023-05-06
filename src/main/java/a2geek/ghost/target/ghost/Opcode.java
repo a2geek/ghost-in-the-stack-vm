@@ -34,6 +34,8 @@ public enum Opcode {
     DUP(0),
     INCR(0),
     DECR(0),
+    PUSHZ(0),
+    LOADSP(0),
     GLOBAL_RESERVE(1),
     LOCAL_RESERVE(1),
     LOCAL_FREE(1),

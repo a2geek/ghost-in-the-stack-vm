@@ -63,6 +63,9 @@ public abstract class Visitor {
         else if (statement instanceof CallSubroutine s) {
             visit(s);
         }
+        else if (statement instanceof DimStatement s) {
+            visit(s);
+        }
         else {
             throw new RuntimeException("statement type not supported: " +
                     statement.getClass().getName());
@@ -72,7 +75,7 @@ public abstract class Visitor {
         if (expression instanceof BinaryExpression e) {
             return Optional.ofNullable(visit(e));
         }
-        else if (expression instanceof IdentifierExpression e) {
+        else if (expression instanceof VariableReference e) {
             return Optional.ofNullable(visit(e));
         }
         else if (expression instanceof IntegerConstant e) {
@@ -192,6 +195,11 @@ public abstract class Visitor {
         }
     }
 
+    public void visit(DimStatement statement) {
+        var expr = dispatch(statement.getExpr());
+        expr.ifPresent(statement::setExpr);
+    }
+
     public Expression visit(BinaryExpression expression) {
         var l = dispatch(expression.getL());
         var r = dispatch(expression.getR());
@@ -203,7 +211,18 @@ public abstract class Visitor {
         return null;
     }
 
-    public Expression visit(IdentifierExpression expression) {
+    public Expression visit(VariableReference expression) {
+        boolean changed = false;
+        var exprs = new ArrayList<Expression>();
+        for (var expr : expression.getIndexes()) {
+            var e = dispatch(expr);
+            changed |= e.isPresent();
+            exprs.add(e.orElse(expr));
+        }
+        if (changed) {
+            expression.setIndexes(exprs);
+            return expression;
+        }
         return null;
     }
 

@@ -244,6 +244,8 @@ brtable:
     .addr _dup-1
     .addr _incr-1
     .addr _decr-1
+    .addr _pushz-1
+    .addr _loadsp-1
     .addr _global_reserve-1
     .addr _local_reserve-1
     .addr _local_free-1
@@ -613,15 +615,34 @@ _popn:
 @nothingtodo:
     jmp loop
 
+; PUSHZ: (N) => (0 0 0 0 ... 0n)
+_pushz:    ; Allows 256 bytes - is that a bug or a feature?
+    pla
+    tay
+    pla
+    lda #0
+@pushloop:
+    pha
+    dey
+    bne @pushloop
+    jmp loop
+
 ; LOADC <int>: () => (int)
 _loadc:
     jsr fetch       ; low byte
     tax
     jsr fetch       ; high byte
+setaxloop:  ; A,X => (X) (A) a=high
     pha
     txa
     pha
     jmp loop
+
+; LOADSP: () => (SP)
+_loadsp:    ; X already has SP
+    lda #1
+    inx ; S was pointing to next place to store a byte - we want the _last_ place a byte was stored
+    jmp setaxloop
 
 ; LOCAL_LOAD <offset>: () => *(locals+offset)
 _local_load:

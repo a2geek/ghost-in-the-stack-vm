@@ -50,7 +50,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             }
         };
 
-        model.assignStmt(symbol, expr);
+        model.assignStmt(new VariableReference(symbol), expr);
         return null;
     }
 
@@ -352,7 +352,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                 yield existing.orElseGet(() -> model.addVariable(id, DataType.INTEGER));
             }
         };
-        return new IdentifierExpression(symbol);
+        return new VariableReference(symbol);
     }
 
     @Override
@@ -368,7 +368,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                 throw new RuntimeException("Intrinsic reference takes no arguments: " + id);
             }
             Symbol symbol = model.addVariable(id, Scope.Type.INTRINSIC, DataType.INTEGER);
-            return new IdentifierExpression(symbol);
+            return new VariableReference(symbol);
         }
         return model.callFunction(id, params);
     }

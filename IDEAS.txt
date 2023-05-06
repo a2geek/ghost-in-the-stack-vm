@@ -1,6 +1,9 @@
 Capturing ideas
 ===============
 
+Check/validate array dimension size and error
+Arrays - option to allocate on stack or heap
+Validate memory footprint for variable allocation in some manner
 How to make reusable libraries which use inline interpreted code? Looks like there can be "nested" grammars!
 Looks like usage of Symbol may need to be checked? There is no constraint that a found variable is what is expected (aka a constant instead of a variable).
 Look at how bytecode is created - feels like Opcode and Directive can support Instruction more directly.
@@ -19,7 +22,6 @@ DEF FN == Function
 ProDOS commands (OPEN, READ, WRITE, CLOSE). Is this SUB and/or FUNCTION?
 HGR
 Constant arrays - can replace all those silly POKE statements with a loop and likely help with DATA statements.
-Arrays - need heap. Where? $200? but that is input and ProDOS can use it. If they are hard-coded, then they can just go into code!
 Function libraries (with inline?) - can a function return more than one value?
 Optimization - strength reduction (MOD 16 can be AND #$0F, MUL x2 can be shift left)
 Optimization - extract common code

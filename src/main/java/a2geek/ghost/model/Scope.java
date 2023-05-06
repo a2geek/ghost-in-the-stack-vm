@@ -58,6 +58,14 @@ public class Scope extends StatementBlock {
     public Symbol addLocalVariable(String name, DataType dataType) {
         return addLocalVariable(name, this.type, dataType);
     }
+    public Symbol addArrayVariable(String name, DataType dataType, int numDimensions) {
+        return findLocalSymbols(name).orElseGet(() -> {
+            var fixedName = caseStrategy.apply(name);
+            var ref = Symbol.builder(fixedName, type).dataType(dataType).dimensions(numDimensions).build();
+            symbols.add(ref);
+            return ref;
+        });
+    }
     public Symbol addLocalVariable(String name, Type type, DataType dataType) {
         return findLocalSymbols(name).orElseGet(() -> {
             var fixedName = caseStrategy.apply(name);

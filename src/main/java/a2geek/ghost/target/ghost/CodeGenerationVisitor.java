@@ -44,7 +44,31 @@ public class CodeGenerationVisitor extends Visitor {
        throw new RuntimeException("symbol not in frame: " + symbol);
     }
 
+    public void emitArrayAddressCalc(VariableReference var) {
+        // TODO assuming element size is 2 - hand optimized as well!
+        // TODO assuming array size is 1
+        // TODO this probably should be in the model to take advantage of optimizations!
+        //      A(0) => LOAD addr, LOADC 0, INCR, SHIFTL 1, ADD  .. should be LOAD addr, LOADC 2, ADD.
+        // FIXME not validating array size
+        // Base Array (symbol) + Expression * sizeof(element) + 2 (array size)
+        emitLoad(var.getSymbol());
+        dispatch(var.getIndexes().get(0));
+        code.emit(Opcode.INCR);
+        code.emit(Opcode.LOADC, 1);
+        code.emit(Opcode.SHIFTL);
+        code.emit(Opcode.ADD);
+    }
+
     public void emitLoad(Symbol symbol) {
+        emitLoad(new VariableReference(symbol));
+    }
+    public void emitLoad(VariableReference var) {
+        if (var.isArray()) {
+            emitArrayAddressCalc(var);
+            code.emit(Opcode.ILOADW);
+            return;
+        }
+        var symbol = var.getSymbol();
         switch (symbol.type()) {
             case LOCAL, PARAMETER, RETURN_VALUE -> {
                 this.code.emit(Opcode.LOCAL_LOAD, frameOffset(symbol));
@@ -74,6 +98,14 @@ public class CodeGenerationVisitor extends Visitor {
         }
     }
     public void emitStore(Symbol symbol) {
+        emitStore(new VariableReference(symbol));
+    }
+    public void emitStore(VariableReference var) {
+        if (var.isArray()) {
+            emitArrayAddressCalc(var);
+            code.emit(Opcode.ISTOREW);
+            return;
+        }        var symbol = var.getSymbol();
         switch (symbol.type()) {
             case LOCAL, PARAMETER, RETURN_VALUE -> {
                 this.code.emit(Opcode.LOCAL_STORE, frameOffset(symbol));
@@ -96,9 +128,30 @@ public class CodeGenerationVisitor extends Visitor {
     }
 
     @Override
+    public void visit(DimStatement statement) {
+        // TODO assuming element size of 2
+        // TODO assuming array size of 1
+        // Reserve N bytes on stack = (Size of Array+1) * (Element Size) + (Size of dimension) * Dimensions
+        //  for now N = (array size+1) * 2 + 2 * 1 => (array size + 2) * 2 => (array size + 2) << 1
+        dispatch(statement.getExpr());
+        code.emit(Opcode.INCR); // INCR, INCR = TOS+2
+        code.emit(Opcode.INCR);
+        code.emit(Opcode.LOADC, 1);
+        code.emit(Opcode.SHIFTL);
+        code.emit(Opcode.PUSHZ);
+        // TODO ^^ ARRAY ALLOCATED TO STACK FOR NOW! This should be configurable?
+        code.emit(Opcode.LOADSP);
+        emitStore(statement.getSymbol());
+        // Need to set array size for dimension 0
+        dispatch(statement.getExpr());
+        emitLoad(statement.getSymbol());
+        code.emit(Opcode.ISTOREW);
+    }
+
+    @Override
     public void visit(AssignmentStatement statement) {
         dispatch(statement.getExpr());
-        emitStore(statement.getSymbol());
+        emitStore(statement.getVar());
     }
 
     public void visit(EndStatement statement) {
@@ -127,7 +180,7 @@ public class CodeGenerationVisitor extends Visitor {
 
     public void visit(ForNextStatement statement) {
         var labels = label("FOR", "FORX");
-        visit(new AssignmentStatement(statement.getSymbol(), statement.getStart()));
+        visit(new AssignmentStatement(new VariableReference(statement.getSymbol()), statement.getStart()));
         code.emit(labels.get(0));
 
         // Note: We don't have a GE at this time.
@@ -148,7 +201,7 @@ public class CodeGenerationVisitor extends Visitor {
 
         // Lean on the binary expression processor to setup an optimized STEP increment.
         BinaryExpression stepIncrementExpr = new BinaryExpression(
-            new IdentifierExpression(statement.getSymbol()),
+            new VariableReference(statement.getSymbol()),
             statement.getStep(), "+");
         visit(stepIncrementExpr);
 
@@ -246,7 +299,7 @@ public class CodeGenerationVisitor extends Visitor {
         if (this.frames.peek().scope() instanceof Function f){
             var refs = this.frames.peek().scope().findByType(Scope.Type.RETURN_VALUE);
             if (refs.size() == 1 && hasReturnValue) {
-                visit(new AssignmentStatement(refs.get(0), statement.getExpr()));
+                visit(new AssignmentStatement(new VariableReference(refs.get(0)), statement.getExpr()));
             } else if (refs.size() != 0 || hasReturnValue) {
                 throw new RuntimeException("function return mismatch");
             }
@@ -392,8 +445,8 @@ public class CodeGenerationVisitor extends Visitor {
         return null;
     }
 
-    public Expression visit(IdentifierExpression expression) {
-        emitLoad(expression.getSymbol());
+    public Expression visit(VariableReference expression) {
+        emitLoad(expression);
         return null;
     }
 

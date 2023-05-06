@@ -2,6 +2,7 @@ package a2geek.ghost.model;
 
 import a2geek.ghost.antlr.ParseUtil;
 import a2geek.ghost.model.expression.FunctionExpression;
+import a2geek.ghost.model.expression.VariableReference;
 import a2geek.ghost.model.scope.ForFrame;
 import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.scope.Subroutine;
@@ -87,6 +88,9 @@ public class ModelBuilder {
     public Symbol addVariable(String name, Scope.Type type, DataType dataType) {
         return this.scope.peek().addLocalVariable(fixCase(name), type, dataType);
     }
+    public Symbol addArrayVariable(String name, DataType dataType, int numDimensions) {
+        return this.scope.peek().addArrayVariable(name + "(", dataType, numDimensions);
+    }
     public Symbol addConstant(String name, Expression value) {
         return this.scope.peek().addLocalConstant(fixCase(name), value);
     }
@@ -166,8 +170,8 @@ public class ModelBuilder {
         throw new RuntimeException("function does not exist: " + id);
     }
 
-    public void assignStmt(Symbol symbol, Expression expr) {
-        AssignmentStatement assignmentStatement = new AssignmentStatement(symbol, expr);
+    public void assignStmt(VariableReference ref, Expression expr) {
+        AssignmentStatement assignmentStatement = new AssignmentStatement(ref, expr);
         addStatement(assignmentStatement);
     }
     public void ifStmt(Expression expr, StatementBlock trueStatements, StatementBlock falseStatements) {
@@ -244,5 +248,10 @@ public class ModelBuilder {
     public void returnStmt(Expression expr) {
         ReturnStatement returnStatement = new ReturnStatement(expr);
         addStatement(returnStatement);
+    }
+
+    public void addDimIntArray(Symbol symbol, Expression size) {
+        DimStatement dimStatement = new DimStatement(symbol, size);
+        addStatement(dimStatement);
     }
 }

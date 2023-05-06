@@ -18,9 +18,13 @@ public class ExpressionBuilder {
         public static StringConstant constant(String value) {
             return new StringConstant(value);
         }
-        public static IdentifierExpression identifier(String name, DataType dataType, Scope.Type scopeType) {
-            var ref = Symbol.builder(name, scopeType).dataType(dataType).build();
-            return new IdentifierExpression(ref);
+        public static VariableReference identifier(String name, DataType dataType, Scope.Type scopeType) {
+            var symbol = Symbol.builder(name, scopeType).dataType(dataType).build();
+            return new VariableReference(symbol);
+        }
+        public static VariableReference arrayReference(String name, DataType dataType, Scope.Type scopeType, Expression expr) {
+            var symbol = Symbol.builder(name + "(", scopeType).dataType(dataType).dimensions(1).build();
+            return new VariableReference(symbol, Arrays.asList(expr));
         }
         public static BinaryExpression binary(String operator, Expression lhs, Expression rhs) {
             return new BinaryExpression(lhs, rhs, operator);

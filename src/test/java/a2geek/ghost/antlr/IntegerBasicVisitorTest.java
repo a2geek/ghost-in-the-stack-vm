@@ -6,8 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import static a2geek.ghost.antlr.ExpressionBuilder.*;
 import static a2geek.ghost.antlr.StatementTester.expect;
-
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class IntegerBasicVisitorTest {
     @Test
@@ -44,12 +43,11 @@ public class IntegerBasicVisitorTest {
 
     @Test
     public void testDim() {
-        // To be implemented
-        assertThrows(RuntimeException.class, () -> {
-            expect("10 DIM A$(30),B(5)")
-                .lineNumber(10)
-                .atEnd();
-        });
+        // Need to add strings
+        expect("10 DIM B(5)")
+            .lineNumber(10)
+                .dimStmt("B", constant(5))
+            .atEnd();
     }
 
     @Test
@@ -167,7 +165,7 @@ public class IntegerBasicVisitorTest {
     }
 
     @Test
-    public void testLetAssignment() {
+    public void testLetIntegerAssignment() {
         // TODO string assignment
         // Normal
         expect("10 A = 1")
@@ -181,6 +179,23 @@ public class IntegerBasicVisitorTest {
             .lineNumber(10)
             .assignment("A", constant(1))
             .atEnd();
+    }
+
+    @Test
+    public void testArrayReferences() {
+        // Normal
+        expect("10 A(2) = 1")
+                .hasArrayReference("A", DataType.INTEGER, Scope.Type.GLOBAL, 1)
+                .lineNumber(10)
+                .arrayAssignment("A", constant(2), constant(1))
+                .atEnd();
+        // LET keyword
+        expect("10 A = A(1)")
+                .hasSymbol("A", DataType.INTEGER, Scope.Type.GLOBAL)
+                .hasArrayReference("A", DataType.INTEGER, Scope.Type.GLOBAL, 1)
+                .lineNumber(10)
+                .assignment("A", arrayReference("A", DataType.INTEGER, Scope.Type.GLOBAL, constant(1)))
+                .atEnd();
     }
 
     @Test

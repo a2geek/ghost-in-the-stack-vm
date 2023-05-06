@@ -85,8 +85,16 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     }
 
     @Override
-    public Expression visitDimStatement(IntegerParser.DimStatementContext ctx) {
-        throw new RuntimeException("DIM statement not implemented yet");
+    public Expression visitIntDimVar(IntegerParser.IntDimVarContext ctx) {
+        var symbol = model.addArrayVariable(ctx.n.getText(), DataType.INTEGER, 1);
+        var expr = visit(ctx.e);
+        model.addDimIntArray(symbol, expr);
+        return null;
+    }
+
+    @Override
+    public Expression visitStrDimVar(IntegerParser.StrDimVarContext ctx) {
+        throw new RuntimeException("strings not supported");
     }
 
     @Override
@@ -185,9 +193,13 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     @Override
     public Expression visitIntegerAssignment(IntegerParser.IntegerAssignmentContext ctx) {
         var expr = visit(ctx.iexpr());
-        // FIXME needs to support arrays
-        var ref = model.addVariable(ctx.ivar().getText(), DataType.INTEGER);
-        model.assignStmt(ref, expr);
+        var ivar = visit(ctx.ivar());
+        if (ivar instanceof VariableReference ref) {
+            model.assignStmt(ref, expr);
+        }
+        else {
+            throw new RuntimeException("unknown variable type: " + ivar);
+        }
         return null;
     }
 
@@ -386,13 +398,15 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     @Override
     public Expression visitIntAryVar(IntegerParser.IntAryVarContext ctx) {
-        throw new RuntimeException("arrays not supported yet");
+        var ref = model.addArrayVariable(ctx.n.getText(), DataType.INTEGER, 1);
+        var expr = visit(ctx.e);
+        return new VariableReference(ref, Arrays.asList(expr));
     }
 
     @Override
     public Expression visitIntVar(IntegerParser.IntVarContext ctx) {
         var ref = model.addVariable(ctx.n.getText(), DataType.INTEGER);
-        return new IdentifierExpression(ref);
+        return new VariableReference(ref);
     }
 
     @Override

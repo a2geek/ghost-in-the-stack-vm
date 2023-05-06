@@ -1,7 +1,7 @@
 package a2geek.ghost.antlr;
 
 import a2geek.ghost.model.*;
-import a2geek.ghost.model.expression.IdentifierExpression;
+import a2geek.ghost.model.expression.VariableReference;
 import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.statement.*;
 import org.antlr.v4.runtime.CharStreams;
@@ -37,7 +37,16 @@ public abstract class StatementTester {
         return this;
     }
 
-    public StatementTester hasSymbol(IdentifierExpression expr) {
+    public StatementTester hasArrayReference(String name, DataType dataType, Scope.Type scopeType, int numDimensions) {
+        var symbol = findSymbol(name + "(");
+        assertTrue(symbol.isPresent(), "array variable not found: " + name);
+        assertEquals(dataType, symbol.get().dataType(), name);
+        assertEquals(scopeType, symbol.get().type(), name);
+        assertEquals(numDimensions, symbol.get().numDimensions());
+        return this;
+    }
+
+    public StatementTester hasSymbol(VariableReference expr) {
         return hasSymbol(expr.getSymbol());
     }
     public StatementTester hasSymbol(Symbol symbol) {
@@ -75,8 +84,15 @@ public abstract class StatementTester {
 
     public StatementTester assignment(String varName, Expression expr) {
         var stmt = nextStatement(AssignmentStatement.class);
-        assertEquals(varName, stmt.getSymbol().name());
+        assertFalse(stmt.getVar().isArray());
+        assertEquals(varName, stmt.getVar().getSymbol().name());
         assertEquals(expr, stmt.getExpr());
+        return this;
+    }
+
+    public StatementTester arrayAssignment(String varName, Expression index, Expression expr) {
+        var stmt = nextStatement(AssignmentStatement.class);
+        assertEquals(varName + "(", stmt.getVar().getSymbol().name());
         return this;
     }
 
@@ -96,6 +112,13 @@ public abstract class StatementTester {
         for (int i=0; i<exprs.length; i++) {
             assertEquals(exprs[i], stmt.getParameters().get(i));
         }
+        return this;
+    }
+
+    public StatementTester dimStmt(String name, Expression expr) {
+        var stmt = nextStatement(DimStatement.class);
+        assertEquals(name + "(", stmt.getSymbol().name());
+        assertEquals(expr, stmt.getExpr());
         return this;
     }
 
