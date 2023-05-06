@@ -78,6 +78,9 @@ public class ModelBuilder {
     public Scope popScope() {
         return this.scope.pop();
     }
+    public boolean isCurrentScope(Class<? extends Scope> clazz) {
+        return clazz.isAssignableFrom(this.scope.peek().getClass());
+    }
 
     public Optional<Symbol> findSymbol(String name) {
         return this.scope.peek().findSymbol(fixCase(name));

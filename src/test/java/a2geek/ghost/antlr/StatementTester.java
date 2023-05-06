@@ -175,8 +175,13 @@ public abstract class StatementTester {
         return this;
     }
 
+    public StatementTester pop() {
+        nextStatement(PopStatement.class);
+        return this;
+    }
+
     public StatementTester returnStmt() {
-        var stmt = nextStatement(ReturnStatement.class);
+        nextStatement(ReturnStatement.class);
         return this;
     }
 

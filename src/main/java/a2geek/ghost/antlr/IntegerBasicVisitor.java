@@ -8,9 +8,11 @@ import a2geek.ghost.model.ModelBuilder;
 import a2geek.ghost.model.StatementBlock;
 import a2geek.ghost.model.expression.*;
 import a2geek.ghost.model.scope.ForFrame;
+import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.statement.EndStatement;
 import a2geek.ghost.model.statement.ForStatement;
 import a2geek.ghost.model.statement.NextStatement;
+import a2geek.ghost.model.statement.PopStatement;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 
@@ -243,8 +245,16 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     @Override
     public Expression visitPopStatement(IntegerParser.PopStatementContext ctx) {
         // This is likely dangerous since we have no markers on the stack.
-        // Uncertain how used it is. Failing for now.
-        throw new RuntimeException("POP statement not supported.");
+        // Assuming that as long as we are in the MAIN (Program) level scope, we are clear.
+        // This means that we are NOT in a Function or Subroutine. But we may have GOSUBs on
+        // the stack.
+        if (model.isCurrentScope(Program.class)) {
+            model.addStatement(new PopStatement());
+            return null;
+        }
+        else {
+            throw new RuntimeException("POP statement only supported in main program.");
+        }
     }
 
     @Override

@@ -294,6 +294,12 @@ public class CodeGenerationVisitor extends Visitor {
     }
 
     @Override
+    public void visit(PopStatement statement) {
+        // This is an address; expect that 2 is always correct!
+        code.emit(Opcode.POPN, 2);
+    }
+
+    @Override
     public void visit(ReturnStatement statement) {
         boolean hasReturnValue = statement.getExpr() != null;
         if (this.frames.peek().scope() instanceof Function f){

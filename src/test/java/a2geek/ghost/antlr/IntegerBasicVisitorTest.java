@@ -249,11 +249,10 @@ public class IntegerBasicVisitorTest {
 
     @Test
     public void testPop() {
-        assertThrows(RuntimeException.class, () -> {
-            expect("10 POP")
-                .lineNumber(10)
-                .atEnd();
-        });
+        expect("10 POP")
+            .lineNumber(10)
+            .pop()
+            .atEnd();
     }
 
     @Test

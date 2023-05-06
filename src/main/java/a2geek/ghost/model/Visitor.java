@@ -66,6 +66,9 @@ public abstract class Visitor {
         else if (statement instanceof DimStatement s) {
             visit(s);
         }
+        else if (statement instanceof PopStatement s) {
+            visit(s);
+        }
         else {
             throw new RuntimeException("statement type not supported: " +
                     statement.getClass().getName());
@@ -198,6 +201,10 @@ public abstract class Visitor {
     public void visit(DimStatement statement) {
         var expr = dispatch(statement.getExpr());
         expr.ifPresent(statement::setExpr);
+    }
+
+    public void visit(PopStatement statement) {
+
     }
 
     public Expression visit(BinaryExpression expression) {
