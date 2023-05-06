@@ -2,8 +2,8 @@ package a2geek.ghost.model.statement;
 
 import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.Expression;
-import a2geek.ghost.model.Symbol;
 import a2geek.ghost.model.Statement;
+import a2geek.ghost.model.Symbol;
 import a2geek.ghost.model.scope.ForFrame;
 
 public class ForStatement implements Statement {

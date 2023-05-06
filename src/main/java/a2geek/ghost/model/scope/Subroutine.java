@@ -1,8 +1,8 @@
 package a2geek.ghost.model.scope;
 
 import a2geek.ghost.model.DataType;
-import a2geek.ghost.model.Symbol;
 import a2geek.ghost.model.Scope;
+import a2geek.ghost.model.Symbol;
 import org.javatuples.Pair;
 
 import java.util.Collections;

@@ -1,7 +1,7 @@
 package a2geek.ghost.target.ghost;
 
-import a2geek.ghost.model.Symbol;
 import a2geek.ghost.model.Scope;
+import a2geek.ghost.model.Symbol;
 import a2geek.ghost.model.scope.Function;
 import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.scope.Subroutine;

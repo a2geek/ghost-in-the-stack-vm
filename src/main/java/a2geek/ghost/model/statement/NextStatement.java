@@ -1,7 +1,7 @@
 package a2geek.ghost.model.statement;
 
-import a2geek.ghost.model.Symbol;
 import a2geek.ghost.model.Statement;
+import a2geek.ghost.model.Symbol;
 import a2geek.ghost.model.scope.ForFrame;
 
 public class NextStatement implements Statement {
