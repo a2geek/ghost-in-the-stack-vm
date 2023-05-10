@@ -23,7 +23,7 @@ public class ExpressionBuilder {
             return new VariableReference(symbol);
         }
         public static VariableReference arrayReference(String name, DataType dataType, Scope.Type scopeType, Expression expr) {
-            var symbol = Symbol.builder(name + "(", scopeType).dataType(dataType).dimensions(1).build();
+            var symbol = Symbol.builder(name + "()", scopeType).dataType(dataType).dimensions(1).build();
             return new VariableReference(symbol, Arrays.asList(expr));
         }
         public static BinaryExpression binary(String operator, Expression lhs, Expression rhs) {

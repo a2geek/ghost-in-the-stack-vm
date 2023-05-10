@@ -99,6 +99,9 @@ public abstract class Visitor {
         else if (expression instanceof FunctionExpression e) {
             return Optional.ofNullable(visit(e));
         }
+        else if (expression instanceof ArrayLengthFunction e) {
+            return Optional.ofNullable(visit(e));
+        }
         else {
             throw new RuntimeException("expression type not supported: " +
                     expression.getClass().getName());
@@ -275,6 +278,10 @@ public abstract class Visitor {
             expression.setParameters(exprs);
             return expression;
         }
+        return null;
+    }
+
+    public Expression visit(ArrayLengthFunction expression) {
         return null;
     }
 }

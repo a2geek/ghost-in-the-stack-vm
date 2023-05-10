@@ -24,6 +24,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     public IntegerBasicVisitor(ModelBuilder model) {
         this.model = model;
+        model.setArrayNameStrategy(s -> s + "()");
     }
 
     public ModelBuilder getModel() {
@@ -413,6 +414,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     public Expression visitIntAryVar(IntegerParser.IntAryVarContext ctx) {
         var ref = model.addArrayVariable(ctx.n.getText(), DataType.INTEGER, 1);
         var expr = visit(ctx.e);
+        model.checkArrayBounds(ref, expr, ctx.getStart().getLine());
         return new VariableReference(ref, Arrays.asList(expr));
     }
 

@@ -1,8 +1,7 @@
 package a2geek.ghost.model;
 
 import a2geek.ghost.antlr.ParseUtil;
-import a2geek.ghost.model.expression.FunctionExpression;
-import a2geek.ghost.model.expression.VariableReference;
+import a2geek.ghost.model.expression.*;
 import a2geek.ghost.model.scope.ForFrame;
 import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.scope.Subroutine;
@@ -21,13 +20,16 @@ import java.util.function.Function;
  */
 public class ModelBuilder {
     private Function<String,String> caseStrategy;
-    private Function<String, String> controlCharsFn = s -> s;
+    private Function<String,String> arrayNameStrategy = s -> s;
+    private Function<String,String> controlCharsFn = s -> s;
     private Stack<Scope> scope = new Stack<>();
     private Stack<StatementBlock> statementBlock = new Stack<>();
     private Set<String> librariesIncluded = new HashSet<>();
     private boolean includeLibraries = true;
     /** Traditional FOR/NEXT statement frame. */
     private Map<Symbol, ForFrame> forFrames = new HashMap<>();
+    /** Track array dimensions */
+    private Map<Symbol, Expression> arrayDims = new HashMap<>();
 
     public ModelBuilder(Function<String,String> caseStrategy) {
         this.caseStrategy = caseStrategy;
@@ -49,12 +51,18 @@ public class ModelBuilder {
     public String fixCase(String id) {
         return caseStrategy.apply(id);
     }
+    public String fixArrayName(String name) {
+        return arrayNameStrategy.apply(name);
+    }
     public String fixControlChars(String value) {
         return controlCharsFn.apply(value);
     }
 
     public void setIncludeLibraries(boolean includeLibraries) {
         this.includeLibraries = includeLibraries;
+    }
+    public void setArrayNameStrategy(Function<String,String> arrayNameStrategy) {
+        this.arrayNameStrategy = arrayNameStrategy;
     }
     public void setControlCharsFn(Function<String,String> controlCharsFn) {
         this.controlCharsFn = controlCharsFn;
@@ -92,7 +100,7 @@ public class ModelBuilder {
         return this.scope.peek().addLocalVariable(fixCase(name), type, dataType);
     }
     public Symbol addArrayVariable(String name, DataType dataType, int numDimensions) {
-        return this.scope.peek().addArrayVariable(name + "(", dataType, numDimensions);
+        return this.scope.peek().addArrayVariable(fixArrayName(name), dataType, numDimensions);
     }
     public Symbol addConstant(String name, Expression value) {
         return this.scope.peek().addLocalConstant(fixCase(name), value);
@@ -256,5 +264,26 @@ public class ModelBuilder {
     public void addDimIntArray(Symbol symbol, Expression size) {
         DimStatement dimStatement = new DimStatement(symbol, size);
         addStatement(dimStatement);
+        arrayDims.put(symbol, size);
+    }
+    public Expression getArrayDim(Symbol symbol) {
+        if (!arrayDims.containsKey(symbol)) {
+            throw new RuntimeException("Array was not DIMmed: " + symbol.name());
+        }
+        return arrayDims.get(symbol);
+    }
+
+    public void checkArrayBounds(Symbol symbol, Expression index, int linenum) {
+        // IF index > ubound(array) THEN
+        //    PRINT "Array index out of bounds ";symbol;" at line "; lineno
+        //    END
+        // END IF
+        var errorBlock = pushStatementBlock(new StatementBlock());
+        callLibrarySubroutine("out_of_bounds",
+            new StringConstant(symbol.name()),
+            new IntegerConstant(linenum));
+        popStatementBlock();
+        var arrayLength = new ArrayLengthFunction(this, symbol);
+        ifStmt(new BinaryExpression(index, arrayLength, ">"), errorBlock, null);
     }
 }

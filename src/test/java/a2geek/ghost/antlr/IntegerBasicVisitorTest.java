@@ -46,7 +46,7 @@ public class IntegerBasicVisitorTest {
         // Need to add strings
         expect("10 DIM B(5)")
             .lineNumber(10)
-                .dimStmt("B", constant(5))
+            .dimStmt("B", constant(5))
             .atEnd();
     }
 
@@ -187,6 +187,7 @@ public class IntegerBasicVisitorTest {
         expect("10 A(2) = 1")
                 .hasArrayReference("A", DataType.INTEGER, Scope.Type.GLOBAL, 1)
                 .lineNumber(10)
+                .skipIfStmt()
                 .arrayAssignment("A", constant(2), constant(1))
                 .atEnd();
         // LET keyword
@@ -194,6 +195,7 @@ public class IntegerBasicVisitorTest {
                 .hasSymbol("A", DataType.INTEGER, Scope.Type.GLOBAL)
                 .hasArrayReference("A", DataType.INTEGER, Scope.Type.GLOBAL, 1)
                 .lineNumber(10)
+                .skipIfStmt()
                 .assignment("A", arrayReference("A", DataType.INTEGER, Scope.Type.GLOBAL, constant(1)))
                 .atEnd();
     }

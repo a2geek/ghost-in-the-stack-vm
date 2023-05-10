@@ -3,4 +3,6 @@
 30 a(1)=a(0)+5
 40 a(2)=a(1)+5
 50 print a(0), a(1), a(2)
-60 end
+60 rem intentionally generating an error
+70 i=5:a(i)=i
+80 end

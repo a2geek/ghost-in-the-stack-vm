@@ -38,7 +38,7 @@ public abstract class StatementTester {
     }
 
     public StatementTester hasArrayReference(String name, DataType dataType, Scope.Type scopeType, int numDimensions) {
-        var symbol = findSymbol(name + "(");
+        var symbol = findSymbol(name + "()");
         assertTrue(symbol.isPresent(), "array variable not found: " + name);
         assertEquals(dataType, symbol.get().dataType(), name);
         assertEquals(scopeType, symbol.get().type(), name);
@@ -92,7 +92,7 @@ public abstract class StatementTester {
 
     public StatementTester arrayAssignment(String varName, Expression index, Expression expr) {
         var stmt = nextStatement(AssignmentStatement.class);
-        assertEquals(varName + "(", stmt.getVar().getSymbol().name());
+        assertEquals(varName + "()", stmt.getVar().getSymbol().name());
         return this;
     }
 
@@ -117,7 +117,7 @@ public abstract class StatementTester {
 
     public StatementTester dimStmt(String name, Expression expr) {
         var stmt = nextStatement(DimStatement.class);
-        assertEquals(name + "(", stmt.getSymbol().name());
+        assertEquals(name + "()", stmt.getSymbol().name());
         assertEquals(expr, stmt.getExpr());
         return this;
     }
@@ -150,6 +150,10 @@ public abstract class StatementTester {
         return this;
     }
 
+    public StatementTester skipIfStmt() {
+        nextStatement(IfStatement.class);
+        return this;
+    }
     public StatementTester ifStmt(Expression expr) {
         var stmt = nextStatement(IfStatement.class);
         return new IfStatementTester(this, stmt.getTrueStatements(), stmt.getFalseStatements());

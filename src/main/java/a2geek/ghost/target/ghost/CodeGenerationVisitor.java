@@ -462,6 +462,12 @@ public class CodeGenerationVisitor extends Visitor {
     }
 
     @Override
+    public Expression visit(BooleanConstant expression) {
+        code.emit(Opcode.LOADC, expression.getValue() ? 1 : 0);
+        return null;
+    }
+
+    @Override
     public Expression visit(StringConstant expression) {
         var label = label("STRCONST");
         String actual = code.emitConstant(label.get(0), expression.getValue());
@@ -517,6 +523,13 @@ public class CodeGenerationVisitor extends Visitor {
         else {
             throw new RuntimeException("unknown unary operator: " + expression.getOp());
         }
+        return null;
+    }
+
+    @Override
+    public Expression visit(ArrayLengthFunction expression) {
+        emitLoad(expression.getSymbol());
+        code.emit(Opcode.ILOADW);
         return null;
     }
 }
