@@ -26,48 +26,49 @@ public abstract class Visitor {
                     scope.getClass().getName());
         }
     }
-    public void dispatch(Statement statement) {
+    public void dispatch(StatementContext context) {
+        var statement = context.currentStatement();
         if (statement instanceof AssignmentStatement s) {
-            visit(s);
+            visit(s, context);
         }
         else if (statement instanceof EndStatement s) {
-            visit(s);
+            visit(s, context);
         }
         else if (statement instanceof IfStatement s) {
-            visit(s);
+            visit(s, context);
         }
         else if (statement instanceof ForNextStatement s) {
-            visit(s);
+            visit(s, context);
         }
         else if (statement instanceof ForStatement s) {
-            visit(s);
+            visit(s, context);
         }
         else if (statement instanceof NextStatement s) {
-            visit(s);
+            visit(s, context);
         }
         else if (statement instanceof PokeStatement s) {
-            visit(s);
+            visit(s, context);
         }
         else if (statement instanceof CallStatement s) {
-            visit(s);
+            visit(s, context);
         }
         else if (statement instanceof GotoGosubStatement s) {
-            visit(s);
+            visit(s, context);
         }
         else if (statement instanceof LabelStatement s) {
-            visit(s);
+            visit(s, context);
         }
         else if (statement instanceof ReturnStatement s) {
-            visit(s);
+            visit(s, context);
         }
         else if (statement instanceof CallSubroutine s) {
-            visit(s);
+            visit(s, context);
         }
         else if (statement instanceof DimStatement s) {
-            visit(s);
+            visit(s, context);
         }
         else if (statement instanceof PopStatement s) {
-            visit(s);
+            visit(s, context);
         }
         else {
             throw new RuntimeException("statement type not supported: " +
@@ -108,51 +109,57 @@ public abstract class Visitor {
         }
     }
 
+    public void dispatchAll(StatementBlock block) {
+        for (int i=0; i<block.getStatements().size(); i++) {
+            StatementContext context = new StatementContext(block, i);
+            dispatch(context);
+        }
+    }
+
     public void visit(Program program) {
-        program.getStatements().forEach(this::dispatch);
+        dispatchAll(program);
         program.getScopes().forEach(this::dispatch);
     }
     public void visit(Subroutine subroutine) {
-        subroutine.getStatements().forEach(this::dispatch);
-        // We assume there are no additional scopes for BASIC.
+        dispatchAll(subroutine);
     }
     public void visit(Function function) {
-        function.getStatements().forEach(this::dispatch);
+        dispatchAll(function);
     }
 
-    public void visit(AssignmentStatement statement) {
+    public void visit(AssignmentStatement statement, StatementContext context) {
         var expr = dispatch(statement.getExpr());
         expr.ifPresent(statement::setExpr);
     }
 
-    public void visit(EndStatement statement) {
+    public void visit(EndStatement statement, StatementContext context) {
     }
 
-    public void visit(CallStatement statement) {
+    public void visit(CallStatement statement, StatementContext context) {
         var expr = dispatch(statement.getExpr());
         expr.ifPresent(statement::setExpr);
     }
 
-    public void visit(IfStatement statement) {
+    public void visit(IfStatement statement, StatementContext context) {
         var expr = dispatch(statement.getExpression());
-        statement.getTrueStatements().getStatements().forEach(this::dispatch);
+        dispatchAll(statement.getTrueStatements());
         if (statement.hasFalseStatements()) {
-            statement.getFalseStatements().getStatements().forEach(this::dispatch);
+            dispatchAll(statement.getFalseStatements());
         }
         expr.ifPresent(statement::setExpression);
     }
 
-    public void visit(ForNextStatement statement) {
+    public void visit(ForNextStatement statement, StatementContext context) {
         var start = dispatch(statement.getStart());
         var end = dispatch(statement.getEnd());
         var step = dispatch(statement.getStep());   // Always set by GhostBasicVisitor
-        statement.getStatements().forEach(this::dispatch);
+        dispatchAll(statement);
         start.ifPresent(statement::setStart);
         end.ifPresent(statement::setEnd);
         step.ifPresent(statement::setStep);
     }
 
-    public void visit(ForStatement statement) {
+    public void visit(ForStatement statement, StatementContext context) {
         var start = dispatch(statement.getStart());
         var end = dispatch(statement.getEnd());
         var step = dispatch(statement.getStep());   // Always set by GhostBasicVisitor
@@ -161,30 +168,30 @@ public abstract class Visitor {
         step.ifPresent(statement::setStep);
     }
 
-    public void visit(NextStatement statement) {
+    public void visit(NextStatement statement, StatementContext context) {
 
     }
 
-    public void visit(PokeStatement statement) {
+    public void visit(PokeStatement statement, StatementContext context) {
         var a = dispatch(statement.getA());
         var b = dispatch(statement.getB());
         a.ifPresent(statement::setA);
         b.ifPresent(statement::setB);
     }
 
-    public void visit(GotoGosubStatement statement) {
+    public void visit(GotoGosubStatement statement, StatementContext context) {
 
     }
 
-    public void visit(LabelStatement statement) {
+    public void visit(LabelStatement statement, StatementContext context) {
 
     }
 
-    public void visit(ReturnStatement statement) {
+    public void visit(ReturnStatement statement, StatementContext context) {
 
     }
 
-    public void visit(CallSubroutine statement) {
+    public void visit(CallSubroutine statement, StatementContext context) {
         boolean changed = false;
         List<Expression> exprs = new ArrayList<>();
         for (Expression expr : statement.getParameters()) {
@@ -201,12 +208,12 @@ public abstract class Visitor {
         }
     }
 
-    public void visit(DimStatement statement) {
+    public void visit(DimStatement statement, StatementContext context) {
         var expr = dispatch(statement.getExpr());
         expr.ifPresent(statement::setExpr);
     }
 
-    public void visit(PopStatement statement) {
+    public void visit(PopStatement statement, StatementContext context) {
 
     }
 

@@ -128,7 +128,7 @@ public class CodeGenerationVisitor extends Visitor {
     }
 
     @Override
-    public void visit(DimStatement statement) {
+    public void visit(DimStatement statement, StatementContext context) {
         // TODO assuming element size of 2
         // TODO assuming array size of 1
         // Reserve N bytes on stack = (Size of Array+1) * (Element Size) + (Size of dimension) * Dimensions
@@ -148,39 +148,43 @@ public class CodeGenerationVisitor extends Visitor {
         code.emit(Opcode.ISTOREW);
     }
 
-    @Override
-    public void visit(AssignmentStatement statement) {
-        dispatch(statement.getExpr());
-        emitStore(statement.getVar());
+    public void assignment(VariableReference var, Expression expr) {
+        dispatch(expr);
+        emitStore(var);
     }
 
-    public void visit(EndStatement statement) {
+    @Override
+    public void visit(AssignmentStatement statement, StatementContext context) {
+        assignment(statement.getVar(), statement.getExpr());
+    }
+
+    public void visit(EndStatement statement, StatementContext context) {
         code.emit(Opcode.EXIT);
     }
 
     @Override
-    public void visit(CallStatement statement) {
+    public void visit(CallStatement statement, StatementContext context) {
         dispatch(statement.getExpr());
         code.emit(Opcode.CALL);
     }
 
     @Override
-    public void visit(IfStatement statement) {
+    public void visit(IfStatement statement, StatementContext context) {
         var labels = label("IFF", "IFX");
         dispatch(statement.getExpression());
         code.emit(Opcode.IFFALSE, statement.hasFalseStatements() ? labels.get(0) : labels.get(1));
-        statement.getTrueStatements().getStatements().forEach(this::dispatch);
+        dispatchAll(statement.getTrueStatements());
         if (statement.hasFalseStatements()) {
             code.emit(Opcode.GOTO, labels.get(1));
             code.emit(labels.get(0));
-            statement.getFalseStatements().getStatements().forEach(this::dispatch);
+            dispatchAll(statement.getFalseStatements());
         }
         code.emit(labels.get(1));
     }
 
-    public void visit(ForNextStatement statement) {
+    public void visit(ForNextStatement statement, StatementContext context) {
         var labels = label("FOR", "FORX");
-        visit(new AssignmentStatement(new VariableReference(statement.getSymbol()), statement.getStart()));
+        assignment(new VariableReference(statement.getSymbol()), statement.getStart());
         code.emit(labels.get(0));
 
         // Note: We don't have a GE at this time.
@@ -197,7 +201,7 @@ public class CodeGenerationVisitor extends Visitor {
         code.emit(Opcode.LE);
 
         code.emit(Opcode.IFFALSE, labels.get(1));
-        statement.getStatements().forEach(this::dispatch);
+        dispatchAll(statement);
 
         // Lean on the binary expression processor to setup an optimized STEP increment.
         BinaryExpression stepIncrementExpr = new BinaryExpression(
@@ -211,7 +215,7 @@ public class CodeGenerationVisitor extends Visitor {
     }
 
     @Override
-    public void visit(ForStatement statement) {
+    public void visit(ForStatement statement, StatementContext context) {
         var labels = label(
             String.format("do_%s_for", statement.getSymbol().name()),
             String.format("do_%s_next", statement.getSymbol().name()));
@@ -262,7 +266,7 @@ public class CodeGenerationVisitor extends Visitor {
     }
 
     @Override
-    public void visit(NextStatement statement) {
+    public void visit(NextStatement statement, StatementContext context) {
         // save our exit address-1
         code.emit(Opcode.LOADA, statement.getExitLabel());
         code.emit(Opcode.DECR);
@@ -274,7 +278,7 @@ public class CodeGenerationVisitor extends Visitor {
     }
 
     @Override
-    public void visit(PokeStatement statement) {
+    public void visit(PokeStatement statement, StatementContext context) {
         dispatch(statement.getB());
         dispatch(statement.getA());
         switch (statement.getOp().toLowerCase()) {
@@ -284,28 +288,28 @@ public class CodeGenerationVisitor extends Visitor {
         }
     }
 
-    public void visit(LabelStatement statement) {
+    public void visit(LabelStatement statement, StatementContext context) {
         code.emit(statement.getId());
     }
 
     @Override
-    public void visit(GotoGosubStatement statement) {
+    public void visit(GotoGosubStatement statement, StatementContext context) {
         code.emit(Opcode.valueOf(statement.getOp().toUpperCase()), statement.getId());
     }
 
     @Override
-    public void visit(PopStatement statement) {
+    public void visit(PopStatement statement, StatementContext context) {
         // This is an address; expect that 2 is always correct!
         code.emit(Opcode.POPN, 2);
     }
 
     @Override
-    public void visit(ReturnStatement statement) {
+    public void visit(ReturnStatement statement, StatementContext context) {
         boolean hasReturnValue = statement.getExpr() != null;
         if (this.frames.peek().scope() instanceof Function f){
             var refs = this.frames.peek().scope().findByType(Scope.Type.RETURN_VALUE);
             if (refs.size() == 1 && hasReturnValue) {
-                visit(new AssignmentStatement(new VariableReference(refs.get(0)), statement.getExpr()));
+                assignment(new VariableReference(refs.get(0)), statement.getExpr());
             } else if (refs.size() != 0 || hasReturnValue) {
                 throw new RuntimeException("function return mismatch");
             }
@@ -320,7 +324,7 @@ public class CodeGenerationVisitor extends Visitor {
     }
 
     @Override
-    public void visit(CallSubroutine statement) {
+    public void visit(CallSubroutine statement, StatementContext context) {
         boolean hasParameters = statement.getParameters().size() != 0;
         for (Expression expr : statement.getParameters()) {
             dispatch(expr);
@@ -339,7 +343,7 @@ public class CodeGenerationVisitor extends Visitor {
         code.emit(subroutine.getName());
         if (hasLocalScope) code.emit(Opcode.LOCAL_RESERVE, frame.localSize());
         if (subroutine.getStatements() != null) {
-            subroutine.getStatements().forEach(this::dispatch);
+            dispatchAll(subroutine);
         }
         if (hasLocalScope) code.emit(Opcode.LOCAL_FREE, frame.localSize());
         code.emit(Opcode.RETURN);
@@ -356,7 +360,7 @@ public class CodeGenerationVisitor extends Visitor {
         code.emit(function.getName());
         if (hasLocalScope) code.emit(Opcode.LOCAL_RESERVE, frame.localSize());
         if (function.getStatements() != null) {
-            function.getStatements().forEach(this::dispatch);
+            dispatchAll(function);
         }
         code.emit(exitLabel);
         if (hasLocalScope) code.emit(Opcode.LOCAL_FREE, frame.localSize());

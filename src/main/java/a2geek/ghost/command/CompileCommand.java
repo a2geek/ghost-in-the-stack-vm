@@ -5,6 +5,7 @@ import a2geek.ghost.model.ModelBuilder;
 import a2geek.ghost.model.Scope;
 import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.visitor.ConstantReductionVisitor;
+import a2geek.ghost.model.visitor.DeadCodeEliminationVisitor;
 import a2geek.ghost.model.visitor.StrengthReductionVisitor;
 import a2geek.ghost.target.ghost.CodeGenerationVisitor;
 import a2geek.ghost.target.ghost.Instruction;
@@ -121,6 +122,8 @@ public class CompileCommand implements Callable<Integer> {
         constantReductionVisitor.visit(program);
         StrengthReductionVisitor rewriteVisitor = new StrengthReductionVisitor();
         rewriteVisitor.visit(program);
+        DeadCodeEliminationVisitor deadCodeEliminationVisitor = new DeadCodeEliminationVisitor();
+        deadCodeEliminationVisitor.visit(program);
 
         if (!quietFlag) {
             System.out.println("=== REWRITTEN ===");
