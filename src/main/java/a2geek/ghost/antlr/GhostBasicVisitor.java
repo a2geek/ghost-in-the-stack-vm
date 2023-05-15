@@ -5,6 +5,7 @@ import a2geek.ghost.antlr.generated.BasicParser;
 import a2geek.ghost.antlr.generated.BasicParser.IfStatementContext;
 import a2geek.ghost.model.*;
 import a2geek.ghost.model.expression.*;
+import a2geek.ghost.model.statement.ForNextStatement;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.javatuples.Pair;
 
@@ -102,6 +103,16 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         optVisit(ctx.s);
         model.forEnd();
         return null;
+    }
+
+    @Override
+    public Expression visitExitStmt(BasicParser.ExitStmtContext ctx) {
+        // TODO determine what we are looking for; for now it's 'for'
+        if (model.findBlock(ForNextStatement.class).isPresent()) {
+            model.exitStmt("for");
+            return null;
+        }
+        throw new RuntimeException("'exit for' must be in a for statement");
     }
 
     @Override

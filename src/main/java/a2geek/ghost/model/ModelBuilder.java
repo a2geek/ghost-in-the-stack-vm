@@ -89,6 +89,22 @@ public class ModelBuilder {
     public boolean isCurrentScope(Class<? extends Scope> clazz) {
         return clazz.isAssignableFrom(this.scope.peek().getClass());
     }
+    public <T extends Scope> Optional<T> findScope(Class<T> clazz) {
+        for (int i = this.scope.size() - 1; i >= 0; i--) {
+            if (clazz.isAssignableFrom(this.scope.get(i).getClass())) {
+                return Optional.of(clazz.cast(this.scope.get(i)));
+            }
+        }
+        return Optional.empty();
+    }
+    public <T extends StatementBlock> Optional<T> findBlock(Class<T> clazz) {
+        for (int i=this.statementBlock.size()-1; i>=0; i--) {
+            if (clazz.isAssignableFrom(this.statementBlock.get(i).getClass())) {
+                return Optional.of(clazz.cast(this.statementBlock.get(i)));
+            }
+        }
+        return Optional.empty();
+    }
 
     public Optional<Symbol> findSymbol(String name) {
         return this.scope.peek().findSymbol(fixCase(name));
@@ -201,6 +217,10 @@ public class ModelBuilder {
         else {
             throw new RuntimeException("expecting for statement on stack");
         }
+    }
+
+    public void exitStmt(String op) {
+        addStatement(new ExitStatement(op));
     }
 
     public void subDeclBegin(String name, List<Pair<String,DataType>> params) {

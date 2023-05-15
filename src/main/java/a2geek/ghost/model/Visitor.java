@@ -70,6 +70,9 @@ public abstract class Visitor {
         else if (statement instanceof PopStatement s) {
             visit(s, context);
         }
+        else if (statement instanceof ExitStatement s) {
+            visit(s, context);
+        }
         else {
             throw new RuntimeException("statement type not supported: " +
                     statement.getClass().getName());
@@ -215,6 +218,10 @@ public abstract class Visitor {
 
     public void visit(PopStatement statement, StatementContext context) {
 
+    }
+
+    public void visit(ExitStatement statement, StatementContext context) {
+        
     }
 
     public Expression visit(BinaryExpression expression) {

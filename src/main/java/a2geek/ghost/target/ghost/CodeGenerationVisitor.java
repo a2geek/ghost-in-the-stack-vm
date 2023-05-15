@@ -13,6 +13,7 @@ public class CodeGenerationVisitor extends Visitor {
     private Stack<Frame> frames = new Stack<>();
     private CodeBlock code = new CodeBlock();
     private int labelNumber;
+    private Stack<String> forExitLabels = new Stack<>();
 
     public List<Instruction> getInstructions() {
         return code.getInstructions();
@@ -184,6 +185,7 @@ public class CodeGenerationVisitor extends Visitor {
 
     public void visit(ForNextStatement statement, StatementContext context) {
         var labels = label("FOR", "FORX");
+        forExitLabels.push(labels.get(1));
         assignment(new VariableReference(statement.getSymbol()), statement.getStart());
         code.emit(labels.get(0));
 
@@ -212,6 +214,13 @@ public class CodeGenerationVisitor extends Visitor {
         emitStore(statement.getSymbol());
         code.emit(Opcode.GOTO, labels.get(0));
         code.emit(labels.get(1));
+        forExitLabels.pop();
+    }
+
+    @Override
+    public void visit(ExitStatement statement, StatementContext context) {
+        // TODO need to handle other exit statements
+        code.emit(Opcode.GOTO, forExitLabels.peek());
     }
 
     @Override

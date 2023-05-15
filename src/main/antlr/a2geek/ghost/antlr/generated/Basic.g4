@@ -47,6 +47,7 @@ statement
     | 'for' id=ID '=' a=expr 'to' b=expr ('step' c=expr)? (EOL|':')+
         s=statements? (EOL|':')*  // EOL is included in statements itself
       'next' id2=ID                                                     # forLoop
+    | 'exit' n='for'                                                    # exitStmt
     | 'color=' a=expr                                                   # colorStmt
     | 'plot' a=expr ',' b=expr                                          # plotStmt
     | 'vlin' a=expr ',' b=expr 'at' x=expr                              # vlinStmt
