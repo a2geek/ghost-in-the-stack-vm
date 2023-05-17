@@ -219,6 +219,19 @@ public class ModelBuilder {
         }
     }
 
+    public void loopBegin(DoLoopStatement.Operation op, Expression test) {
+        DoLoopStatement doStatement = new DoLoopStatement(op, test);
+        pushStatementBlock(doStatement);
+    }
+    public void loopEnd() {
+        if (popStatementBlock() instanceof DoLoopStatement doStatement) {
+            addStatement(doStatement);
+        }
+        else {
+            throw new RuntimeException("expecting do loop statement on stack");
+        }
+    }
+
     public void exitStmt(String op) {
         addStatement(new ExitStatement(op));
     }

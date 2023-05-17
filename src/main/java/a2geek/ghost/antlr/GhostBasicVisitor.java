@@ -5,6 +5,7 @@ import a2geek.ghost.antlr.generated.BasicParser;
 import a2geek.ghost.antlr.generated.BasicParser.IfStatementContext;
 import a2geek.ghost.model.*;
 import a2geek.ghost.model.expression.*;
+import a2geek.ghost.model.statement.DoLoopStatement;
 import a2geek.ghost.model.statement.ForNextStatement;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.javatuples.Pair;
@@ -106,13 +107,65 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     }
 
     @Override
+    public Expression visitDoLoop1(BasicParser.DoLoop1Context ctx) {
+        Expression test = visit(ctx.a);
+        DoLoopStatement.Operation op = switch (ctx.op.getText()) {
+            case "while" -> DoLoopStatement.Operation.DO_WHILE;
+            case "until" -> DoLoopStatement.Operation.DO_UNTIL;
+            default -> throw new RuntimeException("unexpected do loop type: " + ctx.op.getText());
+        };
+
+        model.loopBegin(op, test);
+        optVisit(ctx.s);
+        model.loopEnd();
+        return null;
+    }
+
+    @Override
+    public Expression visitDoLoop2(BasicParser.DoLoop2Context ctx) {
+        Expression test = visit(ctx.a);
+        DoLoopStatement.Operation op = switch (ctx.op.getText()) {
+            case "while" -> DoLoopStatement.Operation.LOOP_WHILE;
+            case "until" -> DoLoopStatement.Operation.LOOP_UNTIL;
+            default -> throw new RuntimeException("unexpected do loop type: " + ctx.op.getText());
+        };
+
+        model.loopBegin(op, test);
+        optVisit(ctx.s);
+        model.loopEnd();
+        return null;
+    }
+
+    @Override
+    public Expression visitWhileLoop(BasicParser.WhileLoopContext ctx) {
+        Expression test = visit(ctx.a);
+
+        model.loopBegin(DoLoopStatement.Operation.WHILE, test);
+        optVisit(ctx.s);
+        model.loopEnd();
+        return null;
+    }
+
+    @Override
     public Expression visitExitStmt(BasicParser.ExitStmtContext ctx) {
-        // TODO determine what we are looking for; for now it's 'for'
-        if (model.findBlock(ForNextStatement.class).isPresent()) {
-            model.exitStmt("for");
-            return null;
+        var op = ctx.n.getText().toLowerCase();
+        switch (op) {
+            case "for" -> {
+                if (model.findBlock(ForNextStatement.class).isPresent()) {
+                    model.exitStmt(op);
+                    return null;
+                }
+                throw new RuntimeException("'exit for' must be in a for statement");
+            }
+            case "while", "loop" -> {
+                if (model.findBlock(DoLoopStatement.class).isPresent()) {
+                    model.exitStmt(op);
+                    return null;
+                }
+                throw new RuntimeException(String.format("'exit %s' must be in a for statement", op));
+            }
         }
-        throw new RuntimeException("'exit for' must be in a for statement");
+        throw new RuntimeException(String.format("unknown exit type: " + op));
     }
 
     @Override

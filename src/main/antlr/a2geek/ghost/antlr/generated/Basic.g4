@@ -44,10 +44,19 @@ statement
         f=statements)?
       'end' 'if' EOL+                                                   # ifStatement
     | 'gr'                                                              # grStmt
+    | 'do' op=('while' | 'until') a=expr (EOL|':')+
+        s=statements? (EOL|':')*  // EOL is included in statements itself
+      'loop'                                                            # doLoop1
+    | 'do' (EOL|':')+
+        s=statements? (EOL|':')*  // EOL is included in statements itself
+      'loop' op=('while' | 'until') a=expr                              # doLoop2
     | 'for' id=ID '=' a=expr 'to' b=expr ('step' c=expr)? (EOL|':')+
         s=statements? (EOL|':')*  // EOL is included in statements itself
       'next' id2=ID                                                     # forLoop
-    | 'exit' n='for'                                                    # exitStmt
+    | 'while' a=expr (EOL|':')+
+        s=statements? (EOL|':')*  // EOL is included in statements itself
+      'end' 'while'                                                     # whileLoop
+    | 'exit' n=('do' | 'for' | 'while')                                 # exitStmt
     | 'color=' a=expr                                                   # colorStmt
     | 'plot' a=expr ',' b=expr                                          # plotStmt
     | 'vlin' a=expr ',' b=expr 'at' x=expr                              # vlinStmt

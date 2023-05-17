@@ -224,6 +224,34 @@ public class CodeGenerationVisitor extends Visitor {
     }
 
     @Override
+    public void visit(DoLoopStatement statement, StatementContext context) {
+        var labels = label("LOOP", "LOOPX");
+        var testAtStart = switch (statement.getOp()) {
+            case WHILE, DO_WHILE, DO_UNTIL -> true;
+            case LOOP_WHILE, LOOP_UNTIL -> false;
+        };
+        var testOpcode = switch (statement.getOp()) {
+            case DO_UNTIL, LOOP_WHILE -> Opcode.IFTRUE;
+            case WHILE, LOOP_UNTIL, DO_WHILE -> Opcode.IFFALSE;
+        };
+
+        code.emit(labels.get(0));
+        if (testAtStart) {
+            dispatch(statement.getExpr());
+            code.emit(testOpcode, labels.get(1));
+        }
+        dispatchAll(statement);
+        if (!testAtStart) {
+            dispatch(statement.getExpr());
+            code.emit(testOpcode, labels.get(0));
+        }
+        else {
+            code.emit(Opcode.GOTO, labels.get(0));
+        }
+        code.emit(labels.get(1));
+    }
+
+    @Override
     public void visit(ForStatement statement, StatementContext context) {
         var labels = label(
             String.format("do_%s_for", statement.getSymbol().name()),
