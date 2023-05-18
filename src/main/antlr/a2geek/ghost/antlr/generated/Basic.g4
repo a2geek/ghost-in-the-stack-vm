@@ -56,6 +56,9 @@ statement
     | 'while' a=expr (EOL|':')+
         s=statements? (EOL|':')*  // EOL is included in statements itself
       'end' 'while'                                                     # whileLoop
+    | 'repeat' (EOL|':')+
+        s=statements? (EOL|':')*  // EOL is included in statements itself
+      'until' a=expr                                                    # repeatLoop
     | 'exit' n=('do' | 'for' | 'while')                                 # exitStmt
     | 'color=' a=expr                                                   # colorStmt
     | 'plot' a=expr ',' b=expr                                          # plotStmt

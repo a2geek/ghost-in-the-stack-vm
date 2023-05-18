@@ -5,7 +5,6 @@ Validate memory footprint for variable allocation in some manner
 How to make reusable libraries which use inline interpreted code? Looks like there can be "nested" grammars!
 Looks like usage of Symbol may need to be checked? There is no constraint that a found variable is what is expected (aka a constant instead of a variable).
 Look at how bytecode is created - feels like Opcode and Directive can support Instruction more directly.
-Add EXIT (FOR/SUB/FUNCTION). Where to validate? Maybe in some visitor to be certain EXIT and RETURN in correct places. "EXIT SUB" and "EXIT FUNCTION" are really the RETURN statement. EXIT loop makes sense!
 Need to figure out how to handle processor status register in CPU interactions; ProDOS functions use C. Probably only want get. (Otherwise state probably will get carried between calls accidentally.)
 Review generated code and look for alternates with new opcodes.
 Add ELSEIF to IF statement.
@@ -13,7 +12,6 @@ Revisit the single line IF -- see what appears to be more standard (dislike Inte
 Unit tests?
 Interpreter for use in tests.
 Structure assembly project; it's gonna get messier.
-REPEAT loop
 ProDOS commands (OPEN, READ, WRITE, CLOSE). Is this SUB and/or FUNCTION?
 Add Applesoft
 DEF FN == Function

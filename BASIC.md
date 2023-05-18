@@ -158,6 +158,18 @@ for var = expr to expr step expr
 next var
 ```
 
+#### Repeat loop
+
+Test at end of loop (1 or more repeats). Repeats if the expression evaluates to false.
+
+```basic
+repeat
+   ' ...
+   [ exit repeat ]
+   ' ...
+until expr
+```
+
 #### While loop
 
 Test at beginning of loop (0 or more repeats). Repeats if the expression evaluates to true.

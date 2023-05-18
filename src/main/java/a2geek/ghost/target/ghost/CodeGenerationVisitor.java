@@ -228,11 +228,11 @@ public class CodeGenerationVisitor extends Visitor {
         var labels = label("LOOP", "LOOPX");
         var testAtStart = switch (statement.getOp()) {
             case WHILE, DO_WHILE, DO_UNTIL -> true;
-            case LOOP_WHILE, LOOP_UNTIL -> false;
+            case REPEAT, LOOP_WHILE, LOOP_UNTIL -> false;
         };
         var testOpcode = switch (statement.getOp()) {
             case DO_UNTIL, LOOP_WHILE -> Opcode.IFTRUE;
-            case WHILE, LOOP_UNTIL, DO_WHILE -> Opcode.IFFALSE;
+            case REPEAT, WHILE, LOOP_UNTIL, DO_WHILE -> Opcode.IFFALSE;
         };
 
         code.emit(labels.get(0));

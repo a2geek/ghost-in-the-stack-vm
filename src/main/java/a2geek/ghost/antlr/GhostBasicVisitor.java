@@ -147,6 +147,16 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     }
 
     @Override
+    public Expression visitRepeatLoop(BasicParser.RepeatLoopContext ctx) {
+        Expression test = visit(ctx.a);
+
+        model.loopBegin(DoLoopStatement.Operation.REPEAT, test);
+        optVisit(ctx.s);
+        model.loopEnd();
+        return null;
+    }
+
+    @Override
     public Expression visitExitStmt(BasicParser.ExitStmtContext ctx) {
         var op = ctx.n.getText().toLowerCase();
         switch (op) {
@@ -157,12 +167,12 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                 }
                 throw new RuntimeException("'exit for' must be in a for statement");
             }
-            case "while", "loop" -> {
+            case "while", "loop", "repeat" -> {
                 if (model.findBlock(DoLoopStatement.class).isPresent()) {
                     model.exitStmt(op);
                     return null;
                 }
-                throw new RuntimeException(String.format("'exit %s' must be in a for statement", op));
+                throw new RuntimeException(String.format("'exit %s' must be in a %s statement", op, op));
             }
         }
         throw new RuntimeException(String.format("unknown exit type: " + op));
