@@ -142,7 +142,9 @@ if expr then true_statement : statement2 : statement3
 
 `statement2` and `statement3` always execute, regardless of the value of `expr`. 
 
-### For loop
+### Loops
+
+#### For loop
 
 There is one caveat with the `for` statement. `step` is optional and defaults to `+1`. If the `step` expression is 
 computed and is negative, the code generated will be incorrect. Positive increments will be fine. Negative 
@@ -151,7 +153,45 @@ constants will also be fine.
 ```basic
 for var = expr to expr step expr
    ' ...
+   [ exit for ]
+   ' ...
 next var
+```
+
+#### While loop
+
+Test at beginning of loop (0 or more repeats). Repeats if the expression evaluates to true.
+
+```basic
+while expr
+   ' ...
+   [ exit while ]
+   ' ...
+end while
+```
+
+#### Do ... Loop
+
+Test at beginning of loop (0 or more repeats). `do while` repeats if the expression evaluates to true 
+and `do until` repeats if the expression is false.
+
+```basic
+do [ while | until ] expr
+   ' ...
+   [ exit do ]
+   ' ...
+loop
+```
+
+Test at end of loop (1 or more repeats). `do while` repeats if the expression evaluates to true
+and `do until` repeats if the expression is false.
+
+```basic
+do
+   ' ...
+   [ exit do ]
+   ' ...
+loop [ while | until ] expr
 ```
 
 ### Output

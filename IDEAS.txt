@@ -13,7 +13,6 @@ Revisit the single line IF -- see what appears to be more standard (dislike Inte
 Unit tests?
 Interpreter for use in tests.
 Structure assembly project; it's gonna get messier.
-WHILE loop
 REPEAT loop
 ProDOS commands (OPEN, READ, WRITE, CLOSE). Is this SUB and/or FUNCTION?
 Add Applesoft
