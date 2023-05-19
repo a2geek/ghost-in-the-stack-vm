@@ -9,16 +9,16 @@ import a2geek.ghost.model.scope.Program;
 import org.antlr.v4.runtime.*;
 
 public class ParseUtil {
-    private static final TrackingErrorListener ERROR_LISTENER = new TrackingErrorListener();
     public static Program basicToModel(CharStream stream, ModelBuilder model) {
         BasicLexer lexer = new BasicLexer(stream);
-        lexer.addErrorListener(ERROR_LISTENER);
+        TrackingErrorListener errorListener = new TrackingErrorListener();
+        lexer.addErrorListener(errorListener);
         TokenStream tokens = new CommonTokenStream(lexer);
         BasicParser parser = new BasicParser(tokens);
-        parser.addErrorListener(ERROR_LISTENER);
+        parser.addErrorListener(errorListener);
 
         BasicParser.ProgramContext context = parser.program();
-        ERROR_LISTENER.check();
+        errorListener.check();
 
         GhostBasicVisitor visitor = new GhostBasicVisitor(model);
         visitor.visit(context);
@@ -27,13 +27,14 @@ public class ParseUtil {
 
     public static Program integerToModel(CharStream stream, ModelBuilder model) {
         IntegerLexer lexer = new IntegerLexer(stream);
-        lexer.addErrorListener(ERROR_LISTENER);
+        TrackingErrorListener errorListener = new TrackingErrorListener();
+        lexer.addErrorListener(errorListener);
         TokenStream tokens = new CommonTokenStream(lexer);
         IntegerParser parser = new IntegerParser(tokens);
-        parser.addErrorListener(ERROR_LISTENER);
+        parser.addErrorListener(errorListener);
 
         IntegerParser.ProgramContext context = parser.program();
-        ERROR_LISTENER.check();
+        errorListener.check();
 
         IntegerBasicVisitor visitor = new IntegerBasicVisitor(model);
         visitor.visit(context);
