@@ -7,7 +7,7 @@ gr
 x=0
 y=0
 
-loop:
+while true
     c = scrn(x,y)
 
     ' blink cursor
@@ -41,5 +41,4 @@ loop:
         home
         print x, y
     end if
-
-    goto loop
+end while

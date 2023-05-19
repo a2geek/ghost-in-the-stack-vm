@@ -1,6 +1,8 @@
 Capturing ideas
 ===============
 
+Add arrays to Basic.
+Optionally disable array bounds checking.
 Validate memory footprint for variable allocation in some manner
 How to make reusable libraries which use inline interpreted code? Looks like there can be "nested" grammars!
 Looks like usage of Symbol may need to be checked? There is no constraint that a found variable is what is expected (aka a constant instead of a variable).

@@ -4,13 +4,13 @@ text
 home
 gr
 
-loop:
+do
     c = rnd(16)
     x = rnd(40)
     y = rnd(40)
     color= c
     plot x,y
-    if peek(-16384) < 128 then goto loop
+loop while peek(-16384) < 128
 
 poke -16368,0
 print "DONE!"

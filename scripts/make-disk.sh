@@ -13,7 +13,7 @@ fi
 ACX="java -jar build/libs/${ACX_JAR}"
 
 export ACX_DISK_NAME=disk1.po
-cp src/main/asm/template.po ${ACX_DISK_NAME}
+${ACX} mkdisk --format=src/main/asm/template.po --name=MYDISK --size=800k --prodos --prodos-order
 
 for dir in $(ls src/main/basic)
 do

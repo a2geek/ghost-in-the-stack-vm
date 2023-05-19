@@ -6,7 +6,7 @@ home
 gr
 
 ' Sort of the middle?
-loop:
+do
     iteration=iteration+1
     print iteration
     for y=15 to 25
@@ -16,7 +16,6 @@ loop:
             plot x,y
         next x
     next y
-    ' Need a REPEAT statement!!
-    if peek(-16384) < 128 then goto loop
+loop while peek(-16384) < 128
 
 end

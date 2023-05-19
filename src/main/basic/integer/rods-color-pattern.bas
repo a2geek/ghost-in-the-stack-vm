@@ -1,7 +1,7 @@
 ' Rod's Color Pattern
 
 GR
-LOOP:
+WHILE TRUE
     FOR W = 3 TO 50
         FOR I = 1 TO 19
             FOR J = 0 TO 19
@@ -12,4 +12,4 @@ LOOP:
             NEXT J
         NEXT I
     NEXT W
-    GOTO LOOP
+END WHILE

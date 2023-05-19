@@ -21,7 +21,7 @@ reset:
         HLIN 0,39 AT L
     NEXT L
 
-repeat:
+again:
     A=A+1
     IF A=40 THEN goto reset
     COLOR= 12
@@ -57,7 +57,7 @@ keyloop:
     PLOT A,B
     D=80
     GOSUB tone
-    GOTO repeat
+    GOTO again
 
 tone:
     POKE AD+0,P: POKE AD+1,D:CALL AD+2:RETURN
