@@ -495,6 +495,10 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         Expression l = visit(ctx.a);
         Expression r = visit(ctx.b);
         String op = ctx.op.getText();
+
+        if ("^".equals(op)) {
+            return model.callFunction("ipow", Arrays.asList(l,r));
+        }
         return new BinaryExpression(l, r, op);
     }
 

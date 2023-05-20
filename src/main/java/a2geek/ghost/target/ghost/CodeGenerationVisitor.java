@@ -13,7 +13,9 @@ public class CodeGenerationVisitor extends Visitor {
     private Stack<Frame> frames = new Stack<>();
     private CodeBlock code = new CodeBlock();
     private int labelNumber;
+    private Stack<String> doExitLabels = new Stack<>();
     private Stack<String> forExitLabels = new Stack<>();
+    private Stack<String> whileExitLabels = new Stack<>();
 
     public List<Instruction> getInstructions() {
         return code.getInstructions();
@@ -219,8 +221,12 @@ public class CodeGenerationVisitor extends Visitor {
 
     @Override
     public void visit(ExitStatement statement, StatementContext context) {
-        // TODO need to handle other exit statements
-        code.emit(Opcode.GOTO, forExitLabels.peek());
+        switch (statement.getOp()) {
+            case "do" -> code.emit(Opcode.GOTO, doExitLabels.peek());
+            case "for" -> code.emit(Opcode.GOTO, forExitLabels.peek());
+            case "while" -> code.emit(Opcode.GOTO, whileExitLabels.peek());
+            default -> throw new RuntimeException("unknown exist statement: " + statement);
+        }
     }
 
     @Override
@@ -234,6 +240,13 @@ public class CodeGenerationVisitor extends Visitor {
             case DO_UNTIL, LOOP_WHILE -> Opcode.IFTRUE;
             case REPEAT, WHILE, LOOP_UNTIL, DO_WHILE -> Opcode.IFFALSE;
         };
+
+        if (statement.getOp() == DoLoopStatement.Operation.WHILE) {
+            whileExitLabels.push(labels.get(1));
+        }
+        else {
+            doExitLabels.push(labels.get(1));
+        }
 
         code.emit(labels.get(0));
         if (testAtStart) {
@@ -249,6 +262,13 @@ public class CodeGenerationVisitor extends Visitor {
             code.emit(Opcode.GOTO, labels.get(0));
         }
         code.emit(labels.get(1));
+
+        if (statement.getOp() == DoLoopStatement.Operation.WHILE) {
+            whileExitLabels.pop();
+        }
+        else {
+            doExitLabels.pop();
+        }
     }
 
     @Override

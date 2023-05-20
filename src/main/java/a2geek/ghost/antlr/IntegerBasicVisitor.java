@@ -346,6 +346,10 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         var left = visit(ctx.left);
         var right = visit(ctx.right);
         var op = ctx.op.getText();
+
+        if ("^".equals(op)) {
+            return model.callFunction("ipow", Arrays.asList(left,right));
+        }
         if ("#".equals(op)) {
             op = "<>";
         }

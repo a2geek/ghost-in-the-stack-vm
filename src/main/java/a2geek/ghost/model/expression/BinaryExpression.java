@@ -14,6 +14,7 @@ public class BinaryExpression implements Expression {
         new Descriptor("*", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN),
         new Descriptor("/", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN),
         new Descriptor("mod", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN),
+        new Descriptor("^", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN),
         // Comparison
         new Descriptor("<", DataType.BOOLEAN, DataType.INTEGER, DataType.BOOLEAN),
         new Descriptor(">", DataType.BOOLEAN, DataType.INTEGER, DataType.BOOLEAN),
@@ -52,7 +53,8 @@ public class BinaryExpression implements Expression {
             "-",   (a,b) -> a-b,
             "*",   (a,b) -> a*b,
             "/",   (a,b) -> a/b,
-            "mod", (a,b) -> a%b
+            "mod", (a,b) -> a%b,
+            "^", (a,b) -> (int)Math.pow(a,b)
         ));
         // Comparison
         INTEGER_OPS.putAll(Map.of(

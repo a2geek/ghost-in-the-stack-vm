@@ -9,6 +9,8 @@ print "B=";b
 print
 print "==> A op B   B op A"
 print
+print "^   ", a^b, b^a
+print
 print "-   ", a-b, b-a
 print "+   ", a+b, b+a
 print

@@ -43,3 +43,20 @@ function math_sgn(n as integer) as integer
         end if
     end if
 end function
+
+' See: https://stackoverflow.com/questions/101439/the-most-efficient-way-to-implement-an-integer-based-power-function-powint-int
+function math_ipow(base as integer, exp as integer) as integer
+    dim result as integer
+    result = 1
+    while true
+        if exp AND 1 then
+            result = result * base
+        end if
+        exp = exp >> 1
+        if exp = 0 then
+            exit while
+        end if
+        base = base * base
+    end while
+    return result
+end function

@@ -111,7 +111,8 @@ anyExpr
     ;
 
 expr
-    : a=expr op=( '*' | '/' | 'mod' ) b=expr                            # binaryExpr
+    : a=expr op='^' b=expr                                              # binaryExpr
+    | a=expr op=( '*' | '/' | 'mod' ) b=expr                            # binaryExpr
     | a=expr op=( '+' | '-' ) b=expr                                    # binaryExpr
     | a=expr op=( '<' | '<=' | '>' | '>=' | '=' | '<>' ) b=expr         # binaryExpr
     | a=expr op=( '<<' | '>>' ) b=expr                                  # binaryExpr

@@ -21,7 +21,8 @@ public class FunctionExpression implements Expression {
             new Descriptor("rnd", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER),
             new Descriptor("abs", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER),
             new Descriptor("sgn", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER),
-            new Descriptor("pdl", MISC_LIBRARY, DataType.INTEGER, DataType.INTEGER)
+            new Descriptor("pdl", MISC_LIBRARY, DataType.INTEGER, DataType.INTEGER),
+            new Descriptor("ipow", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER, DataType.INTEGER)
         ).forEach(d -> {
             FUNCS.put(d.name(), d);
         });
