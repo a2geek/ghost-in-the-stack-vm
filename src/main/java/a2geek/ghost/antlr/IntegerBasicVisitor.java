@@ -91,7 +91,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     public Expression visitIntDimVar(IntegerParser.IntDimVarContext ctx) {
         var symbol = model.addArrayVariable(ctx.n.getText(), DataType.INTEGER, 1);
         var expr = visit(ctx.e);
-        model.addDimIntArray(symbol, expr);
+        model.addDimArray(symbol, expr);
         return null;
     }
 

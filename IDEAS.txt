@@ -1,7 +1,7 @@
 Capturing ideas
 ===============
 
-Add arrays to Basic.
+Add array bounds checking into Basic.
 Optionally disable array bounds checking.
 Secondary model to handle array pointer arithmetic? This could also rewrite loop structures to make code generation simpler.
 Validate memory footprint for variable allocation in some manner

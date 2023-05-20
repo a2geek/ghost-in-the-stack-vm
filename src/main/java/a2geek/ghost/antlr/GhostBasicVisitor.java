@@ -9,8 +9,10 @@ import a2geek.ghost.model.statement.DoLoopStatement;
 import a2geek.ghost.model.statement.ForNextStatement;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.javatuples.Pair;
+import org.javatuples.Triplet;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     private ModelBuilder model;
@@ -38,22 +40,14 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
     @Override
     public Expression visitAssignment(BasicParser.AssignmentContext ctx) {
-        String id = ctx.id.getText();
-        Expression expr = visit(ctx.a);
-        Symbol symbol = switch (id.toLowerCase()) {
-            case Intrinsic.CPU_REGISTER_A,
-                 Intrinsic.CPU_REGISTER_X,
-                 Intrinsic.CPU_REGISTER_Y -> model.addVariable(id, Scope.Type.INTRINSIC, expr.getType());
-            default -> {
-                if (id.contains(".")) {
-                    throw new RuntimeException("invalid identifier: " + id);
-                }
-                yield model.addVariable(id, expr.getType());
-            }
-        };
-
-        model.assignStmt(new VariableReference(symbol), expr);
-        return null;
+        if (visit(ctx.id) instanceof VariableReference varRef) {
+            Expression expr = visit(ctx.a);
+            model.assignStmt(varRef, expr);
+            return null;
+        }
+        else {
+            throw new RuntimeException("expecting a variable type for assignment: " + ctx.id.getText());
+        }
     }
 
     @Override
@@ -314,21 +308,28 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         return null;
     }
 
-    List<Pair<String,DataType>> buildDeclarationList(List<BasicParser.IdDeclContext> params) {
-        var refs = new ArrayList<Pair<String,DataType>>();
+    List<Triplet<String,DataType,List<Expression>>> buildDeclarationList(List<BasicParser.IdDeclContext> params) {
+        var decls = new ArrayList<Triplet<String,DataType,List<Expression>>>();
         var names = new HashSet<>();
         if (params != null) {
             params.forEach(idDecl -> {
                 String id = model.fixCase(idDecl.ID().getText());
                 DataType dt = buildDataType(idDecl.datatype());
+                List<Expression> exprs = new ArrayList<>();
+                for (var expr : idDecl.expr()) {
+                    exprs.add(visit(expr));
+                }
+                if (exprs.size() > 1) {
+                    throw new RuntimeException("only support 1 dimensional arrays at this time: " + id);
+                }
                 if (names.contains(id)) {
                     throw new RuntimeException("parameter already defined: " + id);
                 }
                 names.add(id);
-                refs.add(Pair.with(id,dt));
+                decls.add(Triplet.with(id,dt,exprs));
             });
         }
-        return refs;
+        return decls;
     }
     DataType buildDataType(BasicParser.DatatypeContext ctx) {
         DataType dt = DataType.INTEGER;
@@ -342,7 +343,9 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     public Expression visitSubDecl(BasicParser.SubDeclContext ctx) {
         List<Pair<String,DataType>> params = Collections.emptyList();
         if (ctx.paramDecl() != null) {
-            params = buildDeclarationList(ctx.paramDecl().idDecl());
+            params = buildDeclarationList(ctx.paramDecl().idDecl()).stream()
+                .map(Triplet::removeFrom2)
+                .collect(Collectors.toList());
         }
 
         model.subDeclBegin(ctx.id.getText(), params);
@@ -355,7 +358,9 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     public Expression visitFuncDecl(BasicParser.FuncDeclContext ctx) {
         List<Pair<String,DataType>> params = Collections.emptyList();
         if (ctx.paramDecl() != null) {
-            params = buildDeclarationList(ctx.paramDecl().idDecl());
+            params = buildDeclarationList(ctx.paramDecl().idDecl()).stream()
+                .map(Triplet::removeFrom2)
+                .collect(Collectors.toList());
         }
         DataType dt = buildDataType(ctx.datatype());
 
@@ -377,8 +382,15 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
     @Override
     public Expression visitDimStmt(BasicParser.DimStmtContext ctx) {
-        buildDeclarationList(ctx.idDecl()).forEach(d -> {
-           model.addVariable(d.getValue0(), d.getValue1());
+        buildDeclarationList(ctx.idDecl()).forEach(decl -> {
+            if (decl.getValue2() != null && decl.getValue2().size() > 0) {
+                var symbol = model.addArrayVariable(decl.getValue0(), decl.getValue1(), decl.getValue2().size());
+                // FIXME assuming 1 dimension
+                model.addDimArray(symbol, decl.getValue2().get(0));
+            }
+            else {
+                model.addVariable(decl.getValue0(), decl.getValue1());
+            }
         });
         return null;
     }
@@ -399,17 +411,11 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     }
 
     @Override
-    public Expression visitIdentifier(BasicParser.IdentifierContext ctx) {
+    public Expression visitVariableOrFunctionRef(BasicParser.VariableOrFunctionRefContext ctx) {
         // The ID could possibly be a function call with zero arguments.
-        var id = ctx.id.getText();
-        Optional<Scope> scope = model.findScope(id);
-        if (scope.isPresent()) {
-            if (scope.get() instanceof a2geek.ghost.model.scope.Function fn) {
-                return new FunctionExpression(fn, Collections.emptyList());
-            }
-            else {
-                throw new RuntimeException("Expecting a function named " + id);
-            }
+        var id = ctx.getText();
+        if (model.isFunction(id)) {
+            return model.callFunction(id, Collections.emptyList());
         }
 
         // Look for a likely symbol - and it might already exist
@@ -430,11 +436,11 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     }
 
     @Override
-    public Expression visitFuncExpr(BasicParser.FuncExprContext ctx) {
-        String id = ctx.id.getText();
+    public Expression visitArrayOrFunctionRef(BasicParser.ArrayOrFunctionRefContext ctx) {
+        var id = ctx.ID().getText();
         List<Expression> params = new ArrayList<>();
-        if (ctx.p != null) {
-            ctx.parameters().anyExpr().stream().map(this::visit).forEach(params::add);
+        if (ctx.anyExpr() != null) {
+            ctx.anyExpr().stream().map(this::visit).forEach(params::add);
         }
 
         if (Intrinsic.CPU_REGISTERS.contains(id.toLowerCase())) {
@@ -444,7 +450,26 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             Symbol symbol = model.addVariable(id, Scope.Type.INTRINSIC, DataType.INTEGER);
             return new VariableReference(symbol);
         }
-        return model.callFunction(id, params);
+
+        if (model.isFunction(id)) {
+            return model.callFunction(id, params);
+        }
+
+        var existing = model.findSymbol(id);
+        if (existing.isEmpty()) {
+            throw new RuntimeException("variable does not exist: " + id);
+        }
+        if (params.size() != existing.get().numDimensions()) {
+            if (existing.get().numDimensions() == 0) {
+                throw new RuntimeException("variable is not declared as an array: " + id);
+            }
+            else {
+                var msg = String.format("variable %s should have %d dimensions: %s", id, existing.get().numDimensions(), ctx.getText());
+                throw new RuntimeException(msg);
+            }
+        }
+
+        return new VariableReference(existing.get(), params);
     }
 
     @Override

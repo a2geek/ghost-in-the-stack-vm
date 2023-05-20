@@ -83,7 +83,7 @@ public class VariableReference implements Expression {
     @Override
     public String toString() {
         if (isArray()) {
-            return String.format("%s%s)", symbol.name(),
+            return String.format("%s(%s)", symbol.name(),
                     indexes.stream().map(Expression::toString).collect(Collectors.joining(",")));
         }
         return symbol.name();

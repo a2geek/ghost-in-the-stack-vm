@@ -82,7 +82,8 @@ constantDecl
     ;
 
 extendedID
-    : ID ('.' ID)*
+    : ID '(' ( anyExpr ( ',' anyExpr )* )? ')'                           # arrayOrFunctionRef
+    | ID ('.' ID)*                                                      # variableOrFunctionRef
     ;
 
 paramDecl
@@ -90,7 +91,7 @@ paramDecl
     ;
 
 idDecl
-    : ID ( 'as' datatype )?
+    : ID ( '(' expr ( ',' expr )* ')' )? ( 'as' datatype )?
     ;
 
 datatype
@@ -116,11 +117,10 @@ expr
     | a=expr op=( '<<' | '>>' ) b=expr                                  # binaryExpr
     | a=expr op=( 'or' | 'and' | 'xor' ) b=expr                         # binaryExpr
     | op='-' a=expr                                                     # unaryExpr
-    | '(' a=expr ')'                                                    # parenExpr
-    | id=extendedID p=parameters                                        # funcExpr
-    | id=extendedID                                                     # identifier
+    | id=extendedID                                                     # extendedIdExpr
     | a=INT                                                             # intConstant
     | b=('true' | 'false')                                              # boolConstant
+    | '(' a=expr ')'                                                    # parenExpr
     ;
 
 sexpr

@@ -59,7 +59,14 @@ public class Scope extends StatementBlock {
         return addLocalVariable(name, this.type, dataType);
     }
     public Symbol addArrayVariable(String name, DataType dataType, int numDimensions) {
-        return findLocalSymbols(name).orElseGet(() -> {
+        return findLocalSymbols(name)
+        .map(s -> {
+            if (s.numDimensions() == 0) {
+                throw new RuntimeException("expecting symbol to be an array but it is not: " + name);
+            }
+            return s;
+        })
+        .orElseGet(() -> {
             var fixedName = caseStrategy.apply(name);
             var ref = Symbol.builder(fixedName, type).dataType(dataType).dimensions(numDimensions).build();
             symbols.add(ref);
@@ -67,7 +74,14 @@ public class Scope extends StatementBlock {
         });
     }
     public Symbol addLocalVariable(String name, Type type, DataType dataType) {
-        return findLocalSymbols(name).orElseGet(() -> {
+        return findLocalSymbols(name)
+        .map(s -> {
+            if (s.numDimensions() != 0) {
+                throw new RuntimeException("expecting symbol not to be an array: " + name);
+            }
+            return s;
+        })
+        .orElseGet(() -> {
             var fixedName = caseStrategy.apply(name);
             var ref = Symbol.builder(fixedName, type).dataType(dataType).build();
             symbols.add(ref);

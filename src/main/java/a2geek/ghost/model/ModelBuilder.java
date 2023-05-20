@@ -25,6 +25,7 @@ public class ModelBuilder {
     private Stack<Scope> scope = new Stack<>();
     private Stack<StatementBlock> statementBlock = new Stack<>();
     private Set<String> librariesIncluded = new HashSet<>();
+    private boolean trace = false;
     private boolean includeLibraries = true;
     /** Traditional FOR/NEXT statement frame. */
     private Map<Symbol, ForFrame> forFrames = new HashMap<>();
@@ -58,6 +59,9 @@ public class ModelBuilder {
         return controlCharsFn.apply(value);
     }
 
+    public void setTrace(boolean trace) {
+        this.trace = trace;
+    }
     public void setIncludeLibraries(boolean includeLibraries) {
         this.includeLibraries = includeLibraries;
     }
@@ -126,10 +130,18 @@ public class ModelBuilder {
         return forFrames.computeIfAbsent(symbol, r -> new ForFrame(r, scope.peek()));
     }
 
+    public void trace(String fmt, Object... args) {
+        if (trace) {
+            System.out.printf(fmt, args);
+            System.out.println();
+        }
+    }
+
     public void uses(String libname) {
         if (!includeLibraries || librariesIncluded.contains(libname)) {
             return;
         }
+        trace("loading library: %s", libname);
         librariesIncluded.add(libname);
         String name = String.format("/library/%s.bas", libname);
         try (InputStream inputStream = getClass().getResourceAsStream(name)) {
@@ -176,10 +188,22 @@ public class ModelBuilder {
         addStatement(callSubroutine);
     }
 
+    public boolean isFunction(String name) {
+        var id = fixCase(name);
+        return FunctionExpression.isLibraryFunction(id)
+            || FunctionExpression.isIntrinsicFunction(id)
+            || getProgram().findScope(id).map(s -> s instanceof a2geek.ghost.model.scope.Function).orElse(false);
+    }
+
     public FunctionExpression callFunction(String name, List<Expression> params) {
         var id = fixCase(name);
         if (FunctionExpression.isLibraryFunction(id)) {
             FunctionExpression.Descriptor descriptor = FunctionExpression.getDescriptor(id).orElseThrow();
+            var requiredParameterCount = descriptor.parameterTypes().length;
+            if (params.size() != requiredParameterCount) {
+                var msg = String.format("function '%s' requires %d parameters", id, requiredParameterCount);
+                throw new RuntimeException(msg);
+            }
             uses(descriptor.library());
             id = fixCase(descriptor.fullName());
         }
@@ -187,6 +211,11 @@ public class ModelBuilder {
         Optional<Scope> scope = getProgram().findScope(id);
         if (scope.isPresent()) {
             if (scope.get() instanceof a2geek.ghost.model.scope.Function fn) {
+                var requiredParameterCount = fn.findByType(Scope.Type.PARAMETER).size();
+                if (params.size() != requiredParameterCount) {
+                    var msg = String.format("function '%s' requires %d parameters", id, requiredParameterCount);
+                    throw new RuntimeException(msg);
+                }
                 return new FunctionExpression(fn, params);
             }
         }
@@ -294,7 +323,7 @@ public class ModelBuilder {
         addStatement(returnStatement);
     }
 
-    public void addDimIntArray(Symbol symbol, Expression size) {
+    public void addDimArray(Symbol symbol, Expression size) {
         DimStatement dimStatement = new DimStatement(symbol, size);
         addStatement(dimStatement);
         arrayDims.put(symbol, size);

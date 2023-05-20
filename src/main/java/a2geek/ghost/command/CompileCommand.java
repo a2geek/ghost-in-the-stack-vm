@@ -102,6 +102,7 @@ public class CompileCommand implements Callable<Integer> {
         if (fixControlChars) {
             model.setControlCharsFn(CompileCommand::convertControlCharacterMarkers);
         }
+        model.setTrace(traceFlag);
         Program program = switch (language) {
             case INTEGER_BASIC -> ParseUtil.integerToModel(stream, model);
             case BASIC -> ParseUtil.basicToModel(stream, model);

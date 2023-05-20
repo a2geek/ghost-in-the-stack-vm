@@ -27,10 +27,10 @@ public class FunctionExpression implements Expression {
         });
     }
     public static boolean isIntrinsicFunction(String name) {
-        return getDescriptor(name).map(Descriptor::library).isEmpty();
+        return getDescriptor(name).map(d -> d.library() == null).orElse(false);
     }
     public static boolean isLibraryFunction(String name) {
-        return getDescriptor(name).map(Descriptor::library).isPresent();
+        return getDescriptor(name).map(d -> d.library() != null).orElse(false);
     }
     public static Optional<Descriptor> getDescriptor(String name) {
         return Optional.ofNullable(FUNCS.get(name));

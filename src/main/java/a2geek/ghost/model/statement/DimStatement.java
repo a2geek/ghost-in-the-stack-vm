@@ -27,6 +27,6 @@ public class DimStatement implements Statement {
     @Override
     public String toString() {
         // We assume the name has an opening parenthesis
-        return String.format("DIM %s%s)", symbol.name(), expr);
+        return String.format("DIM %s(%s)", symbol.name(), expr);
     }
 }
