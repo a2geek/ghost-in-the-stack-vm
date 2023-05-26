@@ -18,6 +18,10 @@ public class ExpressionBuilder {
         public static StringConstant constant(String value) {
             return new StringConstant(value);
         }
+        /**
+         * Create a symbol. Since the case strategy <em>is not attached</em>,
+         * the case strategy needs to be applied outside of this method.
+         */
         public static VariableReference identifier(String name, DataType dataType, Scope.Type scopeType) {
             var symbol = Symbol.builder(name, scopeType).dataType(dataType).build();
             return new VariableReference(symbol);

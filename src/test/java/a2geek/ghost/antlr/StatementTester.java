@@ -8,28 +8,40 @@ import org.antlr.v4.runtime.CharStreams;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 import static a2geek.ghost.antlr.ExpressionBuilder.constant;
 import static org.junit.jupiter.api.Assertions.*;
 
 public abstract class StatementTester {
-    public static ProgramTester expect(String source) {
-        ModelBuilder model = new ModelBuilder(String::toUpperCase);
-        Program program = ParseUtil.integerToModel(CharStreams.fromString(source), model);
-        System.out.println(program);
-        return new ProgramTester(program);
-    }
-
+    private Function<String,String> caseStrategy;
+    private Function<String,String> arrayNameStrategy;
     private int statementNumber;
+
+    public StatementTester(
+        Function<String,String> caseStrategy,
+        Function<String,String> arrayNameStrategy
+    ) {
+        this.caseStrategy = caseStrategy;
+        this.arrayNameStrategy = arrayNameStrategy;
+    }
 
     abstract Optional<Symbol> findSymbol(String name);
     abstract List<Statement> getStatements();
+
+    public String fixCase(String value) {
+        return caseStrategy.apply(value);
+    }
+    public String fixArrayName(String name) {
+        return arrayNameStrategy.apply(name);
+    }
 
     private String lineNumberLabel(int lineNumber) {
         return String.format("L%d", lineNumber);
     }
 
     public StatementTester hasSymbol(String name, DataType dataType, Scope.Type scopeType) {
+        name = fixCase(name);
         var symbol = findSymbol(name);
         assertTrue(symbol.isPresent(), "variable not found: " + name);
         assertEquals(dataType, symbol.get().dataType(), name);
@@ -38,7 +50,8 @@ public abstract class StatementTester {
     }
 
     public StatementTester hasArrayReference(String name, DataType dataType, Scope.Type scopeType, int numDimensions) {
-        var symbol = findSymbol(name + "()");
+        name = fixCase(name);
+        var symbol = findSymbol(fixArrayName(name));
         assertTrue(symbol.isPresent(), "array variable not found: " + name);
         assertEquals(dataType, symbol.get().dataType(), name);
         assertEquals(scopeType, symbol.get().type(), name);
@@ -78,21 +91,22 @@ public abstract class StatementTester {
 
     public StatementTester label(String label) {
         var stmt = nextStatement(LabelStatement.class);
-        assertEquals(label, stmt.getId());
+        assertEquals(fixCase(label), stmt.getId());
         return this;
     }
 
     public StatementTester assignment(String varName, Expression expr) {
         var stmt = nextStatement(AssignmentStatement.class);
         assertFalse(stmt.getVar().isArray());
-        assertEquals(varName, stmt.getVar().getSymbol().name());
+        assertEquals(fixCase(varName), stmt.getVar().getSymbol().name());
         assertEquals(expr, stmt.getExpr());
         return this;
     }
 
     public StatementTester arrayAssignment(String varName, Expression index, Expression expr) {
+        varName = fixCase(varName);
         var stmt = nextStatement(AssignmentStatement.class);
-        assertEquals(varName + "()", stmt.getVar().getSymbol().name());
+        assertEquals(fixArrayName(varName), stmt.getVar().getSymbol().name());
         return this;
     }
 
@@ -103,6 +117,7 @@ public abstract class StatementTester {
     }
 
     public StatementTester callSub(String name, Expression... exprs) {
+        name = fixCase(name);
         var descriptor = CallSubroutine.getDescriptor(name);
         assertTrue(descriptor.isPresent(), "subroutine not found: " + name);
         var stmt = nextStatement(CallSubroutine.class);
@@ -116,8 +131,9 @@ public abstract class StatementTester {
     }
 
     public StatementTester dimStmt(String name, Expression expr) {
+        name = fixCase(name);
         var stmt = nextStatement(DimStatement.class);
-        assertEquals(name + "()", stmt.getSymbol().name());
+        assertEquals(fixArrayName(name), stmt.getSymbol().name());
         assertEquals(expr, stmt.getExpr());
         return this;
     }
@@ -128,6 +144,7 @@ public abstract class StatementTester {
     }
 
     public StatementTester forStmt(String name, Expression start, Expression end) {
+        name = fixCase(name);
         var stmt = nextStatement(ForStatement.class);
         assertEquals(name, stmt.getSymbol().name());
         assertEquals(start, stmt.getStart());
@@ -136,17 +153,32 @@ public abstract class StatementTester {
         return this;
     }
 
+    public StatementTester forNext(String name, Expression start, Expression end) {
+        var stmt = nextStatement(ForNextStatement.class);
+        assertEquals(fixCase(name), stmt.getSymbol().name());
+        assertEquals(start, stmt.getStart());
+        assertEquals(end, stmt.getEnd());
+        assertEquals(constant(1), stmt.getStep());
+        return new StatementBlockTester(this, stmt);
+    }
+
     public StatementTester gosub(int lineNumber) {
+        return gosub(lineNumberLabel(lineNumber));
+    }
+    public StatementTester gosub(String label) {
         var stmt = nextStatement(GotoGosubStatement.class);
         assertEquals("gosub", stmt.getOp());
-        assertEquals(lineNumberLabel(lineNumber), stmt.getId());
+        assertEquals(fixCase(label), stmt.getId());
         return this;
     }
 
     public StatementTester gotoStmt(int lineNumber) {
+        return gotoStmt(lineNumberLabel(lineNumber));
+    }
+    public StatementTester gotoStmt(String label) {
         var stmt = nextStatement(GotoGosubStatement.class);
         assertEquals("goto", stmt.getOp());
-        assertEquals(lineNumberLabel(lineNumber), stmt.getId());
+        assertEquals(fixCase(label), stmt.getId());
         return this;
     }
 
@@ -165,15 +197,32 @@ public abstract class StatementTester {
         throw new RuntimeException("not an if statement");
     }
 
+    public StatementTester doLoop(DoLoopStatement.Operation op, Expression expr) {
+        var stmt = nextStatement(DoLoopStatement.class);
+        assertEquals(expr, stmt.getExpr());
+        assertEquals(op, stmt.getOp());
+        return new StatementBlockTester(this, stmt);
+    }
+    public StatementTester endBlock() {
+        throw new RuntimeException("not a do...loop statement");
+    }
+
+    public StatementTester exitStmt(String op) {
+        var stmt = nextStatement(ExitStatement.class);
+        assertEquals(op, stmt.getOp());
+        return this;
+    }
+
     public StatementTester nextStmt(String name) {
+        name = fixCase(name);
         var stmt = nextStatement(NextStatement.class);
         assertEquals(name, stmt.getSymbol().name());
         return this;
     }
 
-    public StatementTester poke(Expression addr, Expression value) {
+    public StatementTester poke(String op, Expression addr, Expression value) {
         var stmt = nextStatement(PokeStatement.class);
-        assertEquals("poke", stmt.getOp());
+        assertEquals(op, stmt.getOp());
         assertEquals(addr, stmt.getA());
         assertEquals(value, stmt.getB());
         return this;
@@ -184,15 +233,32 @@ public abstract class StatementTester {
         return this;
     }
 
-    public StatementTester returnStmt() {
-        nextStatement(ReturnStatement.class);
+    public StatementTester returnStmt(Expression expr) {
+        var stmt = nextStatement(ReturnStatement.class);
+        if (expr == null) {
+            if (stmt.getExpr() != null) {
+                throw new RuntimeException(
+                    "expecting no return value: " + stmt);
+            }
+        }
+        else {
+            if (!expr.equals(stmt.getExpr())) {
+                throw new RuntimeException(
+                    "return expression does not match: " + stmt);
+            }
+        }
         return this;
     }
 
     public static class ProgramTester extends StatementTester {
         private Program program;
 
-        public ProgramTester(Program program) {
+        public ProgramTester(
+            Program program,
+            Function<String,String> caseStrategy,
+            Function<String,String> arrayNameStrategy
+        ) {
+            super(caseStrategy, arrayNameStrategy);
             this.program = program;
         }
         @Override
@@ -211,9 +277,10 @@ public abstract class StatementTester {
         private StatementBlock nextBlock;
 
         public IfStatementTester(StatementTester parent, StatementBlock block, StatementBlock nextBlock) {
+            super(parent.caseStrategy, parent.arrayNameStrategy);
             this.parent = parent;
             this.block = block;
-            this.nextBlock = block;
+            this.nextBlock = nextBlock;
         }
 
         @Override
@@ -236,5 +303,30 @@ public abstract class StatementTester {
             atEnd();
             return parent;
         }
-    };
+    }
+
+    public static class StatementBlockTester extends StatementTester {
+        private StatementTester parent;
+        private StatementBlock block;
+
+        public StatementBlockTester(StatementTester parent, StatementBlock block) {
+            super(parent.caseStrategy, parent.arrayNameStrategy);
+            this.parent = parent;
+            this.block = block;
+        }
+
+        @Override
+        public Optional<Symbol> findSymbol(String name) {
+            return parent.findSymbol(name);
+        }
+        @Override
+        public List<Statement> getStatements() {
+            return block.getStatements();
+        }
+
+        @Override
+        public StatementTester endBlock() {
+            return parent;
+        }
+    }
 }

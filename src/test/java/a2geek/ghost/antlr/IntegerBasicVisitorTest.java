@@ -1,14 +1,24 @@
 package a2geek.ghost.antlr;
 
 import a2geek.ghost.model.DataType;
+import a2geek.ghost.model.ModelBuilder;
 import a2geek.ghost.model.Scope;
+import a2geek.ghost.model.scope.Program;
+import org.antlr.v4.runtime.CharStreams;
 import org.junit.jupiter.api.Test;
 
 import static a2geek.ghost.antlr.ExpressionBuilder.*;
-import static a2geek.ghost.antlr.StatementTester.expect;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class IntegerBasicVisitorTest {
+    public static StatementTester.ProgramTester expect(String source) {
+        ModelBuilder model = new ModelBuilder(String::toUpperCase);
+        Program program = ParseUtil.integerToModel(CharStreams.fromString(source), model);
+        System.out.println(program);
+        return new StatementTester.ProgramTester(program,
+            String::toUpperCase, s -> String.format("%s()", s));
+    }
+
     @Test
     public void testCallStatement() {
         expect("10 CALL 0x300")
@@ -245,7 +255,7 @@ public class IntegerBasicVisitorTest {
     public void testPoke() {
         expect("10 POKE 0x300,1")
             .lineNumber(10)
-            .poke(constant(0x300),constant(1))
+            .poke("poke", constant(0x300),constant(1))
             .atEnd();
     }
 
@@ -300,7 +310,7 @@ public class IntegerBasicVisitorTest {
     public void testReturn() {
         expect("10 RETURN")
             .lineNumber(10)
-            .returnStmt()
+            .returnStmt(null)
             .atEnd();
     }
 
