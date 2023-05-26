@@ -469,6 +469,11 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             }
         }
 
+        // FIXME
+        if (params.size() > 1) {
+            throw new RuntimeException("only single dimension arrays supported at this time: " + ctx.getText());
+        }
+        model.checkArrayBounds(existing.get(), params.get(0), ctx.getStart().getLine());
         return new VariableReference(existing.get(), params);
     }
 

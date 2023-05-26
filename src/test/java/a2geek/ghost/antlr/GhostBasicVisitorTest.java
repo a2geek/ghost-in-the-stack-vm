@@ -31,6 +31,19 @@ public class GhostBasicVisitorTest {
     }
 
     @Test
+    public void testArrayReference() {
+        expect("dim a(10) as integer : a(5) = a(4) + 3")
+            .hasArrayReference("a", DataType.INTEGER, Scope.Type.GLOBAL, 1)
+            .dimStmt("a", constant(10))
+            .skipIfStmt()
+            .skipIfStmt()   // because we don't really optimize them A(5) should be sufficient but we check A(4) as well
+            .arrayAssignment("a", constant(5),
+                    binary("+", arrayReference("a", DataType.INTEGER, Scope.Type.GLOBAL, constant(4)),
+                            constant(3)))
+            .atEnd();
+    }
+
+    @Test
     public void testAssignment() {
         expect("a = 5")
             .hasSymbol("a", DataType.INTEGER, Scope.Type.GLOBAL)

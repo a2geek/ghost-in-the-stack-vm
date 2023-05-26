@@ -1,7 +1,6 @@
 Capturing ideas
 ===============
 
-Add array bounds checking into Basic.
 Optionally disable array bounds checking.
 Secondary model to handle array pointer arithmetic? This could also rewrite loop structures to make code generation simpler.
 Validate memory footprint for variable allocation in some manner
@@ -12,7 +11,7 @@ Need to figure out how to handle processor status register in CPU interactions; 
 Review generated code and look for alternates with new opcodes.
 Add ELSEIF to IF statement.
 Revisit the single line IF -- see what appears to be more standard (dislike Integer Basic variant).
-Unit tests?
+Unit tests?  Integer BASIC(done)  BASIC(done)  optimizations(done)  code generation?
 Interpreter for use in tests.
 Structure assembly project; it's gonna get messier.
 ProDOS commands (OPEN, READ, WRITE, CLOSE). Is this SUB and/or FUNCTION?
