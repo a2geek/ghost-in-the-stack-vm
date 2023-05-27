@@ -63,6 +63,11 @@ public class CompileCommand implements Callable<Integer> {
             description = "replace '<CONTROL-?>' with the actual control character")
     private boolean fixControlChars;
 
+    @Option(names = { "--bounds-checking" }, negatable = true, defaultValue = "true",
+            fallbackValue = "true", showDefaultValue = Visibility.ALWAYS,
+            description = "perform bounds checking on arrays")
+    private boolean boundsChecking;
+
     @Option(names = { "-l", "--listing" }, description = "create listing file")
     private Optional<String> programListing;
 
@@ -103,6 +108,7 @@ public class CompileCommand implements Callable<Integer> {
             model.setControlCharsFn(CompileCommand::convertControlCharacterMarkers);
         }
         model.setTrace(traceFlag);
+        model.setBoundsCheck(boundsChecking);
         Program program = switch (language) {
             case INTEGER_BASIC -> ParseUtil.integerToModel(stream, model);
             case BASIC -> ParseUtil.basicToModel(stream, model);

@@ -26,6 +26,7 @@ public class ModelBuilder {
     private Stack<StatementBlock> statementBlock = new Stack<>();
     private Set<String> librariesIncluded = new HashSet<>();
     private boolean trace = false;
+    private boolean boundsCheck = true;
     private boolean includeLibraries = true;
     /** Traditional FOR/NEXT statement frame. */
     private Map<Symbol, ForFrame> forFrames = new HashMap<>();
@@ -37,6 +38,12 @@ public class ModelBuilder {
         Program program = new Program(caseStrategy);
         this.scope.push(program);
         this.statementBlock.push(program);
+    }
+    private ModelBuilder(ModelBuilder parent) {
+        this(parent.caseStrategy);
+        this.trace = parent.trace;
+        this.boundsCheck = parent.boundsCheck;
+        this.includeLibraries = parent.includeLibraries;
     }
 
     public Program getProgram() {
@@ -61,6 +68,9 @@ public class ModelBuilder {
 
     public void setTrace(boolean trace) {
         this.trace = trace;
+    }
+    public void setBoundsCheck(boolean boundsCheck) {
+        this.boundsCheck = boundsCheck;
     }
     public void setIncludeLibraries(boolean includeLibraries) {
         this.includeLibraries = includeLibraries;
@@ -148,7 +158,7 @@ public class ModelBuilder {
             if (inputStream == null) {
                 throw new RuntimeException("unknown library: " + libname);
             }
-            ModelBuilder libraryModel = new ModelBuilder(this.caseStrategy);
+            ModelBuilder libraryModel = new ModelBuilder(this);
             libraryModel.setIncludeLibraries(false);
             Program library = ParseUtil.basicToModel(CharStreams.fromStream(inputStream), libraryModel);
             // at this time a library is simply a collection of subroutines and functions.
@@ -336,6 +346,9 @@ public class ModelBuilder {
     }
 
     public void checkArrayBounds(Symbol symbol, Expression index, int linenum) {
+        if (!boundsCheck) {
+            return;
+        }
         // IF index > ubound(array) THEN
         //    PRINT "Array index out of bounds ";symbol;" at line "; lineno
         //    END

@@ -11,6 +11,10 @@ public class StatementContext {
         this.index = index;
     }
 
+    public int getIndex() {
+        return index;
+    }
+
     public Statement currentStatement() {
         return block.getStatements().get(index);
     }
