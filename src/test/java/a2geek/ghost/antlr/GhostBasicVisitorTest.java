@@ -6,17 +6,20 @@ import a2geek.ghost.model.Scope;
 import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.statement.DoLoopStatement;
 import org.antlr.v4.runtime.CharStreams;
+import org.javatuples.Pair;
 import org.junit.jupiter.api.Test;
+
+import java.util.Arrays;
 
 import static a2geek.ghost.antlr.ExpressionBuilder.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class GhostBasicVisitorTest {
-    public static StatementTester.ProgramTester expect(String source) {
+    public static StatementTester.ScopeTester expect(String source) {
         ModelBuilder model = new ModelBuilder(String::toUpperCase);
         Program program = ParseUtil.basicToModel(CharStreams.fromString(source), model);
         System.out.println(program);
-        return new StatementTester.ProgramTester(program,
+        return new StatementTester.ScopeTester(program,
             String::toUpperCase, s -> s);
     }
 
@@ -88,7 +91,7 @@ public class GhostBasicVisitorTest {
     @Test
     public void testGr() {
         expect("gr")
-            .callSub("gr")
+            .callLibrarySub("gr")
             .atEnd();
     }
 
@@ -179,28 +182,28 @@ public class GhostBasicVisitorTest {
     @Test
     public void testColor() {
         expect("color=5")
-            .callSub("color", constant(5))
+            .callLibrarySub("color", constant(5))
             .atEnd();
     }
 
     @Test
     public void testPlot() {
         expect("plot 5,6")
-            .callSub("plot", constant(5), constant(6))
+            .callLibrarySub("plot", constant(5), constant(6))
             .atEnd();
     }
 
     @Test
     public void testVlin() {
         expect("vlin 1,2 at 3")
-            .callSub("vlin", constant(1), constant(2), constant(3))
+            .callLibrarySub("vlin", constant(1), constant(2), constant(3))
             .atEnd();
     }
 
     @Test
     public void testHlin() {
         expect("hlin 1,2 at 3")
-            .callSub("hlin", constant(1), constant(2), constant(3))
+            .callLibrarySub("hlin", constant(1), constant(2), constant(3))
             .atEnd();
     }
 
@@ -213,16 +216,16 @@ public class GhostBasicVisitorTest {
     @Test
     public void testHome() {
         expect("home")
-            .callSub("home")
+            .callLibrarySub("home")
             .atEnd();
     }
 
     @Test
     public void testPrint() {
         expect("print 5, \"HELLO\";")
-            .callSub("integer", constant(5))
-            .callSub("comma")
-            .callSub("string", constant("HELLO"))
+            .callLibrarySub("integer", constant(5))
+            .callLibrarySub("comma")
+            .callLibrarySub("string", constant("HELLO"))
             .atEnd();
     }
 
@@ -266,21 +269,66 @@ public class GhostBasicVisitorTest {
     @Test
     public void testText() {
         expect("text")
-            .callSub("text")
+            .callLibrarySub("text")
             .atEnd();
     }
 
     @Test
     public void testVtab() {
         expect("vtab 5")
-            .callSub("vtab", constant(5))
+            .callLibrarySub("vtab", constant(5))
             .atEnd();
     }
 
     @Test
     public void testHtab() {
         expect("htab 5")
-            .callSub("htab", constant(5))
+            .callLibrarySub("htab", constant(5))
+            .atEnd();
+    }
+
+    @Test
+    public void testSubDeclaration() {
+        var expectedParameters = Arrays.asList(
+            // These are in reverse order
+            Pair.with("b", DataType.INTEGER),
+            Pair.with("a", DataType.INTEGER)
+        );
+        expect("""
+                sub doSomething(a as integer, b as integer)
+                    a = 1
+                end sub
+                
+                doSomething(1,2)
+                """)
+            .subScope("doSomething", expectedParameters)
+                .assignment("a", constant(1))
+            .endScope()
+            .callSub("doSomething", constant(1), constant(2))
+            .atEnd();
+    }
+
+    @Test
+    public void testFunctionDeclaration() {
+        var expectedParameters = Arrays.asList(
+            // These are in reverse order
+            Pair.with("b", DataType.INTEGER),
+            Pair.with("a", DataType.INTEGER)
+        );
+        expect("""
+                function addThings(a as integer, b as integer)
+                    return a + b
+                end function
+                
+                c = addThings(1,2)
+                """)
+            .functionScope("addThings", expectedParameters, DataType.INTEGER)
+                .returnStmt(binary("+",
+                    identifier("A", DataType.INTEGER, Scope.Type.PARAMETER),
+                    identifier("B", DataType.INTEGER, Scope.Type.PARAMETER)))
+            .endScope()
+            .hasSymbol("c", DataType.INTEGER, Scope.Type.GLOBAL)
+            // TODO function more difficult to test since we need to find the scope
             .atEnd();
     }
 }

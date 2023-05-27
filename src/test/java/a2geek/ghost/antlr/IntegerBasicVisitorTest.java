@@ -11,11 +11,11 @@ import static a2geek.ghost.antlr.ExpressionBuilder.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class IntegerBasicVisitorTest {
-    public static StatementTester.ProgramTester expect(String source) {
+    public static StatementTester.ScopeTester expect(String source) {
         ModelBuilder model = new ModelBuilder(String::toUpperCase);
         Program program = ParseUtil.integerToModel(CharStreams.fromString(source), model);
         System.out.println(program);
-        return new StatementTester.ProgramTester(program,
+        return new StatementTester.ScopeTester(program,
             String::toUpperCase, s -> String.format("%s()", s));
     }
 
@@ -39,7 +39,7 @@ public class IntegerBasicVisitorTest {
     public void testColor() {
         expect("10 COLOR= 5")
             .lineNumber(10)
-            .callSub("color", constant(5))
+            .callLibrarySub("color", constant(5))
             .atEnd();
     }
 
@@ -105,7 +105,7 @@ public class IntegerBasicVisitorTest {
     public void testGr() {
         expect("10 GR")
             .lineNumber(10)
-            .callSub("gr")
+            .callLibrarySub("gr")
             .atEnd();
     }
 
@@ -121,7 +121,7 @@ public class IntegerBasicVisitorTest {
     public void testHlin() {
         expect("10 HLIN 5,25 AT 10")
             .lineNumber(10)
-            .callSub("hlin", constant(5), constant(25), constant(10))
+            .callLibrarySub("hlin", constant(5), constant(25), constant(10))
             .atEnd();
     }
 
@@ -134,8 +134,8 @@ public class IntegerBasicVisitorTest {
             .ifStmt(binary("=", aRef, constant(1)))
                 .gotoStmt(50)
             .endIf()
-            .callSub("string", constant("OUTSIDE OF IF"))
-            .callSub("newline")
+            .callLibrarySub("string", constant("OUTSIDE OF IF"))
+            .callLibrarySub("newline")
             .atEnd();
     }
 
@@ -146,11 +146,11 @@ public class IntegerBasicVisitorTest {
             .hasSymbol(aRef)
             .lineNumber(10)
             .ifStmt(binary("=", aRef, constant(1)))
-                .callSub("string", constant("IN IF"))
-                .callSub("newline")
+                .callLibrarySub("string", constant("IN IF"))
+                .callLibrarySub("newline")
             .endIf()
-            .callSub("string", constant("OUTSIDE OF IF"))
-            .callSub("newline")
+            .callLibrarySub("string", constant("OUTSIDE OF IF"))
+            .callLibrarySub("newline")
             .atEnd();
     }
 
@@ -158,7 +158,7 @@ public class IntegerBasicVisitorTest {
     public void testInnum() {
         expect("10 IN# 0")
             .lineNumber(10)
-            .callSub("innum", constant(0))
+            .callLibrarySub("innum", constant(0))
             .atEnd();
     }
 
@@ -247,7 +247,7 @@ public class IntegerBasicVisitorTest {
     public void testPlot() {
         expect("10 PLOT 1,1")
             .lineNumber(10)
-            .callSub("plot", constant(1), constant(1))
+            .callLibrarySub("plot", constant(1), constant(1))
             .atEnd();
     }
 
@@ -271,7 +271,7 @@ public class IntegerBasicVisitorTest {
     public void testPrnum() {
         expect("10 PR#3")
             .lineNumber(10)
-            .callSub("prnum", constant(3))
+            .callLibrarySub("prnum", constant(3))
             .atEnd();
     }
 
@@ -280,11 +280,11 @@ public class IntegerBasicVisitorTest {
         expect("10 PRINT \"X=\",X; : PRINT \"...\"")
             .hasSymbol("X", DataType.INTEGER, Scope.Type.GLOBAL)
             .lineNumber(10)
-            .callSub("string", constant("X="))
-            .callSub("comma")
-            .callSub("integer", identifier("X", DataType.INTEGER, Scope.Type.GLOBAL))
-            .callSub("string", constant("..."))
-            .callSub("newline")
+            .callLibrarySub("string", constant("X="))
+            .callLibrarySub("comma")
+            .callLibrarySub("integer", identifier("X", DataType.INTEGER, Scope.Type.GLOBAL))
+            .callLibrarySub("string", constant("..."))
+            .callLibrarySub("newline")
             .atEnd();
     }
 
@@ -327,7 +327,7 @@ public class IntegerBasicVisitorTest {
     public void testTab() {
         expect("10 TAB 15")
             .lineNumber(10)
-            .callSub("htab", constant(15))
+            .callLibrarySub("htab", constant(15))
             .atEnd();
     }
 
@@ -343,7 +343,7 @@ public class IntegerBasicVisitorTest {
     public void testText() {
         expect("10 TEXT")
             .lineNumber(10)
-            .callSub("text")
+            .callLibrarySub("text")
             .atEnd();
     }
 
@@ -351,7 +351,7 @@ public class IntegerBasicVisitorTest {
     public void testVlin() {
         expect("10 VLIN 1,2 AT 3")
             .lineNumber(10)
-            .callSub("vlin", constant(1), constant(2), constant(3))
+            .callLibrarySub("vlin", constant(1), constant(2), constant(3))
             .atEnd();
     }
 
@@ -359,7 +359,7 @@ public class IntegerBasicVisitorTest {
     public void testVtab() {
         expect("10 VTAB 5")
             .lineNumber(10)
-            .callSub("vtab", constant(5))
+            .callLibrarySub("vtab", constant(5))
             .atEnd();
     }
 }

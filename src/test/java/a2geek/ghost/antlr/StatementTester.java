@@ -2,8 +2,9 @@ package a2geek.ghost.antlr;
 
 import a2geek.ghost.model.*;
 import a2geek.ghost.model.expression.VariableReference;
-import a2geek.ghost.model.scope.Program;
+import a2geek.ghost.model.scope.Subroutine;
 import a2geek.ghost.model.statement.*;
+import org.javatuples.Pair;
 
 import java.util.List;
 import java.util.Optional;
@@ -27,6 +28,7 @@ public abstract class StatementTester {
 
     abstract Optional<Symbol> findSymbol(String name);
     abstract List<Statement> getStatements();
+    abstract Optional<Scope> findScope(String name);
 
     public String fixCase(String value) {
         return caseStrategy.apply(value);
@@ -115,16 +117,26 @@ public abstract class StatementTester {
         return this;
     }
 
-    public StatementTester callSub(String name, Expression... exprs) {
+    public StatementTester callLibrarySub(String name, Expression... params) {
         name = fixCase(name);
         var descriptor = CallSubroutine.getDescriptor(name);
         assertTrue(descriptor.isPresent(), "subroutine not found: " + name);
         var stmt = nextStatement(CallSubroutine.class);
         var fullName = descriptor.get().fullName().toUpperCase();
         assertEquals(fullName, stmt.getName());
-        assertEquals(descriptor.get().parameterTypes().length, exprs.length);
-        for (int i=0; i<exprs.length; i++) {
-            assertEquals(exprs[i], stmt.getParameters().get(i));
+        assertEquals(descriptor.get().parameterTypes().length, params.length);
+        for (int i=0; i<params.length; i++) {
+            assertEquals(params[i], stmt.getParameters().get(i));
+        }
+        return this;
+    }
+
+    public StatementTester callSub(String name, Expression... params) {
+        var stmt = nextStatement(CallSubroutine.class);
+        assertEquals(fixCase(name), stmt.getName());
+        assertEquals(stmt.getParameters().size(), params.length);
+        for (int i=0; i<params.length; i++) {
+            assertEquals(params[i], stmt.getParameters().get(i));
         }
         return this;
     }
@@ -249,24 +261,82 @@ public abstract class StatementTester {
         return this;
     }
 
-    public static class ProgramTester extends StatementTester {
-        private Program program;
+    /** Validate that all parameters are in the correct order and have correct name and type. */
+    void checkParameters(Scope scope, List<Pair<String,DataType>> parameters) {
+        List<Symbol> symbols = scope.findByType(Scope.Type.PARAMETER);
+        assertEquals(parameters.size(), symbols.size());
+        for (int i=0; i<parameters.size(); i++) {
+            Symbol symbol = symbols.get(i);
+            Pair<String,DataType> parameter = parameters.get(i);
+            assertEquals(fixCase(parameter.getValue0()), fixCase(symbol.name()));
+            assertEquals(parameter.getValue1(), symbol.dataType());
+        }
+    }
 
-        public ProgramTester(
-            Program program,
+    public StatementTester subScope(String name, List<Pair<String, DataType>> parameters) {
+        var scope = findScope(fixCase(name));
+        if (scope.isPresent()) {
+            if (scope.get() instanceof Subroutine sub) {
+                checkParameters(sub, parameters);
+                return new ScopeTester(this, sub);
+            }
+            else {
+                throw new RuntimeException("scope expected to be a subroutine: " + name);
+            }
+        }
+        throw new RuntimeException("scope not found: " + name);
+    }
+    public StatementTester functionScope(String name, List<Pair<String,DataType>> parmeters,
+                                         DataType returnType) {
+        var scope = findScope(fixCase(name));
+        if (scope.isPresent()) {
+            if (scope.get() instanceof a2geek.ghost.model.scope.Function function) {
+                assertEquals(returnType, function.getType());
+                checkParameters(function, parmeters);
+                return new ScopeTester(this, function);
+            }
+            else {
+                throw new RuntimeException("scope expected to be a function: " + name);
+            }
+        }
+        throw new RuntimeException("scope not found: " + name);
+    }
+    public StatementTester endScope() {
+        throw new RuntimeException("not in a scope");
+    }
+
+    public static class ScopeTester extends StatementTester {
+        private StatementTester parent;
+        private Scope scope;
+
+        public ScopeTester(StatementTester parent, Scope scope) {
+            super(parent.caseStrategy, parent.arrayNameStrategy);
+            this.parent = parent;
+            this.scope = scope;
+        }
+        public ScopeTester(
+            Scope scope,
             Function<String,String> caseStrategy,
             Function<String,String> arrayNameStrategy
         ) {
             super(caseStrategy, arrayNameStrategy);
-            this.program = program;
+            this.scope = scope;
         }
         @Override
         public Optional<Symbol> findSymbol(String name) {
-            return program.findSymbol(name);
+            return scope.findSymbol(name);
         }
         @Override
         public List<Statement> getStatements() {
-            return program.getStatements();
+            return scope.getStatements();
+        }
+        @Override
+        Optional<Scope> findScope(String name) {
+            return scope.findScope(name);
+        }
+        @Override
+        public StatementTester endScope() {
+            return parent;
         }
     }
 
@@ -290,6 +360,11 @@ public abstract class StatementTester {
         public List<Statement> getStatements() {
             return block.getStatements();
         }
+        @Override
+        Optional<Scope> findScope(String name) {
+            return Optional.empty();
+        }
+
         @Override
         public StatementTester elseStmt() {
             if (nextBlock == null) {
@@ -321,6 +396,10 @@ public abstract class StatementTester {
         @Override
         public List<Statement> getStatements() {
             return block.getStatements();
+        }
+        @Override
+        Optional<Scope> findScope(String name) {
+            return Optional.empty();
         }
 
         @Override
