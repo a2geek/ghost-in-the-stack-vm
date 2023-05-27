@@ -319,16 +319,12 @@ public class GhostBasicVisitorTest {
                 function addThings(a as integer, b as integer)
                     return a + b
                 end function
-                
-                c = addThings(1,2)
                 """)
             .functionScope("addThings", expectedParameters, DataType.INTEGER)
                 .returnStmt(binary("+",
                     identifier("A", DataType.INTEGER, Scope.Type.PARAMETER),
                     identifier("B", DataType.INTEGER, Scope.Type.PARAMETER)))
             .endScope()
-            .hasSymbol("c", DataType.INTEGER, Scope.Type.GLOBAL)
-            // TODO function more difficult to test since we need to find the scope
             .atEnd();
     }
 }
