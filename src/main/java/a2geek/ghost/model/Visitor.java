@@ -119,6 +119,11 @@ public abstract class Visitor {
         for (int i=0; i<block.getStatements().size(); i++) {
             StatementContext context = new StatementContext(block, i);
             dispatch(context);
+            // If we insert or delete a row, we should reprocess it
+            while (context.getIndex() != i && i < block.getStatements().size()) {
+                context = new StatementContext(block, i);
+                dispatch(context);
+            }
         }
     }
 
