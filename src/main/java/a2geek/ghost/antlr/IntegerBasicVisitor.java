@@ -18,6 +18,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 
 public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     private ModelBuilder model;
@@ -190,7 +191,28 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     @Override
     public Expression visitInputStatement(IntegerParser.InputStatementContext ctx) {
-        throw new RuntimeException("input statement not implemented yet");
+        if (ctx.prompt != null) {
+            String value = ctx.prompt.getText().replaceAll("^\"|\"$", "");
+            model.callLibrarySubroutine("string", new StringConstant(model.fixControlChars(value)));
+        }
+        else {
+            model.callLibrarySubroutine("string", new StringConstant("?"));
+        }
+        for (var avar : ctx.var()) {
+            var expr = visit(avar);
+            if (expr instanceof VariableReference varRef) {
+                if (varRef.getType() == DataType.INTEGER) {
+                    model.assignStmt(varRef, model.callFunction("integer", Collections.emptyList()));
+                }
+                else {
+                    throw new RuntimeException("string input statement not implemented yet");
+                }
+            }
+            else {
+                throw new RuntimeException("unknown variable type: " + avar);
+            }
+        }
+        return null;
     }
 
     @Override

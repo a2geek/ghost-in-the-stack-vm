@@ -8,6 +8,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class FunctionExpression implements Expression {
+    private static final String INPUT_LIBRARY = "input";
     private static final String LORES_LIBRARY = "lores";
     private static final String MISC_LIBRARY = "misc";
     private static final String MATH_LIBRARY = "math";
@@ -22,7 +23,8 @@ public class FunctionExpression implements Expression {
             new Descriptor("abs", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER),
             new Descriptor("sgn", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER),
             new Descriptor("pdl", MISC_LIBRARY, DataType.INTEGER, DataType.INTEGER),
-            new Descriptor("ipow", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER, DataType.INTEGER)
+            new Descriptor("ipow", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER, DataType.INTEGER),
+            new Descriptor("integer", INPUT_LIBRARY, DataType.INTEGER)
         ).forEach(d -> {
             FUNCS.put(d.name(), d);
         });
