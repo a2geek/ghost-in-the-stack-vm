@@ -85,12 +85,14 @@ callworkptr:
 
 compareAB:
     lda stackB+1,x
-    eor stackB+1,x
+    eor stackA+1,x
     bmi @diffsigns
     lda stackB+1,x
     cmp stackA+1,x
+    bne @diffvalue
     lda stackB,x
     cmp stackA,x
+@diffvalue:
     rts
 @diffsigns:
     lda stackA+1,x
@@ -417,7 +419,7 @@ _istorew:
 ; LT: (B) (A) => (B<A)  [signed]
 _lt:
     jsr compareAB
-    bpl setBto0
+    bcs setBto0
 setBto1:
     lda #1
     ldy #0
@@ -426,9 +428,9 @@ setBto1:
 ; LE: (B) (A) => (B<=A) [signed]
 _le:
     jsr compareAB
+    bcc setBto1
     beq setBto1
-    bmi setBto1
-    bpl setBto0
+    bcs setBto0
 
 ; EQ: (B) (A) => (B=A)
 _eq:

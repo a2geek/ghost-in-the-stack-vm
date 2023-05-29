@@ -4,7 +4,7 @@ home
 ' cannot use a constant since those get optimized away!
 dim a as integer, b as integer
 a = 1
-b = 2
+b = 200
 
 print "A=";a
 print "B=";b
@@ -32,5 +32,6 @@ print "OR ", (f or f),  (f or t),  (t or f),  (t or t)
 print "AND", (f and f), (f and t), (t and f), (t and t)
 print "XOR", (f xor f), (f xor t), (t xor f), (t xor t)
 print
+print "NOT", not f, not t
 
 end
