@@ -135,4 +135,4 @@ STR : '"' ~["]* '"' ;
 EOL : [\r]? [\n] ;
 WS : [ \t]+ -> skip ;
 
-COMMENT : '\'' ~[\n]* [\n] -> skip ;
+COMMENT : '\'' ~[\n]* -> skip ;
