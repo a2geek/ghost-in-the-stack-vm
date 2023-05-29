@@ -26,5 +26,6 @@ print "<<  ", a << b, b << a
 print ">>  ", a >> b, b >> a
 print
 print "-NEG", -a, -b
+print "NOT ", not a, not b
 
 end

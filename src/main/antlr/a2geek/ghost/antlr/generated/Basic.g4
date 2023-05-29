@@ -117,7 +117,7 @@ expr
     | a=expr op=( '<' | '<=' | '>' | '>=' | '=' | '<>' ) b=expr         # binaryExpr
     | a=expr op=( '<<' | '>>' ) b=expr                                  # binaryExpr
     | a=expr op=( 'or' | 'and' | 'xor' ) b=expr                         # binaryExpr
-    | op='-' a=expr                                                     # unaryExpr
+    | op=('-' | 'not') a=expr                                           # unaryExpr
     | id=extendedID                                                     # extendedIdExpr
     | a=INT                                                             # intConstant
     | b=('true' | 'false')                                              # boolConstant

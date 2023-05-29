@@ -580,6 +580,15 @@ public class CodeGenerationVisitor extends Visitor {
             dispatch(expression.getExpr());
             code.emit(Opcode.NEG);
         }
+        else if ("not".equals(expression.getOp())) {
+            dispatch(expression.getExpr());
+            switch (expression.getType()) {
+                case INTEGER -> code.emit(Opcode.LOADC, 0xffff);
+                case BOOLEAN -> code.emit(Opcode.LOADC, 1);
+                default -> throw new RuntimeException("cannot only perform a NOT on a Boolean or Integer: " + expression);
+            }
+            code.emit(Opcode.XOR);
+        }
         else {
             throw new RuntimeException("unknown unary operator: " + expression.getOp());
         }

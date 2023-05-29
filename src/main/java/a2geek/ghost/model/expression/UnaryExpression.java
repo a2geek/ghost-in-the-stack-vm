@@ -14,9 +14,9 @@ public class UnaryExpression implements Expression {
     public UnaryExpression(String op, Expression expr) {
         this.expr = expr;
         this.op = op;
-        this.type = DataType.INTEGER;
-        if (!expr.isType(type)) {
-            throw new RuntimeException("Unary operation must be of type " + type);
+        this.type = expr.getType();
+        if (!expr.isType(DataType.INTEGER, DataType.BOOLEAN)) {
+            throw new RuntimeException("Unary operation must be of type Integer or Boolean");
         }
     }
 
@@ -27,7 +27,11 @@ public class UnaryExpression implements Expression {
 
     @Override
     public Optional<Integer> asInteger() {
-        return expr.asInteger().map(i -> -i);
+        return expr.asInteger().map(i -> switch (op) {
+            case "-" -> -i;
+            case "not" -> i==0 ? 1 : 0;
+            default -> throw new RuntimeException("unknown unary operation: " + op);
+        });
     }
 
     @Override
@@ -72,6 +76,6 @@ public class UnaryExpression implements Expression {
 
     @Override
     public String toString() {
-        return String.format("- %s", expr);
+        return String.format("%s %s", op, expr);
     }
 }
