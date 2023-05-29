@@ -27,7 +27,7 @@ public class DoLoopStatement extends StatementBlock implements Statement {
     @Override
     public String toString() {
         var fmt = switch (op) {
-            case REPEAT -> "REPEAT %1$s : UNTIL %1$s";
+            case REPEAT -> "REPEAT %2$s : UNTIL %1$s";
             case WHILE -> "WHILE %1$s : %2$s : END WHILE";
             case DO_WHILE -> "DO WHILE %1$s : %2$s : LOOP";
             case DO_UNTIL -> "DO UNTIL %1$s : %2$s : LOOP";

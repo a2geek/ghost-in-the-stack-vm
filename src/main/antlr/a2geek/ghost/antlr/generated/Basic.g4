@@ -59,7 +59,7 @@ statement
     | 'repeat' (EOL|':')+
         s=statements? (EOL|':')*  // EOL is included in statements itself
       'until' a=expr                                                    # repeatLoop
-    | 'exit' n=('do' | 'for' | 'while')                                 # exitStmt
+    | 'exit' n=('do' | 'for' | 'repeat' | 'while')                      # exitStmt
     | 'color=' a=expr                                                   # colorStmt
     | 'plot' a=expr ',' b=expr                                          # plotStmt
     | 'vlin' a=expr ',' b=expr 'at' x=expr                              # vlinStmt

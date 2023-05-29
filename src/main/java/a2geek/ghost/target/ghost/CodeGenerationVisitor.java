@@ -15,6 +15,7 @@ public class CodeGenerationVisitor extends Visitor {
     private int labelNumber;
     private Stack<String> doExitLabels = new Stack<>();
     private Stack<String> forExitLabels = new Stack<>();
+    private Stack<String> repeatExitLabels = new Stack<>();
     private Stack<String> whileExitLabels = new Stack<>();
 
     public List<Instruction> getInstructions() {
@@ -221,17 +222,27 @@ public class CodeGenerationVisitor extends Visitor {
 
     @Override
     public void visit(ExitStatement statement, StatementContext context) {
-        switch (statement.getOp()) {
-            case "do" -> code.emit(Opcode.GOTO, doExitLabels.peek());
-            case "for" -> code.emit(Opcode.GOTO, forExitLabels.peek());
-            case "while" -> code.emit(Opcode.GOTO, whileExitLabels.peek());
+        var labelStack = switch (statement.getOp()) {
+            case "do" -> doExitLabels;
+            case "for" -> forExitLabels;
+            case "repeat" -> repeatExitLabels;
+            case "while" -> whileExitLabels;
             default -> throw new RuntimeException("unknown exist statement: " + statement);
+        };
+        if (labelStack.empty()) {
+            throw new RuntimeException("cannot exit " + statement.getOp() + " loop when not in one!");
         }
+        code.emit(Opcode.GOTO, labelStack.peek());
     }
 
     @Override
     public void visit(DoLoopStatement statement, StatementContext context) {
         var labels = label("LOOP", "LOOPX");
+        var labelStack = switch (statement.getOp()) {
+            case REPEAT -> repeatExitLabels;
+            case WHILE -> whileExitLabels;
+            case DO_WHILE, DO_UNTIL, LOOP_WHILE, LOOP_UNTIL -> doExitLabels;
+        };
         var testAtStart = switch (statement.getOp()) {
             case WHILE, DO_WHILE, DO_UNTIL -> true;
             case REPEAT, LOOP_WHILE, LOOP_UNTIL -> false;
@@ -241,13 +252,7 @@ public class CodeGenerationVisitor extends Visitor {
             case REPEAT, WHILE, LOOP_UNTIL, DO_WHILE -> Opcode.IFFALSE;
         };
 
-        if (statement.getOp() == DoLoopStatement.Operation.WHILE) {
-            whileExitLabels.push(labels.get(1));
-        }
-        else {
-            doExitLabels.push(labels.get(1));
-        }
-
+        labelStack.push(labels.get(1));
         code.emit(labels.get(0));
         if (testAtStart) {
             dispatch(statement.getExpr());
@@ -262,13 +267,7 @@ public class CodeGenerationVisitor extends Visitor {
             code.emit(Opcode.GOTO, labels.get(0));
         }
         code.emit(labels.get(1));
-
-        if (statement.getOp() == DoLoopStatement.Operation.WHILE) {
-            whileExitLabels.pop();
-        }
-        else {
-            doExitLabels.pop();
-        }
+        labelStack.pop();
     }
 
     @Override
