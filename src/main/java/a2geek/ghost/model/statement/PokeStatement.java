@@ -33,7 +33,7 @@ public class PokeStatement implements Statement {
     }
 
     public void setB(Expression b) {
-        b.mustBe(DataType.INTEGER);
+        b.mustBe(DataType.INTEGER, DataType.BOOLEAN);
         this.b = b;
     }
 
