@@ -136,3 +136,4 @@ EOL : [\r]? [\n] ;
 WS : [ \t]+ -> skip ;
 
 COMMENT : '\'' ~[\n]* -> skip ;
+LINE_CONTINUATION: ' ' '_' '\r'? '\n' -> skip;
