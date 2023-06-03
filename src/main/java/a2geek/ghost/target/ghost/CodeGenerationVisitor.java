@@ -133,23 +133,36 @@ public class CodeGenerationVisitor extends Visitor {
 
     @Override
     public void visit(DimStatement statement, StatementContext context) {
-        // TODO assuming element size of 2
-        // TODO assuming array size of 1
-        // Reserve N bytes on stack = (Size of Array+1) * (Element Size) + (Size of dimension) * Dimensions
-        //  for now N = (array size+1) * 2 + 2 * 1 => (array size + 2) * 2 => (array size + 2) << 1
-        dispatch(statement.getExpr());
-        code.emit(Opcode.INCR); // INCR, INCR = TOS+2
-        code.emit(Opcode.INCR);
-        code.emit(Opcode.LOADC, 1);
-        code.emit(Opcode.SHIFTL);
-        code.emit(Opcode.PUSHZ);
-        // TODO ^^ ARRAY ALLOCATED TO STACK FOR NOW! This should be configurable?
-        code.emit(Opcode.LOADSP);
-        emitStore(statement.getSymbol());
-        // Need to set array size for dimension 0
-        dispatch(statement.getExpr());
-        emitLoad(statement.getSymbol());
-        code.emit(Opcode.ISTOREW);
+        if (statement.hasDefaultValues()) {
+            List<Integer> integerArray = statement.getDefaultValues().stream()
+                .map(Expression::asInteger)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .toList();
+            var label = label("INTARYCONST");
+            String actual = code.emitConstant(label.get(0), integerArray);
+            code.emit(Opcode.LOADA, actual);
+            emitStore(statement.getSymbol());
+        }
+        else {
+            // TODO assuming element size of 2
+            // TODO assuming array size of 1
+            // Reserve N bytes on stack = (Size of Array+1) * (Element Size) + (Size of dimension) * Dimensions
+            //  for now N = (array size+1) * 2 + 2 * 1 => (array size + 2) * 2 => (array size + 2) << 1
+            dispatch(statement.getExpr());
+            code.emit(Opcode.INCR); // INCR, INCR = TOS+2
+            code.emit(Opcode.INCR);
+            code.emit(Opcode.LOADC, 1);
+            code.emit(Opcode.SHIFTL);
+            code.emit(Opcode.PUSHZ);
+            // TODO ^^ ARRAY ALLOCATED TO STACK FOR NOW! This should be configurable?
+            code.emit(Opcode.LOADSP);
+            emitStore(statement.getSymbol());
+            // Need to set array size for dimension 0
+            dispatch(statement.getExpr());
+            emitLoad(statement.getSymbol());
+            code.emit(Opcode.ISTOREW);
+        }
     }
 
     public void assignment(VariableReference var, Expression expr) {

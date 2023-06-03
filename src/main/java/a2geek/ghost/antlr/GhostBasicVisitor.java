@@ -9,7 +9,6 @@ import a2geek.ghost.model.statement.DoLoopStatement;
 import a2geek.ghost.model.statement.ForNextStatement;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.javatuples.Pair;
-import org.javatuples.Triplet;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -308,25 +307,49 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         return null;
     }
 
-    List<Triplet<String,DataType,List<Expression>>> buildDeclarationList(List<BasicParser.IdDeclContext> params) {
-        var decls = new ArrayList<Triplet<String,DataType,List<Expression>>>();
+    List<IdDeclaration> buildDeclarationList(List<BasicParser.IdDeclContext> params) {
+        var decls = new ArrayList<IdDeclaration>();
         var names = new HashSet<>();
         if (params != null) {
             params.forEach(idDecl -> {
+                Set<IdModifier> modifiers = new HashSet<>();
+                if (idDecl.idModifier() != null) {
+                    modifiers.add(IdModifier.valueOf(idDecl.idModifier().getText().toUpperCase()));
+                }
                 String id = model.fixCase(idDecl.ID().getText());
-                DataType dt = buildDataType(idDecl.datatype());
-                List<Expression> exprs = new ArrayList<>();
-                for (var expr : idDecl.expr()) {
-                    exprs.add(visit(expr));
-                }
-                if (exprs.size() > 1) {
-                    throw new RuntimeException("only support 1 dimensional arrays at this time: " + id);
-                }
                 if (names.contains(id)) {
                     throw new RuntimeException("parameter already defined: " + id);
                 }
+                DataType dt = buildDataType(idDecl.datatype());
+                List<Expression> dimensions = new ArrayList<>();
+                for (var expr : idDecl.expr()) {
+                    dimensions.add(visit(expr));
+                }
+                if (dimensions.size() > 1) {
+                    throw new RuntimeException("only support 1 dimensional arrays at this time: " + id);
+                }
+                if (modifiers.contains(IdModifier.STATIC) && dimensions.size() > 0) {
+                    // FIXME?
+                    System.out.println("WARNING: static array size set by assignment");
+                }
+                boolean isArray = !dimensions.isEmpty() || idDecl.getText().contains("()");
+                List<Expression> defaultValues = new ArrayList<>();
+                if (idDecl.idDeclDefault() != null && idDecl.idDeclDefault().anyExpr() != null) {
+                    for (var anyExpr : idDecl.idDeclDefault().anyExpr()) {
+                        var expr = visit(anyExpr);
+                        if (isArray && !expr.isConstant()) {
+                            throw new RuntimeException("array default values currently must be constant: "
+                                + anyExpr.getText());
+                        }
+                        defaultValues.add(expr);
+                    }
+                }
+                if (isArray && modifiers.contains(IdModifier.STATIC)) {
+                    dimensions.clear();;
+                    dimensions.add(new IntegerConstant(defaultValues.size()));
+                }
                 names.add(id);
-                decls.add(Triplet.with(id,dt,exprs));
+                decls.add(new IdDeclaration(modifiers, id, dt, dimensions, defaultValues));
             });
         }
         return decls;
@@ -344,7 +367,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         List<Pair<String,DataType>> params = Collections.emptyList();
         if (ctx.paramDecl() != null) {
             params = buildDeclarationList(ctx.paramDecl().idDecl()).stream()
-                .map(Triplet::removeFrom2)
+                .map(IdDeclaration::toParameter)
                 .collect(Collectors.toList());
         }
 
@@ -359,7 +382,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         List<Pair<String,DataType>> params = Collections.emptyList();
         if (ctx.paramDecl() != null) {
             params = buildDeclarationList(ctx.paramDecl().idDecl()).stream()
-                .map(Triplet::removeFrom2)
+                .map(IdDeclaration::toParameter)
                 .collect(Collectors.toList());
         }
         DataType dt = buildDataType(ctx.datatype());
@@ -383,13 +406,29 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     @Override
     public Expression visitDimStmt(BasicParser.DimStmtContext ctx) {
         buildDeclarationList(ctx.idDecl()).forEach(decl -> {
-            if (decl.getValue2() != null && decl.getValue2().size() > 0) {
-                var symbol = model.addArrayVariable(decl.getValue0(), decl.getValue1(), decl.getValue2().size());
+            if (decl.isArray()) {
+                var symbol = model.addArrayVariable(decl.name(), decl.dataType(), decl.dimensions().size());
                 // FIXME assuming 1 dimension
-                model.addDimArray(symbol, decl.getValue2().get(0));
+                if (decl.hasDefaultValues()) {
+                    decl.defaultValues().forEach(expr -> {
+                        if (!expr.isConstant()) {
+                            throw new RuntimeException("default array values must be constant");
+                        }
+                    });
+                    model.addDimArray(symbol, new IntegerConstant(1), decl.defaultValues());
+                }
+                else {
+                    model.addDimArray(symbol, decl.dimensions().get(0), null);
+                }
             }
             else {
-                model.addVariable(decl.getValue0(), decl.getValue1());
+                var symbol = model.addVariable(decl.name(), decl.dataType());
+                if (decl.hasDefaultValues()) {
+                    if (decl.defaultValues().size() != 1) {
+                        throw new RuntimeException("can only assign one default value: " + decl.name());
+                    }
+                    model.assignStmt(new VariableReference(symbol), decl.defaultValues().get(0));
+                }
             }
         });
         return null;
@@ -523,5 +562,28 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         Expression e = visit(ctx.a);
         String op = ctx.op.getText();
         return new UnaryExpression(op, e);
+    }
+
+    enum IdModifier {
+        STATIC
+    }
+    record IdDeclaration(Set<IdModifier> modifiers,
+                         String name,
+                         DataType dataType,
+                         List<Expression> dimensions,
+                         List<Expression> defaultValues) {
+        /** Validate this is appropriate for a parameter and transform it. */
+        public Pair<String,DataType> toParameter() {
+            if (!defaultValues().isEmpty()) {
+                throw new RuntimeException("parameters cannot have default values");
+            }
+            return Pair.with(name, dataType);
+        }
+        public boolean isArray() {
+            return dimensions != null && dimensions.size() > 0;
+        }
+        public boolean hasDefaultValues() {
+            return defaultValues != null && defaultValues.size() > 0;
+        }
     }
 }

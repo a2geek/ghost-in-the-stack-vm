@@ -5,7 +5,7 @@ import java.io.ByteArrayOutputStream;
 import java.util.Map;
 import java.util.Objects;
 
-public record Instruction (String label, Opcode opcode, Directive directive, Integer arg, String string) {
+public record Instruction (String label, Opcode opcode, Directive directive, Integer arg, ConstantValue constantValue) {
     public boolean isLabelOnly() {
         return label != null && opcode == null && arg == null;
     }
@@ -13,8 +13,8 @@ public record Instruction (String label, Opcode opcode, Directive directive, Int
         if (opcode != null) {
             return opcode.argc + 1;
         }
-        else if (directive != null) {
-            return string.length() + 1;
+        else if (directive == Directive.CONSTANT) {
+            return constantValue.size();
         }
         return 0;
     }
@@ -51,12 +51,21 @@ public record Instruction (String label, Opcode opcode, Directive directive, Int
     }
     byte[] handleDirective(Map<String,Integer> addrs) {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-        switch (directive) {
+        switch (constantValue.dataType()) {
             case STRING -> {
-                for (byte ch : string.getBytes()) {
+                for (byte ch : constantValue.string().getBytes()) {
                     bytes.write(ch|0x80);
                 }
                 bytes.write(0);
+            }
+            case INTEGER -> {
+                // NOTE: Just assuming this is an array!
+                bytes.write(constantValue.integerArray().size() & 0xff);
+                bytes.write(constantValue.integerArray().size() >> 8 & 0xff);
+                for (int value : constantValue.integerArray()) {
+                    bytes.write(value & 0xff);
+                    bytes.write(value >> 8 & 0xff);
+                }
             }
             default -> {
                 throw new RuntimeException("Unsupported directive: " + directive);
@@ -78,8 +87,8 @@ public record Instruction (String label, Opcode opcode, Directive directive, Int
         else if (label != null && opcode != null && arg == null) {
             return String.format("\t%s %s", opcode, label);
         }
-        else if (label != null && directive != null && string != null) {
-            return String.format("%s:\t%s \"%s\"", label, directive, string);
+        else if (label != null && directive == Directive.CONSTANT) {
+            return String.format("%s:\t%s %s", label, directive, constantValue);
         }
         else {
             var message = String.format("Unexpected instruction: %s %s %04d", label, opcode, arg);

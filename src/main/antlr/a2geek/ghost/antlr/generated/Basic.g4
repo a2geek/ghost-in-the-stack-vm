@@ -82,7 +82,7 @@ constantDecl
     ;
 
 extendedID
-    : ID '(' ( anyExpr ( ',' anyExpr )* )? ')'                           # arrayOrFunctionRef
+    : ID '(' ( anyExpr ( ',' anyExpr )* )? ')'                          # arrayOrFunctionRef
     | ID ('.' ID)*                                                      # variableOrFunctionRef
     ;
 
@@ -91,7 +91,16 @@ paramDecl
     ;
 
 idDecl
-    : ID ( '(' expr ( ',' expr )* ')' )? ( 'as' datatype )?
+    : idModifier? ID ( '(' ( expr ( ',' expr )* )? ')' )? ( 'as' datatype )? ( '=' idDeclDefault )?
+    ;
+
+idModifier
+    : 'static'
+    ;
+
+idDeclDefault
+    : anyExpr
+    | '{' anyExpr ( ',' anyExpr )* '}'
     ;
 
 datatype

@@ -1,5 +1,7 @@
 package a2geek.ghost.target.ghost;
 
+import a2geek.ghost.model.DataType;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -35,12 +37,31 @@ public class CodeBlock {
         Objects.requireNonNull(suggestedLabel, "suggestedLabel");
         Objects.requireNonNull(string, "string");
         var existing = dataSegment.stream()
-                .filter(inst -> string.equals(inst.string()))
+                .filter(inst -> inst.directive() == Directive.CONSTANT)
+                .filter(inst -> inst.constantValue().dataType() == DataType.STRING)
+                .filter(inst -> string.equals(inst.constantValue().string()))
                 .findFirst();
         if (existing.isPresent()) {
             return existing.map(Instruction::label).get();
         }
-        Instruction inst = new Instruction(suggestedLabel, null, Directive.STRING, null, string);
+        Instruction inst = new Instruction(suggestedLabel, null, Directive.CONSTANT, null,
+            ConstantValue.with(string));
+        dataSegment.add(inst);
+        return suggestedLabel;
+    }
+    public String emitConstant(String suggestedLabel, List<Integer> integerArray) {
+        Objects.requireNonNull(suggestedLabel, "suggestedLabel");
+        Objects.requireNonNull(integerArray, "integerArray");
+        var existing = dataSegment.stream()
+            .filter(inst -> inst.directive() == Directive.CONSTANT)
+            .filter(inst -> inst.constantValue().dataType() == DataType.INTEGER)
+            .filter(inst -> integerArray.equals(inst.constantValue().integerArray()))
+            .findFirst();
+        if (existing.isPresent()) {
+            return existing.map(Instruction::label).get();
+        }
+        Instruction inst = new Instruction(suggestedLabel, null, Directive.CONSTANT, null,
+            ConstantValue.with(integerArray));
         dataSegment.add(inst);
         return suggestedLabel;
     }

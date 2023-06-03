@@ -333,8 +333,8 @@ public class ModelBuilder {
         addStatement(returnStatement);
     }
 
-    public void addDimArray(Symbol symbol, Expression size) {
-        DimStatement dimStatement = new DimStatement(symbol, size);
+    public void addDimArray(Symbol symbol, Expression size, List<Expression> defaultValues) {
+        DimStatement dimStatement = new DimStatement(symbol, size, defaultValues);
         addStatement(dimStatement);
         arrayDims.put(symbol, size);
     }

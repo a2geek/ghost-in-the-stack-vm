@@ -228,6 +228,22 @@ public abstract class Visitor {
     public void visit(DimStatement statement, StatementContext context) {
         var expr = dispatch(statement.getExpr());
         expr.ifPresent(statement::setExpr);
+        if (statement.hasDefaultValues()) {
+            boolean changed = false;
+            List<Expression> exprs = new ArrayList<>();
+            for (Expression expr2 : statement.getDefaultValues()) {
+                var newExpr = dispatch(expr2);
+                if (newExpr.isPresent()) {
+                    changed = true;
+                    exprs.add(newExpr.get());
+                } else {
+                    exprs.add(expr2);
+                }
+            }
+            if (changed) {
+                statement.setDefaultValues(exprs);
+            }
+        }
     }
 
     public void visit(PopStatement statement, StatementContext context) {
