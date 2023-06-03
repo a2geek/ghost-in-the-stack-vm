@@ -68,6 +68,12 @@ Variables may be declared with the `dim` statement:
 dim a as integer, b as boolean
 ```
 
+Arrays can also be initialized. Note that the `static` keyword is required:
+
+```basic
+dim static a() as integer = { 1, 2, 3, 4 }
+```
+
 ## Statements
 
 Generally, statements probably can be chained together with colons (':') but use separate lines if it doesn't 
