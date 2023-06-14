@@ -293,6 +293,7 @@ Any built-in functions are referenced here.
 | `rnd(iexpr)`        | Math      | Returns a random number in the range `0` to `iexpr-1`.                          |
 | `scrn(xexpr,yexpr)` | Lores     | Read color of lores graphics point at `xexpr`, `yexpr` coordinate.              |
 | `sgn(iexpr)`        | Math      | Returns 1,0,-1 if `iexpr < 0`, or `iexpr = 0`, or `iexpr > 0`.                  |
+| `ubound(arrayVar)`  | Intrinsic | Returns length of array.                                                        |
 
 Note that the library specified is lowercase in the `uses` phrase. 
 All library functions are currently prefixed by the library name.
