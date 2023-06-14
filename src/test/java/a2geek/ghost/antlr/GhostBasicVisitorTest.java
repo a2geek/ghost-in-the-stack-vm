@@ -3,6 +3,7 @@ package a2geek.ghost.antlr;
 import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.ModelBuilder;
 import a2geek.ghost.model.Scope;
+import a2geek.ghost.model.Symbol;
 import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.statement.DoLoopStatement;
 import org.antlr.v4.runtime.CharStreams;
@@ -15,8 +16,10 @@ import static a2geek.ghost.antlr.ExpressionBuilder.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class GhostBasicVisitorTest {
+    private static ModelBuilder model;
+
     public static StatementTester.ScopeTester expect(String source) {
-        ModelBuilder model = new ModelBuilder(String::toUpperCase);
+        model = new ModelBuilder(String::toUpperCase);
         Program program = ParseUtil.basicToModel(CharStreams.fromString(source), model);
         System.out.println(program);
         return new StatementTester.ScopeTester(program,
@@ -31,6 +34,21 @@ public class GhostBasicVisitorTest {
             .hasArrayReference("c", DataType.INTEGER, Scope.Type.GLOBAL, 1)
             .dimStmt("c", constant(10))
             .atEnd();
+    }
+
+
+    @Test
+    public void testUbound() {
+        var arrayRef = Symbol.builder(model.fixCase("a"), Scope.Type.GLOBAL)
+                .dataType(DataType.INTEGER)
+                .dimensions(1)
+                .build();
+        expect("dim a(10) as integer, b as integer : b = ubound(a)")
+                .hasSymbol("a", DataType.INTEGER, Scope.Type.GLOBAL)
+                .hasSymbol("b", DataType.INTEGER, Scope.Type.GLOBAL)
+                .dimStmt("a", constant(10))
+                .assignment("b", ubound(model, arrayRef))
+                .atEnd();
     }
 
     @Test

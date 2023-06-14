@@ -5,6 +5,7 @@ import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.ModelBuilder;
 import a2geek.ghost.model.Symbol;
 
+import java.util.Objects;
 import java.util.Optional;
 
 public class ArrayLengthFunction implements Expression {
@@ -37,5 +38,20 @@ public class ArrayLengthFunction implements Expression {
     @Override
     public String toString() {
         return String.format("ubound(%s)", symbol.name());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ArrayLengthFunction that = (ArrayLengthFunction) o;
+        // Intentionally skipping model
+        return Objects.equals(symbol, that.symbol);
+    }
+
+    @Override
+    public int hashCode() {
+        // Intentionally skipping model
+        return Objects.hash(symbol);
     }
 }

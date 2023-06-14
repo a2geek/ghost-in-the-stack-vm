@@ -1,9 +1,6 @@
 package a2geek.ghost.antlr;
 
-import a2geek.ghost.model.DataType;
-import a2geek.ghost.model.Expression;
-import a2geek.ghost.model.Scope;
-import a2geek.ghost.model.Symbol;
+import a2geek.ghost.model.*;
 import a2geek.ghost.model.expression.*;
 
 import java.util.Arrays;
@@ -38,5 +35,8 @@ public class ExpressionBuilder {
         }
         public static FunctionExpression function(String name, Expression... parameters) {
             return new FunctionExpression(name, Arrays.asList(parameters));
+        }
+        public static ArrayLengthFunction ubound(ModelBuilder model, Symbol arrayRef) {
+            return new ArrayLengthFunction(model, arrayRef);
         }
     }

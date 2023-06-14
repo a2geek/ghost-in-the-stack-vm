@@ -482,6 +482,13 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             ctx.anyExpr().stream().map(this::visit).forEach(params::add);
         }
 
+        if ("ubound".equalsIgnoreCase(id)) {
+            if (params.size() == 1 && params.get(0) instanceof VariableReference varRef) {
+                return new ArrayLengthFunction(model, varRef.getSymbol());
+            }
+            throw new RuntimeException("ubound expects a variable name as its argument: " + ctx.getText());
+        }
+
         if (Intrinsic.CPU_REGISTERS.contains(id.toLowerCase())) {
             if (params.size() > 0) {
                 throw new RuntimeException("Intrinsic reference takes no arguments: " + id);
