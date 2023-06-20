@@ -60,6 +60,22 @@ function name(a as integer,b as boolean) as integer
 end function
 ```
 
+Array parameters must not include any dimension size expression and 
+are declared simply as `a() as integer`. Use the `ubound(...)` function
+to determine length of array at runtime. Sample code:
+
+```basic
+function arrayTotal(myArray() as integer)
+  dim total as integer, i as integer
+  
+  for i = 0 to ubound(myArray)
+    total = total + myArray(i)
+  next i
+  
+  return total
+end function 
+```
+
 If there are no parameters the parenthesis can be dropped as well.
 
 Variables may be declared with the `dim` statement:

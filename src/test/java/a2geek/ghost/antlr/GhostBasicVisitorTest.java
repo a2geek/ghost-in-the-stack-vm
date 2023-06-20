@@ -4,10 +4,10 @@ import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.ModelBuilder;
 import a2geek.ghost.model.Scope;
 import a2geek.ghost.model.Symbol;
+import a2geek.ghost.model.expression.VariableReference;
 import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.statement.DoLoopStatement;
 import org.antlr.v4.runtime.CharStreams;
-import org.javatuples.Pair;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -309,8 +309,8 @@ public class GhostBasicVisitorTest {
     public void testSubDeclaration() {
         var expectedParameters = Arrays.asList(
             // These are in reverse order
-            Pair.with("b", DataType.INTEGER),
-            Pair.with("a", DataType.INTEGER)
+            Symbol.builder("b", Scope.Type.PARAMETER).dataType(DataType.INTEGER).build(),
+            Symbol.builder("a", Scope.Type.PARAMETER).dataType(DataType.INTEGER).build()
         );
         expect("""
                 sub doSomething(a as integer, b as integer)
@@ -330,8 +330,8 @@ public class GhostBasicVisitorTest {
     public void testFunctionDeclaration() {
         var expectedParameters = Arrays.asList(
             // These are in reverse order
-            Pair.with("b", DataType.INTEGER),
-            Pair.with("a", DataType.INTEGER)
+            Symbol.builder("b", Scope.Type.PARAMETER).dataType(DataType.INTEGER).build(),
+            Symbol.builder("a", Scope.Type.PARAMETER).dataType(DataType.INTEGER).build()
         );
         expect("""
                 function addThings(a as integer, b as integer)
@@ -343,6 +343,34 @@ public class GhostBasicVisitorTest {
                     identifier("A", DataType.INTEGER, Scope.Type.PARAMETER),
                     identifier("B", DataType.INTEGER, Scope.Type.PARAMETER)))
             .endScope()
+            .atEnd();
+    }
+
+    @Test
+    public void testSubArrayParameter() {
+        var expectedParameters = Arrays.asList(
+            Symbol.builder("a", Scope.Type.PARAMETER).dataType(DataType.INTEGER).dimensions(1).build()
+        );
+        var arraySymbol = new VariableReference(Symbol.builder("A", Scope.Type.GLOBAL)
+            .dataType(DataType.INTEGER)
+            .dimensions(1)
+            .build());
+        expect("""
+                sub addArray(a() as integer)
+                    ' code goes here
+                    return
+                end sub
+                
+                dim a(10) as integer
+                addArray(a)
+                """)
+            .subScope("addArray", expectedParameters)
+                .hasArrayReference("a", DataType.INTEGER, Scope.Type.PARAMETER, 1)
+                .returnStmt(null)
+            .endScope()
+            .hasArrayReference("a", DataType.INTEGER, Scope.Type.GLOBAL, 1)
+            .dimStmt("a", constant(10))
+            .callSub("addArray", arraySymbol)
             .atEnd();
     }
 }

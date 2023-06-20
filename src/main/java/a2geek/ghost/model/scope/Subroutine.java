@@ -1,21 +1,17 @@
 package a2geek.ghost.model.scope;
 
-import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.Scope;
 import a2geek.ghost.model.Symbol;
-import org.javatuples.Pair;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class Subroutine extends Scope {
-    public Subroutine(Scope parent, String name, List<Pair<String, DataType>> parameters) {
+    public Subroutine(Scope parent, String name, List<Symbol.Builder> parameters) {
         super(parent, name);
         Collections.reverse(parameters);
-        for (var param : parameters) {
-            addLocalVariable(param.getValue0(), Type.PARAMETER, param.getValue1());
-        }
+        parameters.forEach(this::addLocalSymbol);
     }
 
     @Override

@@ -98,6 +98,26 @@ public class Scope extends StatementBlock {
         symbols.add(ref);
         return ref;
     }
+    public Symbol addLocalSymbol(Symbol.Builder builder) {
+        return findLocalSymbols(builder.name())
+            .map(symbol -> {
+                if (builder.equals(symbol)) {
+                    return symbol;
+                }
+                var msg = String.format("name already exists in scope and is a different type, cannot override: %s", builder.name());
+                throw new RuntimeException(msg);
+            })
+            .orElseGet(() -> {
+                var fixedName = caseStrategy.apply(builder.name());
+                builder.name(fixedName);
+                if (builder.type() == null) {
+                    builder.type(type);
+                }
+                var symbol = builder.build();
+                symbols.add(symbol);
+                return symbol;
+            });
+    }
 
     public Optional<Symbol> findLocalSymbols(String name) {
         var fixedName = caseStrategy.apply(name);

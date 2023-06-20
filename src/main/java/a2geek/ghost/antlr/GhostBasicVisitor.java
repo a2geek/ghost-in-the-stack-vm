@@ -8,7 +8,6 @@ import a2geek.ghost.model.expression.*;
 import a2geek.ghost.model.statement.DoLoopStatement;
 import a2geek.ghost.model.statement.ForNextStatement;
 import org.antlr.v4.runtime.tree.ParseTree;
-import org.javatuples.Pair;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -332,7 +331,11 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                     // FIXME?
                     System.out.println("WARNING: static array size set by assignment");
                 }
-                boolean isArray = !dimensions.isEmpty() || idDecl.getText().contains("()");
+                if (idDecl.getText().contains("()")) {
+                    // We should be able to assume no dimensions declared
+                    dimensions.add(new IntegerConstant(1));
+                }
+                boolean isArray = !dimensions.isEmpty();
                 List<Expression> defaultValues = new ArrayList<>();
                 if (idDecl.idDeclDefault() != null && idDecl.idDeclDefault().anyExpr() != null) {
                     for (var anyExpr : idDecl.idDeclDefault().anyExpr()) {
@@ -364,7 +367,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
     @Override
     public Expression visitSubDecl(BasicParser.SubDeclContext ctx) {
-        List<Pair<String,DataType>> params = Collections.emptyList();
+        List<Symbol.Builder> params = Collections.emptyList();
         if (ctx.paramDecl() != null) {
             params = buildDeclarationList(ctx.paramDecl().idDecl()).stream()
                 .map(IdDeclaration::toParameter)
@@ -379,7 +382,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
     @Override
     public Expression visitFuncDecl(BasicParser.FuncDeclContext ctx) {
-        List<Pair<String,DataType>> params = Collections.emptyList();
+        List<Symbol.Builder> params = Collections.emptyList();
         if (ctx.paramDecl() != null) {
             params = buildDeclarationList(ctx.paramDecl().idDecl()).stream()
                 .map(IdDeclaration::toParameter)
@@ -580,11 +583,13 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                          List<Expression> dimensions,
                          List<Expression> defaultValues) {
         /** Validate this is appropriate for a parameter and transform it. */
-        public Pair<String,DataType> toParameter() {
+        public Symbol.Builder toParameter() {
             if (!defaultValues().isEmpty()) {
                 throw new RuntimeException("parameters cannot have default values");
             }
-            return Pair.with(name, dataType);
+            return Symbol.builder(name, Scope.Type.PARAMETER)
+                    .dataType(dataType)
+                    .dimensions(dimensions.size());
         }
         public boolean isArray() {
             return dimensions != null && dimensions.size() > 0;

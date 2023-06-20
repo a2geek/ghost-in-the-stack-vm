@@ -4,7 +4,6 @@ import a2geek.ghost.model.*;
 import a2geek.ghost.model.expression.VariableReference;
 import a2geek.ghost.model.scope.Subroutine;
 import a2geek.ghost.model.statement.*;
-import org.javatuples.Pair;
 
 import java.util.List;
 import java.util.Optional;
@@ -262,18 +261,19 @@ public abstract class StatementTester {
     }
 
     /** Validate that all parameters are in the correct order and have correct name and type. */
-    void checkParameters(Scope scope, List<Pair<String,DataType>> parameters) {
+    void checkParameters(Scope scope, List<Symbol> parameters) {
         List<Symbol> symbols = scope.findByType(Scope.Type.PARAMETER);
         assertEquals(parameters.size(), symbols.size());
         for (int i=0; i<parameters.size(); i++) {
             Symbol symbol = symbols.get(i);
-            Pair<String,DataType> parameter = parameters.get(i);
-            assertEquals(fixCase(parameter.getValue0()), fixCase(symbol.name()));
-            assertEquals(parameter.getValue1(), symbol.dataType());
+            Symbol parameter = parameters.get(i);
+            assertEquals(fixCase(parameter.name()), fixCase(symbol.name()));
+            assertEquals(parameter.dataType(), symbol.dataType());
+            assertEquals(parameter.numDimensions(), symbol.numDimensions());
         }
     }
 
-    public StatementTester subScope(String name, List<Pair<String, DataType>> parameters) {
+    public StatementTester subScope(String name, List<Symbol> parameters) {
         var scope = findScope(fixCase(name));
         if (scope.isPresent()) {
             if (scope.get() instanceof Subroutine sub) {
@@ -286,13 +286,13 @@ public abstract class StatementTester {
         }
         throw new RuntimeException("scope not found: " + name);
     }
-    public StatementTester functionScope(String name, List<Pair<String,DataType>> parmeters,
+    public StatementTester functionScope(String name, List<Symbol> parameters,
                                          DataType returnType) {
         var scope = findScope(fixCase(name));
         if (scope.isPresent()) {
             if (scope.get() instanceof a2geek.ghost.model.scope.Function function) {
                 assertEquals(returnType, function.getType());
-                checkParameters(function, parmeters);
+                checkParameters(function, parameters);
                 return new ScopeTester(this, function);
             }
             else {

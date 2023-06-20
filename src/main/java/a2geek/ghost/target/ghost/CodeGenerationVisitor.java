@@ -375,7 +375,7 @@ public class CodeGenerationVisitor extends Visitor {
     @Override
     public void visit(ReturnStatement statement, StatementContext context) {
         boolean hasReturnValue = statement.getExpr() != null;
-        if (this.frames.peek().scope() instanceof Function f){
+        if (this.frames.peek().scope() instanceof Function f) {
             var refs = this.frames.peek().scope().findByType(Scope.Type.RETURN_VALUE);
             if (refs.size() == 1 && hasReturnValue) {
                 assignment(new VariableReference(refs.get(0)), statement.getExpr());

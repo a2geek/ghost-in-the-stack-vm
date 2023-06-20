@@ -7,7 +7,6 @@ import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.scope.Subroutine;
 import a2geek.ghost.model.statement.*;
 import org.antlr.v4.runtime.CharStreams;
-import org.javatuples.Pair;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -275,7 +274,7 @@ public class ModelBuilder {
         addStatement(new ExitStatement(op));
     }
 
-    public void subDeclBegin(String name, List<Pair<String,DataType>> params) {
+    public void subDeclBegin(String name, List<Symbol.Builder> params) {
         Subroutine sub = new Subroutine(scope.peek(), fixCase(name), params);
         addScope(sub);
 
@@ -288,11 +287,11 @@ public class ModelBuilder {
         popStatementBlock();
     }
 
-    public void funcDeclBegin(String name, DataType returnType, List<Pair<String,DataType>> params) {
+    public void funcDeclBegin(String name, DataType returnType, List<Symbol.Builder> params) {
         // FIXME? naming is really awkward due to naming conflicts!
         a2geek.ghost.model.scope.Function func =
             new a2geek.ghost.model.scope.Function(scope.peek(),
-                Pair.with(fixCase(name),returnType), params);
+                Symbol.builder(name, Scope.Type.RETURN_VALUE).dataType(returnType), params);
         addScope(func);
 
         pushScope(func);
@@ -339,7 +338,10 @@ public class ModelBuilder {
         arrayDims.put(symbol, size);
     }
     public Expression getArrayDim(Symbol symbol) {
-        if (!arrayDims.containsKey(symbol)) {
+        if (symbol.type() == Scope.Type.PARAMETER) {
+            // Expression has only one required method to implement at this time; may need to adjust in future!
+            return symbol::dataType;
+        } else if (!arrayDims.containsKey(symbol)) {
             throw new RuntimeException("Array was not DIMmed: " + symbol.name());
         }
         return arrayDims.get(symbol);
