@@ -6,8 +6,8 @@ import picocli.CommandLine;
 import java.io.IOException;
 
 public class Main {
-    public static int main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException {
         int exitCode = new CommandLine(new CompileCommand()).execute(args);
-        return exitCode;
+        System.exit(exitCode);
     }
 }
