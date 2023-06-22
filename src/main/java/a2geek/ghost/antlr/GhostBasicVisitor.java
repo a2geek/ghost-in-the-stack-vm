@@ -587,7 +587,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             if (!defaultValues().isEmpty()) {
                 throw new RuntimeException("parameters cannot have default values");
             }
-            return Symbol.builder(name, Scope.Type.PARAMETER)
+            return Symbol.variable(name, Scope.Type.PARAMETER)
                     .dataType(dataType)
                     .dimensions(dimensions.size());
         }

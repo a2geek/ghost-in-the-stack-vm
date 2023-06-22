@@ -3,10 +3,10 @@ package a2geek.ghost.model;
 import java.util.Objects;
 
 public record Symbol(String name, Scope.Type type, Expression expr, DataType dataType, int numDimensions) {
-    public static Builder builder(String name, Scope.Type type) {
+    public static Builder variable(String name, Scope.Type type) {
         return new Builder(name, type);
     }
-    public static Builder builder(String name, Expression expr) {
+    public static Builder constant(String name, Expression expr) {
         return new Builder(name, Scope.Type.CONSTANT).expression(expr).dataType(expr.getType());
     }
     public static class Builder {

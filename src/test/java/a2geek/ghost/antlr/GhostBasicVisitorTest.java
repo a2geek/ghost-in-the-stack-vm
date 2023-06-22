@@ -39,7 +39,7 @@ public class GhostBasicVisitorTest {
 
     @Test
     public void testUbound() {
-        var arrayRef = Symbol.builder(model.fixCase("a"), Scope.Type.GLOBAL)
+        var arrayRef = Symbol.variable(model.fixCase("a"), Scope.Type.GLOBAL)
                 .dataType(DataType.INTEGER)
                 .dimensions(1)
                 .build();
@@ -309,8 +309,8 @@ public class GhostBasicVisitorTest {
     public void testSubDeclaration() {
         var expectedParameters = Arrays.asList(
             // These are in reverse order
-            Symbol.builder("b", Scope.Type.PARAMETER).dataType(DataType.INTEGER).build(),
-            Symbol.builder("a", Scope.Type.PARAMETER).dataType(DataType.INTEGER).build()
+            Symbol.variable("b", Scope.Type.PARAMETER).dataType(DataType.INTEGER).build(),
+            Symbol.variable("a", Scope.Type.PARAMETER).dataType(DataType.INTEGER).build()
         );
         expect("""
                 sub doSomething(a as integer, b as integer)
@@ -330,8 +330,8 @@ public class GhostBasicVisitorTest {
     public void testFunctionDeclaration() {
         var expectedParameters = Arrays.asList(
             // These are in reverse order
-            Symbol.builder("b", Scope.Type.PARAMETER).dataType(DataType.INTEGER).build(),
-            Symbol.builder("a", Scope.Type.PARAMETER).dataType(DataType.INTEGER).build()
+            Symbol.variable("b", Scope.Type.PARAMETER).dataType(DataType.INTEGER).build(),
+            Symbol.variable("a", Scope.Type.PARAMETER).dataType(DataType.INTEGER).build()
         );
         expect("""
                 function addThings(a as integer, b as integer)
@@ -349,9 +349,9 @@ public class GhostBasicVisitorTest {
     @Test
     public void testSubArrayParameter() {
         var expectedParameters = Arrays.asList(
-            Symbol.builder("a", Scope.Type.PARAMETER).dataType(DataType.INTEGER).dimensions(1).build()
+            Symbol.variable("a", Scope.Type.PARAMETER).dataType(DataType.INTEGER).dimensions(1).build()
         );
-        var arraySymbol = new VariableReference(Symbol.builder("A", Scope.Type.GLOBAL)
+        var arraySymbol = new VariableReference(Symbol.variable("A", Scope.Type.GLOBAL)
             .dataType(DataType.INTEGER)
             .dimensions(1)
             .build());

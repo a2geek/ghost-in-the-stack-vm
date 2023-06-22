@@ -63,7 +63,7 @@ public class FunctionExpression implements Expression {
         this.name = function.getName();
         this.function = function;
         this.parameters = expr;
-        this.returnType = function.getType();
+        this.returnType = function.getDataType();
     }
 
     @Override

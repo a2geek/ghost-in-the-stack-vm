@@ -36,27 +36,17 @@ public class Scope extends StatementBlock {
     public String getName() {
         return name;
     }
+    public Type getType() {
+        return type;
+    }
 
     public void setName(String name) {
         // Renaming is needed for libraries (prefix library name to the method name)
         this.name = name;
     }
 
-    public List<Symbol> getAllSymbols() {
-        var allVariables = new ArrayList<Symbol>();
-        allVariables.addAll(this.symbols);
-        if (this.parent != null) {
-            this.parent.getAllSymbols().stream()
-                    .filter(ref -> Type.GLOBAL == ref.type())
-                    .forEach(allVariables::add);
-        }
-        return allVariables;
-    }
     public List<Symbol> getLocalSymbols() {
         return symbols;
-    }
-    public Symbol addLocalVariable(String name, DataType dataType) {
-        return addLocalVariable(name, this.type, dataType);
     }
     public Symbol addArrayVariable(String name, DataType dataType, int numDimensions) {
         return findLocalSymbols(name)
@@ -68,22 +58,7 @@ public class Scope extends StatementBlock {
         })
         .orElseGet(() -> {
             var fixedName = caseStrategy.apply(name);
-            var ref = Symbol.builder(fixedName, type).dataType(dataType).dimensions(numDimensions).build();
-            symbols.add(ref);
-            return ref;
-        });
-    }
-    public Symbol addLocalVariable(String name, Type type, DataType dataType) {
-        return findLocalSymbols(name)
-        .map(s -> {
-            if (s.numDimensions() != 0) {
-                throw new RuntimeException("expecting symbol not to be an array: " + name);
-            }
-            return s;
-        })
-        .orElseGet(() -> {
-            var fixedName = caseStrategy.apply(name);
-            var ref = Symbol.builder(fixedName, type).dataType(dataType).build();
+            var ref = Symbol.variable(fixedName, type).dataType(dataType).dimensions(numDimensions).build();
             symbols.add(ref);
             return ref;
         });
@@ -94,11 +69,13 @@ public class Scope extends StatementBlock {
             throw new RuntimeException(msg);
         }
         var fixedName = caseStrategy.apply(name);
-        var ref = Symbol.builder(fixedName, expr).build();
+        var ref = Symbol.constant(fixedName, expr).build();
         symbols.add(ref);
         return ref;
     }
     public Symbol addLocalSymbol(Symbol.Builder builder) {
+        var fixedName = caseStrategy.apply(builder.name());
+        builder.name(fixedName);
         return findLocalSymbols(builder.name())
             .map(symbol -> {
                 if (builder.equals(symbol)) {
@@ -108,8 +85,6 @@ public class Scope extends StatementBlock {
                 throw new RuntimeException(msg);
             })
             .orElseGet(() -> {
-                var fixedName = caseStrategy.apply(builder.name());
-                builder.name(fixedName);
                 if (builder.type() == null) {
                     builder.type(type);
                 }

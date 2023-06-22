@@ -8,17 +8,17 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class Function extends Subroutine {
-    private DataType type;
+    private DataType dataType;
     private String exitLabel;
 
     public Function(Scope parent, Symbol.Builder func, List<Symbol.Builder> parameters) {
         super(parent, func.name(), parameters);
         addLocalSymbol(func.type(Type.RETURN_VALUE));
-        this.type = func.dataType();
+        this.dataType = func.dataType();
     }
 
-    public DataType getType() {
-        return type;
+    public DataType getDataType() {
+        return dataType;
     }
 
     public String getExitLabel() {

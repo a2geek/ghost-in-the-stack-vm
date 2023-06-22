@@ -291,7 +291,7 @@ public abstract class StatementTester {
         var scope = findScope(fixCase(name));
         if (scope.isPresent()) {
             if (scope.get() instanceof a2geek.ghost.model.scope.Function function) {
-                assertEquals(returnType, function.getType());
+                assertEquals(returnType, function.getDataType());
                 checkParameters(function, parameters);
                 return new ScopeTester(this, function);
             }

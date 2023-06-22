@@ -123,10 +123,10 @@ public class ModelBuilder {
         return this.scope.peek().findSymbol(fixCase(name));
     }
     public Symbol addVariable(String name, DataType dataType) {
-        return this.scope.peek().addLocalVariable(fixCase(name), dataType);
+        return this.scope.peek().addLocalSymbol(Symbol.variable(name, scope.peek().getType()).dataType(dataType));
     }
     public Symbol addVariable(String name, Scope.Type type, DataType dataType) {
-        return this.scope.peek().addLocalVariable(fixCase(name), type, dataType);
+        return this.scope.peek().addLocalSymbol(Symbol.variable(name, type).dataType(dataType));
     }
     public Symbol addArrayVariable(String name, DataType dataType, int numDimensions) {
         return this.scope.peek().addArrayVariable(fixArrayName(name), dataType, numDimensions);
@@ -291,7 +291,7 @@ public class ModelBuilder {
         // FIXME? naming is really awkward due to naming conflicts!
         a2geek.ghost.model.scope.Function func =
             new a2geek.ghost.model.scope.Function(scope.peek(),
-                Symbol.builder(name, Scope.Type.RETURN_VALUE).dataType(returnType), params);
+                Symbol.variable(name, Scope.Type.RETURN_VALUE).dataType(returnType), params);
         addScope(func);
 
         pushScope(func);

@@ -20,11 +20,11 @@ public class ExpressionBuilder {
          * the case strategy needs to be applied outside of this method.
          */
         public static VariableReference identifier(String name, DataType dataType, Scope.Type scopeType) {
-            var symbol = Symbol.builder(name, scopeType).dataType(dataType).build();
+            var symbol = Symbol.variable(name, scopeType).dataType(dataType).build();
             return new VariableReference(symbol);
         }
         public static VariableReference arrayReference(String name, DataType dataType, Scope.Type scopeType, Expression expr) {
-            var symbol = Symbol.builder(name + "()", scopeType).dataType(dataType).dimensions(1).build();
+            var symbol = Symbol.variable(name + "()", scopeType).dataType(dataType).dimensions(1).build();
             return new VariableReference(symbol, Arrays.asList(expr));
         }
         public static BinaryExpression binary(String operator, Expression lhs, Expression rhs) {
