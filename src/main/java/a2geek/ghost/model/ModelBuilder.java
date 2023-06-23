@@ -129,10 +129,13 @@ public class ModelBuilder {
         return this.scope.peek().addLocalSymbol(Symbol.variable(name, type).dataType(dataType));
     }
     public Symbol addArrayVariable(String name, DataType dataType, int numDimensions) {
-        return this.scope.peek().addArrayVariable(fixArrayName(name), dataType, numDimensions);
+        return this.scope.peek().addLocalSymbol(
+                Symbol.variable(fixArrayName(name), scope.peek().getType())
+                      .dataType(dataType)
+                      .dimensions(numDimensions));
     }
     public Symbol addConstant(String name, Expression value) {
-        return this.scope.peek().addLocalConstant(fixCase(name), value);
+        return this.scope.peek().addLocalSymbol(Symbol.constant(name, value));
     }
 
     public ForFrame forFrame(Symbol symbol) {

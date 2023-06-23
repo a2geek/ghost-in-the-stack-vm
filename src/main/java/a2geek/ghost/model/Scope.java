@@ -48,31 +48,6 @@ public class Scope extends StatementBlock {
     public List<Symbol> getLocalSymbols() {
         return symbols;
     }
-    public Symbol addArrayVariable(String name, DataType dataType, int numDimensions) {
-        return findLocalSymbols(name)
-        .map(s -> {
-            if (s.numDimensions() == 0) {
-                throw new RuntimeException("expecting symbol to be an array but it is not: " + name);
-            }
-            return s;
-        })
-        .orElseGet(() -> {
-            var fixedName = caseStrategy.apply(name);
-            var ref = Symbol.variable(fixedName, type).dataType(dataType).dimensions(numDimensions).build();
-            symbols.add(ref);
-            return ref;
-        });
-    }
-    public Symbol addLocalConstant(String name, Expression expr) {
-        if (findLocalSymbols(name).isPresent()) {
-            String msg = String.format("name already exists in scope, cannot add twice: %s", name);
-            throw new RuntimeException(msg);
-        }
-        var fixedName = caseStrategy.apply(name);
-        var ref = Symbol.constant(fixedName, expr).build();
-        symbols.add(ref);
-        return ref;
-    }
     public Symbol addLocalSymbol(Symbol.Builder builder) {
         var fixedName = caseStrategy.apply(builder.name());
         builder.name(fixedName);
