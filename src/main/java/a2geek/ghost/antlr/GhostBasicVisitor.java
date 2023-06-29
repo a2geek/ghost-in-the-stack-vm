@@ -8,6 +8,7 @@ import a2geek.ghost.model.expression.*;
 import a2geek.ghost.model.statement.DoLoopStatement;
 import a2geek.ghost.model.statement.ForNextStatement;
 import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -271,6 +272,15 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     @Override
     public Expression visitGotoGosubStmt(BasicParser.GotoGosubStmtContext ctx) {
         model.gotoGosubStmt(ctx.op.getText(), ctx.l.getText());
+        return null;
+    }
+
+    @Override
+    public Expression visitOnGotoGosubStmt(BasicParser.OnGotoGosubStmtContext ctx) {
+        var op = ctx.op.getText();
+        var expr = visit(ctx.a);
+        var labels = ctx.ID().stream().map(TerminalNode::getText).toList();
+        model.onGotoGosubStmt(op, expr, labels);
         return null;
     }
 

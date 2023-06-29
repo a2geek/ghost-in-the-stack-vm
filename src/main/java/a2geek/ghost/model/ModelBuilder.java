@@ -330,6 +330,11 @@ public class ModelBuilder {
         addStatement(gotoGosubStatement);
     }
 
+    public void onGotoGosubStmt(String op, Expression expr, List<String> labels) {
+        var statement = new OnGotoGosubStatement(op.toLowerCase(), expr, labels.stream().map(this::fixCase).toList());
+        addStatement(statement);
+    }
+
     public void returnStmt(Expression expr) {
         ReturnStatement returnStatement = new ReturnStatement(expr);
         addStatement(returnStatement);

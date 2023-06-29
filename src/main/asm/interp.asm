@@ -248,6 +248,7 @@ brtable:
     .addr _decr-1
     .addr _pushz-1
     .addr _loadsp-1
+    .addr _fixa-1
     .addr _global_reserve-1
     .addr _local_reserve-1
     .addr _local_free-1
@@ -747,6 +748,17 @@ _goto:
     sta ip+1
     sty ip
     jmp loop
+
+; FIXA: (tos) => (baseip + tos)
+_fixa:
+    clc
+    lda baseip
+    adc stackA,x
+    sta stackA,x
+    lda baseip+1
+    adc stackA+1,x
+    sta stackA+1,x
+    jmp _incr   ; baseIP is offset by -1
 
 ; RETURN; (TOS) => (); IP=TOS
 _return:

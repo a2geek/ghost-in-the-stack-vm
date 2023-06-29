@@ -76,6 +76,9 @@ public abstract class Visitor {
         else if (statement instanceof DoLoopStatement s) {
             visit(s, context);
         }
+        else if (statement instanceof OnGotoGosubStatement s) {
+            visit(s, context);
+        }
         else {
             throw new RuntimeException("statement type not supported: " +
                     statement.getClass().getName());
@@ -198,6 +201,11 @@ public abstract class Visitor {
 
     public void visit(GotoGosubStatement statement, StatementContext context) {
 
+    }
+
+    public void visit(OnGotoGosubStatement statement, StatementContext context) {
+        var expr = dispatch(statement.getExpr());
+        expr.ifPresent(statement::setExpr);
     }
 
     public void visit(LabelStatement statement, StatementContext context) {

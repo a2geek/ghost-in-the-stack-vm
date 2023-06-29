@@ -51,18 +51,30 @@ public record Instruction (String label, Opcode opcode, Directive directive, Int
     }
     byte[] handleDirective(Map<String,Integer> addrs) {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-        switch (constantValue.dataType()) {
-            case STRING -> {
+        switch (constantValue.constantType()) {
+            case STRING_VALUE -> {
                 for (byte ch : constantValue.string().getBytes()) {
                     bytes.write(ch|0x80);
                 }
                 bytes.write(0);
             }
-            case INTEGER -> {
-                // NOTE: Just assuming this is an array!
+            case INTEGER_ARRAY -> {
                 bytes.write(constantValue.integerArray().size() & 0xff);
                 bytes.write(constantValue.integerArray().size() >> 8 & 0xff);
                 for (int value : constantValue.integerArray()) {
+                    bytes.write(value & 0xff);
+                    bytes.write(value >> 8 & 0xff);
+                }
+            }
+            case LABEL_ARRAY_LESS_1 -> {
+                bytes.write(constantValue.stringArray().size() & 0xff);
+                bytes.write(constantValue.stringArray().size() >> 8 & 0xff);
+                for (String label : constantValue.stringArray()) {
+                    Integer value = addrs.get(label);
+                    if (value == null) {
+                        throw new RuntimeException("label not found: " + label);
+                    }
+                    value = value - 1;
                     bytes.write(value & 0xff);
                     bytes.write(value >> 8 & 0xff);
                 }

@@ -70,6 +70,7 @@ statement
     | op=( 'poke' | 'pokew' ) a=expr ',' b=expr                         # pokeStmt
     | 'call' a=expr                                                     # callStmt
     | op=( 'goto' | 'gosub' ) l=ID                                      # gotoGosubStmt
+    | 'on' a=expr op=( 'goto' | 'gosub' ) ID (',' ID)*                  # onGotoGosubStmt
     | 'return' e=expr?                                                  # returnStmt
     | 'text'                                                            # textStmt
     | 'vtab' a=expr                                                     # vtabStmt

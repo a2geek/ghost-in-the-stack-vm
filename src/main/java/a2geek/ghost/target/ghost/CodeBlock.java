@@ -1,7 +1,5 @@
 package a2geek.ghost.target.ghost;
 
-import a2geek.ghost.model.DataType;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -38,11 +36,11 @@ public class CodeBlock {
         Objects.requireNonNull(string, "string");
         var existing = dataSegment.stream()
                 .filter(inst -> inst.directive() == Directive.CONSTANT)
-                .filter(inst -> inst.constantValue().dataType() == DataType.STRING)
+                .filter(inst -> inst.constantValue().constantType() == ConstantType.STRING_VALUE)
                 .filter(inst -> string.equals(inst.constantValue().string()))
                 .findFirst();
         if (existing.isPresent()) {
-            return existing.map(Instruction::label).get();
+            return existing.map(Instruction::label).orElseThrow();
         }
         Instruction inst = new Instruction(suggestedLabel, null, Directive.CONSTANT, null,
             ConstantValue.with(string));
@@ -54,14 +52,30 @@ public class CodeBlock {
         Objects.requireNonNull(integerArray, "integerArray");
         var existing = dataSegment.stream()
             .filter(inst -> inst.directive() == Directive.CONSTANT)
-            .filter(inst -> inst.constantValue().dataType() == DataType.INTEGER)
+            .filter(inst -> inst.constantValue().constantType() == ConstantType.INTEGER_ARRAY)
             .filter(inst -> integerArray.equals(inst.constantValue().integerArray()))
             .findFirst();
         if (existing.isPresent()) {
-            return existing.map(Instruction::label).get();
+            return existing.map(Instruction::label).orElseThrow();
         }
         Instruction inst = new Instruction(suggestedLabel, null, Directive.CONSTANT, null,
             ConstantValue.with(integerArray));
+        dataSegment.add(inst);
+        return suggestedLabel;
+    }
+    public String emitConstantLabels(String suggestedLabel, List<String> labelArray) {
+        Objects.requireNonNull(suggestedLabel, "suggestedLabel");
+        Objects.requireNonNull(labelArray, "labelArray");
+        var existing = dataSegment.stream()
+                .filter(inst -> inst.directive() == Directive.CONSTANT)
+                .filter(inst -> inst.constantValue().constantType() == ConstantType.LABEL_ARRAY_LESS_1)
+                .filter(inst -> labelArray.equals(inst.constantValue().stringArray()))
+                .findFirst();
+        if (existing.isPresent()) {
+            return existing.map(Instruction::label).orElseThrow();
+        }
+        Instruction inst = new Instruction(suggestedLabel, null, Directive.CONSTANT, null,
+                ConstantValue.withLabels(labelArray));
         dataSegment.add(inst);
         return suggestedLabel;
     }
