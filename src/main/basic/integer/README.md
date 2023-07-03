@@ -62,6 +62,7 @@ Modified:
 
 Games:
 * barricade
+* demo-l
 
 Usage:
 ```basic
