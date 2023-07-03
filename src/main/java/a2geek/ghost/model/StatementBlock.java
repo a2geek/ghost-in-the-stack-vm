@@ -23,6 +23,9 @@ public class StatementBlock {
         }
         return false;
     }
+    public void insertStatement(Statement statement) {
+        this.statements.add(0, statement);
+    }
     public void addStatement(Statement statement) {
         this.statements.add(statement);
     }

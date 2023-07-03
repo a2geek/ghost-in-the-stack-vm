@@ -148,6 +148,15 @@ public abstract class StatementTester {
         return this;
     }
 
+    public StatementTester dimDefaultStmt(String name, List<Expression> defaultValues) {
+        name = fixCase(name);
+        var stmt = nextStatement(DimStatement.class);
+        assertEquals(fixArrayName(name), stmt.getSymbol().name());
+        assertEquals(DataType.INTEGER, stmt.getSymbol().dataType());
+        assertEquals(defaultValues, stmt.getDefaultValues());
+        return this;
+    }
+
     public StatementTester end() {
         nextStatement(EndStatement.class);
         return this;
@@ -179,6 +188,14 @@ public abstract class StatementTester {
         var stmt = nextStatement(GotoGosubStatement.class);
         assertEquals("gosub", stmt.getOp());
         assertEquals(fixCase(label), stmt.getId());
+        return this;
+    }
+
+    public StatementTester onGosub(Expression target, List<String> labels) {
+        var stmt = nextStatement(OnGotoGosubStatement.class);
+        assertEquals("gosub", stmt.getOp());
+        assertEquals(target, stmt.getExpr());
+        assertEquals(labels, stmt.getLabels());
         return this;
     }
 

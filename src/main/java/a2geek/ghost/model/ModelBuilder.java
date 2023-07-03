@@ -81,6 +81,9 @@ public class ModelBuilder {
         this.controlCharsFn = controlCharsFn;
     }
 
+    public void insertStatement(Statement statement) {
+        this.statementBlock.peek().insertStatement(statement);
+    }
     public void addStatement(Statement statement) {
         this.statementBlock.peek().addStatement(statement);
     }
@@ -329,9 +332,14 @@ public class ModelBuilder {
         GotoGosubStatement gotoGosubStatement = new GotoGosubStatement(op.toLowerCase(), fixCase(label));
         addStatement(gotoGosubStatement);
     }
+    public void onGotoGosubStmt(String op, Expression expr, List<String> labels, String altToString) {
+        OnGotoGosubStatement stmt = new OnGotoGosubStatement(op.toLowerCase(), expr,
+            labels, altToString);
+        addStatement(stmt);
+    }
 
     public void onGotoGosubStmt(String op, Expression expr, List<String> labels) {
-        var statement = new OnGotoGosubStatement(op.toLowerCase(), expr, labels.stream().map(this::fixCase).toList());
+        var statement = new OnGotoGosubStatement(op.toLowerCase(), expr, labels);
         addStatement(statement);
     }
 
@@ -340,6 +348,11 @@ public class ModelBuilder {
         addStatement(returnStatement);
     }
 
+    public void insertDimArray(Symbol symbol, Expression size, List<Expression> defaultValues) {
+        DimStatement dimStatement = new DimStatement(symbol, size, defaultValues);
+        insertStatement(dimStatement);
+        arrayDims.put(symbol, size);
+    }
     public void addDimArray(Symbol symbol, Expression size, List<Expression> defaultValues) {
         DimStatement dimStatement = new DimStatement(symbol, size, defaultValues);
         addStatement(dimStatement);

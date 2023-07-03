@@ -93,6 +93,22 @@ public class IntegerBasicVisitorTest {
             .atEnd();
     }
 
+    // TODO FIXME need to figure out built-in function testing as well as array references
+//    @Test
+//    public void testDynamicGosub() {
+//        var expr = function("line_index",
+//            binary("*", constant(10), identifier("I", DataType.INTEGER, Scope.Type.LOCAL)),
+//            arrayReference(IntegerBasicVisitor.LINE_NUMBERS, DataType.INTEGER, Scope.Type.GLOBAL, constant(1)));
+//        var labels = Arrays.asList("L10");
+//        expect("10 GOSUB 10*I")
+//            .hasSymbol("I", DataType.INTEGER, Scope.Type.GLOBAL)
+//            .dimDefaultStmt(IntegerBasicVisitor.LINE_NUMBERS, Arrays.asList(constant(10)))
+//            .hasArrayReference(IntegerBasicVisitor.LINE_NUMBERS, DataType.INTEGER, Scope.Type.GLOBAL, 1)
+//            .lineNumber(10)
+//            .onGosub(expr, labels)
+//            .atEnd();
+//    }
+
     @Test
     public void testGoto() {
         expect("10 GOTO 100")

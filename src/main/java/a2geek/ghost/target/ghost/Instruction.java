@@ -59,16 +59,20 @@ public record Instruction (String label, Opcode opcode, Directive directive, Int
                 bytes.write(0);
             }
             case INTEGER_ARRAY -> {
-                bytes.write(constantValue.integerArray().size() & 0xff);
-                bytes.write(constantValue.integerArray().size() >> 8 & 0xff);
+                // BASIC arrays ignore the zeroth element, so 1,2,3,4 is length of 3
+                int size = constantValue.integerArray().size()-1;
+                bytes.write(size & 0xff);
+                bytes.write(size >> 8 & 0xff);
                 for (int value : constantValue.integerArray()) {
                     bytes.write(value & 0xff);
                     bytes.write(value >> 8 & 0xff);
                 }
             }
             case LABEL_ARRAY_LESS_1 -> {
-                bytes.write(constantValue.stringArray().size() & 0xff);
-                bytes.write(constantValue.stringArray().size() >> 8 & 0xff);
+                // BASIC arrays ignore the zeroth element, so 1,2,3,4 is length of 3
+                int size = constantValue.stringArray().size()-1;
+                bytes.write(size & 0xff);
+                bytes.write(size >> 8 & 0xff);
                 for (String label : constantValue.stringArray()) {
                     Integer value = addrs.get(label);
                     if (value == null) {

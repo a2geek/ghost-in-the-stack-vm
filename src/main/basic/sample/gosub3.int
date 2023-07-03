@@ -1,0 +1,11 @@
+10 for i=1 to 3
+15 print "GOSUB ";i*100
+20 gosub i*100
+30 next i
+40 end
+
+100 print "ONE":return
+
+200 print "TWO":return
+
+300 print "THREE":return

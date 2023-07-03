@@ -279,7 +279,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     public Expression visitOnGotoGosubStmt(BasicParser.OnGotoGosubStmtContext ctx) {
         var op = ctx.op.getText();
         var expr = visit(ctx.a);
-        var labels = ctx.ID().stream().map(TerminalNode::getText).toList();
+        var labels = ctx.ID().stream().map(TerminalNode::getText).map(model::fixCase).toList();
         model.onGotoGosubStmt(op, expr, labels);
         return null;
     }

@@ -24,7 +24,7 @@ statement
     | 'dsp' var                                                             # dspStatement
     | 'end'                                                                 # endStatement
     | 'for' ivar '=' first=iexpr 'to' last=iexpr ( 'step' step=iexpr )?     # forStatement
-    | g=('gosub'|'goto') l=INTEGER                                          # gosubGotoStatement
+    | g=('gosub'|'goto') e=expr                                             # gosubGotoStatement
     | 'gr'                                                                  # grStatement
     | 'himem:' addr=iexpr                                                   # himemStatement
     | 'hlin' x0=iexpr ',' x1=iexpr 'at' y=iexpr                             # hlinStatement
@@ -74,7 +74,7 @@ iexpr
     | left=iexpr op=( '+' | '-' ) right=iexpr                       # binaryIntExpr
     | left=iexpr op=('<'|'>'|'<='|'>='|'='|'<>'|'#') right=iexpr    # binaryIntExpr
     | left=sexpr op=('<'|'>'|'<='|'>='|'='|'<>'|'#') right=sexpr    # binaryStrExpr
-    | 'not' e=iexpr                                                 # unaryIntExpr
+    | op='not' e=iexpr                                              # unaryIntExpr
     | left=iexpr op=( 'and' | 'or' ) right=iexpr                    # binaryIntExpr
     | func=ifcall                                                   # funcExpr
     | ref=ivar                                                      # intVarExpr

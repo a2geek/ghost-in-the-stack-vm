@@ -12,6 +12,7 @@ public class FunctionExpression implements Expression {
     private static final String LORES_LIBRARY = "lores";
     private static final String MISC_LIBRARY = "misc";
     private static final String MATH_LIBRARY = "math";
+    private static final String RUNTIME_LIBRARY = "runtime";
     private static final Map<String,Descriptor> FUNCS = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     static {
         Arrays.asList(
@@ -24,7 +25,8 @@ public class FunctionExpression implements Expression {
             new Descriptor("sgn", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER),
             new Descriptor("pdl", MISC_LIBRARY, DataType.INTEGER, DataType.INTEGER),
             new Descriptor("ipow", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER, DataType.INTEGER),
-            new Descriptor("integer", INPUT_LIBRARY, DataType.INTEGER)
+            new Descriptor("integer", INPUT_LIBRARY, DataType.INTEGER),
+            new Descriptor("line_index", RUNTIME_LIBRARY, DataType.INTEGER, DataType.INTEGER, DataType.INTEGER)
         ).forEach(d -> {
             FUNCS.put(d.name(), d);
         });

@@ -38,8 +38,8 @@ Notes:
 | `dsp <var>`                                     | N/A                                                                      |
 | `end`                                           | -                                                                        |
 | `for <var> = <iexpr> to <iexpr> [step <iexpr>]` | If step is variable with negative value, will not process correctly.     |
-| `gosub <iexpr>`                                 | Only constant line numbers at this time.                                 |
-| `goto <iexpr>`                                  | Only constant line numbers at this time.                                 |
+| `gosub <iexpr>`                                 | Both constant and expressions (dynamic gosub).                           |
+| `goto <iexpr>`                                  | Both constant and expressions (dynamic goto).                            |
 | `gr`                                            | -                                                                        |
 | `himem: <iexpr>`                                | N/A                                                                      |
 | `hlin <iexpr>,<iexpr> at <iexpr>`               | -                                                                        |

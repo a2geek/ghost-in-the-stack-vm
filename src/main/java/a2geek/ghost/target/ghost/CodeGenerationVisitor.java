@@ -368,8 +368,10 @@ public class CodeGenerationVisitor extends Visitor {
 
     @Override
     public void visit(OnGotoGosubStatement statement, StatementContext context) {
-        // TODO!
-        // if n > 0 and n < ubound(addrs) then
+        // ' NOTE: the upper range check needs to extend array length by one ...
+        // '       because the array has a zero index but ON ... GOTO/GOSUB starts
+        // '       at index 1.
+        // if n > 0 and n <= ubound(addrs)+1 then
         //     (gosub only) loadc endloop-1
         //     load addrs[n]
         //     return
@@ -378,12 +380,14 @@ public class CodeGenerationVisitor extends Visitor {
         var addressLabels = code.emitConstantLabels(labels.get(1), statement.getLabels());
         // n > 0
         code.emit(Opcode.LOADC, 0);
+        // FIXME: This can be optimized since EXPR is evaluated 3 times!
         dispatch(statement.getExpr());
         code.emit(Opcode.LT);
-        // n < ubound(addrs)
+        // n <= ubound(addrs)+1
         dispatch(statement.getExpr());
         code.emit(Opcode.LOADA, addressLabels);
         code.emit(Opcode.ILOADW);   // ubound
+        code.emit(Opcode.INCR);     // +1
         code.emit(Opcode.LE);
         code.emit(Opcode.AND);
         code.emit(Opcode.IFFALSE, labels.get(0));
@@ -630,7 +634,7 @@ public class CodeGenerationVisitor extends Visitor {
             dispatch(expression.getExpr());
             code.emit(Opcode.NEG);
         }
-        else if ("not".equals(expression.getOp())) {
+        else if ("not".equalsIgnoreCase(expression.getOp())) {
             dispatch(expression.getExpr());
             switch (expression.getType()) {
                 case INTEGER -> code.emit(Opcode.LOADC, 0xffff);

@@ -13,15 +13,19 @@ import a2geek.ghost.model.statement.EndStatement;
 import a2geek.ghost.model.statement.ForStatement;
 import a2geek.ghost.model.statement.NextStatement;
 import a2geek.ghost.model.statement.PopStatement;
-import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
+    public static final String LINE_NUMBERS = "_line_numbers";
+
     private ModelBuilder model;
+    private List<Expression> lineNumbers = new ArrayList<>();
+    private List<String> lineLabels = new ArrayList<>();
 
     public IntegerBasicVisitor(ModelBuilder model) {
         this.model = model;
@@ -38,6 +42,10 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         if (!model.getProgram().isLastStatement(EndStatement.class)) {
             model.endStmt();
         }
+        // Note that the array name gets mangled to keep types distinct by name
+        model.findSymbol(model.fixArrayName(LINE_NUMBERS)).ifPresent(symbol -> {
+            model.insertDimArray(symbol, new IntegerConstant(lineNumbers.size()), lineNumbers);
+        });
         return null;
     }
 
@@ -49,16 +57,23 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         model.callLibrarySubroutine(name, exprs.toArray(new Expression[0]));
     }
 
-    void gotoGosub(String command, Token token) {
-        var linenum = Integer.parseInt(token.getText());
-        String label = String.format("L%d", linenum);
-        model.gotoGosubStmt(command, label);
+    String gotoGosubLabel(int linenum) {
+        return String.format("L%d", linenum);
     }
 
     @Override
     public Expression visitProgramLine(IntegerParser.ProgramLineContext ctx) {
-        model.labelStmt("L" + ctx.INTEGER().getText());
-        visit(ctx.statements());
+        var lineNumber = Integer.parseInt(ctx.INTEGER().getText());
+        var lineLabel = gotoGosubLabel(lineNumber);
+        lineNumbers.add(new IntegerConstant(lineNumber));
+        lineLabels.add(model.fixCase(lineLabel));
+
+        model.labelStmt(lineLabel);
+        try {
+            visit(ctx.statements());
+        } catch (Exception ex) {
+            throw new RuntimeException("Error in line " + lineNumber, ex);
+        }
         return null;
     }
 
@@ -141,7 +156,22 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     @Override
     public Expression visitGosubGotoStatement(IntegerParser.GosubGotoStatementContext ctx) {
-        gotoGosub(ctx.g.getText(), ctx.l);
+        var expr = visit(ctx.e);
+        var op = ctx.g.getText();
+        if (!expr.isType(DataType.INTEGER)) {
+            throw new RuntimeException("GOTO/GOSUB must have an integer target: " + ctx.getText());
+        }
+        if (expr.isConstant()) {
+            var line = expr.asInteger().map(this::gotoGosubLabel).orElseThrow();
+            model.gotoGosubStmt(op, line);
+        }
+        else {
+            var lineNumbers = model.addArrayVariable(LINE_NUMBERS, DataType.INTEGER, 1);
+            var text = String.format("%s %s", op.toUpperCase(), expr);
+            var lookupExpr = model.callFunction("line_index",
+                Arrays.asList(expr, new VariableReference(lineNumbers)));
+            model.onGotoGosubStmt(op, lookupExpr, lineLabels, text);
+        }
         return null;
     }
 
@@ -167,7 +197,8 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     public Expression visitIfLineStatement(IntegerParser.IfLineStatementContext ctx) {
         var expr = visit(ctx.e);
         StatementBlock block = model.pushStatementBlock(new StatementBlock());
-        gotoGosub("goto", ctx.l);
+        var linenum = Integer.parseInt(ctx.l.getText());
+        model.gotoGosubStmt("goto", gotoGosubLabel(linenum));
         model.popStatementBlock();
         model.ifStmt(expr, block, null);
         return null;
