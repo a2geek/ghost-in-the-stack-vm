@@ -272,7 +272,16 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     @Override
     public Expression visitLomemStatement(IntegerParser.LomemStatementContext ctx) {
-        System.out.println("LOMEM not supported; ignoring it.");
+        var expr = visit(ctx.addr);
+        if (expr.isConstant() && expr.asInteger().isPresent()) {
+            int addr = expr.asInteger().orElseThrow();
+            if (addr >= 0x803 && addr < 0x1000) {   // totally arbitrary.
+                System.err.println("WARNING: LOMEM indicates this application may over write the $803 location.");
+            }
+        }
+        else {
+            System.out.println("LOMEM not supported; ignoring it.");
+        }
         return null;
     }
 
