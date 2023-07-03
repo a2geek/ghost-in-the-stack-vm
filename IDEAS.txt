@@ -17,7 +17,6 @@ ProDOS commands (OPEN, READ, WRITE, CLOSE). Is this SUB and/or FUNCTION?
 Add Applesoft
 DEF FN == Function
 Arrays - option to allocate on stack or heap
-Constant arrays - can replace all those silly POKE statements with a loop and likely help with DATA statements.
 Function libraries (with inline?) - can a function return more than one value?
 Optimization - extract common code
 Does it make sense to have a second model that is closer to machine code (things like FOR/NEXT get replaced by IF's and GOTO's) to simplify code generation?
