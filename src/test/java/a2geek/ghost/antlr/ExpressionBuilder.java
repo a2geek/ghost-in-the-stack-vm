@@ -1,7 +1,7 @@
 package a2geek.ghost.antlr;
 
-import a2geek.ghost.model.*;
-import a2geek.ghost.model.expression.*;
+import a2geek.ghost.model.basic.*;
+import a2geek.ghost.model.basic.expression.*;
 
 import java.util.Arrays;
 

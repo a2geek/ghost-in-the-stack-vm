@@ -1,9 +1,9 @@
 package a2geek.ghost.antlr;
 
-import a2geek.ghost.model.DataType;
-import a2geek.ghost.model.ModelBuilder;
-import a2geek.ghost.model.Scope;
-import a2geek.ghost.model.scope.Program;
+import a2geek.ghost.model.basic.DataType;
+import a2geek.ghost.model.basic.ModelBuilder;
+import a2geek.ghost.model.basic.Scope;
+import a2geek.ghost.model.basic.scope.Program;
 import org.antlr.v4.runtime.CharStreams;
 import org.junit.jupiter.api.Test;
 

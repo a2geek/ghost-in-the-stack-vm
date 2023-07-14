@@ -1,12 +1,12 @@
 package a2geek.ghost.command;
 
 import a2geek.ghost.antlr.ParseUtil;
-import a2geek.ghost.model.ModelBuilder;
-import a2geek.ghost.model.Scope;
-import a2geek.ghost.model.scope.Program;
-import a2geek.ghost.model.visitor.ConstantReductionVisitor;
-import a2geek.ghost.model.visitor.DeadCodeEliminationVisitor;
-import a2geek.ghost.model.visitor.StrengthReductionVisitor;
+import a2geek.ghost.model.basic.ModelBuilder;
+import a2geek.ghost.model.basic.Scope;
+import a2geek.ghost.model.basic.scope.Program;
+import a2geek.ghost.model.basic.visitor.ConstantReductionVisitor;
+import a2geek.ghost.model.basic.visitor.DeadCodeEliminationVisitor;
+import a2geek.ghost.model.basic.visitor.StrengthReductionVisitor;
 import a2geek.ghost.target.ghost.CodeGenerationVisitor;
 import a2geek.ghost.target.ghost.Instruction;
 import io.github.applecommander.applesingle.AppleSingle;

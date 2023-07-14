@@ -2,17 +2,17 @@ package a2geek.ghost.antlr;
 
 import a2geek.ghost.antlr.generated.IntegerBaseVisitor;
 import a2geek.ghost.antlr.generated.IntegerParser;
-import a2geek.ghost.model.DataType;
-import a2geek.ghost.model.Expression;
-import a2geek.ghost.model.ModelBuilder;
-import a2geek.ghost.model.StatementBlock;
-import a2geek.ghost.model.expression.*;
-import a2geek.ghost.model.scope.ForFrame;
-import a2geek.ghost.model.scope.Program;
-import a2geek.ghost.model.statement.EndStatement;
-import a2geek.ghost.model.statement.ForStatement;
-import a2geek.ghost.model.statement.NextStatement;
-import a2geek.ghost.model.statement.PopStatement;
+import a2geek.ghost.model.basic.DataType;
+import a2geek.ghost.model.basic.Expression;
+import a2geek.ghost.model.basic.ModelBuilder;
+import a2geek.ghost.model.basic.StatementBlock;
+import a2geek.ghost.model.basic.expression.*;
+import a2geek.ghost.model.basic.scope.ForFrame;
+import a2geek.ghost.model.basic.scope.Program;
+import a2geek.ghost.model.basic.statement.EndStatement;
+import a2geek.ghost.model.basic.statement.ForStatement;
+import a2geek.ghost.model.basic.statement.NextStatement;
+import a2geek.ghost.model.basic.statement.PopStatement;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.util.ArrayList;

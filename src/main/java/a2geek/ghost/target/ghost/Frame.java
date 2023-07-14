@@ -1,10 +1,10 @@
 package a2geek.ghost.target.ghost;
 
-import a2geek.ghost.model.Scope;
-import a2geek.ghost.model.Symbol;
-import a2geek.ghost.model.scope.Function;
-import a2geek.ghost.model.scope.Program;
-import a2geek.ghost.model.scope.Subroutine;
+import a2geek.ghost.model.basic.Scope;
+import a2geek.ghost.model.basic.Symbol;
+import a2geek.ghost.model.basic.scope.Function;
+import a2geek.ghost.model.basic.scope.Program;
+import a2geek.ghost.model.basic.scope.Subroutine;
 
 import java.util.HashMap;
 import java.util.Map;

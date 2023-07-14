@@ -3,10 +3,10 @@ package a2geek.ghost.antlr;
 import a2geek.ghost.antlr.generated.BasicBaseVisitor;
 import a2geek.ghost.antlr.generated.BasicParser;
 import a2geek.ghost.antlr.generated.BasicParser.IfStatementContext;
-import a2geek.ghost.model.*;
-import a2geek.ghost.model.expression.*;
-import a2geek.ghost.model.statement.DoLoopStatement;
-import a2geek.ghost.model.statement.ForNextStatement;
+import a2geek.ghost.model.basic.*;
+import a2geek.ghost.model.basic.expression.*;
+import a2geek.ghost.model.basic.statement.DoLoopStatement;
+import a2geek.ghost.model.basic.statement.ForNextStatement;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 

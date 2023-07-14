@@ -14,7 +14,7 @@ AST. That visitor is utilized to create a model of the language.
 
 ### Model
 
-Package(s): `a2geek.ghost.model.statement`, `a2geek.ghost.model.expression`
+Package(s): `a2geek.ghost.model.basic.statement`, `a2geek.ghost.model.basic.expression`
 
 The language model is the construct of a Program with various Statements and Expressions.
 
@@ -23,7 +23,7 @@ print a newline, print a comma.
 
 ### Model visitors
 
-Package(s): `a2geek.ghost.model.visitor`
+Package(s): `a2geek.ghost.model.basic.visitor`
 
 Instead of writing code that understands all of the language multiple times, a visitor type pattern was created. This is
 a hand-coded class that handles dispatch to the specific subclasses and default activities. Current visitors do the 
