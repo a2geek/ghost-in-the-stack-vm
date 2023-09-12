@@ -8,8 +8,11 @@ import a2geek.ghost.model.basic.statement.*;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 
 import static a2geek.ghost.antlr.ExpressionBuilder.constant;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.matchesPattern;
 import static org.junit.jupiter.api.Assertions.*;
 
 public abstract class StatementTester {
@@ -91,7 +94,8 @@ public abstract class StatementTester {
 
     public StatementTester label(String label) {
         var stmt = nextStatement(LabelStatement.class);
-        assertEquals(fixCase(label), stmt.getId());
+        var pattern = Pattern.compile(String.format("_%s\\d+", label), Pattern.CASE_INSENSITIVE);
+        assertThat(stmt.getLabel().name(), matchesPattern(pattern));
         return this;
     }
 
@@ -172,22 +176,14 @@ public abstract class StatementTester {
         return this;
     }
 
-    public StatementTester forNext(String name, Expression start, Expression end) {
-        var stmt = nextStatement(ForNextStatement.class);
-        assertEquals(fixCase(name), stmt.getSymbol().name());
-        assertEquals(start, stmt.getStart());
-        assertEquals(end, stmt.getEnd());
-        assertEquals(constant(1), stmt.getStep());
-        return new StatementBlockTester(this, stmt);
-    }
-
     public StatementTester gosub(int lineNumber) {
         return gosub(lineNumberLabel(lineNumber));
     }
     public StatementTester gosub(String label) {
         var stmt = nextStatement(GotoGosubStatement.class);
         assertEquals("gosub", stmt.getOp());
-        assertEquals(fixCase(label), stmt.getId());
+        var pattern = Pattern.compile(String.format("_%s\\d+", label), Pattern.CASE_INSENSITIVE);
+        assertThat(stmt.getLabel().name(), matchesPattern(pattern));
         return this;
     }
 
@@ -205,7 +201,8 @@ public abstract class StatementTester {
     public StatementTester gotoStmt(String label) {
         var stmt = nextStatement(GotoGosubStatement.class);
         assertEquals("goto", stmt.getOp());
-        assertEquals(fixCase(label), stmt.getId());
+        var pattern = Pattern.compile(String.format("_%s\\d+", label), Pattern.CASE_INSENSITIVE);
+        assertThat(stmt.getLabel().name(), matchesPattern(pattern));
         return this;
     }
 

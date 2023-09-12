@@ -111,6 +111,7 @@ public class Scope extends StatementBlock {
         PARAMETER,
         RETURN_VALUE,
         INTRINSIC,
-        CONSTANT
+        CONSTANT,
+        LABEL
     }
 }

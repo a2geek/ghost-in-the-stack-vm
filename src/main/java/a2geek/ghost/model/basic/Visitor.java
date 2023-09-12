@@ -37,9 +37,6 @@ public abstract class Visitor {
         else if (statement instanceof IfStatement s) {
             visit(s, context);
         }
-        else if (statement instanceof ForNextStatement s) {
-            visit(s, context);
-        }
         else if (statement instanceof ForStatement s) {
             visit(s, context);
         }
@@ -161,16 +158,6 @@ public abstract class Visitor {
             dispatchAll(statement.getFalseStatements());
         }
         expr.ifPresent(statement::setExpression);
-    }
-
-    public void visit(ForNextStatement statement, StatementContext context) {
-        var start = dispatch(statement.getStart());
-        var end = dispatch(statement.getEnd());
-        var step = dispatch(statement.getStep());   // Always set by GhostBasicVisitor
-        dispatchAll(statement);
-        start.ifPresent(statement::setStart);
-        end.ifPresent(statement::setEnd);
-        step.ifPresent(statement::setStep);
     }
 
     public void visit(DoLoopStatement statement, StatementContext context) {

@@ -31,6 +31,7 @@ public class ModelBuilder {
     private Map<Symbol, ForFrame> forFrames = new HashMap<>();
     /** Track array dimensions */
     private Map<Symbol, Expression> arrayDims = new HashMap<>();
+    private int labelNumber;
 
     public ModelBuilder(Function<String,String> caseStrategy) {
         this.caseStrategy = caseStrategy;
@@ -139,6 +140,17 @@ public class ModelBuilder {
     }
     public Symbol addConstant(String name, Expression value) {
         return this.scope.peek().addLocalSymbol(Symbol.constant(name, value));
+    }
+    /** Generate labels for code. The multiple values is to allow grouping of labels (same label number) for complex structures. */
+    public List<Symbol> addLabels(String... names) {
+        labelNumber+= 1;
+        List<Symbol> symbols = new ArrayList<>();
+        for (var name : names) {
+            var builder = Symbol.label(String.format("_%s%d", name, labelNumber));
+            var symbol = this.scope.peek().addLocalSymbol(builder);
+            symbols.add(symbol);
+        }
+        return symbols;
     }
 
     public ForFrame forFrame(Symbol symbol) {
@@ -250,19 +262,6 @@ public class ModelBuilder {
         addStatement(statement);
     }
 
-    public void forBegin(Symbol symbol, Expression start, Expression end, Expression step) {
-        ForNextStatement forStatement = new ForNextStatement(symbol, start, end, step);
-        pushStatementBlock(forStatement);
-    }
-    public void forEnd() {
-        if (popStatementBlock() instanceof ForNextStatement forStatement) {
-            addStatement(forStatement);
-        }
-        else {
-            throw new RuntimeException("expecting for statement on stack");
-        }
-    }
-
     public void loopBegin(DoLoopStatement.Operation op, Expression test) {
         DoLoopStatement doStatement = new DoLoopStatement(op, test);
         pushStatementBlock(doStatement);
@@ -323,13 +322,13 @@ public class ModelBuilder {
         addStatement(pokeStatement);
     }
 
-    public void labelStmt(String label) {
-        LabelStatement labelStatement = new LabelStatement(fixCase(label));
+    public void labelStmt(Symbol label) {
+        LabelStatement labelStatement = new LabelStatement(label);
         addStatement(labelStatement);
     }
 
-    public void gotoGosubStmt(String op, String label) {
-        GotoGosubStatement gotoGosubStatement = new GotoGosubStatement(op.toLowerCase(), fixCase(label));
+    public void gotoGosubStmt(String op, Symbol label) {
+        GotoGosubStatement gotoGosubStatement = new GotoGosubStatement(op.toLowerCase(), label);
         addStatement(gotoGosubStatement);
     }
     public void onGotoGosubStmt(String op, Expression expr, List<String> labels, String altToString) {

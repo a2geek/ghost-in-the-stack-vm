@@ -2,10 +2,7 @@ package a2geek.ghost.antlr;
 
 import a2geek.ghost.antlr.generated.IntegerBaseVisitor;
 import a2geek.ghost.antlr.generated.IntegerParser;
-import a2geek.ghost.model.basic.DataType;
-import a2geek.ghost.model.basic.Expression;
-import a2geek.ghost.model.basic.ModelBuilder;
-import a2geek.ghost.model.basic.StatementBlock;
+import a2geek.ghost.model.basic.*;
 import a2geek.ghost.model.basic.expression.*;
 import a2geek.ghost.model.basic.scope.ForFrame;
 import a2geek.ghost.model.basic.scope.Program;
@@ -57,8 +54,9 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         model.callLibrarySubroutine(name, exprs.toArray(new Expression[0]));
     }
 
-    String gotoGosubLabel(int linenum) {
-        return String.format("L%d", linenum);
+    Symbol gotoGosubLabel(int linenum) {
+        var label = String.format("L%d", linenum);
+        return model.addLabels(label).get(0);
     }
 
     @Override
@@ -66,7 +64,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         var lineNumber = Integer.parseInt(ctx.INTEGER().getText());
         var lineLabel = gotoGosubLabel(lineNumber);
         lineNumbers.add(new IntegerConstant(lineNumber));
-        lineLabels.add(model.fixCase(lineLabel));
+        lineLabels.add(lineLabel.name());
 
         model.labelStmt(lineLabel);
         try {

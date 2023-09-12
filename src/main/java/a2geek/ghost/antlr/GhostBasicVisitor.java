@@ -6,7 +6,6 @@ import a2geek.ghost.antlr.generated.BasicParser.IfStatementContext;
 import a2geek.ghost.model.basic.*;
 import a2geek.ghost.model.basic.expression.*;
 import a2geek.ghost.model.basic.statement.DoLoopStatement;
-import a2geek.ghost.model.basic.statement.ForNextStatement;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
@@ -15,6 +14,7 @@ import java.util.stream.Collectors;
 
 public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     private ModelBuilder model;
+    private Stack<Symbol> forNextStatements = new Stack<>();
 
     public GhostBasicVisitor(ModelBuilder model) {
         this.model = model;
@@ -93,9 +93,38 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         Expression end = visit(ctx.b);
         Expression step = optVisit(ctx.c).orElse(new IntegerConstant(1));
 
-        model.forBegin(symbol, start, end, step);
+        // FOR X = 1 TO 10 [ STEP 1 ] ... [EXIT FOR] ... NEXT X
+        // ---
+        // X = 1
+        // (LOOP)
+        // IF X <= 10 THEN
+        //   ...STATEMENTS...
+        //   ...EXIT FOR == GOTO (EXIT)
+        //   X = X + STEP
+        //   GOTO (LOOP)
+        // (EXIT)
+        // ...
+
+        var ref = new VariableReference(symbol);
+        var labels = model.addLabels("FOR_LOOP", "FOR_EXIT");
+        var loopLabel = labels.get(0);
+        var exitLabel = labels.get(1);
+
+        // building contents of "IF" statement
+        model.pushStatementBlock(new StatementBlock());
+        forNextStatements.push(exitLabel);
         optVisit(ctx.s);
-        model.forEnd();
+        forNextStatements.pop();
+        model.assignStmt(ref, new BinaryExpression(ref, step, "+"));
+        model.gotoGosubStmt("goto", loopLabel);
+        var sb = model.popStatementBlock();
+
+        // generating code
+        model.assignStmt(ref, start);
+        model.labelStmt(loopLabel);
+        // FIXME need to handle negatives
+        model.ifStmt(new BinaryExpression(ref, end, "<="), sb, null);
+        model.labelStmt(exitLabel);
         return null;
     }
 
@@ -154,8 +183,8 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         var op = ctx.n.getText().toLowerCase();
         switch (op) {
             case "for" -> {
-                if (model.findBlock(ForNextStatement.class).isPresent()) {
-                    model.exitStmt(op);
+                if (!forNextStatements.isEmpty()) {
+                    model.gotoGosubStmt("goto", forNextStatements.peek());
                     return null;
                 }
                 throw new RuntimeException("'exit for' must be in a for statement");
@@ -265,13 +294,15 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
     @Override
     public Expression visitLabel(BasicParser.LabelContext ctx) {
-        model.labelStmt(ctx.id.getText());
+        var symbols = model.addLabels(ctx.id.getText());
+        model.labelStmt(symbols.get(0));
         return null;
     }
 
     @Override
     public Expression visitGotoGosubStmt(BasicParser.GotoGosubStmtContext ctx) {
-        model.gotoGosubStmt(ctx.op.getText(), ctx.l.getText());
+        var symbols = model.addLabels(ctx.l.getText());
+        model.gotoGosubStmt(ctx.op.getText(), symbols.get(0));
         return null;
     }
 

@@ -3,6 +3,9 @@ package a2geek.ghost.model.basic;
 import java.util.Objects;
 
 public record Symbol(String name, Scope.Type type, Expression expr, DataType dataType, int numDimensions) {
+    public static Builder label(String name) {
+        return new Builder(name, Scope.Type.LABEL);
+    }
     public static Builder variable(String name, Scope.Type type) {
         return new Builder(name, type);
     }

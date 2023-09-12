@@ -14,7 +14,6 @@ public class CodeGenerationVisitor extends Visitor {
     private CodeBlock code = new CodeBlock();
     private int labelNumber;
     private Stack<String> doExitLabels = new Stack<>();
-    private Stack<String> forExitLabels = new Stack<>();
     private Stack<String> repeatExitLabels = new Stack<>();
     private Stack<String> whileExitLabels = new Stack<>();
 
@@ -199,48 +198,13 @@ public class CodeGenerationVisitor extends Visitor {
         code.emit(labels.get(1));
     }
 
-    public void visit(ForNextStatement statement, StatementContext context) {
-        var labels = label("FOR", "FORX");
-        forExitLabels.push(labels.get(1));
-        assignment(new VariableReference(statement.getSymbol()), statement.getStart());
-        code.emit(labels.get(0));
-
-        // Note: We don't have a GE at this time.
-        // FIXME: If STEP is a variable, code generated will be incorrect.
-        boolean stepIsNegative = statement.getStep() instanceof IntegerConstant e && e.getValue() < 0;
-        if (stepIsNegative) {
-            dispatch(statement.getEnd());
-            emitLoad(statement.getSymbol());
-        }
-        else {
-            emitLoad(statement.getSymbol());
-            dispatch(statement.getEnd());
-        }
-        code.emit(Opcode.LE);
-
-        code.emit(Opcode.IFFALSE, labels.get(1));
-        dispatchAll(statement);
-
-        // Lean on the binary expression processor to setup an optimized STEP increment.
-        BinaryExpression stepIncrementExpr = new BinaryExpression(
-            new VariableReference(statement.getSymbol()),
-            statement.getStep(), "+");
-        visit(stepIncrementExpr);
-
-        emitStore(statement.getSymbol());
-        code.emit(Opcode.GOTO, labels.get(0));
-        code.emit(labels.get(1));
-        forExitLabels.pop();
-    }
-
     @Override
     public void visit(ExitStatement statement, StatementContext context) {
         var labelStack = switch (statement.getOp()) {
             case "do" -> doExitLabels;
-            case "for" -> forExitLabels;
             case "repeat" -> repeatExitLabels;
             case "while" -> whileExitLabels;
-            default -> throw new RuntimeException("unknown exist statement: " + statement);
+            default -> throw new RuntimeException("unknown exit statement: " + statement);
         };
         if (labelStack.empty()) {
             throw new RuntimeException("cannot exit " + statement.getOp() + " loop when not in one!");
@@ -358,12 +322,12 @@ public class CodeGenerationVisitor extends Visitor {
     }
 
     public void visit(LabelStatement statement, StatementContext context) {
-        code.emit(statement.getId());
+        code.emit(statement.getLabel().name());
     }
 
     @Override
     public void visit(GotoGosubStatement statement, StatementContext context) {
-        code.emit(Opcode.valueOf(statement.getOp().toUpperCase()), statement.getId());
+        code.emit(Opcode.valueOf(statement.getOp().toUpperCase()), statement.getLabel().name());
     }
 
     @Override
