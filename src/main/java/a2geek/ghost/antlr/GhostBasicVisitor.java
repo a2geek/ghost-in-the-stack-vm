@@ -6,6 +6,7 @@ import a2geek.ghost.antlr.generated.BasicParser.IfStatementContext;
 import a2geek.ghost.model.basic.*;
 import a2geek.ghost.model.basic.expression.*;
 import a2geek.ghost.model.basic.statement.DoLoopStatement;
+import a2geek.ghost.model.basic.statement.IfStatement;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
@@ -95,13 +96,22 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
         // FOR X = 1 TO 10 [ STEP 1 ] ... [EXIT FOR] ... NEXT X
         // ---
-        // X = 1
+        // X = START
         // (LOOP)
-        // IF X <= 10 THEN
-        //   ...STATEMENTS...
-        //   ...EXIT FOR == GOTO (EXIT)
-        //   X = X + STEP
-        //   GOTO (LOOP)
+        // IF SGN(STEP) >= 0 THEN  ' positive increment/zero
+        //     IF X <= END THEN
+        //         ...STATEMENTS...
+        //         ...EXIT FOR == GOTO (EXIT)
+        //         GOTO (LOOP)
+        //     END IF
+        // ELSE                   ' decrement
+        //     IF X >= END THEN
+        //         ...STATEMENTS...
+        //         ...EXIT FOR == GOTO (EXIT)
+        //         X = X + STEP
+        //         GOTO (LOOP)
+        //     END IF
+        // END IF
         // (EXIT)
         // ...
 
@@ -118,12 +128,14 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         model.assignStmt(ref, new BinaryExpression(ref, step, "+"));
         model.gotoGosubStmt("goto", loopLabel);
         var sb = model.popStatementBlock();
+        var positive = new IfStatement(new BinaryExpression(ref, end, "<="), sb, null);
+        var negative = new IfStatement(new BinaryExpression(ref, end, ">="), sb, null);
 
         // generating code
         model.assignStmt(ref, start);
         model.labelStmt(loopLabel);
-        // FIXME need to handle negatives
-        model.ifStmt(new BinaryExpression(ref, end, "<="), sb, null);
+        model.ifStmt(new BinaryExpression(new FunctionExpression("SGN", Arrays.asList(step)), IntegerConstant.ZERO, ">="),
+                StatementBlock.with(positive), StatementBlock.with(negative));
         model.labelStmt(exitLabel);
         return null;
     }
