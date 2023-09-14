@@ -87,33 +87,48 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         return null;
     }
 
+    /**
+     * Build a FOR ... NEXT loop. Note that the initial code is complicated by the possibility
+     * of the step being negative (meaning different tests for the loop portion.  If the step is
+     * a constant (or default of 1), this collapses into the simple condition during dead code
+     * optimization.
+     * <p>
+     * Sample FOR loop:
+     * <pre>
+     * FOR X = 1 TO 10 [ STEP 1 ]
+     *     ' code
+     *     [EXIT FOR]
+     *     ' code
+     * NEXT X
+     * </pre>
+     * <p>
+     * Target intermediate pseudocode; "(name)" is a label:
+     * <pre>
+     * X = START
+     * (LOOP)
+     * IF SGN(STEP) >= 0 THEN  ' positive increment/zero
+     *     IF X <= END THEN
+     *         ...STATEMENTS...
+     *         ...EXIT FOR == GOTO (EXIT)
+     *         GOTO (LOOP)
+     *     END IF
+     * ELSE                   ' decrement
+     *     IF X >= END THEN
+     *         ...STATEMENTS...
+     *         ...EXIT FOR == GOTO (EXIT)
+     *         X = X + STEP
+     *         GOTO (LOOP)
+     *     END IF
+     * END IF
+     * (EXIT)
+     * </pre>
+     */
     @Override
     public Expression visitForLoop(BasicParser.ForLoopContext ctx) {
         Symbol symbol = model.addVariable(ctx.id.getText(), DataType.INTEGER);
         Expression start = visit(ctx.a);
         Expression end = visit(ctx.b);
         Expression step = optVisit(ctx.c).orElse(new IntegerConstant(1));
-
-        // FOR X = 1 TO 10 [ STEP 1 ] ... [EXIT FOR] ... NEXT X
-        // ---
-        // X = START
-        // (LOOP)
-        // IF SGN(STEP) >= 0 THEN  ' positive increment/zero
-        //     IF X <= END THEN
-        //         ...STATEMENTS...
-        //         ...EXIT FOR == GOTO (EXIT)
-        //         GOTO (LOOP)
-        //     END IF
-        // ELSE                   ' decrement
-        //     IF X >= END THEN
-        //         ...STATEMENTS...
-        //         ...EXIT FOR == GOTO (EXIT)
-        //         X = X + STEP
-        //         GOTO (LOOP)
-        //     END IF
-        // END IF
-        // (EXIT)
-        // ...
 
         var ref = new VariableReference(symbol);
         var labels = model.addLabels("FOR_LOOP", "FOR_EXIT");
