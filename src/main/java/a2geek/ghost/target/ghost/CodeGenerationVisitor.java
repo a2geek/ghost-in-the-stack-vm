@@ -183,16 +183,30 @@ public class CodeGenerationVisitor extends Visitor {
 
     @Override
     public void visit(IfStatement statement, StatementContext context) {
-        var labels = label("IFF", "IFX");
+        if (!statement.hasTrueStatements() && !statement.hasFalseStatements()) {
+            // Do not generate code if this is somehow an empty IF statement
+            return;
+        }
+
+        var labels = label("IF_ELSE", "IF_EXIT");
+        var elseLabel = labels.get(0);
+        var exitLabel = labels.get(1);
+
         dispatch(statement.getExpression());
-        code.emit(Opcode.IFFALSE, statement.hasFalseStatements() ? labels.get(0) : labels.get(1));
-        dispatchAll(statement.getTrueStatements());
-        if (statement.hasFalseStatements()) {
-            code.emit(Opcode.GOTO, labels.get(1));
-            code.emit(labels.get(0));
+        if (statement.hasTrueStatements()) {
+            code.emit(Opcode.IFFALSE, statement.hasFalseStatements() ? elseLabel : exitLabel);
+            dispatchAll(statement.getTrueStatements());
+            if (statement.hasFalseStatements()) {
+                code.emit(Opcode.GOTO, exitLabel);
+                code.emit(elseLabel);
+                dispatchAll(statement.getFalseStatements());
+            }
+        }
+        else {
+            code.emit(Opcode.IFTRUE, exitLabel);
             dispatchAll(statement.getFalseStatements());
         }
-        code.emit(labels.get(1));
+        code.emit(exitLabel);
     }
 
     @Override

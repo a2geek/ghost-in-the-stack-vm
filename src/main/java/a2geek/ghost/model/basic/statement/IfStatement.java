@@ -32,6 +32,10 @@ public class IfStatement implements Statement {
         return falseStatements;
     }
 
+    public boolean hasTrueStatements() {
+        return trueStatements != null && !trueStatements.isEmpty();
+    }
+
     public boolean hasFalseStatements() {
         return falseStatements != null && !falseStatements.isEmpty();
     }
