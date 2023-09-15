@@ -5,8 +5,9 @@ import a2geek.ghost.antlr.generated.BasicParser;
 import a2geek.ghost.antlr.generated.BasicParser.IfStatementContext;
 import a2geek.ghost.model.basic.*;
 import a2geek.ghost.model.basic.expression.*;
-import a2geek.ghost.model.basic.statement.DoLoopStatement;
+import a2geek.ghost.model.basic.statement.GotoGosubStatement;
 import a2geek.ghost.model.basic.statement.IfStatement;
+import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
@@ -15,7 +16,11 @@ import java.util.stream.Collectors;
 
 public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     private ModelBuilder model;
-    private Stack<Symbol> forNextStatements = new Stack<>();
+    private Map<String,Symbol> gotoGosubLabels = new HashMap<>();
+    private Stack<Symbol> forExitLabels = new Stack<>();
+    private Stack<Symbol> doExitLabels = new Stack<>();
+    private Stack<Symbol> repeatExitLabels = new Stack<>();
+    private Stack<Symbol> whileExitLabels = new Stack<>();
 
     public GhostBasicVisitor(ModelBuilder model) {
         this.model = model;
@@ -89,7 +94,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
     /**
      * Build a FOR ... NEXT loop. Note that the initial code is complicated by the possibility
-     * of the step being negative (meaning different tests for the loop portion.  If the step is
+     * of the step being negative (meaning different tests for the loop portion).  If the step is
      * a constant (or default of 1), this collapses into the simple condition during dead code
      * optimization.
      * <p>
@@ -137,9 +142,9 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
         // building contents of "IF" statement
         model.pushStatementBlock(new StatementBlock());
-        forNextStatements.push(exitLabel);
+        forExitLabels.push(exitLabel);
         optVisit(ctx.s);
-        forNextStatements.pop();
+        forExitLabels.pop();
         model.assignStmt(ref, new BinaryExpression(ref, step, "+"));
         model.gotoGosubStmt("goto", loopLabel);
         var sb = model.popStatementBlock();
@@ -155,76 +160,228 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         return null;
     }
 
+    /**
+     * Build a DO [ WHILE | UNTIL ] ... LOOP statement, which tests at beginning of statement.
+     * <p>
+     * Sample code:
+     * <pre>
+     * DO [ WHILE | UNTIL ] (condition)
+     *     ' statements
+     *     [ EXIT DO ]
+     *     ' more statements
+     * LOOP
+     * </pre>
+     * <p>
+     * Generated code for DO WHILE ... LOOP will be of the form:
+     * <pre>
+     * (LOOP)
+     * IF condition THEN
+     *     ' DO NOTHING
+     * ELSE
+     *     GOTO (EXIT)
+     * END IF
+     * ' statements
+     * [ EXIT DO => GOTO (EXIT) ]
+     * ' more statements
+     * GOTO (LOOP)
+     * (EXIT)
+     * </pre>
+     * <p>
+     * With DO UNTIL ... LOOP, the first IF will be:
+     * <pre>
+     * IF condition THEN
+     *     GOTO (EXIT)
+     * END IF
+     * </pre>
+     */
     @Override
     public Expression visitDoLoop1(BasicParser.DoLoop1Context ctx) {
         Expression test = visit(ctx.a);
-        DoLoopStatement.Operation op = switch (ctx.op.getText()) {
-            case "while" -> DoLoopStatement.Operation.DO_WHILE;
-            case "until" -> DoLoopStatement.Operation.DO_UNTIL;
+
+        var labels = model.addLabels("DO_LOOP", "DO_EXIT");
+        var loopLabel = labels.get(0);
+        var exitLabel = labels.get(1);
+        var gotoExitStatement = StatementBlock.with(new GotoGosubStatement("goto", exitLabel));
+
+        model.labelStmt(loopLabel);
+        switch (ctx.op.getText()) {
+            case "while" -> model.ifStmt(test, StatementBlock.EMPTY, gotoExitStatement);
+            case "until" -> model.ifStmt(test, gotoExitStatement, null);
             default -> throw new RuntimeException("unexpected do loop type: " + ctx.op.getText());
         };
-
-        model.loopBegin(op, test);
+        doExitLabels.push(exitLabel);
         optVisit(ctx.s);
-        model.loopEnd();
+        doExitLabels.pop();
+        model.gotoGosubStmt("goto", loopLabel);
+        model.labelStmt(exitLabel);
+
         return null;
     }
 
+    /**
+     * Build a DO ... LOOP [ WHILE | UNTIL ] statement, which tests at end of statement.
+     * <p>
+     * Sample code:
+     * <pre>
+     * DO
+     *     ' statements
+     *     [ EXIT DO ]
+     *     ' more statements
+     * LOOP [ WHILE | UNTIL ] (condition)
+     * </pre>
+     * <p>
+     * Generated code for DO ... LOOP WHILE will be of the form:
+     * <pre>
+     * (LOOP)
+     * ' statements
+     * [ EXIT DO => GOTO (EXIT) ]
+     * ' more statements
+     * IF condition THEN
+     *     GOTO (LOOP)
+     * END IF
+     * (EXIT)
+     * </pre>
+     * <p>
+     * With DO ... LOOP UNTIL, the final IF will be:
+     * <pre>
+     * IF condition THEN
+     *     ' DO NOTHING
+     * ELSE
+     *     GOTO (LOOP)
+     * END IF
+     * </pre>
+     */
     @Override
     public Expression visitDoLoop2(BasicParser.DoLoop2Context ctx) {
         Expression test = visit(ctx.a);
-        DoLoopStatement.Operation op = switch (ctx.op.getText()) {
-            case "while" -> DoLoopStatement.Operation.LOOP_WHILE;
-            case "until" -> DoLoopStatement.Operation.LOOP_UNTIL;
+
+        var labels = model.addLabels("DO_LOOP", "DO_EXIT");
+        var loopLabel = labels.get(0);
+        var exitLabel = labels.get(1);
+        var gotoStatement = StatementBlock.with(new GotoGosubStatement("goto", loopLabel));
+
+        model.labelStmt(loopLabel);
+        doExitLabels.push(exitLabel);
+        optVisit(ctx.s);
+        doExitLabels.pop();
+        switch (ctx.op.getText()) {
+            case "while" -> model.ifStmt(test, gotoStatement, null);
+            case "until" -> model.ifStmt(test, StatementBlock.EMPTY, gotoStatement);
             default -> throw new RuntimeException("unexpected do loop type: " + ctx.op.getText());
         };
+        model.labelStmt(exitLabel);
 
-        model.loopBegin(op, test);
-        optVisit(ctx.s);
-        model.loopEnd();
         return null;
     }
 
+    /**
+     * Build a WHILE ... LOOP statement.
+     * <p>
+     * Sample code:
+     * <pre>
+     * WHILE (condition)
+     *     ' statements
+     *     [ EXIT WHILE ]
+     *     ' more statements
+     * LOOP
+     * </pre>
+     * <p>
+     * Generated code will be of the form:
+     * <pre>
+     * (LOOP)
+     * IF condition THEN
+     *     ' statements
+     *     [ EXIT WHILE => GOTO (EXIT) ]
+     *     ' more statements
+     *     GOTO (LOOP)
+     * END IF
+     * (EXIT)
+     * </pre>
+     */
     @Override
     public Expression visitWhileLoop(BasicParser.WhileLoopContext ctx) {
         Expression test = visit(ctx.a);
 
-        model.loopBegin(DoLoopStatement.Operation.WHILE, test);
+        var labels = model.addLabels("WHILE_LOOP", "WHILE_EXIT");
+        var loopLabel = labels.get(0);
+        var exitLabel = labels.get(1);
+
+        model.pushStatementBlock(new StatementBlock());
+        whileExitLabels.push(exitLabel);
         optVisit(ctx.s);
-        model.loopEnd();
+        whileExitLabels.pop();
+        model.gotoGosubStmt("goto", loopLabel);
+        var loopStatements = model.popStatementBlock();
+
+        model.labelStmt(loopLabel);
+        model.ifStmt(test, loopStatements, null);
+        model.labelStmt(exitLabel);
+
         return null;
     }
 
+    /**
+     * Build a REPEAT ... UNTIL statement.
+     * <p>
+     * Sample code:
+     * <pre>
+     * REPEAT
+     *     ' statements
+     *     [ EXIT REPEAT ]
+     *     ' more statements
+     * UNTIL (condition)
+     * </pre>
+     * <p>
+     * Generated code will be of the form:
+     * <pre>
+     * (LOOP)
+     * IF condition THEN
+     *     ' DO NOTHING; EXIT LOOP
+     * ELSE
+     *     ' statements
+     *     [ EXIT REPEAT => GOTO (EXIT) ]
+     *     ' more statements
+     *     GOTO (LOOP)
+     * END IF
+     * (EXIT)
+     * </pre>
+     */
     @Override
     public Expression visitRepeatLoop(BasicParser.RepeatLoopContext ctx) {
         Expression test = visit(ctx.a);
 
-        model.loopBegin(DoLoopStatement.Operation.REPEAT, test);
+        var labels = model.addLabels("REPEAT_LOOP", "REPEAT_EXIT");
+        var loopLabel = labels.get(0);
+        var exitLabel = labels.get(1);
+
+        model.labelStmt(loopLabel);
+        repeatExitLabels.push(exitLabel);
         optVisit(ctx.s);
-        model.loopEnd();
+        repeatExitLabels.pop();
+        model.ifStmt(test, StatementBlock.EMPTY, StatementBlock.with(new GotoGosubStatement("goto", loopLabel)));
+        model.labelStmt(exitLabel);
+
         return null;
     }
 
     @Override
     public Expression visitExitStmt(BasicParser.ExitStmtContext ctx) {
         var op = ctx.n.getText().toLowerCase();
-        switch (op) {
-            case "for" -> {
-                if (!forNextStatements.isEmpty()) {
-                    model.gotoGosubStmt("goto", forNextStatements.peek());
-                    return null;
-                }
-                throw new RuntimeException("'exit for' must be in a for statement");
-            }
-            case "while", "loop", "repeat" -> {
-                if (model.findBlock(DoLoopStatement.class).isPresent()) {
-                    model.exitStmt(op);
-                    return null;
-                }
-                throw new RuntimeException(String.format("'exit %s' must be in a %s statement", op, op));
-            }
+        var labels = switch (op) {
+            case "for" -> forExitLabels;
+            case "while" -> whileExitLabels;
+            case "repeat" -> repeatExitLabels;
+            case "loop" -> doExitLabels;
+            default -> throw new RuntimeException(String.format("unknown exit type: " + op));
+        };
+
+        if (labels.isEmpty()) {
+            var msg = String.format("'exit %s' must be in a %s statement", op, op);
+            throw new RuntimeException(msg);
         }
-        throw new RuntimeException(String.format("unknown exit type: " + op));
+
+        model.gotoGosubStmt("goto", labels.peek());
+        return null;
     }
 
     @Override
@@ -319,17 +476,21 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         return null;
     }
 
+    public Symbol findGotoGosubLabel(Token id) {
+        return gotoGosubLabels.computeIfAbsent(
+                model.fixCase(id.getText()),
+                x -> model.addLabels(x).get(0));
+    }
+
     @Override
     public Expression visitLabel(BasicParser.LabelContext ctx) {
-        var symbols = model.addLabels(ctx.id.getText());
-        model.labelStmt(symbols.get(0));
+        model.labelStmt(findGotoGosubLabel(ctx.id));
         return null;
     }
 
     @Override
     public Expression visitGotoGosubStmt(BasicParser.GotoGosubStmtContext ctx) {
-        var symbols = model.addLabels(ctx.l.getText());
-        model.gotoGosubStmt(ctx.op.getText(), symbols.get(0));
+        model.gotoGosubStmt(ctx.op.getText(), findGotoGosubLabel(ctx.l));
         return null;
     }
 
@@ -337,8 +498,11 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     public Expression visitOnGotoGosubStmt(BasicParser.OnGotoGosubStmtContext ctx) {
         var op = ctx.op.getText();
         var expr = visit(ctx.a);
-        var labels = ctx.ID().stream().map(TerminalNode::getText).map(model::fixCase).toList();
-        model.onGotoGosubStmt(op, expr, labels);
+        var labels = ctx.ID().stream()
+                .map(TerminalNode::getSymbol)
+                .map(this::findGotoGosubLabel)
+                .toList();
+        model.onGotoGosubStmt(op, expr, () -> labels);
         return null;
     }
 

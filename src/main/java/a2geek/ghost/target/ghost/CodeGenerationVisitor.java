@@ -13,9 +13,6 @@ public class CodeGenerationVisitor extends Visitor {
     private Stack<Frame> frames = new Stack<>();
     private CodeBlock code = new CodeBlock();
     private int labelNumber;
-    private Stack<String> doExitLabels = new Stack<>();
-    private Stack<String> repeatExitLabels = new Stack<>();
-    private Stack<String> whileExitLabels = new Stack<>();
 
     public List<Instruction> getInstructions() {
         return code.getInstructions();
@@ -196,55 +193,6 @@ public class CodeGenerationVisitor extends Visitor {
             dispatchAll(statement.getFalseStatements());
         }
         code.emit(labels.get(1));
-    }
-
-    @Override
-    public void visit(ExitStatement statement, StatementContext context) {
-        var labelStack = switch (statement.getOp()) {
-            case "do" -> doExitLabels;
-            case "repeat" -> repeatExitLabels;
-            case "while" -> whileExitLabels;
-            default -> throw new RuntimeException("unknown exit statement: " + statement);
-        };
-        if (labelStack.empty()) {
-            throw new RuntimeException("cannot exit " + statement.getOp() + " loop when not in one!");
-        }
-        code.emit(Opcode.GOTO, labelStack.peek());
-    }
-
-    @Override
-    public void visit(DoLoopStatement statement, StatementContext context) {
-        var labels = label("LOOP", "LOOPX");
-        var labelStack = switch (statement.getOp()) {
-            case REPEAT -> repeatExitLabels;
-            case WHILE -> whileExitLabels;
-            case DO_WHILE, DO_UNTIL, LOOP_WHILE, LOOP_UNTIL -> doExitLabels;
-        };
-        var testAtStart = switch (statement.getOp()) {
-            case WHILE, DO_WHILE, DO_UNTIL -> true;
-            case REPEAT, LOOP_WHILE, LOOP_UNTIL -> false;
-        };
-        var testOpcode = switch (statement.getOp()) {
-            case DO_UNTIL, LOOP_WHILE -> Opcode.IFTRUE;
-            case REPEAT, WHILE, LOOP_UNTIL, DO_WHILE -> Opcode.IFFALSE;
-        };
-
-        labelStack.push(labels.get(1));
-        code.emit(labels.get(0));
-        if (testAtStart) {
-            dispatch(statement.getExpr());
-            code.emit(testOpcode, labels.get(1));
-        }
-        dispatchAll(statement);
-        if (!testAtStart) {
-            dispatch(statement.getExpr());
-            code.emit(testOpcode, labels.get(0));
-        }
-        else {
-            code.emit(Opcode.GOTO, labels.get(0));
-        }
-        code.emit(labels.get(1));
-        labelStack.pop();
     }
 
     @Override

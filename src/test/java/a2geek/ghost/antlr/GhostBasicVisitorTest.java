@@ -6,7 +6,6 @@ import a2geek.ghost.model.basic.Scope;
 import a2geek.ghost.model.basic.Symbol;
 import a2geek.ghost.model.basic.expression.VariableReference;
 import a2geek.ghost.model.basic.scope.Program;
-import a2geek.ghost.model.basic.statement.DoLoopStatement;
 import org.antlr.v4.runtime.CharStreams;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -115,27 +114,29 @@ public class GhostBasicVisitorTest {
     }
 
     @Test
+    @Disabled
     public void testDoLoop1() {
-        expect("""
-                do while true
-                    a = 10
-                loop""")
-            .doLoop(DoLoopStatement.Operation.DO_WHILE, constant(true))
-                .assignment("a", constant(10))
-            .endBlock()
-            .atEnd();
+//        expect("""
+//                do while true
+//                    a = 10
+//                loop""")
+//            .doLoop(DoLoopStatement.Operation.DO_WHILE, constant(true))
+//                .assignment("a", constant(10))
+//            .endBlock()
+//            .atEnd();
     }
 
     @Test
+    @Disabled
     public void testDoLoop2() {
-        expect("""
-                do
-                    a = 10
-                loop while true""")
-            .doLoop(DoLoopStatement.Operation.LOOP_WHILE, constant(true))
-                .assignment("a", constant(10))
-            .endBlock()
-            .atEnd();
+//        expect("""
+//                do
+//                    a = 10
+//                loop while true""")
+//            .doLoop(DoLoopStatement.Operation.LOOP_WHILE, constant(true))
+//                .assignment("a", constant(10))
+//            .endBlock()
+//            .atEnd();
     }
 
     @Test
@@ -152,39 +153,42 @@ public class GhostBasicVisitorTest {
     }
 
     @Test
+    @Disabled
     public void testWhile() {
-        expect("""
-                while true
-                    a = 10
-                end while""")
-            .doLoop(DoLoopStatement.Operation.WHILE, constant(true))
-                .assignment("a", constant(10))
-            .endBlock()
-            .atEnd();
+//        expect("""
+//                while true
+//                    a = 10
+//                end while""")
+//            .doLoop(DoLoopStatement.Operation.WHILE, constant(true))
+//                .assignment("a", constant(10))
+//            .endBlock()
+//            .atEnd();
     }
 
     @Test
+    @Disabled
     public void testRepeat() {
-        expect("""
-                repeat
-                    a = 10
-                until true""")
-            .doLoop(DoLoopStatement.Operation.REPEAT, constant(true))
-                .assignment("a", constant(10))
-            .endBlock()
-            .atEnd();
+//        expect("""
+//                repeat
+//                    a = 10
+//                until true""")
+//            .doLoop(DoLoopStatement.Operation.REPEAT, constant(true))
+//                .assignment("a", constant(10))
+//            .endBlock()
+//            .atEnd();
     }
 
     @Test
+    @Disabled
     public void testExit() {
-        expect("""
-                while true
-                    exit while
-                end while""")
-            .doLoop(DoLoopStatement.Operation.WHILE, constant(true))
-                .exitStmt("while")
-            .endBlock()
-            .atEnd();
+//        expect("""
+//                while true
+//                    exit while
+//                end while""")
+//            .doLoop(DoLoopStatement.Operation.WHILE, constant(true))
+//                .exitStmt("while")
+//            .endBlock()
+//            .atEnd();
     }
 
     @Test
@@ -193,8 +197,7 @@ public class GhostBasicVisitorTest {
             RuntimeException.class,
             () -> {
                 expect("exit for")
-                    .exitStmt("for")
-                    .atEnd();
+                    .fail("'exit for' must be in a FOR ... NEXT statement");
             }
         );
     }

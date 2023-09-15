@@ -13,6 +13,7 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * A shared component to help building the BASIC model between language variants.
@@ -31,7 +32,8 @@ public class ModelBuilder {
     private Map<Symbol, ForFrame> forFrames = new HashMap<>();
     /** Track array dimensions */
     private Map<Symbol, Expression> arrayDims = new HashMap<>();
-    private int labelNumber;
+    /** Tracking a distinct label number globally (regardless of scope) to prevent name collisions. */
+    private static int labelNumber;
 
     public ModelBuilder(Function<String,String> caseStrategy) {
         this.caseStrategy = caseStrategy;
@@ -262,23 +264,6 @@ public class ModelBuilder {
         addStatement(statement);
     }
 
-    public void loopBegin(DoLoopStatement.Operation op, Expression test) {
-        DoLoopStatement doStatement = new DoLoopStatement(op, test);
-        pushStatementBlock(doStatement);
-    }
-    public void loopEnd() {
-        if (popStatementBlock() instanceof DoLoopStatement doStatement) {
-            addStatement(doStatement);
-        }
-        else {
-            throw new RuntimeException("expecting do loop statement on stack");
-        }
-    }
-
-    public void exitStmt(String op) {
-        addStatement(new ExitStatement(op));
-    }
-
     public void subDeclBegin(String name, List<Symbol.Builder> params) {
         Subroutine sub = new Subroutine(scope.peek(), fixCase(name), params);
         addScope(sub);
@@ -331,14 +316,14 @@ public class ModelBuilder {
         GotoGosubStatement gotoGosubStatement = new GotoGosubStatement(op.toLowerCase(), label);
         addStatement(gotoGosubStatement);
     }
-    public void onGotoGosubStmt(String op, Expression expr, List<String> labels, String altToString) {
+    public void onGotoGosubStmt(String op, Expression expr, Supplier<List<Symbol>> labelFn, String altToString) {
         OnGotoGosubStatement stmt = new OnGotoGosubStatement(op.toLowerCase(), expr,
-            labels, altToString);
+                labelFn, altToString);
         addStatement(stmt);
     }
 
-    public void onGotoGosubStmt(String op, Expression expr, List<String> labels) {
-        var statement = new OnGotoGosubStatement(op.toLowerCase(), expr, labels);
+    public void onGotoGosubStmt(String op, Expression expr, Supplier<List<Symbol>> labelFn) {
+        var statement = new OnGotoGosubStatement(op.toLowerCase(), expr, labelFn);
         addStatement(statement);
     }
 

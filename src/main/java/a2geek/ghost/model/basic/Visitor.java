@@ -67,12 +67,6 @@ public abstract class Visitor {
         else if (statement instanceof PopStatement s) {
             visit(s, context);
         }
-        else if (statement instanceof ExitStatement s) {
-            visit(s, context);
-        }
-        else if (statement instanceof DoLoopStatement s) {
-            visit(s, context);
-        }
         else if (statement instanceof OnGotoGosubStatement s) {
             visit(s, context);
         }
@@ -160,12 +154,6 @@ public abstract class Visitor {
         expr.ifPresent(statement::setExpression);
     }
 
-    public void visit(DoLoopStatement statement, StatementContext context) {
-        var expr = dispatch(statement.getExpr());
-        dispatchAll(statement);
-        expr.ifPresent(statement::setExpr);
-    }
-
     public void visit(ForStatement statement, StatementContext context) {
         var start = dispatch(statement.getStart());
         var end = dispatch(statement.getEnd());
@@ -243,10 +231,6 @@ public abstract class Visitor {
 
     public void visit(PopStatement statement, StatementContext context) {
 
-    }
-
-    public void visit(ExitStatement statement, StatementContext context) {
-        
     }
 
     public Expression visit(BinaryExpression expression) {

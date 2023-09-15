@@ -40,7 +40,7 @@ public abstract class StatementTester {
     }
 
     private String lineNumberLabel(int lineNumber) {
-        return String.format("L%d", lineNumber);
+        return String.format("L%d_", lineNumber);
     }
 
     public StatementTester hasSymbol(String name, DataType dataType, Scope.Type scopeType) {
@@ -67,6 +67,10 @@ public abstract class StatementTester {
     }
     public StatementTester hasSymbol(Symbol symbol) {
         return hasSymbol(symbol.name(), symbol.dataType(), symbol.type());
+    }
+
+    public void fail(String message) {
+        fail(message);
     }
 
     public StatementTester atEnd() {
@@ -221,20 +225,8 @@ public abstract class StatementTester {
         throw new RuntimeException("not an if statement");
     }
 
-    public StatementTester doLoop(DoLoopStatement.Operation op, Expression expr) {
-        var stmt = nextStatement(DoLoopStatement.class);
-        assertEquals(expr, stmt.getExpr());
-        assertEquals(op, stmt.getOp());
-        return new StatementBlockTester(this, stmt);
-    }
     public StatementTester endBlock() {
         throw new RuntimeException("not a do...loop statement");
-    }
-
-    public StatementTester exitStmt(String op) {
-        var stmt = nextStatement(ExitStatement.class);
-        assertEquals(op, stmt.getOp());
-        return this;
     }
 
     public StatementTester nextStmt(String name) {

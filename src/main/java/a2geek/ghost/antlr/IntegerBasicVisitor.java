@@ -12,17 +12,14 @@ import a2geek.ghost.model.basic.statement.NextStatement;
 import a2geek.ghost.model.basic.statement.PopStatement;
 import org.antlr.v4.runtime.tree.ParseTree;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     public static final String LINE_NUMBERS = "_line_numbers";
 
     private ModelBuilder model;
     private List<Expression> lineNumbers = new ArrayList<>();
-    private List<String> lineLabels = new ArrayList<>();
+    private SortedMap<Integer,Symbol> lineLabels = new TreeMap<>();
 
     public IntegerBasicVisitor(ModelBuilder model) {
         this.model = model;
@@ -55,8 +52,9 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     }
 
     Symbol gotoGosubLabel(int linenum) {
-        var label = String.format("L%d", linenum);
-        return model.addLabels(label).get(0);
+        return lineLabels.computeIfAbsent(
+                linenum,
+                n -> model.addLabels(String.format("L%d_", n)).get(0));
     }
 
     @Override
@@ -64,7 +62,6 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         var lineNumber = Integer.parseInt(ctx.INTEGER().getText());
         var lineLabel = gotoGosubLabel(lineNumber);
         lineNumbers.add(new IntegerConstant(lineNumber));
-        lineLabels.add(lineLabel.name());
 
         model.labelStmt(lineLabel);
         try {
@@ -168,7 +165,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
             var text = String.format("%s %s", op.toUpperCase(), expr);
             var lookupExpr = model.callFunction("line_index",
                 Arrays.asList(expr, new VariableReference(lineNumbers)));
-            model.onGotoGosubStmt(op, lookupExpr, lineLabels, text);
+            model.onGotoGosubStmt(op, lookupExpr, () -> lineLabels.values().stream().toList(), text);
         }
         return null;
     }
