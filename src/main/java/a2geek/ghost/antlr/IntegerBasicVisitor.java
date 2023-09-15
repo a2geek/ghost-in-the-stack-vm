@@ -18,7 +18,6 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     public static final String LINE_NUMBERS = "_line_numbers";
 
     private ModelBuilder model;
-    private List<Expression> lineNumbers = new ArrayList<>();
     private SortedMap<Integer,Symbol> lineLabels = new TreeMap<>();
 
     public IntegerBasicVisitor(ModelBuilder model) {
@@ -38,7 +37,11 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         }
         // Note that the array name gets mangled to keep types distinct by name
         model.findSymbol(model.fixArrayName(LINE_NUMBERS)).ifPresent(symbol -> {
-            model.insertDimArray(symbol, new IntegerConstant(lineNumbers.size()), lineNumbers);
+            model.insertDimArray(symbol, new IntegerConstant(lineLabels.size()),
+                    lineLabels.keySet().stream()
+                            .map(IntegerConstant::new)
+                            .map(Expression.class::cast)
+                            .toList());
         });
         return null;
     }
@@ -61,7 +64,6 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     public Expression visitProgramLine(IntegerParser.ProgramLineContext ctx) {
         var lineNumber = Integer.parseInt(ctx.INTEGER().getText());
         var lineLabel = gotoGosubLabel(lineNumber);
-        lineNumbers.add(new IntegerConstant(lineNumber));
 
         model.labelStmt(lineLabel);
         try {
