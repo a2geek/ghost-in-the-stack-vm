@@ -20,7 +20,7 @@ directives
 
 declarations
     : 'const' constantDecl ( ',' constantDecl )*                        # constant
-    | 'sub' id=ID p=paramDecl? EOL+
+    | 'sub' (f='inline')? id=ID p=paramDecl? EOL+
         (s=statements)?
       'end' 'sub'                                                       # subDecl
     | 'function' id=ID p=paramDecl? ('as' datatype)? EOL+

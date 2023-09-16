@@ -7,6 +7,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class StatementBlock {
+    public static final StatementBlock EMPTY = new StatementBlock();
+    public static StatementBlock with(Statement... statements) {
+        StatementBlock sb = new StatementBlock();
+        for (var stmt : statements) {
+            sb.addStatement(stmt);
+        }
+        return sb;
+    }
     private List<Statement> statements = new ArrayList<>();
 
     public List<Statement> getStatements() {

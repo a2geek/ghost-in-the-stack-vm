@@ -13,10 +13,7 @@ public class CodeGenerationVisitor extends Visitor {
     private Stack<Frame> frames = new Stack<>();
     private CodeBlock code = new CodeBlock();
     private int labelNumber;
-    private Stack<String> doExitLabels = new Stack<>();
-    private Stack<String> forExitLabels = new Stack<>();
-    private Stack<String> repeatExitLabels = new Stack<>();
-    private Stack<String> whileExitLabels = new Stack<>();
+    private Stack<Map<Symbol,Expression>> inlineVariables = new Stack<>();
 
     public List<Instruction> getInstructions() {
         return code.getInstructions();
@@ -187,100 +184,30 @@ public class CodeGenerationVisitor extends Visitor {
 
     @Override
     public void visit(IfStatement statement, StatementContext context) {
-        var labels = label("IFF", "IFX");
+        if (!statement.hasTrueStatements() && !statement.hasFalseStatements()) {
+            // Do not generate code if this is somehow an empty IF statement
+            return;
+        }
+
+        var labels = label("IF_ELSE", "IF_EXIT");
+        var elseLabel = labels.get(0);
+        var exitLabel = labels.get(1);
+
         dispatch(statement.getExpression());
-        code.emit(Opcode.IFFALSE, statement.hasFalseStatements() ? labels.get(0) : labels.get(1));
-        dispatchAll(statement.getTrueStatements());
-        if (statement.hasFalseStatements()) {
-            code.emit(Opcode.GOTO, labels.get(1));
-            code.emit(labels.get(0));
+        if (statement.hasTrueStatements()) {
+            code.emit(Opcode.IFFALSE, statement.hasFalseStatements() ? elseLabel : exitLabel);
+            dispatchAll(statement.getTrueStatements());
+            if (statement.hasFalseStatements()) {
+                code.emit(Opcode.GOTO, exitLabel);
+                code.emit(elseLabel);
+                dispatchAll(statement.getFalseStatements());
+            }
+        }
+        else {
+            code.emit(Opcode.IFTRUE, exitLabel);
             dispatchAll(statement.getFalseStatements());
         }
-        code.emit(labels.get(1));
-    }
-
-    public void visit(ForNextStatement statement, StatementContext context) {
-        var labels = label("FOR", "FORX");
-        forExitLabels.push(labels.get(1));
-        assignment(new VariableReference(statement.getSymbol()), statement.getStart());
-        code.emit(labels.get(0));
-
-        // Note: We don't have a GE at this time.
-        // FIXME: If STEP is a variable, code generated will be incorrect.
-        boolean stepIsNegative = statement.getStep() instanceof IntegerConstant e && e.getValue() < 0;
-        if (stepIsNegative) {
-            dispatch(statement.getEnd());
-            emitLoad(statement.getSymbol());
-        }
-        else {
-            emitLoad(statement.getSymbol());
-            dispatch(statement.getEnd());
-        }
-        code.emit(Opcode.LE);
-
-        code.emit(Opcode.IFFALSE, labels.get(1));
-        dispatchAll(statement);
-
-        // Lean on the binary expression processor to setup an optimized STEP increment.
-        BinaryExpression stepIncrementExpr = new BinaryExpression(
-            new VariableReference(statement.getSymbol()),
-            statement.getStep(), "+");
-        visit(stepIncrementExpr);
-
-        emitStore(statement.getSymbol());
-        code.emit(Opcode.GOTO, labels.get(0));
-        code.emit(labels.get(1));
-        forExitLabels.pop();
-    }
-
-    @Override
-    public void visit(ExitStatement statement, StatementContext context) {
-        var labelStack = switch (statement.getOp()) {
-            case "do" -> doExitLabels;
-            case "for" -> forExitLabels;
-            case "repeat" -> repeatExitLabels;
-            case "while" -> whileExitLabels;
-            default -> throw new RuntimeException("unknown exist statement: " + statement);
-        };
-        if (labelStack.empty()) {
-            throw new RuntimeException("cannot exit " + statement.getOp() + " loop when not in one!");
-        }
-        code.emit(Opcode.GOTO, labelStack.peek());
-    }
-
-    @Override
-    public void visit(DoLoopStatement statement, StatementContext context) {
-        var labels = label("LOOP", "LOOPX");
-        var labelStack = switch (statement.getOp()) {
-            case REPEAT -> repeatExitLabels;
-            case WHILE -> whileExitLabels;
-            case DO_WHILE, DO_UNTIL, LOOP_WHILE, LOOP_UNTIL -> doExitLabels;
-        };
-        var testAtStart = switch (statement.getOp()) {
-            case WHILE, DO_WHILE, DO_UNTIL -> true;
-            case REPEAT, LOOP_WHILE, LOOP_UNTIL -> false;
-        };
-        var testOpcode = switch (statement.getOp()) {
-            case DO_UNTIL, LOOP_WHILE -> Opcode.IFTRUE;
-            case REPEAT, WHILE, LOOP_UNTIL, DO_WHILE -> Opcode.IFFALSE;
-        };
-
-        labelStack.push(labels.get(1));
-        code.emit(labels.get(0));
-        if (testAtStart) {
-            dispatch(statement.getExpr());
-            code.emit(testOpcode, labels.get(1));
-        }
-        dispatchAll(statement);
-        if (!testAtStart) {
-            dispatch(statement.getExpr());
-            code.emit(testOpcode, labels.get(0));
-        }
-        else {
-            code.emit(Opcode.GOTO, labels.get(0));
-        }
-        code.emit(labels.get(1));
-        labelStack.pop();
+        code.emit(exitLabel);
     }
 
     @Override
@@ -358,12 +285,12 @@ public class CodeGenerationVisitor extends Visitor {
     }
 
     public void visit(LabelStatement statement, StatementContext context) {
-        code.emit(statement.getId());
+        code.emit(statement.getLabel().name());
     }
 
     @Override
     public void visit(GotoGosubStatement statement, StatementContext context) {
-        code.emit(Opcode.valueOf(statement.getOp().toUpperCase()), statement.getId());
+        code.emit(Opcode.valueOf(statement.getOp().toUpperCase()), statement.getLabel().name());
     }
 
     @Override
@@ -435,19 +362,52 @@ public class CodeGenerationVisitor extends Visitor {
 
     @Override
     public void visit(CallSubroutine statement, StatementContext context) {
-        boolean hasParameters = statement.getParameters().size() != 0;
-        for (Expression expr : statement.getParameters()) {
-            dispatch(expr);
+        // Using the "program" frame
+        var scope = frames.get(0).scope().findLocalScope(statement.getName())
+                .orElseThrow(() -> new RuntimeException(statement.getName() + " not found"));
+        if (scope instanceof Subroutine sub) {
+            Map<Symbol,Expression> map = new HashMap<>();
+            inlineVariables.push(map);
+            if (sub.isInline()) {
+                var parameters = sub.findByType(Scope.Type.PARAMETER);
+                if (parameters.size() != statement.getParameters().size()) {
+                    throw new RuntimeException(String.format("parameter size mismatch for call to '%s'", statement.getName()));
+                }
+                // Subroutine parameters are REVERSED (for stack placement), so taking that into account:
+                Collections.reverse(parameters);
+                for (int i=0; i<parameters.size(); i++) {
+                    var param = parameters.get(i);
+                    var value = statement.getParameters().get(i);
+                    if (param.numDimensions() > 0) {
+                        throw new RuntimeException("parameter inlining not available for arrays: " + param.name());
+                    }
+                    map.put(param, value);
+                }
+                dispatchAll(sub);
+            }
+            else {
+                boolean hasParameters = statement.getParameters().size() != 0;
+                for (Expression expr : statement.getParameters()) {
+                    dispatch(expr);
+                }
+                code.emit(Opcode.GOSUB, statement.getName());
+                if (hasParameters) {
+                    // FIXME when we have more datatypes this will be incorrect
+                    code.emit(Opcode.POPN, statement.getParameters().size() * 2);
+                }
+            }
+            inlineVariables.pop();
+            return;
         }
-        code.emit(Opcode.GOSUB, statement.getName());
-        if (hasParameters) {
-            // FIXME when we have more datatypes this will be incorrect
-            code.emit(Opcode.POPN, statement.getParameters().size() * 2);
-        }
+        throw new RuntimeException(String.format("calling a subroutine but '%s' is not a subroutine?", statement.getName()));
     }
 
     @Override
     public void visit(Subroutine subroutine) {
+        if (subroutine.isInline()) {
+            // We are already inlining this, so do not generate code.
+            return;
+        }
         var hasLocalScope = subroutine.findByType(Scope.Type.PARAMETER, Scope.Type.LOCAL).size() != 0;
         var frame = frames.push(Frame.create(subroutine));
         code.emit(subroutine.getName());
@@ -566,7 +526,15 @@ public class CodeGenerationVisitor extends Visitor {
     }
 
     public Expression visit(VariableReference expression) {
-        emitLoad(expression);
+        if (!inlineVariables.isEmpty() && inlineVariables.peek().containsKey(expression.getSymbol())) {
+            Expression expr = inlineVariables.peek().get(expression.getSymbol());
+            inlineVariables.push(Collections.emptyMap());   // We are outside the mapped context for this evaluation
+            dispatch(expr);
+            inlineVariables.pop();
+        }
+        else {
+            emitLoad(expression);
+        }
         return null;
     }
 

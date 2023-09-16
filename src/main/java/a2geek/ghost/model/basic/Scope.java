@@ -96,12 +96,12 @@ public class Scope extends StatementBlock {
             throw new RuntimeException(s.getName() + " already exists");
         };
         Runnable addNew = () -> this.scopes.add(scope);
-        findScope(scope.getName()).ifPresentOrElse(alreadyExists, addNew);
+        findLocalScope(scope.getName()).ifPresentOrElse(alreadyExists, addNew);
     }
     public List<Scope> getScopes() {
         return scopes;
     }
-    public Optional<Scope> findScope(String name) {
+    public Optional<Scope> findLocalScope(String name) {
         return scopes.stream().filter(s -> s.getName().equals(name)).findFirst();
     }
 
@@ -111,6 +111,7 @@ public class Scope extends StatementBlock {
         PARAMETER,
         RETURN_VALUE,
         INTRINSIC,
-        CONSTANT
+        CONSTANT,
+        LABEL
     }
 }

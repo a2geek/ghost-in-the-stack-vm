@@ -13,6 +13,7 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * A shared component to help building the BASIC model between language variants.
@@ -31,6 +32,8 @@ public class ModelBuilder {
     private Map<Symbol, ForFrame> forFrames = new HashMap<>();
     /** Track array dimensions */
     private Map<Symbol, Expression> arrayDims = new HashMap<>();
+    /** Tracking a distinct label number globally (regardless of scope) to prevent name collisions. */
+    private static int labelNumber;
 
     public ModelBuilder(Function<String,String> caseStrategy) {
         this.caseStrategy = caseStrategy;
@@ -52,7 +55,7 @@ public class ModelBuilder {
         throw new RuntimeException("Program not found");
     }
     public Optional<Scope> findScope(String name) {
-        return getProgram().findScope(fixCase(name));
+        return getProgram().findLocalScope(fixCase(name));
     }
 
     public String fixCase(String id) {
@@ -140,6 +143,17 @@ public class ModelBuilder {
     public Symbol addConstant(String name, Expression value) {
         return this.scope.peek().addLocalSymbol(Symbol.constant(name, value));
     }
+    /** Generate labels for code. The multiple values is to allow grouping of labels (same label number) for complex structures. */
+    public List<Symbol> addLabels(String... names) {
+        labelNumber+= 1;
+        List<Symbol> symbols = new ArrayList<>();
+        for (var name : names) {
+            var builder = Symbol.label(String.format("_%s%d", name, labelNumber));
+            var symbol = this.scope.peek().addLocalSymbol(builder);
+            symbols.add(symbol);
+        }
+        return symbols;
+    }
 
     public ForFrame forFrame(Symbol symbol) {
         return forFrames.computeIfAbsent(symbol, r -> new ForFrame(r, scope.peek()));
@@ -192,7 +206,7 @@ public class ModelBuilder {
         var subName = fixCase(name);
         // We can only validate for the primary program; libraries are trusted and sometimes circular!
         if (includeLibraries) {
-            var subScope = getProgram().findScope(subName).orElse(null);
+            var subScope = getProgram().findLocalScope(subName).orElse(null);
             if (subScope instanceof Subroutine) {
                 // TODO validate argument count and types
             } else {
@@ -207,7 +221,7 @@ public class ModelBuilder {
         var id = fixCase(name);
         return FunctionExpression.isLibraryFunction(id)
             || FunctionExpression.isIntrinsicFunction(id)
-            || getProgram().findScope(id).map(s -> s instanceof a2geek.ghost.model.basic.scope.Function).orElse(false);
+            || getProgram().findLocalScope(id).map(s -> s instanceof a2geek.ghost.model.basic.scope.Function).orElse(false);
     }
 
     public FunctionExpression callFunction(String name, List<Expression> params) {
@@ -223,7 +237,7 @@ public class ModelBuilder {
             id = fixCase(descriptor.fullName());
         }
 
-        Optional<Scope> scope = getProgram().findScope(id);
+        Optional<Scope> scope = getProgram().findLocalScope(id);
         if (scope.isPresent()) {
             if (scope.get() instanceof a2geek.ghost.model.basic.scope.Function fn) {
                 var requiredParameterCount = fn.findByType(Scope.Type.PARAMETER).size();
@@ -250,42 +264,13 @@ public class ModelBuilder {
         addStatement(statement);
     }
 
-    public void forBegin(Symbol symbol, Expression start, Expression end, Expression step) {
-        ForNextStatement forStatement = new ForNextStatement(symbol, start, end, step);
-        pushStatementBlock(forStatement);
-    }
-    public void forEnd() {
-        if (popStatementBlock() instanceof ForNextStatement forStatement) {
-            addStatement(forStatement);
-        }
-        else {
-            throw new RuntimeException("expecting for statement on stack");
-        }
-    }
-
-    public void loopBegin(DoLoopStatement.Operation op, Expression test) {
-        DoLoopStatement doStatement = new DoLoopStatement(op, test);
-        pushStatementBlock(doStatement);
-    }
-    public void loopEnd() {
-        if (popStatementBlock() instanceof DoLoopStatement doStatement) {
-            addStatement(doStatement);
-        }
-        else {
-            throw new RuntimeException("expecting do loop statement on stack");
-        }
-    }
-
-    public void exitStmt(String op) {
-        addStatement(new ExitStatement(op));
-    }
-
-    public void subDeclBegin(String name, List<Symbol.Builder> params) {
+    public Subroutine subDeclBegin(String name, List<Symbol.Builder> params) {
         Subroutine sub = new Subroutine(scope.peek(), fixCase(name), params);
         addScope(sub);
 
         pushScope(sub);
         pushStatementBlock(sub);
+        return sub;
     }
     public void subDeclEnd() {
         // TODO does this need to be validated?
@@ -323,23 +308,23 @@ public class ModelBuilder {
         addStatement(pokeStatement);
     }
 
-    public void labelStmt(String label) {
-        LabelStatement labelStatement = new LabelStatement(fixCase(label));
+    public void labelStmt(Symbol label) {
+        LabelStatement labelStatement = new LabelStatement(label);
         addStatement(labelStatement);
     }
 
-    public void gotoGosubStmt(String op, String label) {
-        GotoGosubStatement gotoGosubStatement = new GotoGosubStatement(op.toLowerCase(), fixCase(label));
+    public void gotoGosubStmt(String op, Symbol label) {
+        GotoGosubStatement gotoGosubStatement = new GotoGosubStatement(op.toLowerCase(), label);
         addStatement(gotoGosubStatement);
     }
-    public void onGotoGosubStmt(String op, Expression expr, List<String> labels, String altToString) {
+    public void onGotoGosubStmt(String op, Expression expr, Supplier<List<Symbol>> labelFn, String altToString) {
         OnGotoGosubStatement stmt = new OnGotoGosubStatement(op.toLowerCase(), expr,
-            labels, altToString);
+                labelFn, altToString);
         addStatement(stmt);
     }
 
-    public void onGotoGosubStmt(String op, Expression expr, List<String> labels) {
-        var statement = new OnGotoGosubStatement(op.toLowerCase(), expr, labels);
+    public void onGotoGosubStmt(String op, Expression expr, Supplier<List<Symbol>> labelFn) {
+        var statement = new OnGotoGosubStatement(op.toLowerCase(), expr, labelFn);
         addStatement(statement);
     }
 

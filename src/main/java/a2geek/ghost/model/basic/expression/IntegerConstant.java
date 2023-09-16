@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 public class IntegerConstant implements Expression {
+    public static final IntegerConstant ZERO = new IntegerConstant(0);
     public static final IntegerConstant ONE = new IntegerConstant(1);
     public static final IntegerConstant NEGATIVE_ONE = new IntegerConstant(-1);
 

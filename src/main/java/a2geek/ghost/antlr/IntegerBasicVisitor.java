@@ -2,10 +2,7 @@ package a2geek.ghost.antlr;
 
 import a2geek.ghost.antlr.generated.IntegerBaseVisitor;
 import a2geek.ghost.antlr.generated.IntegerParser;
-import a2geek.ghost.model.basic.DataType;
-import a2geek.ghost.model.basic.Expression;
-import a2geek.ghost.model.basic.ModelBuilder;
-import a2geek.ghost.model.basic.StatementBlock;
+import a2geek.ghost.model.basic.*;
 import a2geek.ghost.model.basic.expression.*;
 import a2geek.ghost.model.basic.scope.ForFrame;
 import a2geek.ghost.model.basic.scope.Program;
@@ -15,17 +12,13 @@ import a2geek.ghost.model.basic.statement.NextStatement;
 import a2geek.ghost.model.basic.statement.PopStatement;
 import org.antlr.v4.runtime.tree.ParseTree;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     public static final String LINE_NUMBERS = "_line_numbers";
 
     private ModelBuilder model;
-    private List<Expression> lineNumbers = new ArrayList<>();
-    private List<String> lineLabels = new ArrayList<>();
+    private SortedMap<Integer,Symbol> lineLabels = new TreeMap<>();
 
     public IntegerBasicVisitor(ModelBuilder model) {
         this.model = model;
@@ -44,7 +37,11 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         }
         // Note that the array name gets mangled to keep types distinct by name
         model.findSymbol(model.fixArrayName(LINE_NUMBERS)).ifPresent(symbol -> {
-            model.insertDimArray(symbol, new IntegerConstant(lineNumbers.size()), lineNumbers);
+            model.insertDimArray(symbol, new IntegerConstant(lineLabels.size()),
+                    lineLabels.keySet().stream()
+                            .map(IntegerConstant::new)
+                            .map(Expression.class::cast)
+                            .toList());
         });
         return null;
     }
@@ -57,16 +54,16 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         model.callLibrarySubroutine(name, exprs.toArray(new Expression[0]));
     }
 
-    String gotoGosubLabel(int linenum) {
-        return String.format("L%d", linenum);
+    Symbol gotoGosubLabel(int linenum) {
+        return lineLabels.computeIfAbsent(
+                linenum,
+                n -> model.addLabels(String.format("L%d_", n)).get(0));
     }
 
     @Override
     public Expression visitProgramLine(IntegerParser.ProgramLineContext ctx) {
         var lineNumber = Integer.parseInt(ctx.INTEGER().getText());
         var lineLabel = gotoGosubLabel(lineNumber);
-        lineNumbers.add(new IntegerConstant(lineNumber));
-        lineLabels.add(model.fixCase(lineLabel));
 
         model.labelStmt(lineLabel);
         try {
@@ -170,7 +167,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
             var text = String.format("%s %s", op.toUpperCase(), expr);
             var lookupExpr = model.callFunction("line_index",
                 Arrays.asList(expr, new VariableReference(lineNumbers)));
-            model.onGotoGosubStmt(op, lookupExpr, lineLabels, text);
+            model.onGotoGosubStmt(op, lookupExpr, () -> lineLabels.values().stream().toList(), text);
         }
         return null;
     }

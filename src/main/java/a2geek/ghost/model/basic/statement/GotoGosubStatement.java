@@ -1,30 +1,31 @@
 package a2geek.ghost.model.basic.statement;
 
 import a2geek.ghost.model.basic.Statement;
+import a2geek.ghost.model.basic.Symbol;
 
 public class GotoGosubStatement implements Statement {
     private String op;
-    private String id;
+    private Symbol label;
 
-    public GotoGosubStatement(String op, String id) {
+    public GotoGosubStatement(String op, Symbol label) {
         this.op = op;
-        this.id = id;
+        this.label = label;
     }
 
     public String getOp() {
         return op;
     }
 
-    public String getId() {
-        return id;
+    public Symbol getLabel() {
+        return label;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public void setLabel(Symbol label) {
+        this.label = label;
     }
 
     @Override
     public String toString() {
-        return String.format("%s %s", op.toUpperCase(), id);
+        return String.format("%s %s", op.toUpperCase(), label.name());
     }
 }

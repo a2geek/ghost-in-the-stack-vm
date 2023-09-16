@@ -94,6 +94,9 @@ public class FunctionExpression implements Expression {
         if ("asc".equalsIgnoreCase(name) && parameters.size() == 1) {
             return parameters.get(0).isConstant();
         }
+        else if ("sgn".equalsIgnoreCase(name) && parameters.size() == 1) {
+            return parameters.get(0).isConstant();
+        }
         return false;
     }
 
@@ -102,6 +105,10 @@ public class FunctionExpression implements Expression {
         if ("asc".equalsIgnoreCase(name) && parameters.size() == 1 &&
                 parameters.get(0) instanceof StringConstant s) {
             return Optional.of(s.getValue().charAt(0)|0x80);
+        }
+        else if ("sgn".equalsIgnoreCase(name) && parameters.size() == 1 &&
+                parameters.get(0) instanceof IntegerConstant i) {
+            return Optional.of(Integer.signum(i.getValue()));
         }
         return Optional.empty();
     }

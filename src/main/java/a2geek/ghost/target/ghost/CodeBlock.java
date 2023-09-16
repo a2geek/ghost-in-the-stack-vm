@@ -1,5 +1,7 @@
 package a2geek.ghost.target.ghost;
 
+import a2geek.ghost.model.basic.Symbol;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -63,19 +65,20 @@ public class CodeBlock {
         dataSegment.add(inst);
         return suggestedLabel;
     }
-    public String emitConstantLabels(String suggestedLabel, List<String> labelArray) {
+    public String emitConstantLabels(String suggestedLabel, List<Symbol> labelArray) {
         Objects.requireNonNull(suggestedLabel, "suggestedLabel");
         Objects.requireNonNull(labelArray, "labelArray");
+        var stringArray = labelArray.stream().map(Symbol::name).toList();
         var existing = dataSegment.stream()
                 .filter(inst -> inst.directive() == Directive.CONSTANT)
                 .filter(inst -> inst.constantValue().constantType() == ConstantType.LABEL_ARRAY_LESS_1)
-                .filter(inst -> labelArray.equals(inst.constantValue().stringArray()))
+                .filter(inst -> stringArray.equals(inst.constantValue().stringArray()))
                 .findFirst();
         if (existing.isPresent()) {
             return existing.map(Instruction::label).orElseThrow();
         }
         Instruction inst = new Instruction(suggestedLabel, null, Directive.CONSTANT, null,
-                ConstantValue.withLabels(labelArray));
+                ConstantValue.withLabels(stringArray));
         dataSegment.add(inst);
         return suggestedLabel;
     }

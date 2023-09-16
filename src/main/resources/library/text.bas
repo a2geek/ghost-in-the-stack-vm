@@ -10,19 +10,19 @@ const MON_SETTXT = 0xfb39
 const MON_TABV = 0xfb5b
 const MON_HOME = 0xfc58
 
-sub text_home
+sub inline text_home
     call MON_HOME
 end sub
 
-sub text_text
+sub inline text_text
     call MON_SETTXT
 end sub
 
-sub text_htab(h as integer)
+sub inline text_htab(h as integer)
     poke MON_CH, h-1
 end sub
 
-sub text_vtab(v as integer)
+sub inline text_vtab(v as integer)
     cpu.register.a = v
     call MON_TABV
 end sub
