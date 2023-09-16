@@ -338,7 +338,7 @@ public abstract class StatementTester {
         }
         @Override
         Optional<Scope> findScope(String name) {
-            return scope.findScope(name);
+            return scope.findLocalScope(name);
         }
         @Override
         public StatementTester endScope() {

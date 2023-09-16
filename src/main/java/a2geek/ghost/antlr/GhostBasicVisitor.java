@@ -605,8 +605,10 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                 .map(IdDeclaration::toParameter)
                 .collect(Collectors.toList());
         }
+        boolean inline = ctx.f != null && "inline".equalsIgnoreCase(ctx.f.getText());
 
-        model.subDeclBegin(ctx.id.getText(), params);
+        var sub = model.subDeclBegin(ctx.id.getText(), params);
+        sub.setInline(inline);
         visit(ctx.s);
         model.subDeclEnd();
         return null;

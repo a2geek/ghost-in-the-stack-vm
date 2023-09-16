@@ -13,6 +13,7 @@ public class CodeGenerationVisitor extends Visitor {
     private Stack<Frame> frames = new Stack<>();
     private CodeBlock code = new CodeBlock();
     private int labelNumber;
+    private Stack<Map<Symbol,Expression>> inlineVariables = new Stack<>();
 
     public List<Instruction> getInstructions() {
         return code.getInstructions();
@@ -361,19 +362,52 @@ public class CodeGenerationVisitor extends Visitor {
 
     @Override
     public void visit(CallSubroutine statement, StatementContext context) {
-        boolean hasParameters = statement.getParameters().size() != 0;
-        for (Expression expr : statement.getParameters()) {
-            dispatch(expr);
+        // Using the "program" frame
+        var scope = frames.get(0).scope().findLocalScope(statement.getName())
+                .orElseThrow(() -> new RuntimeException(statement.getName() + " not found"));
+        if (scope instanceof Subroutine sub) {
+            Map<Symbol,Expression> map = new HashMap<>();
+            inlineVariables.push(map);
+            if (sub.isInline()) {
+                var parameters = sub.findByType(Scope.Type.PARAMETER);
+                if (parameters.size() != statement.getParameters().size()) {
+                    throw new RuntimeException(String.format("parameter size mismatch for call to '%s'", statement.getName()));
+                }
+                // Subroutine parameters are REVERSED (for stack placement), so taking that into account:
+                Collections.reverse(parameters);
+                for (int i=0; i<parameters.size(); i++) {
+                    var param = parameters.get(i);
+                    var value = statement.getParameters().get(i);
+                    if (param.numDimensions() > 0) {
+                        throw new RuntimeException("parameter inlining not available for arrays: " + param.name());
+                    }
+                    map.put(param, value);
+                }
+                dispatchAll(sub);
+            }
+            else {
+                boolean hasParameters = statement.getParameters().size() != 0;
+                for (Expression expr : statement.getParameters()) {
+                    dispatch(expr);
+                }
+                code.emit(Opcode.GOSUB, statement.getName());
+                if (hasParameters) {
+                    // FIXME when we have more datatypes this will be incorrect
+                    code.emit(Opcode.POPN, statement.getParameters().size() * 2);
+                }
+            }
+            inlineVariables.pop();
+            return;
         }
-        code.emit(Opcode.GOSUB, statement.getName());
-        if (hasParameters) {
-            // FIXME when we have more datatypes this will be incorrect
-            code.emit(Opcode.POPN, statement.getParameters().size() * 2);
-        }
+        throw new RuntimeException(String.format("calling a subroutine but '%s' is not a subroutine?", statement.getName()));
     }
 
     @Override
     public void visit(Subroutine subroutine) {
+        if (subroutine.isInline()) {
+            // We are already inlining this, so do not generate code.
+            return;
+        }
         var hasLocalScope = subroutine.findByType(Scope.Type.PARAMETER, Scope.Type.LOCAL).size() != 0;
         var frame = frames.push(Frame.create(subroutine));
         code.emit(subroutine.getName());
@@ -492,7 +526,15 @@ public class CodeGenerationVisitor extends Visitor {
     }
 
     public Expression visit(VariableReference expression) {
-        emitLoad(expression);
+        if (!inlineVariables.isEmpty() && inlineVariables.peek().containsKey(expression.getSymbol())) {
+            Expression expr = inlineVariables.peek().get(expression.getSymbol());
+            inlineVariables.push(Collections.emptyMap());   // We are outside the mapped context for this evaluation
+            dispatch(expr);
+            inlineVariables.pop();
+        }
+        else {
+            emitLoad(expression);
+        }
         return null;
     }
 

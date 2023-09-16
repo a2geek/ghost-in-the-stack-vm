@@ -55,7 +55,7 @@ public class ModelBuilder {
         throw new RuntimeException("Program not found");
     }
     public Optional<Scope> findScope(String name) {
-        return getProgram().findScope(fixCase(name));
+        return getProgram().findLocalScope(fixCase(name));
     }
 
     public String fixCase(String id) {
@@ -206,7 +206,7 @@ public class ModelBuilder {
         var subName = fixCase(name);
         // We can only validate for the primary program; libraries are trusted and sometimes circular!
         if (includeLibraries) {
-            var subScope = getProgram().findScope(subName).orElse(null);
+            var subScope = getProgram().findLocalScope(subName).orElse(null);
             if (subScope instanceof Subroutine) {
                 // TODO validate argument count and types
             } else {
@@ -221,7 +221,7 @@ public class ModelBuilder {
         var id = fixCase(name);
         return FunctionExpression.isLibraryFunction(id)
             || FunctionExpression.isIntrinsicFunction(id)
-            || getProgram().findScope(id).map(s -> s instanceof a2geek.ghost.model.basic.scope.Function).orElse(false);
+            || getProgram().findLocalScope(id).map(s -> s instanceof a2geek.ghost.model.basic.scope.Function).orElse(false);
     }
 
     public FunctionExpression callFunction(String name, List<Expression> params) {
@@ -237,7 +237,7 @@ public class ModelBuilder {
             id = fixCase(descriptor.fullName());
         }
 
-        Optional<Scope> scope = getProgram().findScope(id);
+        Optional<Scope> scope = getProgram().findLocalScope(id);
         if (scope.isPresent()) {
             if (scope.get() instanceof a2geek.ghost.model.basic.scope.Function fn) {
                 var requiredParameterCount = fn.findByType(Scope.Type.PARAMETER).size();
@@ -264,12 +264,13 @@ public class ModelBuilder {
         addStatement(statement);
     }
 
-    public void subDeclBegin(String name, List<Symbol.Builder> params) {
+    public Subroutine subDeclBegin(String name, List<Symbol.Builder> params) {
         Subroutine sub = new Subroutine(scope.peek(), fixCase(name), params);
         addScope(sub);
 
         pushScope(sub);
         pushStatementBlock(sub);
+        return sub;
     }
     public void subDeclEnd() {
         // TODO does this need to be validated?
