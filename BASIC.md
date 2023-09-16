@@ -28,8 +28,10 @@ All variables are assumed to be 16 bit integers. Other data types exist in expre
 Subroutines may be declared at the top of the program. They have their own variable scope and, at this time,
 do not share any access to global variables.
 
+> Note that the inline flag is optional and only applies to `sub`.
+
 ```basic
-sub name(a,b,c)
+sub [inline] name(a,b,c)
     ...
 end sub
 ```
