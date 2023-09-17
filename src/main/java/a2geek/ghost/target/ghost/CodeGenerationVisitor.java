@@ -15,6 +15,9 @@ public class CodeGenerationVisitor extends Visitor {
     private int labelNumber;
     private Stack<Map<Symbol,Expression>> inlineVariables = new Stack<>();
 
+    public CodeBlock getCode() {
+        return code;
+    }
     public List<Instruction> getInstructions() {
         return code.getInstructions();
     }

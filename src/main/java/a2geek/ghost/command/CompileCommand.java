@@ -9,6 +9,7 @@ import a2geek.ghost.model.basic.visitor.DeadCodeEliminationVisitor;
 import a2geek.ghost.model.basic.visitor.StrengthReductionVisitor;
 import a2geek.ghost.target.ghost.CodeGenerationVisitor;
 import a2geek.ghost.target.ghost.Instruction;
+import a2geek.ghost.target.ghost.PeepholeOptimizer;
 import io.github.applecommander.applesingle.AppleSingle;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
@@ -139,6 +140,12 @@ public class CompileCommand implements Callable<Integer> {
 
         CodeGenerationVisitor codeGenerationVisitor = new CodeGenerationVisitor();
         codeGenerationVisitor.visit(program);
+
+        // Fixme: Ugly code.
+        int loops = 5;
+        while (loops > 0 && PeepholeOptimizer.optimize2(codeGenerationVisitor.getCode()) > 0) {
+            loops--;
+        }
 
         // Assembly first pass: Figure out label values
         Map<String,Integer> addrs = new HashMap<>();

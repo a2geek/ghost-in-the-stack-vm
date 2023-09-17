@@ -10,6 +10,11 @@ public class CodeBlock {
     private List<Instruction> codeSegment = new ArrayList<>();
     private List<Instruction> dataSegment = new ArrayList<>();
 
+    // For optimizer
+    List<Instruction> getCodeSegment() {
+        return codeSegment;
+    }
+
     public List<Instruction> getInstructions() {
         var instructions = new ArrayList<>(codeSegment);
         instructions.addAll(dataSegment);
