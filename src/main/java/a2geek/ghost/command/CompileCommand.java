@@ -143,14 +143,15 @@ public class CompileCommand implements Callable<Integer> {
 
         // Fixme: Ugly code.
         int loops = 5;
-        while (loops > 0 && PeepholeOptimizer.optimize2(codeGenerationVisitor.getCode()) > 0) {
+        List<Instruction> code = codeGenerationVisitor.getInstructions();
+        while (loops > 0 && PeepholeOptimizer.optimize(code) > 0) {
             loops--;
         }
 
         // Assembly first pass: Figure out label values
         Map<String,Integer> addrs = new HashMap<>();
         int addr = 0;
-        for (Instruction instruction : codeGenerationVisitor.getInstructions()) {
+        for (Instruction instruction : code) {
             if (instruction.isLabelOnly()) {
                 addrs.put(instruction.label(), addr);
             }
@@ -162,7 +163,7 @@ public class CompileCommand implements Callable<Integer> {
         PrintWriter pw = new PrintWriter(sw);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         addr = 0;
-        for (Instruction instruction : codeGenerationVisitor.getInstructions()) {
+        for (Instruction instruction : code) {
             byte[] data = instruction.assemble(addrs);
             out.writeBytes(data);
             //

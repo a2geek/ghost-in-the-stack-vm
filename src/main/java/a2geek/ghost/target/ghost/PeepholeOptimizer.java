@@ -6,7 +6,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 
 public class PeepholeOptimizer {
-    public static int optimize2(CodeBlock code) {
+    public static int optimize(List<Instruction> code) {
         var changed = 0;
         var ctx = new Context(code);
         while (ctx.hasNext()) {
@@ -93,8 +93,8 @@ public class PeepholeOptimizer {
         private List<Instruction> code;
         private int pos;
 
-        public Context(CodeBlock code) {
-            this.code = code.getCodeSegment();
+        public Context(List<Instruction> code) {
+            this.code = code;
         }
 
         public Optional<List<Instruction>> slice(int size) {
