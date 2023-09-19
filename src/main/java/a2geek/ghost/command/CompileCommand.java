@@ -27,7 +27,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-@Command(name = "compile", mixinStandardHelpOptions = true, 
+import static picocli.CommandLine.ArgGroup;
+
+@Command(name = "compile", mixinStandardHelpOptions = true, usageHelpAutoWidth = true,
     description = "Compile Ghost BASIC program.")
 public class CompileCommand implements Callable<Integer> {
     public static final String INTERPRETER = "/interp-base.as";
@@ -64,10 +66,8 @@ public class CompileCommand implements Callable<Integer> {
             description = "replace '<CONTROL-?>' with the actual control character")
     private boolean fixControlChars;
 
-    @Option(names = { "--bounds-checking" }, negatable = true, defaultValue = "true",
-            fallbackValue = "true", showDefaultValue = Visibility.ALWAYS,
-            description = "perform bounds checking on arrays")
-    private boolean boundsChecking;
+    @ArgGroup(exclusive = false, heading = "Optimizations:%n")
+    private OptimizationFlags optimizations = new OptimizationFlags();
 
     @Option(names = { "-l", "--listing" }, description = "create listing file")
     private Optional<String> programListing;
@@ -109,7 +109,7 @@ public class CompileCommand implements Callable<Integer> {
             model.setControlCharsFn(CompileCommand::convertControlCharacterMarkers);
         }
         model.setTrace(traceFlag);
-        model.setBoundsCheck(boundsChecking);
+        optimizations.apply(model);
         Program program = switch (language) {
             case INTEGER_BASIC -> ParseUtil.integerToModel(stream, model);
             case BASIC -> ParseUtil.basicToModel(stream, model);
@@ -126,12 +126,7 @@ public class CompileCommand implements Callable<Integer> {
             }
         }
 
-        ConstantReductionVisitor constantReductionVisitor = new ConstantReductionVisitor();
-        constantReductionVisitor.visit(program);
-        StrengthReductionVisitor rewriteVisitor = new StrengthReductionVisitor();
-        rewriteVisitor.visit(program);
-        DeadCodeEliminationVisitor deadCodeEliminationVisitor = new DeadCodeEliminationVisitor();
-        deadCodeEliminationVisitor.visit(program);
+        optimizations.apply(program);
 
         if (!quietFlag) {
             System.out.println("=== REWRITTEN ===");
@@ -141,12 +136,8 @@ public class CompileCommand implements Callable<Integer> {
         CodeGenerationVisitor codeGenerationVisitor = new CodeGenerationVisitor();
         codeGenerationVisitor.visit(program);
 
-        // Fixme: Ugly code.
-        int loops = 5;
         List<Instruction> code = codeGenerationVisitor.getInstructions();
-        while (loops > 0 && PeepholeOptimizer.optimize(code) > 0) {
-            loops--;
-        }
+        optimizations.apply(code);
 
         // Assembly first pass: Figure out label values
         Map<String,Integer> addrs = new HashMap<>();
@@ -241,6 +232,61 @@ public class CompileCommand implements Callable<Integer> {
                 pw.printf("%02x ", b);
             }
             return sw.toString();
+        }
+    }
+
+    public static class OptimizationFlags {
+        @Option(names = { "--bounds-checking" }, negatable = true, defaultValue = "true",
+                fallbackValue = "true", showDefaultValue = Visibility.NEVER,
+                description = "perform bounds checking on arrays")
+        private boolean boundsChecking;
+
+        @Option(names = { "--constant-reduction" }, negatable = true, defaultValue = "true",
+                fallbackValue = "true", showDefaultValue = Visibility.NEVER,
+                description = "constant reduction")
+        private boolean constantReduction;
+
+        @Option(names = { "--strength-reduction" }, negatable = true, defaultValue = "true",
+                fallbackValue = "true", showDefaultValue = Visibility.NEVER,
+                description = "enable strength reduction")
+        private boolean strengthReduction;
+
+        @Option(names = { "--dead-code-elimination" }, negatable = true, defaultValue = "true",
+                fallbackValue = "true", showDefaultValue = Visibility.NEVER,
+                description = "enable dead code elimination")
+        private boolean deadCodeElimination;
+
+        @Option(names = { "--peephole-optimizer" }, negatable = true, defaultValue = "true",
+                fallbackValue = "true", showDefaultValue = Visibility.NEVER,
+                description = "enable peephole optimizer")
+        private boolean peepholeOptimizer;
+
+        public void apply(ModelBuilder model) {
+            model.setBoundsCheck(boundsChecking);
+        }
+
+        public void apply(Program program) {
+            if (constantReduction) {
+                ConstantReductionVisitor constantReductionVisitor = new ConstantReductionVisitor();
+                constantReductionVisitor.visit(program);
+            }
+            if (strengthReduction) {
+                StrengthReductionVisitor rewriteVisitor = new StrengthReductionVisitor();
+                rewriteVisitor.visit(program);
+            }
+            if (deadCodeElimination) {
+                DeadCodeEliminationVisitor deadCodeEliminationVisitor = new DeadCodeEliminationVisitor();
+                deadCodeEliminationVisitor.visit(program);
+            }
+        }
+
+        public void apply(List<Instruction> code) {
+            if (peepholeOptimizer) {
+                int loops = 5;      // arbitrarily picking maximum number of passes
+                while (loops > 0 && PeepholeOptimizer.optimize(code) > 0) {
+                    loops--;
+                }
+            }
         }
     }
 }
