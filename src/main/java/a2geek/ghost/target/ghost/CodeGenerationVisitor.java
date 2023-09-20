@@ -502,12 +502,6 @@ public class CodeGenerationVisitor extends Visitor {
     }
 
     @Override
-    public Expression visit(ParenthesisExpression expression) {
-        dispatch(expression.getExpr());
-        return null;
-    }
-
-    @Override
     public Expression visit(FunctionExpression function) {
         Runnable emitParameters = () -> {
             for (Expression expr : function.getParameters()) {

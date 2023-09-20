@@ -88,9 +88,6 @@ public abstract class Visitor {
         else if (expression instanceof BooleanConstant e) {
             return Optional.ofNullable(visit(e));
         }
-        else if (expression instanceof ParenthesisExpression e) {
-            return Optional.ofNullable(visit(e));
-        }
         else if (expression instanceof UnaryExpression e) {
             return Optional.ofNullable(visit(e));
         }
@@ -259,15 +256,6 @@ public abstract class Visitor {
     }
 
     public Expression visit(BooleanConstant expression) {
-        return null;
-    }
-
-    public Expression visit(ParenthesisExpression expression) {
-        var e = dispatch(expression.getExpr());
-        if (e.isPresent()) {
-            e.ifPresent(expression::setExpr);
-            return expression;
-        }
         return null;
     }
 

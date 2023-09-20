@@ -528,7 +528,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     @Override
     public Expression visitParenExpr(IntegerParser.ParenExprContext ctx) {
-        return new ParenthesisExpression(visit(ctx.e));
+        return visit(ctx.e);
     }
 
     @Override

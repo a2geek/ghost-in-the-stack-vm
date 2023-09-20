@@ -797,8 +797,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
     @Override
     public Expression visitParenExpr(BasicParser.ParenExprContext ctx) {
-        Expression e = visit(ctx.a);
-        return new ParenthesisExpression(e);
+        return visit(ctx.a);
     }
 
     @Override
