@@ -1,6 +1,6 @@
 package a2geek.ghost.target.ghost;
 
-import a2geek.ghost.model.basic.Symbol;
+import a2geek.ghost.model.Symbol;
 
 import java.util.ArrayList;
 import java.util.List;

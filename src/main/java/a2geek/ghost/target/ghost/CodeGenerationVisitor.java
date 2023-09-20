@@ -1,11 +1,11 @@
 package a2geek.ghost.target.ghost;
 
-import a2geek.ghost.model.basic.*;
-import a2geek.ghost.model.basic.expression.*;
-import a2geek.ghost.model.basic.scope.Function;
-import a2geek.ghost.model.basic.scope.Program;
-import a2geek.ghost.model.basic.scope.Subroutine;
-import a2geek.ghost.model.basic.statement.*;
+import a2geek.ghost.model.*;
+import a2geek.ghost.model.expression.*;
+import a2geek.ghost.model.scope.Function;
+import a2geek.ghost.model.scope.Program;
+import a2geek.ghost.model.scope.Subroutine;
+import a2geek.ghost.model.statement.*;
 
 import java.util.*;
 

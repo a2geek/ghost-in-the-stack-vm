@@ -1,9 +1,9 @@
 package a2geek.ghost.antlr;
 
-import a2geek.ghost.model.basic.*;
-import a2geek.ghost.model.basic.expression.VariableReference;
-import a2geek.ghost.model.basic.scope.Subroutine;
-import a2geek.ghost.model.basic.statement.*;
+import a2geek.ghost.model.*;
+import a2geek.ghost.model.expression.VariableReference;
+import a2geek.ghost.model.scope.Subroutine;
+import a2geek.ghost.model.statement.*;
 
 import java.util.List;
 import java.util.Optional;
@@ -296,7 +296,7 @@ public abstract class StatementTester {
                                          DataType returnType) {
         var scope = findScope(fixCase(name));
         if (scope.isPresent()) {
-            if (scope.get() instanceof a2geek.ghost.model.basic.scope.Function function) {
+            if (scope.get() instanceof a2geek.ghost.model.scope.Function function) {
                 assertEquals(returnType, function.getDataType());
                 checkParameters(function, parameters);
                 return new ScopeTester(this, function);

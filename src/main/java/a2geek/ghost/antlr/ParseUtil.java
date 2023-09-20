@@ -4,8 +4,8 @@ import a2geek.ghost.antlr.generated.BasicLexer;
 import a2geek.ghost.antlr.generated.BasicParser;
 import a2geek.ghost.antlr.generated.IntegerLexer;
 import a2geek.ghost.antlr.generated.IntegerParser;
-import a2geek.ghost.model.basic.ModelBuilder;
-import a2geek.ghost.model.basic.scope.Program;
+import a2geek.ghost.model.ModelBuilder;
+import a2geek.ghost.model.scope.Program;
 import org.antlr.v4.runtime.*;
 
 public class ParseUtil {
