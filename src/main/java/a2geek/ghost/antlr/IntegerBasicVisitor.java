@@ -7,8 +7,7 @@ import a2geek.ghost.model.expression.*;
 import a2geek.ghost.model.scope.ForFrame;
 import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.statement.EndStatement;
-import a2geek.ghost.model.statement.ForStatement;
-import a2geek.ghost.model.statement.NextStatement;
+import a2geek.ghost.model.statement.IfStatement;
 import a2geek.ghost.model.statement.PopStatement;
 import org.antlr.v4.runtime.tree.ParseTree;
 
@@ -19,6 +18,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     private ModelBuilder model;
     private SortedMap<Integer,Symbol> lineLabels = new TreeMap<>();
+    private Map<Symbol, ForFrame> forFrames = new HashMap<>();
 
     public IntegerBasicVisitor(ModelBuilder model) {
         this.model = model;
@@ -129,24 +129,120 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         return tree != null ? visit(tree) : defaultExpression;
     }
 
+    /**
+     * Build a FOR statement.
+     * <p>
+     * Items handled:<ul>
+     * <li>The FOR and NEXT statement are independent of each other and, therefore, unstructured.</li>
+     * <li>The compiler needs to track state, where to go, how to exit, etc for the loop constructs.</li>
+     * <li>The test condition varies based on if the STEP increment is positive or negative, so that
+     *   code is more complicated than expected.</li>
+     * <li>We trust the optimizer to collapse any code with constants into a more optimal form.</li>
+     * </ul>
+     * <p>
+     * Sample FOR statement:
+     * <pre>
+     * FOR X = 1 TO 10 [ STEP 1 ]
+     * </pre>
+     * <p>
+     * Target intermediate pseudocode; "(name)" is a label:
+     * <pre>
+     * X = START
+     * X_END = END
+     * X_STEP = STEP
+     * X_NEXT_ADDR = ADDROF(NEXT)-1
+     * GOTO (LOOP)
+     * (NEXT)
+     * X = X + X_STEP
+     * IF SGN(X_STEP) >= 0 THEN  ' positive increment/zero
+     *     IF X <= X_END THEN
+     *         GOTO (LOOP)
+     *     END IF
+     * ELSE                      ' decrement
+     *     IF X >= END THEN
+     *         GOTO (LOOP)
+     *     END IF
+     * END IF
+     * GOTO *X_EXIT_ADDR         ' dynamic GOTO
+     * (LOOP)
+     * </pre>
+     */
     @Override
     public Expression visitForStatement(IntegerParser.ForStatementContext ctx) {
         var ref = model.addVariable(ctx.ivar().getText(), DataType.INTEGER);
         var first = visit(ctx.first);
         var last = visit(ctx.last);
         Expression step = visitOrDefault(ctx.step, IntegerConstant.ONE);
-        ForFrame frame = model.forFrame(ref);
+        ForFrame frame = forFrames.computeIfAbsent(ref, r -> new ForFrame(r, model.peekScope()));
 
-        model.addStatement(new ForStatement(ref, first, last, step, frame));
+        var labels = model.addLabels("FOR_LOOP", "FOR_NEXT");
+        var loopLabel = labels.get(0);
+        var nextLabel = labels.get(1);
+
+        var varRef = new VariableReference(ref);
+        var endRef = new VariableReference(frame.getEndRef());
+        var stepRef = new VariableReference(frame.getStepRef());
+        var nextRef = new VariableReference(frame.getNextRef());
+
+        // setup FOR statement
+        model.assignStmt(varRef, first);
+        model.assignStmt(endRef, last);
+        model.assignStmt(stepRef, step);
+        model.assignStmt(nextRef, new BinaryExpression(new AddressOfFunction(nextLabel), IntegerConstant.ONE, "-"));
+        model.gotoGosubStmt("goto", loopLabel);
+
+        // handle loop increment and test
+        model.labelStmt(nextLabel);
+        model.assignStmt(varRef, new BinaryExpression(varRef, stepRef, "+"));
+        model.pushStatementBlock(new StatementBlock());
+        model.gotoGosubStmt("goto", loopLabel);
+        var sb = model.popStatementBlock();
+        var positive = new IfStatement(new BinaryExpression(varRef, endRef, "<="), sb, null);
+        var negative = new IfStatement(new BinaryExpression(varRef, endRef, ">="), sb, null);
+        model.ifStmt(new BinaryExpression(model.callFunction("SGN", Arrays.asList(step)), IntegerConstant.ZERO, ">="),
+                StatementBlock.with(positive), StatementBlock.with(negative));
+        model.dynamicGoto(frame.getExitRef());
+
+        // continue FOR loop
+        model.labelStmt(loopLabel);
+
         return null;
     }
 
+    /**
+     * Build a NEXT statement.
+     * <p>
+     * Items handled:<ul>
+     * <li>The FOR and NEXT statement are independent of each other and, therefore, unstructured.</li>
+     * <li>The NEXT statement may come first in the code</li>
+     * <li>The compiler needs to track state, where to go, how to exit, etc for the loop constructs.</li>
+     * </ul>
+     * <p>
+     * Sample NEXT statement:
+     * <pre>
+     * NEXT X
+     * </pre>
+     * <p>
+     * Target intermediate pseudocode; "(name)" is a label:
+     * <pre>
+     * X_EXIT_ADDR = ADDROF(EXIT)-1
+     * GOTO *X_NEXT_ADDR         ' dynamic GOTO
+     * (LOOP)
+     * </pre>
+     */
     @Override
     public Expression visitNextStatement(IntegerParser.NextStatementContext ctx) {
         for (var ivar : ctx.ivar()) {
             var ref = model.addVariable(ivar.getText(), DataType.INTEGER);
-            ForFrame frame = model.forFrame(ref);
-            model.addStatement(new NextStatement(ref, frame));
+            ForFrame frame = forFrames.computeIfAbsent(ref, r -> new ForFrame(r, model.peekScope()));
+            var exitRef = new VariableReference(frame.getExitRef());
+
+            var labels = model.addLabels("FOR_EXIT");
+            var exitLabel = labels.get(0);
+
+            model.assignStmt(exitRef, new BinaryExpression(new AddressOfFunction(exitLabel), IntegerConstant.ONE, "-"));
+            model.dynamicGoto(frame.getNextRef());
+            model.labelStmt(exitLabel);
         }
         return null;
     }

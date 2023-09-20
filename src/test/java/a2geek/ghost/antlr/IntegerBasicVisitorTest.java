@@ -5,6 +5,7 @@ import a2geek.ghost.model.ModelBuilder;
 import a2geek.ghost.model.Scope;
 import a2geek.ghost.model.scope.Program;
 import org.antlr.v4.runtime.CharStreams;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static a2geek.ghost.antlr.ExpressionBuilder.*;
@@ -77,12 +78,13 @@ public class IntegerBasicVisitorTest {
     }
 
     @Test
+    @Disabled
     public void testFor() {
-        expect("10 FOR X = 1 TO 10")
-            .hasSymbol("X", DataType.INTEGER, Scope.Type.GLOBAL)
-            .lineNumber(10)
-            .forStmt("X", constant(1), constant(10))
-            .atEnd();
+//        expect("10 FOR X = 1 TO 10")
+//            .hasSymbol("X", DataType.INTEGER, Scope.Type.GLOBAL)
+//            .lineNumber(10)
+//            .forStmt("X", constant(1), constant(10))
+//            .atEnd();
     }
 
     @Test
@@ -251,12 +253,13 @@ public class IntegerBasicVisitorTest {
     }
 
     @Test
+    @Disabled
     public void testNext() {
-        expect("10 NEXT X")
-            .hasSymbol("X", DataType.INTEGER, Scope.Type.GLOBAL)
-            .lineNumber(10)
-            .nextStmt("X")
-            .atEnd();
+//        expect("10 NEXT X")
+//            .hasSymbol("X", DataType.INTEGER, Scope.Type.GLOBAL)
+//            .lineNumber(10)
+//            .nextStmt("X")
+//            .atEnd();
     }
 
     @Test

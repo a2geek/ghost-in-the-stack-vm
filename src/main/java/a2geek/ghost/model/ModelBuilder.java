@@ -2,7 +2,6 @@ package a2geek.ghost.model;
 
 import a2geek.ghost.antlr.ParseUtil;
 import a2geek.ghost.model.expression.*;
-import a2geek.ghost.model.scope.ForFrame;
 import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.scope.Subroutine;
 import a2geek.ghost.model.statement.*;
@@ -28,8 +27,6 @@ public class ModelBuilder {
     private boolean trace = false;
     private boolean boundsCheck = true;
     private boolean includeLibraries = true;
-    /** Traditional FOR/NEXT statement frame. */
-    private Map<Symbol, ForFrame> forFrames = new HashMap<>();
     /** Track array dimensions */
     private Map<Symbol, Expression> arrayDims = new HashMap<>();
     /** Tracking a distinct label number globally (regardless of scope) to prevent name collisions. */
@@ -105,6 +102,9 @@ public class ModelBuilder {
     public Scope popScope() {
         return this.scope.pop();
     }
+    public Scope peekScope() {
+        return this.scope.peek();
+    }
     public boolean isCurrentScope(Class<? extends Scope> clazz) {
         return clazz.isAssignableFrom(this.scope.peek().getClass());
     }
@@ -153,10 +153,6 @@ public class ModelBuilder {
             symbols.add(symbol);
         }
         return symbols;
-    }
-
-    public ForFrame forFrame(Symbol symbol) {
-        return forFrames.computeIfAbsent(symbol, r -> new ForFrame(r, scope.peek()));
     }
 
     public void trace(String fmt, Object... args) {
@@ -322,7 +318,10 @@ public class ModelBuilder {
                 labelFn, altToString);
         addStatement(stmt);
     }
-
+    public void dynamicGoto(Symbol label) {
+        DynamicGotoStatement dynamicGotoStatement = new DynamicGotoStatement(label);
+        addStatement(dynamicGotoStatement);
+    }
     public void onGotoGosubStmt(String op, Expression expr, Supplier<List<Symbol>> labelFn) {
         var statement = new OnGotoGosubStatement(op.toLowerCase(), expr, labelFn);
         addStatement(statement);

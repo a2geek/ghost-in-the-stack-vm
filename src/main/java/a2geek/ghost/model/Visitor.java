@@ -37,12 +37,6 @@ public abstract class Visitor {
         else if (statement instanceof IfStatement s) {
             visit(s, context);
         }
-        else if (statement instanceof ForStatement s) {
-            visit(s, context);
-        }
-        else if (statement instanceof NextStatement s) {
-            visit(s, context);
-        }
         else if (statement instanceof PokeStatement s) {
             visit(s, context);
         }
@@ -68,6 +62,9 @@ public abstract class Visitor {
             visit(s, context);
         }
         else if (statement instanceof OnGotoGosubStatement s) {
+            visit(s, context);
+        }
+        else if (statement instanceof DynamicGotoStatement s) {
             visit(s, context);
         }
         else {
@@ -101,6 +98,9 @@ public abstract class Visitor {
             return Optional.ofNullable(visit(e));
         }
         else if (expression instanceof ArrayLengthFunction e) {
+            return Optional.ofNullable(visit(e));
+        }
+        else if (expression instanceof AddressOfFunction e) {
             return Optional.ofNullable(visit(e));
         }
         else {
@@ -154,19 +154,6 @@ public abstract class Visitor {
         expr.ifPresent(statement::setExpression);
     }
 
-    public void visit(ForStatement statement, StatementContext context) {
-        var start = dispatch(statement.getStart());
-        var end = dispatch(statement.getEnd());
-        var step = dispatch(statement.getStep());   // Always set by GhostBasicVisitor
-        start.ifPresent(statement::setStart);
-        end.ifPresent(statement::setEnd);
-        step.ifPresent(statement::setStep);
-    }
-
-    public void visit(NextStatement statement, StatementContext context) {
-
-    }
-
     public void visit(PokeStatement statement, StatementContext context) {
         var a = dispatch(statement.getA());
         var b = dispatch(statement.getB());
@@ -181,6 +168,10 @@ public abstract class Visitor {
     public void visit(OnGotoGosubStatement statement, StatementContext context) {
         var expr = dispatch(statement.getExpr());
         expr.ifPresent(statement::setExpr);
+    }
+
+    public void visit(DynamicGotoStatement statement, StatementContext context) {
+
     }
 
     public void visit(LabelStatement statement, StatementContext context) {
@@ -305,6 +296,10 @@ public abstract class Visitor {
     }
 
     public Expression visit(ArrayLengthFunction expression) {
+        return null;
+    }
+
+    public Expression visit(AddressOfFunction expression) {
         return null;
     }
 }

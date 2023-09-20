@@ -10,7 +10,6 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
-import static a2geek.ghost.antlr.ExpressionBuilder.constant;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.matchesPattern;
 import static org.junit.jupiter.api.Assertions.*;
@@ -170,16 +169,6 @@ public abstract class StatementTester {
         return this;
     }
 
-    public StatementTester forStmt(String name, Expression start, Expression end) {
-        name = fixCase(name);
-        var stmt = nextStatement(ForStatement.class);
-        assertEquals(name, stmt.getSymbol().name());
-        assertEquals(start, stmt.getStart());
-        assertEquals(end, stmt.getEnd());
-        assertEquals(constant(1), stmt.getStep());
-        return this;
-    }
-
     public StatementTester gosub(int lineNumber) {
         return gosub(lineNumberLabel(lineNumber));
     }
@@ -227,13 +216,6 @@ public abstract class StatementTester {
 
     public StatementTester endBlock() {
         throw new RuntimeException("not a do...loop statement");
-    }
-
-    public StatementTester nextStmt(String name) {
-        name = fixCase(name);
-        var stmt = nextStatement(NextStatement.class);
-        assertEquals(name, stmt.getSymbol().name());
-        return this;
     }
 
     public StatementTester poke(String op, Expression addr, Expression value) {

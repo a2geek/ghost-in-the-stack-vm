@@ -91,22 +91,28 @@ public class FunctionExpression implements Expression {
 
     @Override
     public boolean isConstant() {
-        if ("asc".equalsIgnoreCase(name) && parameters.size() == 1) {
+        if (matches("asc") && parameters.size() == 1) {
             return parameters.get(0).isConstant();
         }
-        else if ("sgn".equalsIgnoreCase(name) && parameters.size() == 1) {
+        else if (matches("sgn", "math_sgn") && parameters.size() == 1) {
             return parameters.get(0).isConstant();
+        }
+        return false;
+    }
+    boolean matches(String... values) {
+        for (var value : values) {
+            if (value.equalsIgnoreCase(name)) return true;
         }
         return false;
     }
 
     @Override
     public Optional<Integer> asInteger() {
-        if ("asc".equalsIgnoreCase(name) && parameters.size() == 1 &&
+        if (matches("asc") && parameters.size() == 1 &&
                 parameters.get(0) instanceof StringConstant s) {
             return Optional.of(s.getValue().charAt(0)|0x80);
         }
-        else if ("sgn".equalsIgnoreCase(name) && parameters.size() == 1 &&
+        else if (matches("sgn", "math_sgn") && parameters.size() == 1 &&
                 parameters.get(0) instanceof IntegerConstant i) {
             return Optional.of(Integer.signum(i.getValue()));
         }
