@@ -318,9 +318,9 @@ public class ModelBuilder {
                 labelFn, altToString);
         addStatement(stmt);
     }
-    public void dynamicGoto(Symbol label) {
-        DynamicGotoStatement dynamicGotoStatement = new DynamicGotoStatement(label);
-        addStatement(dynamicGotoStatement);
+    public void dynamicGotoGosubStmt(String op, Symbol label) {
+        DynamicGotoGosubStatement dynamicGotoGosubStatement = new DynamicGotoGosubStatement(op, label);
+        addStatement(dynamicGotoGosubStatement);
     }
     public void onGotoGosubStmt(String op, Expression expr, Supplier<List<Symbol>> labelFn) {
         var statement = new OnGotoGosubStatement(op.toLowerCase(), expr, labelFn);

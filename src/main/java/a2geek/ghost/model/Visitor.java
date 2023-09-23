@@ -64,7 +64,7 @@ public abstract class Visitor {
         else if (statement instanceof OnGotoGosubStatement s) {
             visit(s, context);
         }
-        else if (statement instanceof DynamicGotoStatement s) {
+        else if (statement instanceof DynamicGotoGosubStatement s) {
             visit(s, context);
         }
         else {
@@ -167,7 +167,7 @@ public abstract class Visitor {
         expr.ifPresent(statement::setExpr);
     }
 
-    public void visit(DynamicGotoStatement statement, StatementContext context) {
+    public void visit(DynamicGotoGosubStatement statement, StatementContext context) {
 
     }
 

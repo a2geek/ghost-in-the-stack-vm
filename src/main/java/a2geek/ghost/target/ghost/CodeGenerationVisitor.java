@@ -272,10 +272,18 @@ public class CodeGenerationVisitor extends Visitor {
     }
 
     @Override
-    public void visit(DynamicGotoStatement statement, StatementContext context) {
+    public void visit(DynamicGotoGosubStatement statement, StatementContext context) {
+        var labels = label("RETURN");
+        var returnLabel = labels.get(0);
+        if ("gosub".equalsIgnoreCase(statement.getOp())) {
+            // GOSUB needs a return address on the stack
+            code.emit(Opcode.LOADA, returnLabel);
+            code.emit(Opcode.DECR);
+        }
         // Note that we chose to perform ADDR-1 before assigning value, so assuming this is ADDR-1 format
         emitLoad(statement.getLabel());
         code.emit(Opcode.RETURN);
+        code.emit(returnLabel);
     }
 
     @Override

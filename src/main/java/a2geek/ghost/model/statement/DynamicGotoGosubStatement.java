@@ -3,11 +3,21 @@ package a2geek.ghost.model.statement;
 import a2geek.ghost.model.Statement;
 import a2geek.ghost.model.Symbol;
 
-public class DynamicGotoStatement implements Statement {
+public class DynamicGotoGosubStatement implements Statement {
+    private String op;
     private Symbol label;
 
-    public DynamicGotoStatement(Symbol label) {
+    public DynamicGotoGosubStatement(String op, Symbol label) {
+        this.op = op;
         this.label = label;
+    }
+
+    public String getOp() {
+        return op;
+    }
+
+    public void setOp(String op) {
+        this.op = op;
     }
 
     public Symbol getLabel() {
