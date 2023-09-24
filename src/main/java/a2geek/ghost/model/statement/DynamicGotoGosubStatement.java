@@ -1,15 +1,15 @@
 package a2geek.ghost.model.statement;
 
+import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.Statement;
-import a2geek.ghost.model.Symbol;
 
 public class DynamicGotoGosubStatement implements Statement {
     private String op;
-    private Symbol label;
+    private Expression target;
 
-    public DynamicGotoGosubStatement(String op, Symbol label) {
+    public DynamicGotoGosubStatement(String op, Expression target) {
         this.op = op;
-        this.label = label;
+        this.target = target;
     }
 
     public String getOp() {
@@ -20,16 +20,16 @@ public class DynamicGotoGosubStatement implements Statement {
         this.op = op;
     }
 
-    public Symbol getLabel() {
-        return label;
+    public Expression getTarget() {
+        return target;
     }
 
-    public void setLabel(Symbol label) {
-        this.label = label;
+    public void setTarget(Expression target) {
+        this.target = target;
     }
 
     @Override
     public String toString() {
-        return String.format("GOTO *%s", label.name());
+        return String.format("GOTO *%s", target);
     }
 }

@@ -281,7 +281,7 @@ public class CodeGenerationVisitor extends Visitor {
             code.emit(Opcode.DECR);
         }
         // Note that we chose to perform ADDR-1 before assigning value, so assuming this is ADDR-1 format
-        emitLoad(statement.getLabel());
+        dispatch(statement.getTarget());
         code.emit(Opcode.RETURN);
         code.emit(returnLabel);
     }

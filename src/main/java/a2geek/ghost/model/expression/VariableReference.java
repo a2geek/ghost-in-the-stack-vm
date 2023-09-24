@@ -5,13 +5,17 @@ import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.Scope;
 import a2geek.ghost.model.Symbol;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class VariableReference implements Expression {
+    public static VariableReference with(Symbol symbol, Expression... indexes) {
+        if (indexes.length == 0) {
+            return new VariableReference(symbol);
+        }
+        return new VariableReference(symbol, Arrays.asList(indexes));
+    }
+
     private Symbol symbol;
     private List<Expression> indexes = new ArrayList<>();
 

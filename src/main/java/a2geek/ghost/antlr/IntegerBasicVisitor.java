@@ -201,7 +201,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         var negative = new IfStatement(new BinaryExpression(varRef, endRef, ">="), sb, null);
         model.ifStmt(new BinaryExpression(model.callFunction("SGN", Arrays.asList(step)), IntegerConstant.ZERO, ">="),
                 StatementBlock.with(positive), StatementBlock.with(negative));
-        model.dynamicGotoGosubStmt("goto", frame.getExitRef());
+        model.dynamicGotoGosubStmt("goto", VariableReference.with(frame.getExitRef()));
 
         // continue FOR loop
         model.labelStmt(loopLabel);
@@ -241,7 +241,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
             var exitLabel = labels.get(0);
 
             model.assignStmt(exitRef, new BinaryExpression(new AddressOfFunction(exitLabel), IntegerConstant.ONE, "-"));
-            model.dynamicGotoGosubStmt("goto", frame.getNextRef());
+            model.dynamicGotoGosubStmt("goto", VariableReference.with(frame.getNextRef()));
             model.labelStmt(exitLabel);
         }
         return null;
