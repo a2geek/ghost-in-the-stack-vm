@@ -168,7 +168,8 @@ public abstract class Visitor {
     }
 
     public void visit(DynamicGotoGosubStatement statement, StatementContext context) {
-
+        var target = dispatch(statement.getTarget());
+        target.ifPresent(statement::setTarget);
     }
 
     public void visit(LabelStatement statement, StatementContext context) {
@@ -176,7 +177,8 @@ public abstract class Visitor {
     }
 
     public void visit(ReturnStatement statement, StatementContext context) {
-
+        var expr = dispatch(statement.getExpr());
+        expr.ifPresent(statement::setExpr);
     }
 
     public void visit(CallSubroutine statement, StatementContext context) {
