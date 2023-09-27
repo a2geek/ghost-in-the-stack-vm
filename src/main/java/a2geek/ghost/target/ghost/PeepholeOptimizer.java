@@ -1,14 +1,11 @@
 package a2geek.ghost.target.ghost;
 
-import java.util.Iterator;
 import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
 
 public class PeepholeOptimizer {
     public static int optimize(List<Instruction> code) {
         var changed = 0;
-        var ctx = new Context(code);
+        var ctx = new InstructionContext(code);
         while (ctx.hasNext()) {
             if (optimize2(ctx) || optimize3(ctx)) {
                 changed++;
@@ -18,7 +15,7 @@ public class PeepholeOptimizer {
         return changed;
     }
 
-    static boolean optimize2(Context ctx) {
+    static boolean optimize2(InstructionContext ctx) {
         var twoInstructions = ctx.slice(2);
         if (twoInstructions.isPresent()) {
             var list = twoInstructions.get();
@@ -76,7 +73,7 @@ public class PeepholeOptimizer {
         return false;
     }
 
-    static boolean optimize3(Context ctx) {
+    static boolean optimize3(InstructionContext ctx) {
         var threeInstructions = ctx.slice(3);
         if (threeInstructions.isPresent()) {
             var list = threeInstructions.get();
@@ -110,43 +107,5 @@ public class PeepholeOptimizer {
             if (primary == secondary) return true;
         }
         return false;
-    }
-
-    public static class Context implements Iterator<Instruction> {
-        private List<Instruction> code;
-        private int pos;
-
-        public Context(List<Instruction> code) {
-            this.code = code;
-        }
-
-        public Optional<List<Instruction>> slice(int size) {
-            if (size > 0 && pos + size <= code.size()) {
-                return Optional.of(code.subList(pos, pos+size));
-            }
-            return Optional.empty();
-        }
-
-        @Override
-        public boolean hasNext() {
-            return pos < code.size();
-        }
-        @Override
-        public Instruction next() {
-            if (pos >= code.size()) {
-                throw new NoSuchElementException();
-            }
-            return code.get(pos++);
-        }
-        @Override
-        public void remove() {
-            if (pos >= code.size()) {
-                throw new IllegalStateException();
-            }
-            removeAt(pos);
-        }
-        public void removeAt(int i) {
-            code.remove(i);
-        }
     }
 }

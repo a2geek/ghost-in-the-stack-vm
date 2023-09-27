@@ -7,7 +7,7 @@ import java.util.Objects;
 
 public record Instruction (String label, Opcode opcode, Directive directive, Integer arg, ConstantValue constantValue) {
     public boolean isLabelOnly() {
-        return label != null && opcode == null && arg == null;
+        return label != null && opcode == null && directive == null && arg == null && constantValue == null;
     }
     public int size() {
         if (opcode != null) {

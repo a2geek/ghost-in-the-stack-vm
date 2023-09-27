@@ -9,6 +9,7 @@ import a2geek.ghost.model.visitor.DeadCodeEliminationVisitor;
 import a2geek.ghost.model.visitor.StrengthReductionVisitor;
 import a2geek.ghost.target.ghost.CodeGenerationVisitor;
 import a2geek.ghost.target.ghost.Instruction;
+import a2geek.ghost.target.ghost.LabelOptimizer;
 import a2geek.ghost.target.ghost.PeepholeOptimizer;
 import io.github.applecommander.applesingle.AppleSingle;
 import org.antlr.v4.runtime.CharStream;
@@ -143,7 +144,7 @@ public class CompileCommand implements Callable<Integer> {
         Map<String,Integer> addrs = new HashMap<>();
         int addr = 0;
         for (Instruction instruction : code) {
-            if (instruction.isLabelOnly()) {
+            if (instruction.opcode() == null && instruction.label() != null) {
                 addrs.put(instruction.label(), addr);
             }
             addr += instruction.size();
@@ -236,6 +237,11 @@ public class CompileCommand implements Callable<Integer> {
     }
 
     public static class OptimizationFlags {
+        @Option(names = { "--optimizations" }, negatable = true, defaultValue = "false",
+            fallbackValue = "false", showDefaultValue = Visibility.NEVER,
+            description = "disable all optimizations")
+        private boolean noOptimizations;
+
         @Option(names = { "--bounds-checking" }, negatable = true, defaultValue = "true",
                 fallbackValue = "true", showDefaultValue = Visibility.NEVER,
                 description = "perform bounds checking on arrays")
@@ -261,6 +267,11 @@ public class CompileCommand implements Callable<Integer> {
                 description = "enable peephole optimizer")
         private boolean peepholeOptimizer;
 
+        @Option(names = { "--label-optimizer" }, negatable = true, defaultValue = "true",
+                fallbackValue = "true", showDefaultValue = Visibility.NEVER,
+                description = "enable label optimizer")
+        private boolean labelOptimizer;
+
         public void apply(ModelBuilder model) {
             model.setBoundsCheck(boundsChecking);
         }
@@ -269,6 +280,10 @@ public class CompileCommand implements Callable<Integer> {
             if (constantReduction) {
                 ConstantReductionVisitor constantReductionVisitor = new ConstantReductionVisitor();
                 constantReductionVisitor.visit(program);
+            }
+            if (noOptimizations) {
+                // Constant reduction must be present at this time since ASC("A") doesn't exist in runtime.
+                return;
             }
             if (strengthReduction) {
                 StrengthReductionVisitor rewriteVisitor = new StrengthReductionVisitor();
@@ -281,6 +296,12 @@ public class CompileCommand implements Callable<Integer> {
         }
 
         public void apply(List<Instruction> code) {
+            if (noOptimizations) {
+                return;
+            }
+            if (labelOptimizer) {
+                LabelOptimizer.optimize(code);
+            }
             if (peepholeOptimizer) {
                 int loops = 5;      // arbitrarily picking maximum number of passes
                 while (loops > 0 && PeepholeOptimizer.optimize(code) > 0) {
