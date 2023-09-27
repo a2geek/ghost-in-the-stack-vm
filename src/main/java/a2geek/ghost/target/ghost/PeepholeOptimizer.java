@@ -44,21 +44,17 @@ public class PeepholeOptimizer {
                 list.set(1, inst1);
                 return true;
             }
-            // GLOBAL_LOAD offset  ==>  GLOBAL_LOAD offset
-            // GLOBAL_LOAD offset  ==>  DUP
-            if (inst1.opcode() == Opcode.GLOBAL_LOAD && inst2.opcode() == Opcode.GLOBAL_LOAD && inst1.arg().equals(inst2.arg())) {
+            // Handle any combination of loads that load the same thing twice
+            // GLOBAL_LOAD|LOCAL_LOAD|LOADC arg  ==>  *LOAD arg
+            // GLOBAL_LOAD|LOCAL_LOAD|LOADC arg  ==>  DUP
+            if (is(inst1.opcode(), Opcode.GLOBAL_LOAD, Opcode.LOCAL_LOAD, Opcode.LOADC)
+                    && inst1.opcode() == inst2.opcode() && inst1.arg().equals(inst2.arg())) {
                 list.set(1, new Instruction(null, Opcode.DUP, null, null, null));
                 return true;
             }
-            // LOCAL_LOAD offset  ==>  LOCAL_LOAD offset
-            // LOCAL_LOAD offset  ==>  DUP
-            if (inst1.opcode() == Opcode.LOCAL_LOAD && inst2.opcode() == Opcode.LOCAL_LOAD && inst1.arg().equals(inst2.arg())) {
-                list.set(1, new Instruction(null, Opcode.DUP, null, null, null));
-                return true;
-            }
-            // LOADC 0014  ==>  LOADC 0014
-            // LOADC 0014  ==>  DUP
-            if (inst1.opcode() == Opcode.LOADC && inst2.opcode() == Opcode.LOADC && inst1.arg().equals(inst2.arg())) {
+            // LOADA label  ==>  LOADA label
+            // LOADA label  ==>  DUP
+            if (inst1.opcode() == Opcode.LOADA && inst2.opcode() == Opcode.LOADA && inst1.label().equals(inst2.label())) {
                 list.set(1, new Instruction(null, Opcode.DUP, null, null, null));
                 return true;
             }
@@ -98,6 +94,13 @@ public class PeepholeOptimizer {
                 return true;
             }
         };
+        return false;
+    }
+
+    static boolean is(Opcode primary, Opcode... secondaries) {
+        for (Opcode secondary : secondaries) {
+            if (primary == secondary) return true;
+        }
         return false;
     }
 
