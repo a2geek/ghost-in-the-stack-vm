@@ -11,6 +11,7 @@ public class BinaryExpression implements Expression {
         // Arithmetic
         new Descriptor("+", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN),
         new Descriptor("-", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN),
+        new Descriptor("-", DataType.ADDRESS, DataType.ADDRESS, DataType.INTEGER),    // ADDR + n => ADDR.
         new Descriptor("*", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN),
         new Descriptor("/", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN),
         new Descriptor("mod", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN),
@@ -170,6 +171,7 @@ public class BinaryExpression implements Expression {
                 case BOOLEAN -> asBoolean().map(b -> b ? "True" : "False");
                 case INTEGER -> asInteger().map(i -> Integer.toString(i));
                 case STRING -> throw new RuntimeException("unable to evaluate string expressions at this time");
+                case ADDRESS -> throw new RuntimeException("unable to evaluate address expressions at this time");
             };
         }
         return Optional.empty();

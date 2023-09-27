@@ -18,8 +18,7 @@ public class AddressOfFunction implements Expression {
 
     @Override
     public DataType getType() {
-        // FIXME
-        return DataType.INTEGER;
+        return DataType.ADDRESS;
     }
 
     @Override

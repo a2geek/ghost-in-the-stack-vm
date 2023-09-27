@@ -6,10 +6,12 @@ import a2geek.ghost.model.Statement;
 public class DynamicGotoGosubStatement implements Statement {
     private String op;
     private Expression target;
+    private boolean needsAddressAdjustment;
 
-    public DynamicGotoGosubStatement(String op, Expression target) {
+    public DynamicGotoGosubStatement(String op, Expression target, boolean needsAddressAdjustment) {
         this.op = op;
         this.target = target;
+        this.needsAddressAdjustment = needsAddressAdjustment;
     }
 
     public String getOp() {
@@ -26,6 +28,10 @@ public class DynamicGotoGosubStatement implements Statement {
 
     public void setTarget(Expression target) {
         this.target = target;
+    }
+
+    public boolean needsAddressAdjustment() {
+        return needsAddressAdjustment;
     }
 
     @Override

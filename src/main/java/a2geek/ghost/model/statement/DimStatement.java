@@ -9,9 +9,9 @@ import java.util.List;
 public class DimStatement implements Statement {
     private Symbol symbol;
     private Expression expr;
-    private List<Expression> defaultValues;
+    private List<? extends Expression> defaultValues;
 
-    public DimStatement(Symbol symbol, Expression expr, List<Expression> defaultValues) {
+    public DimStatement(Symbol symbol, Expression expr, List<? extends Expression> defaultValues) {
         this.symbol = symbol;
         this.expr = expr;
         this.defaultValues = defaultValues;
@@ -31,7 +31,7 @@ public class DimStatement implements Statement {
     public boolean hasDefaultValues() {
         return defaultValues != null && defaultValues.size() > 0;
     }
-    public List<Expression> getDefaultValues() {
+    public List<? extends Expression> getDefaultValues() {
         return defaultValues;
     }
     public void setDefaultValues(List<Expression> defaultValues) {

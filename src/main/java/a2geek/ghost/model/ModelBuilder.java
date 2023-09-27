@@ -318,8 +318,8 @@ public class ModelBuilder {
                 labelFn, altToString);
         addStatement(stmt);
     }
-    public void dynamicGotoGosubStmt(String op, Expression target) {
-        DynamicGotoGosubStatement dynamicGotoGosubStatement = new DynamicGotoGosubStatement(op, target);
+    public void dynamicGotoGosubStmt(String op, Expression target, boolean needsAddressAdjustment) {
+        DynamicGotoGosubStatement dynamicGotoGosubStatement = new DynamicGotoGosubStatement(op, target, needsAddressAdjustment);
         addStatement(dynamicGotoGosubStatement);
     }
     public void onGotoGosubStmt(String op, Expression expr, Supplier<List<Symbol>> labelFn) {
@@ -337,7 +337,7 @@ public class ModelBuilder {
         insertStatement(dimStatement);
         arrayDims.put(symbol, size);
     }
-    public void addDimArray(Symbol symbol, Expression size, List<Expression> defaultValues) {
+    public void addDimArray(Symbol symbol, Expression size, List<? extends Expression> defaultValues) {
         DimStatement dimStatement = new DimStatement(symbol, size, defaultValues);
         addStatement(dimStatement);
         arrayDims.put(symbol, size);

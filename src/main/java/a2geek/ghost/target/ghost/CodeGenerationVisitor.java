@@ -106,7 +106,8 @@ public class CodeGenerationVisitor extends Visitor {
             emitArrayAddressCalc(var);
             code.emit(Opcode.ISTOREW);
             return;
-        }        var symbol = var.getSymbol();
+        }
+        var symbol = var.getSymbol();
         switch (symbol.type()) {
             case LOCAL, PARAMETER, RETURN_VALUE -> {
                 this.code.emit(Opcode.LOCAL_STORE, frameOffset(symbol));
@@ -131,15 +132,30 @@ public class CodeGenerationVisitor extends Visitor {
     @Override
     public void visit(DimStatement statement, StatementContext context) {
         if (statement.hasDefaultValues()) {
-            List<Integer> integerArray = statement.getDefaultValues().stream()
-                .map(Expression::asInteger)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .toList();
-            var label = label("INTARYCONST");
-            String actual = code.emitConstant(label.get(0), integerArray);
-            code.emit(Opcode.LOADA, actual);
-            emitStore(statement.getSymbol());
+            var dataType = statement.getSymbol().dataType();
+            if (dataType == DataType.INTEGER) {
+                List<Integer> integerArray = statement.getDefaultValues().stream()
+                        .map(Expression::asInteger)
+                        .filter(Optional::isPresent)
+                        .map(Optional::get)
+                        .toList();
+                var label = label("INTARYCONST");
+                String actual = code.emitConstant(label.get(0), integerArray);
+                code.emit(Opcode.LOADA, actual);
+                emitStore(statement.getSymbol());
+            } else if (dataType == DataType.ADDRESS) {
+                List<Symbol> labels = statement.getDefaultValues().stream()
+                        .filter(AddressOfFunction.class::isInstance)
+                        .map(AddressOfFunction.class::cast)
+                        .map(AddressOfFunction::getSymbol)
+                        .toList();
+                var label = label("ADDRARYCONST");
+                var actual = code.emitConstantLabels(label.get(0), labels);
+                code.emit(Opcode.LOADA, actual);
+                emitStore(statement.getSymbol());
+            } else {
+                throw new RuntimeException("unknown dim statement with data type of " + dataType);
+            }
         }
         else {
             // TODO assuming element size of 2
@@ -280,8 +296,10 @@ public class CodeGenerationVisitor extends Visitor {
             code.emit(Opcode.LOADA, returnLabel);
             code.emit(Opcode.DECR);
         }
-        // Note that we chose to perform ADDR-1 before assigning value, so assuming this is ADDR-1 format
         dispatch(statement.getTarget());
+        if (statement.needsAddressAdjustment()) {
+            code.emit(Opcode.FIXA);
+        }
         code.emit(Opcode.RETURN);
         code.emit(returnLabel);
     }

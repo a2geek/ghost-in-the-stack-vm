@@ -20,8 +20,8 @@ public class ForFrame {
         BiFunction<String,DataType,Symbol.Builder> mkBuilder = (fmt, dt) -> Symbol.variable(String.format(fmt, varRef.name(), num), Scope.Type.GLOBAL).dataType(dt);
         this.endRef = scope.addLocalSymbol(mkBuilder.apply("for_%s_end%d", varRef.dataType()));
         this.stepRef = scope.addLocalSymbol(mkBuilder.apply("for_%s_step%d", varRef.dataType()));
-        this.nextRef = scope.addLocalSymbol(mkBuilder.apply("for_%s_next%d", DataType.INTEGER));
-        this.exitRef = scope.addLocalSymbol(mkBuilder.apply("for_%s_exit%d", DataType.INTEGER));
+        this.nextRef = scope.addLocalSymbol(mkBuilder.apply("for_%s_next%d", DataType.ADDRESS));
+        this.exitRef = scope.addLocalSymbol(mkBuilder.apply("for_%s_exit%d", DataType.ADDRESS));
     }
 
     public Symbol getVarRef() {

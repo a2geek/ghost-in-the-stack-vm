@@ -494,15 +494,38 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         return null;
     }
 
+    /**
+     * Build an ON ... ( GOTO | GOSUB ) statement. Note that we simply generate an array of the
+     * labels and then index into them.
+     * <p>
+     * Pseudocode. NOTE: the upper range check needs to extend array length by one
+     * sinc the array has a zero index but ON ... GOTO/GOSUB starts at index 1.
+     * <pre>
+     * IF N > 0 AND N <= UBOUND(ADDRS)+1 THEN
+     *     ( GOTO | GOSUB ) *ADDRS[N-1]
+     * END IF
+     * </pre>
+     */
     @Override
     public Expression visitOnGotoGosubStmt(BasicParser.OnGotoGosubStmtContext ctx) {
         var op = ctx.op.getText();
         var expr = visit(ctx.a);
-        var labels = ctx.ID().stream()
+        var addrof = ctx.ID().stream()
                 .map(TerminalNode::getSymbol)
                 .map(this::findGotoGosubLabel)
+                .map(AddressOfFunction::new)
                 .toList();
-        model.onGotoGosubStmt(op, expr, () -> labels);
+
+        var name = String.format("ON_%s", op).toUpperCase();
+        var addrs = model.addArrayVariable(name, DataType.ADDRESS, 1);
+        model.addDimArray(addrs, IntegerConstant.ONE, addrof);
+        // TODO optimize "expr" reference due to multiple references
+        var test = new BinaryExpression(new BinaryExpression(expr, IntegerConstant.ZERO, ">"),
+                new BinaryExpression(expr, new ArrayLengthFunction(model, addrs), "<="), "and");
+        model.pushStatementBlock(new StatementBlock());
+        model.dynamicGotoGosubStmt(op, VariableReference.with(addrs, new BinaryExpression(expr, IntegerConstant.ONE, "-")), true);
+        var sb = model.popStatementBlock();
+        model.ifStmt(test, sb, null);
         return null;
     }
 

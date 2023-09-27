@@ -4,7 +4,7 @@ import java.util.Objects;
 
 public record Symbol(String name, Scope.Type type, Expression expr, DataType dataType, int numDimensions) {
     public static Builder label(String name) {
-        return new Builder(name, Scope.Type.LABEL);
+        return new Builder(name, Scope.Type.LABEL).dataType(DataType.ADDRESS);
     }
     public static Builder variable(String name, Scope.Type type) {
         return new Builder(name, type);

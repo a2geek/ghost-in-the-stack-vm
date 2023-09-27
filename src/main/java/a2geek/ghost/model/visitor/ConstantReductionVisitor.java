@@ -41,6 +41,7 @@ public class ConstantReductionVisitor extends Visitor {
                 case INTEGER -> expression.asInteger().map(IntegerConstant::new);
                 case BOOLEAN -> expression.asBoolean().map(BooleanConstant::new);
                 case STRING -> expression.asString().map(StringConstant::new);
+                case ADDRESS -> Optional.empty();
             };
         }
         return Optional.empty();

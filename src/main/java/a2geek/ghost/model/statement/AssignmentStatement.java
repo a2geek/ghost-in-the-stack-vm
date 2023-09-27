@@ -12,8 +12,8 @@ public class AssignmentStatement implements Statement {
     public AssignmentStatement(VariableReference var, Expression expr) {
         this.var = var;
         this.expr = expr;
-        // TODO string is really being evaluated as a pointer to a string.
-        expr.mustBe(DataType.INTEGER, DataType.BOOLEAN, DataType.STRING);
+        // FIXME really need to check if the expression can be assigned to the variable
+        expr.mustBe(DataType.INTEGER, DataType.BOOLEAN, DataType.STRING, DataType.ADDRESS);
     }
 
     public VariableReference getVar() {
