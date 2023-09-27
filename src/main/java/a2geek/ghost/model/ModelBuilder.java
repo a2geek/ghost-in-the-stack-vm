@@ -143,6 +143,13 @@ public class ModelBuilder {
     public Symbol addConstant(String name, Expression value) {
         return this.scope.peek().addLocalSymbol(Symbol.constant(name, value));
     }
+    public Symbol addTempVariable(DataType dataType) {
+        labelNumber+= 1;    // just reusing the counter
+        var name = String.format("_temp%d", labelNumber);
+        return this.scope.peek().addLocalSymbol(
+                Symbol.variable(name, scope.peek().getType())
+                      .dataType(dataType));
+    }
     /** Generate labels for code. The multiple values is to allow grouping of labels (same label number) for complex structures. */
     public List<Symbol> addLabels(String... names) {
         labelNumber+= 1;
@@ -313,18 +320,9 @@ public class ModelBuilder {
         GotoGosubStatement gotoGosubStatement = new GotoGosubStatement(op.toLowerCase(), label);
         addStatement(gotoGosubStatement);
     }
-    public void onGotoGosubStmt(String op, Expression expr, Supplier<List<Symbol>> labelFn, String altToString) {
-        OnGotoGosubStatement stmt = new OnGotoGosubStatement(op.toLowerCase(), expr,
-                labelFn, altToString);
-        addStatement(stmt);
-    }
     public void dynamicGotoGosubStmt(String op, Expression target, boolean needsAddressAdjustment) {
         DynamicGotoGosubStatement dynamicGotoGosubStatement = new DynamicGotoGosubStatement(op, target, needsAddressAdjustment);
         addStatement(dynamicGotoGosubStatement);
-    }
-    public void onGotoGosubStmt(String op, Expression expr, Supplier<List<Symbol>> labelFn) {
-        var statement = new OnGotoGosubStatement(op.toLowerCase(), expr, labelFn);
-        addStatement(statement);
     }
 
     public void returnStmt(Expression expr) {
@@ -332,7 +330,7 @@ public class ModelBuilder {
         addStatement(returnStatement);
     }
 
-    public void insertDimArray(Symbol symbol, Expression size, List<Expression> defaultValues) {
+    public void insertDimArray(Symbol symbol, Expression size, List<? extends Expression> defaultValues) {
         DimStatement dimStatement = new DimStatement(symbol, size, defaultValues);
         insertStatement(dimStatement);
         arrayDims.put(symbol, size);

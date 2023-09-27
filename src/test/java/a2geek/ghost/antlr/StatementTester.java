@@ -180,14 +180,6 @@ public abstract class StatementTester {
         return this;
     }
 
-    public StatementTester onGosub(Expression target, List<String> labels) {
-        var stmt = nextStatement(OnGotoGosubStatement.class);
-        assertEquals("gosub", stmt.getOp());
-        assertEquals(target, stmt.getExpr());
-        assertEquals(labels, stmt.getLabels());
-        return this;
-    }
-
     public StatementTester gotoStmt(int lineNumber) {
         return gotoStmt(lineNumberLabel(lineNumber));
     }

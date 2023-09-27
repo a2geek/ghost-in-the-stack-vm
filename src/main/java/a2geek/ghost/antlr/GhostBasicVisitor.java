@@ -518,7 +518,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
         var name = String.format("ON_%s", op).toUpperCase();
         var addrs = model.addArrayVariable(name, DataType.ADDRESS, 1);
-        model.addDimArray(addrs, IntegerConstant.ONE, addrof);
+        model.addDimArray(addrs, new IntegerConstant(addrof.size()), addrof);
         // TODO optimize "expr" reference due to multiple references
         var test = new BinaryExpression(new BinaryExpression(expr, IntegerConstant.ZERO, ">"),
                 new BinaryExpression(expr, new ArrayLengthFunction(model, addrs), "<="), "and");

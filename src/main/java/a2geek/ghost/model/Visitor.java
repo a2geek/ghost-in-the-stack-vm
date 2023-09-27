@@ -61,9 +61,6 @@ public abstract class Visitor {
         else if (statement instanceof PopStatement s) {
             visit(s, context);
         }
-        else if (statement instanceof OnGotoGosubStatement s) {
-            visit(s, context);
-        }
         else if (statement instanceof DynamicGotoGosubStatement s) {
             visit(s, context);
         }
@@ -73,7 +70,12 @@ public abstract class Visitor {
         }
     }
     public Optional<Expression> dispatch(Expression expression) {
-        if (expression instanceof BinaryExpression e) {
+        if (expression == null) {
+            // This occurs when the expression is optional, such as the RETURN statement.
+            // Catching it here instead of testing everywhere else as issues are discovered.
+            return Optional.empty();
+        }
+        else if (expression instanceof BinaryExpression e) {
             return Optional.ofNullable(visit(e));
         }
         else if (expression instanceof VariableReference e) {
@@ -160,11 +162,6 @@ public abstract class Visitor {
 
     public void visit(GotoGosubStatement statement, StatementContext context) {
 
-    }
-
-    public void visit(OnGotoGosubStatement statement, StatementContext context) {
-        var expr = dispatch(statement.getExpr());
-        expr.ifPresent(statement::setExpr);
     }
 
     public void visit(DynamicGotoGosubStatement statement, StatementContext context) {

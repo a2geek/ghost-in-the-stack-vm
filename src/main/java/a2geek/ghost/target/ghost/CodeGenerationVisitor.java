@@ -247,47 +247,6 @@ public class CodeGenerationVisitor extends Visitor {
     }
 
     @Override
-    public void visit(OnGotoGosubStatement statement, StatementContext context) {
-        // ' NOTE: the upper range check needs to extend array length by one ...
-        // '       because the array has a zero index but ON ... GOTO/GOSUB starts
-        // '       at index 1.
-        // if n > 0 and n <= ubound(addrs)+1 then
-        //     (gosub only) loadc endloop-1
-        //     load addrs[n]
-        //     return
-        // end if
-        var labels = label("ONEXIT", "ONLABELS");
-        var addressLabels = code.emitConstantLabels(labels.get(1), statement.getLabels());
-        // n > 0
-        code.emit(Opcode.LOADC, 0);
-        // FIXME: This can be optimized since EXPR is evaluated 3 times!
-        dispatch(statement.getExpr());
-        code.emit(Opcode.LT);
-        // n <= ubound(addrs)+1
-        dispatch(statement.getExpr());
-        code.emit(Opcode.LOADA, addressLabels);
-        code.emit(Opcode.ILOADW);   // ubound
-        code.emit(Opcode.INCR);     // +1
-        code.emit(Opcode.LE);
-        code.emit(Opcode.AND);
-        code.emit(Opcode.IFFALSE, labels.get(0));
-        if ("gosub".equalsIgnoreCase(statement.getOp())) {
-            code.emit(Opcode.LOADA, labels.get(0));
-            code.emit(Opcode.DECR);
-        }
-        // array reference to lookup label: addressLabels + n*2  (N in BASIC starts at 1 but in dispatch that's the zero index)
-        code.emit(Opcode.LOADA, addressLabels);
-        dispatch(statement.getExpr());
-        code.emit(Opcode.LOADC, 1);
-        code.emit(Opcode.SHIFTL);
-        code.emit(Opcode.ADD);
-        code.emit(Opcode.ILOADW);
-        code.emit(Opcode.FIXA);
-        code.emit(Opcode.RETURN);       // "igoto" or "igosub"
-        code.emit(labels.get(0));
-    }
-
-    @Override
     public void visit(DynamicGotoGosubStatement statement, StatementContext context) {
         var labels = label("RETURN");
         var returnLabel = labels.get(0);

@@ -15,6 +15,7 @@ import java.util.*;
 
 public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     public static final String LINE_NUMBERS = "_line_numbers";
+    public static final String LINE_LABELS = "_line_labels";
 
     private ModelBuilder model;
     private SortedMap<Integer,Symbol> lineLabels = new TreeMap<>();
@@ -35,12 +36,18 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         if (!model.getProgram().isLastStatement(EndStatement.class)) {
             model.endStmt();
         }
-        // Note that the array name gets mangled to keep types distinct by name
+        // If we need the line number references for dynamic goto/gosub, create them...
         model.findSymbol(model.fixArrayName(LINE_NUMBERS)).ifPresent(symbol -> {
             model.insertDimArray(symbol, new IntegerConstant(lineLabels.size()),
                     lineLabels.keySet().stream()
                             .map(IntegerConstant::new)
                             .map(Expression.class::cast)
+                            .toList());
+        });
+        model.findSymbol(model.fixArrayName(LINE_LABELS)).ifPresent(symbol -> {
+            model.insertDimArray(symbol, new IntegerConstant(lineLabels.size()),
+                    lineLabels.values().stream()
+                            .map(AddressOfFunction::new)
                             .toList());
         });
         return null;
@@ -247,6 +254,21 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         return null;
     }
 
+    /**
+     * Handle GOTO/GOSUB statement. Note that we can do a static jump if the expression is just
+     * a constant (GOTO 10) but also have to handle if the expression is more complex as well
+     * (GOTO i*10).  In the first case, we just generate a direct GOTO or GOSUB.  In the second
+     * case, we build a "dynamic" GOTO/GOSUB with appropriate array lookups.
+     * <p>
+     * Pseudocode for dynamic GOTO/GOSUB. NOTE: the upper range check needs to extend array length
+     * by one since the array has a zero index but ON ... GOTO/GOSUB starts at index 1.
+     * <pre>
+     * _TEMP = line_index(expr, line_numbers)
+     * IF _TEMP > 0 AND _TEMP <= UBOUND(line_numbers)+1 THEN
+     *     ( GOTO | GOSUB ) *line_labels[_TEMP - 1]
+     * END IF
+     * </pre>
+     */
     @Override
     public Expression visitGosubGotoStatement(IntegerParser.GosubGotoStatementContext ctx) {
         var expr = visit(ctx.e);
@@ -260,10 +282,18 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         }
         else {
             var lineNumbers = model.addArrayVariable(LINE_NUMBERS, DataType.INTEGER, 1);
-            var text = String.format("%s %s", op.toUpperCase(), expr);
-            var lookupExpr = model.callFunction("line_index",
-                Arrays.asList(expr, new VariableReference(lineNumbers)));
-            model.onGotoGosubStmt(op, lookupExpr, () -> lineLabels.values().stream().toList(), text);
+            var lineLabels = model.addArrayVariable(LINE_LABELS, DataType.ADDRESS, 1);
+
+            var temp = VariableReference.with(model.addTempVariable(DataType.INTEGER));
+            var test = new BinaryExpression(new BinaryExpression(temp, IntegerConstant.ZERO, ">"),
+                new BinaryExpression(temp, new ArrayLengthFunction(model, lineNumbers), "<="), "and");
+
+            model.pushStatementBlock(new StatementBlock());
+            model.dynamicGotoGosubStmt(op, VariableReference.with(lineLabels, new BinaryExpression(temp, IntegerConstant.ONE, "-")), true);
+            var sb = model.popStatementBlock();
+
+            model.assignStmt(temp, model.callFunction("line_index", Arrays.asList(expr, new VariableReference(lineNumbers))));
+            model.ifStmt(test, sb, null);
         }
         return null;
     }
