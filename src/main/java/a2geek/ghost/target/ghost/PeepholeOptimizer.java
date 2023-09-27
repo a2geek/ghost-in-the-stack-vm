@@ -58,6 +58,14 @@ public class PeepholeOptimizer {
                 list.set(1, new Instruction(null, Opcode.DUP, null, null, null));
                 return true;
             }
+            // DECR or INCR  ==> remove
+            // INCR or DECR  ==> remove
+            if ((inst1.opcode() == Opcode.DECR && inst2.opcode() == Opcode.INCR)
+                    || (inst1.opcode() == Opcode.INCR && inst2.opcode() == Opcode.DECR)) {
+                list.remove(1);
+                list.remove(0);
+                return true;
+            }
             // GOTO _FUNCXIT18  ==>  GOTO _FUNCXIT18
             // GOTO _IF_EXIT19  ==>  remove ANY CODE after a GOTO!
             if (inst1.opcode() == Opcode.GOTO && inst2.opcode() != null) {
