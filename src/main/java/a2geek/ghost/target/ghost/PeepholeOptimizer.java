@@ -56,8 +56,14 @@ public class PeepholeOptimizer {
                 list.set(1, new Instruction(null, Opcode.DUP, null, null, null));
                 return true;
             }
-            // GOTO _FUNCXIT18
-            // GOTO _IF_EXIT19  ==> remove ANY CODE after a GOTO!
+            // LOADC 0014  ==>  LOADC 0014
+            // LOADC 0014  ==>  DUP
+            if (inst1.opcode() == Opcode.LOADC && inst2.opcode() == Opcode.LOADC && inst1.arg().equals(inst2.arg())) {
+                list.set(1, new Instruction(null, Opcode.DUP, null, null, null));
+                return true;
+            }
+            // GOTO _FUNCXIT18  ==>  GOTO _FUNCXIT18
+            // GOTO _IF_EXIT19  ==>  remove ANY CODE after a GOTO!
             if (inst1.opcode() == Opcode.GOTO && inst2.opcode() != null) {
                 list.remove(1);
                 return true;
