@@ -1,31 +1,61 @@
 package a2geek.ghost.target.ghost;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
 public class LabelOptimizer {
     private static final Pattern LINE_NUMBER = Pattern.compile("_L\\d+_\\d+", Pattern.CASE_INSENSITIVE);
     private static Map<String,String> replaceLabels = new HashMap<>();
+    private static Set<String> usedLabels = new HashSet<>();
 
     public static void optimize(List<Instruction> code) {
         replaceLabels.clear();
         // Pass 1: Gather metadata, delete duplicate labels
+        process(code, LabelOptimizer::findAndCleanupIdenticalLabels);
+        // Pass 2: Replace labels on instructions
+        process(code, LabelOptimizer::replaceMovedLabels);
+
+        usedLabels.clear();
+        // Pass 3: Gather all used labels
+        process(code, LabelOptimizer::populateUsedLabels);
+        // Pass 4: Remove unused labels
+        process(code, LabelOptimizer::removeUnusedLabels);
+    }
+
+    static void process(List<Instruction> code, Consumer<InstructionContext> consumer) {
         var ctx = new InstructionContext(code);
         while (ctx.hasNext()) {
-            pass1(ctx);
-            ctx.next();
-        }
-        // Pass 2: Replace labels on instructions
-        ctx = new InstructionContext(code);
-        while (ctx.hasNext()) {
-            pass2(ctx);
+            consumer.accept(ctx);
             ctx.next();
         }
     }
 
-    static void pass1(InstructionContext ctx) {
+    static void populateUsedLabels(InstructionContext ctx) {
+        var oneInstruction = ctx.slice(1);
+        if (oneInstruction.isPresent()) {
+            var inst = oneInstruction.get().get(0);
+            if (inst.opcode() != null && inst.label() != null) {
+                usedLabels.add(inst.label());
+            }
+        }
+    }
+
+    static void removeUnusedLabels(InstructionContext ctx) {
+        var oneInstruction = ctx.slice(1);
+        if (oneInstruction.isPresent()) {
+            var list = oneInstruction.get();
+            var inst = list.get(0);
+            if (inst.isLabelOnly()
+                    && inst.label().startsWith("_")     // HACK: don't remove library labels, even if not used. TBD.
+                    && !LINE_NUMBER.matcher(inst.label()).matches()
+                    && !usedLabels.contains(inst.label())) {
+                list.remove(0);
+            }
+        }
+    }
+
+    static void findAndCleanupIdenticalLabels(InstructionContext ctx) {
         var twoInstructions = ctx.slice(2);
         if (twoInstructions.isPresent()) {
             var list = twoInstructions.get();
@@ -42,7 +72,7 @@ public class LabelOptimizer {
         }
     }
 
-    static void pass2(InstructionContext ctx) {
+    static void replaceMovedLabels(InstructionContext ctx) {
         var oneInstruction = ctx.slice(1);
         if (oneInstruction.isPresent()) {
             var list = oneInstruction.get();

@@ -305,6 +305,9 @@ public class CompileCommand implements Callable<Integer> {
             if (peepholeOptimizer) {
                 int loops = 5;      // arbitrarily picking maximum number of passes
                 while (loops > 0 && PeepholeOptimizer.optimize(code) > 0) {
+                    if (labelOptimizer) {
+                        LabelOptimizer.optimize(code);  // This gets impacted by the peephole optimizer as well
+                    }
                     loops--;
                 }
             }
