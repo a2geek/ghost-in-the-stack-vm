@@ -19,7 +19,7 @@ for dir in $(ls src/main/basic)
 do
   ${ACX} mkdir ${dir}
 
-  for source in $(find src/main/basic/${dir} -name "*.bas" -o -name "*.int")
+  for source in $(find -s src/main/basic/${dir} -name "*.bas" -o -name "*.int")
   do
     echo "Building file ${source} in ${dir}..."
 
