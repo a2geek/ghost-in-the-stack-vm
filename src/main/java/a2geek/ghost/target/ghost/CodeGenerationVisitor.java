@@ -14,6 +14,8 @@ public class CodeGenerationVisitor extends Visitor {
     private CodeBlock code = new CodeBlock();
     private int labelNumber;
     private Stack<Map<Symbol,Expression>> inlineVariables = new Stack<>();
+    private Set<String> scopesUsed = new HashSet<>();
+    private Set<String> scopesProcessed = new HashSet<>();
 
     public List<Instruction> getInstructions() {
         return code.getInstructions();
@@ -32,9 +34,25 @@ public class CodeGenerationVisitor extends Visitor {
     public void visit(Program program) {
         var frame = this.frames.push(Frame.create(program));
         code.emit(Opcode.GLOBAL_RESERVE, frame.localSize());
-        super.visit(program);
+
+        dispatchAll(program);
         // Note we don't have a GLOBAL_FREE; EXIT restores stack for us
         code.emit(Opcode.EXIT);
+
+        // Only write library methods that are actually used
+        boolean wroteCode;
+        do {
+            wroteCode = false;
+            var detachedScopesUsed = new HashSet<>(scopesUsed);
+            for (String scopeName : detachedScopesUsed) {
+                if (!scopesProcessed.contains(scopeName)) {
+                    program.findLocalScope(scopeName).ifPresent(this::dispatch);
+                    scopesProcessed.add(scopeName);
+                    wroteCode = true;
+                }
+            }
+        } while (wroteCode);
+
         this.frames.pop();
     }
 
@@ -315,6 +333,7 @@ public class CodeGenerationVisitor extends Visitor {
                 dispatchAll(sub);
             }
             else {
+                scopesUsed.add(statement.getName());
                 boolean hasParameters = statement.getParameters().size() != 0;
                 for (Expression expr : statement.getParameters()) {
                     dispatch(expr);
@@ -506,6 +525,7 @@ public class CodeGenerationVisitor extends Visitor {
                 if (function.getFunction() == null) {
                     throw new RuntimeException("unimplemented standard function: " + function.getName());
                 }
+                scopesUsed.add(function.getName());
                 // FIXME need to reserve by return type when types are in place!
                 code.emit(Opcode.LOADC, 0);
                 emitParameters.run();
