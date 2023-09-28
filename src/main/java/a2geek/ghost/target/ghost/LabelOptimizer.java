@@ -38,6 +38,10 @@ public class LabelOptimizer {
             if (inst.opcode() != null && inst.label() != null) {
                 usedLabels.add(inst.label());
             }
+            else if (inst.directive() == Directive.CONSTANT
+                     && inst.constantValue().constantType() == ConstantType.LABEL_ARRAY_LESS_1) {
+                usedLabels.addAll(inst.constantValue().stringArray());
+            }
         }
     }
 
