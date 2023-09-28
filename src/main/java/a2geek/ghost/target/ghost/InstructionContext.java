@@ -24,17 +24,18 @@ public class InstructionContext implements Iterator<Instruction> {
 
         @Override
         public boolean hasNext() {
-            return pos+1 < code.size();
+            return pos < code.size();
         }
         @Override
         public Instruction next() {
             if (pos >= code.size()) {
                 throw new NoSuchElementException();
             }
+            var inst = code.get(pos);
             if (origSize == code.size()) {
                 // Only advance if we did NOT modify the list; otherwise we "magically" skip elements
                 pos+= 1;
             }
-            return code.get(pos);
+            return inst;
         }
     }
