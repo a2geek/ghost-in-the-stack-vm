@@ -75,12 +75,6 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
     @Override
     public Expression visitIfStatement(IfStatementContext ctx) {
-        Expression expr = visit(ctx.a);
-
-        StatementBlock trueStatements = model.pushStatementBlock(new StatementBlock());
-        visit(ctx.t);
-        model.popStatementBlock();
-
         StatementBlock falseStatements = null;
         if (ctx.f != null) {
             falseStatements = model.pushStatementBlock(new StatementBlock());
@@ -88,7 +82,27 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             model.popStatementBlock();
         }
 
-        model.ifStmt(expr, trueStatements, falseStatements);
+        int i = ctx.ifFragment().size() - 1;
+        while (i > 0) {
+            var fragment = ctx.ifFragment(i);
+            model.pushStatementBlock(new StatementBlock());
+            visit(fragment.statements());
+            var sb = model.popStatementBlock();
+
+            model.pushStatementBlock(new StatementBlock());
+            var expr = visit(fragment.expr());
+            model.ifStmt(expr, sb, falseStatements);
+            falseStatements = model.popStatementBlock();
+
+            i-= 1;
+        }
+
+        Expression expr = visit(ctx.ifFragment(0).expr());
+        model.pushStatementBlock(new StatementBlock());
+        visit(ctx.ifFragment(0).statements());
+        StatementBlock sb = model.popStatementBlock();
+
+        model.ifStmt(expr, sb, falseStatements);
         return null;
     }
 

@@ -146,14 +146,16 @@ vlin y0,y1 at x
 c = scrn(x,y)
 ```
 
-### If/Then/Else
+### If/ElseIf/Else
 
-The traditional If/Then/Else statement. Note that generally, `if` end with `end if`. `expr` is considered true if the 
+The traditional If/ElseIf/Else statement. Note that generally, `if` ends with `end if`. `expr` is considered true if the 
 expression evaluates to non-zero and false if it evaluates to zero.
 
 ```basic
 if expr then
   ' true statements
+[ elseif expr2 then
+  ' true2 statements ]
 else
   ' false statements
 end if
@@ -314,6 +316,7 @@ Any built-in functions are referenced here.
 | `scrn(xexpr,yexpr)` | Lores     | Read color of lores graphics point at `xexpr`, `yexpr` coordinate.              |
 | `sgn(iexpr)`        | Math      | Returns 1,0,-1 if `iexpr < 0`, or `iexpr = 0`, or `iexpr > 0`.                  |
 | `ubound(arrayVar)`  | Intrinsic | Returns length of array.                                                        |
+| `addrof(var)`       | Intrinsic | Calculate address of a variable.                                                |
 
 Note that the library specified is lowercase in the `uses` phrase. 
 All library functions are currently prefixed by the library name.

@@ -1,15 +1,13 @@
 Capturing ideas
 ===============
 
-Secondary model to handle array pointer arithmetic? This could also rewrite loop structures to make code generation simpler.
+Secondary model should handle array pointer arithmetic? This could make code generation simpler.
 Validate memory footprint for variable allocation in some manner
-How to make reusable libraries which use inline interpreted code? Looks like there can be "nested" grammars!
 Looks like usage of Symbol may need to be checked? There is no constraint that a found variable is what is expected (aka a constant instead of a variable).
 Look at how bytecode is created - feels like Opcode and Directive can support Instruction more directly.
 Need to figure out how to handle processor status register in CPU interactions; ProDOS functions use C. Probably only want get. (Otherwise state probably will get carried between calls accidentally.)
 Review generated code and look for alternates with new opcodes.
-Add ELSEIF to IF statement.
-Revisit the single line IF -- see what appears to be more standard (dislike Integer Basic variant).
+Revisit the single line IF -- see what appears to be more standard.
 Unit tests?  Integer BASIC(done)  BASIC(done)  optimizations(done)  code generation?
 Interpreter for use in tests.
 Structure assembly project; it's gonna get messier.
@@ -17,6 +15,4 @@ ProDOS commands (OPEN, READ, WRITE, CLOSE). Is this SUB and/or FUNCTION?
 Add Applesoft
 DEF FN == Function
 Arrays - option to allocate on stack or heap
-Function libraries (with inline?) - can a function return more than one value?
 Optimization - extract common code
-Does it make sense to have a second model that is closer to machine code (things like FOR/NEXT get replaced by IF's and GOTO's) to simplify code generation?

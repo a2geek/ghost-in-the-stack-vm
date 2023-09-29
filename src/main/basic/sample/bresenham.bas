@@ -53,25 +53,18 @@ while peek(-16384) < 128
     c = (c + 1) mod 16
     i = (i + 3) mod 160
 
-    ' NOTE: Really need IF ELSEIF structure!!
     if i < 40 then
         y = 0
         x = i
-    else
-        if i < 80 then
-            y = i - 40
-            x = 39
-        else
-            if i < 120 then
-                x = 39 - (i - 80)
-                y = 39
-            else
-                if i < 160 then
-                    y = 39 - (i - 120)
-                    x = 0
-                end if
-            end if
-        end if
+    elseif i < 80 then
+        y = i - 40
+        x = 39
+    elseif i < 120 then
+        x = 39 - (i - 80)
+        y = 39
+    else    ' i < 160
+        y = 39 - (i - 120)
+        x = 0
     end if
 
     color= c

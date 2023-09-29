@@ -38,8 +38,8 @@ statement
     | id=extendedID '=' a=expr                                          # assignment
     | id=ID ':'                                                         # label
     | 'if' a=expr 'then' t=statement                                    # ifShortStatement
-    | 'if' a=expr 'then' EOL+
-        t=statements 
+    | 'if' ifFragment
+      ('elseif' ifFragment)*
       ('else' EOL+
         f=statements)?
       'end' 'if' EOL+                                                   # ifStatement
@@ -76,6 +76,10 @@ statement
     | 'vtab' a=expr                                                     # vtabStmt
     | 'htab' a=expr                                                     # htabStmt
     | id=ID p=parameters?                                               # callSub
+    ;
+ifFragment
+    : expr 'then' EOL+
+        statements
     ;
 
 constantDecl
