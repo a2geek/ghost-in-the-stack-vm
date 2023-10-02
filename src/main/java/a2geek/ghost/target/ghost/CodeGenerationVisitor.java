@@ -176,23 +176,45 @@ public class CodeGenerationVisitor extends Visitor {
             }
         }
         else {
-            // TODO assuming element size of 2
-            // TODO assuming array size of 1
-            // Reserve N bytes on stack = (Size of Array+1) * (Element Size) + (Size of dimension) * Dimensions
-            //  for now N = (array size+1) * 2 + 2 * 1 => (array size + 2) * 2 => (array size + 2) << 1
-            dispatch(statement.getExpr());
-            code.emit(Opcode.INCR); // INCR, INCR = TOS+2
-            code.emit(Opcode.INCR);
-            code.emit(Opcode.LOADC, 1);
-            code.emit(Opcode.SHIFTL);
-            code.emit(Opcode.PUSHZ);
-            // TODO ^^ ARRAY ALLOCATED TO STACK FOR NOW! This should be configurable?
-            code.emit(Opcode.LOADSP);
-            emitStore(statement.getSymbol());
-            // Need to set array size for dimension 0
-            dispatch(statement.getExpr());
-            emitLoad(statement.getSymbol());
-            code.emit(Opcode.ISTOREW);
+            switch (statement.getSymbol().dataType()) {
+                case INTEGER, BOOLEAN -> {
+                    // TODO assuming element size of 2
+                    // TODO assuming array size of 1
+                    // Reserve N bytes on stack = (Size of Array+1) * (Element Size) + (Size of dimension) * Dimensions
+                    //  for now N = (array size+1) * 2 + 2 * 1 => (array size + 2) * 2 => (array size + 2) << 1
+                    dispatch(statement.getExpr());
+                    code.emit(Opcode.INCR); // INCR, INCR = TOS+2
+                    code.emit(Opcode.INCR);
+                    code.emit(Opcode.LOADC, 1);
+                    code.emit(Opcode.SHIFTL);
+                    code.emit(Opcode.PUSHZ);
+                    // TODO ^^ ARRAY ALLOCATED TO STACK FOR NOW! This should be configurable?
+                    code.emit(Opcode.LOADSP);
+                    emitStore(statement.getSymbol());
+                    // Need to set array size for dimension 0
+                    dispatch(statement.getExpr());
+                    emitLoad(statement.getSymbol());
+                    code.emit(Opcode.ISTOREW);
+                }
+                case STRING -> {
+                    // TODO this is just an Integer BASIC string so not an array of strings!
+                    if (statement.getSymbol().numDimensions() > 0) {
+                        throw new RuntimeException("actual string arrays not supported at this time");
+                    }
+                    // Reserve N bytes on stack = Max length (2 bytes) + string length + 1 for extra zero byte.
+                    dispatch(statement.getExpr());
+                    code.emit(Opcode.DUP);
+                    code.emit(Opcode.LOADC, 3);
+                    code.emit(Opcode.ADD);
+                    code.emit(Opcode.PUSHZ);
+                    code.emit(Opcode.LOADSP);
+                    emitStore(statement.getSymbol());
+                    // Need to set array size for dimension 0 (DUP from before)
+                    emitLoad(statement.getSymbol());
+                    code.emit(Opcode.ISTOREW);
+                }
+                default -> throw new RuntimeException("cannot DIM variable of type: " + statement.getSymbol());
+            }
         }
     }
 

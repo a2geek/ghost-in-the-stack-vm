@@ -115,9 +115,13 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         return null;
     }
 
+    /* Note: A string defaults to 1 character if not DIMmed. */
     @Override
     public Expression visitStrDimVar(IntegerParser.StrDimVarContext ctx) {
-        throw new RuntimeException("strings not supported");
+        var symbol = model.addVariable(ctx.n.getText(), DataType.STRING);
+        var expr = visit(ctx.e);
+        model.addDimArray(symbol, expr, null);
+        return null;
     }
 
     @Override
@@ -355,11 +359,11 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         for (var avar : ctx.var()) {
             var expr = visit(avar);
             if (expr instanceof VariableReference varRef) {
-                if (varRef.getType() == DataType.INTEGER) {
-                    model.assignStmt(varRef, model.callFunction("integer", Collections.emptyList()));
-                }
-                else {
-                    throw new RuntimeException("string input statement not implemented yet");
+                switch (varRef.getType()) {
+                    case INTEGER -> model.assignStmt(varRef, model.callFunction("integer", Collections.emptyList()));
+                    // FIXME correct with runtime name
+                    case STRING -> model.assignStmt(varRef, model.callFunction("string", Collections.emptyList()));
+                    default -> throw new RuntimeException("string input statement not implemented yet");
                 }
             }
             else {
@@ -384,6 +388,9 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     @Override
     public Expression visitStringAssignment(IntegerParser.StringAssignmentContext ctx) {
+        var sexpr = visit(ctx.sexpr());
+        var sref = visit(ctx.sref());
+        // TODO!
         throw new RuntimeException("string assignment TODO");
     }
 
@@ -567,11 +574,11 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         return new StringConstant(model.fixControlChars(value));
     }
 
-    @Override
-    public Expression visitStrVarExpr(IntegerParser.StrVarExprContext ctx) {
-        // FIXME
-        throw new RuntimeException("string variables not supported yet");
-    }
+//    @Override
+//    public Expression visitStrVarExpr(IntegerParser.StrVarExprContext ctx) {
+//        // TODO - is this needed? this specific one basically defers to #visitStrVar
+//        throw new RuntimeException("string variables not supported yet");
+//    }
 
     @Override
     public Expression visitIntArgFunc(IntegerParser.IntArgFuncContext ctx) {
@@ -596,7 +603,10 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     @Override
     public Expression visitStrRef(IntegerParser.StrRefContext ctx) {
-        throw new RuntimeException("strings not supported at this time");
+        // Note (LHS): A$(start)
+        var ref = model.addVariable(ctx.n.getText(), DataType.STRING);
+        var start = visit(ctx.start);
+        return VariableReference.with(ref, start);
     }
 
     @Override
@@ -615,6 +625,10 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     @Override
     public Expression visitStrVar(IntegerParser.StrVarContext ctx) {
-        throw new RuntimeException("strings not supported yet");
+        // Note (RHS): A$(start,end)
+        var ref = model.addVariable(ctx.n.getText(), DataType.STRING);
+        var start = visit(ctx.start);
+        var end = visit(ctx.end);
+        return VariableReference.with(ref, start, end);
     }
 }

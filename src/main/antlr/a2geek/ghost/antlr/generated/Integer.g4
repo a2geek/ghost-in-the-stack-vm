@@ -116,7 +116,7 @@ sname
     ;
 
 svar
-    : n=sname ( '(' start=iexpr ( ',' length=iexpr )? ')' )?    # strVar
+    : n=sname ( '(' start=iexpr ( ',' end=iexpr )? ')' )?    # strVar
     ;
 
 REMARK : 'rem' ( LINE_CONTINUATION | ~[\r\n] )* ;
