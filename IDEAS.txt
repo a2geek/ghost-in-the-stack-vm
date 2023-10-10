@@ -16,3 +16,4 @@ Add Applesoft
 DEF FN == Function
 Arrays - option to allocate on stack or heap
 Optimization - extract common code
+Change INPUT mechanism to be more like expected (don't input individually for every variable)
