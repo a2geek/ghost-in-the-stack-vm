@@ -9,6 +9,7 @@ const GIVAYF = 0xe2f2
 const FOUT = 0xed34
 const MON_CROUT = 0xfd8e
 const MON_COUT = 0xfded
+const MON_PRNTAX = 0xf941
 
 sub print_comma
     ' FIXME
@@ -33,11 +34,18 @@ sub print_boolean(b as boolean)
 end sub
 
 sub print_string(s as string)
-    cpu.register.a = s
-    cpu.register.y = s >> 8
+    ' String starts with max length byte
+    cpu.register.a = s+1
+    cpu.register.y = (s+1) >> 8
     call STROUT
 end sub
 
 sub print_newline
     call MON_CROUT
+end sub
+
+sub print_address(a as address)
+    cpu.register.a = a >> 8
+    cpu.register.x = a
+    call MON_PRNTAX
 end sub

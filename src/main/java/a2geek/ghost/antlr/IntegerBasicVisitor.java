@@ -6,6 +6,7 @@ import a2geek.ghost.model.*;
 import a2geek.ghost.model.expression.*;
 import a2geek.ghost.model.scope.ForFrame;
 import a2geek.ghost.model.scope.Program;
+import a2geek.ghost.model.statement.DimStatement;
 import a2geek.ghost.model.statement.EndStatement;
 import a2geek.ghost.model.statement.IfStatement;
 import a2geek.ghost.model.statement.PopStatement;
@@ -19,7 +20,8 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     private ModelBuilder model;
     private SortedMap<Integer,Symbol> lineLabels = new TreeMap<>();
-    private Map<Symbol, ForFrame> forFrames = new HashMap<>();
+    private Map<Symbol,ForFrame> forFrames = new HashMap<>();
+    private Map<Symbol,Boolean> stringsDimmed = new HashMap<>();
 
     public IntegerBasicVisitor(ModelBuilder model) {
         this.model = model;
@@ -50,6 +52,13 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
                             .map(AddressOfFunction::new)
                             .toList());
         });
+        // Any strings that do not have a DIM, we need to dim as length 1.
+        // Note that we don't/can't validate that the strings dimmed are dimmed first.
+        stringsDimmed.forEach((symbol,flag) -> {
+            if (!flag) {
+                model.insertStatement(new DimStatement(symbol, IntegerConstant.ONE, null));
+            }
+        });
         return null;
     }
 
@@ -76,6 +85,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         try {
             visit(ctx.statements());
         } catch (Exception ex) {
+            System.out.println(ctx.getText());
             throw new RuntimeException("Error in line " + lineNumber, ex);
         }
         return null;
@@ -121,6 +131,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         var symbol = model.addVariable(ctx.n.getText(), DataType.STRING);
         var expr = visit(ctx.e);
         model.addDimArray(symbol, expr, null);
+        stringsDimmed.computeIfAbsent(symbol, k -> Boolean.TRUE);
         return null;
     }
 
@@ -361,9 +372,8 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
             if (expr instanceof VariableReference varRef) {
                 switch (varRef.getType()) {
                     case INTEGER -> model.assignStmt(varRef, model.callFunction("integer", Collections.emptyList()));
-                    // FIXME correct with runtime name
-                    case STRING -> model.assignStmt(varRef, model.callFunction("string", Collections.emptyList()));
-                    default -> throw new RuntimeException("string input statement not implemented yet");
+                    case STRING ->  model.callLibrarySubroutine("readstring", varRef);
+                    default -> throw new RuntimeException("input statement not implemented yet: " + varRef.getType());
                 }
             }
             else {
@@ -386,12 +396,52 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         return null;
     }
 
+    /**
+     * Handle string assignments. An attempt is made to optimize the generated code a little
+     * bit since the string copy routine takes all the expected indexes as parameters, rather
+     * than generating substring parsing code elsewhere.
+     */
     @Override
     public Expression visitStringAssignment(IntegerParser.StringAssignmentContext ctx) {
-        var sexpr = visit(ctx.sexpr());
-        var sref = visit(ctx.sref());
-        // TODO!
-        throw new RuntimeException("string assignment TODO");
+        var srefExpr = visit(ctx.sref());       // LHS
+        var stringExpr = visit(ctx.sexpr());    // RHS
+        if (srefExpr instanceof VariableReference sref) {
+            var targetVariable = sref.getSymbol();
+            var targetStart = switch (sref.getIndexes().size()) {
+                case 0 -> IntegerConstant.ONE;
+                case 1 -> sref.getIndexes().get(0);
+                default -> throw new RuntimeException("string reference on left-hand side can only have 0 or 1 index");
+            };
+
+            if (stringExpr instanceof VariableReference expr) {
+                var sourceVariable = expr.getSymbol();
+                var sourceStart = switch (expr.getIndexes().size()) {
+                    case 0 -> IntegerConstant.ONE;
+                    case 1,2 -> expr.getIndexes().get(0);
+                    default -> throw new RuntimeException("string reference on right-hand side can only have 0, 1, or 2 index");
+                };
+                var sourceEnd = switch (expr.getIndexes().size()) {
+                    case 0,1 -> IntegerConstant.ZERO;
+                    case 2 -> expr.getIndexes().get(1);
+                    default -> throw new RuntimeException("string reference on right-hand side can only have 0, 1, or 2 index");
+                };
+                model.callLibrarySubroutine("strcpy", VariableReference.with(targetVariable), targetStart,
+                        VariableReference.with(sourceVariable), sourceStart, sourceEnd);
+            }
+            else if (stringExpr instanceof StringConstant expr) {
+                var sourceEnd = expr.getValue().length();
+                model.callLibrarySubroutine("strcpy", VariableReference.with(targetVariable), targetStart,
+                        expr, IntegerConstant.ONE, new IntegerConstant(sourceEnd));
+            }
+            else {
+                model.callLibrarySubroutine("strcpy", VariableReference.with(targetVariable), targetStart,
+                        stringExpr, IntegerConstant.ONE, IntegerConstant.ZERO);
+            }
+            return null;
+        }
+        else {
+            throw new RuntimeException("unknown variable type: " + srefExpr);
+        }
     }
 
     @Override
@@ -548,6 +598,24 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         return new BinaryExpression(left, right, op);
     }
 
+    /**
+     * String comparison only supports equals a not equals.
+     */
+    @Override
+    public Expression visitBinaryStrExpr(IntegerParser.BinaryStrExprContext ctx) {
+        var left = visit(ctx.left);
+        var right = visit(ctx.right);
+        var op = ctx.op.getText();
+
+        if ("#".equals(op)) {
+            op = "<>";
+        }
+        return new BinaryExpression(
+                model.callFunction("strcmp", Arrays.asList(left,right)),
+                IntegerConstant.ZERO,
+                op);
+    }
+
     @Override
     public Expression visitUnaryIntExpr(IntegerParser.UnaryIntExprContext ctx) {
         var op = ctx.op.getText();
@@ -605,8 +673,12 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     public Expression visitStrRef(IntegerParser.StrRefContext ctx) {
         // Note (LHS): A$(start)
         var ref = model.addVariable(ctx.n.getText(), DataType.STRING);
-        var start = visit(ctx.start);
-        return VariableReference.with(ref, start);
+        stringsDimmed.computeIfAbsent(ref, k -> Boolean.FALSE);
+        if (ctx.start != null) {
+            var start = visit(ctx.start);
+            return VariableReference.with(ref, start);
+        }
+        return VariableReference.with(ref);
     }
 
     @Override
@@ -627,8 +699,17 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     public Expression visitStrVar(IntegerParser.StrVarContext ctx) {
         // Note (RHS): A$(start,end)
         var ref = model.addVariable(ctx.n.getText(), DataType.STRING);
-        var start = visit(ctx.start);
-        var end = visit(ctx.end);
-        return VariableReference.with(ref, start, end);
+        stringsDimmed.computeIfAbsent(ref, k -> Boolean.FALSE);
+        if (ctx.start != null) {
+            var start = visit(ctx.start);
+            if (ctx.end != null) {
+                var end = visit(ctx.end);
+                // FIXME need to make a copy?
+                return VariableReference.with(ref, start, end);
+            }
+            // FIXME need to make a copy?
+            return VariableReference.with(ref, start);
+        }
+        return VariableReference.with(ref);
     }
 }

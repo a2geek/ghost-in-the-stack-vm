@@ -4,6 +4,7 @@ import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.scope.Function;
 
+import javax.print.DocFlavor;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -13,32 +14,66 @@ public class FunctionExpression implements Expression {
     private static final String MISC_LIBRARY = "misc";
     private static final String MATH_LIBRARY = "math";
     private static final String RUNTIME_LIBRARY = "runtime";
-    private static final Map<String,Descriptor> FUNCS = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-    static {
-        Arrays.asList(
-            new Descriptor("peek", null, DataType.INTEGER, DataType.INTEGER),
-            new Descriptor("peekw", null, DataType.INTEGER, DataType.INTEGER),
-            new Descriptor("scrn", LORES_LIBRARY, DataType.INTEGER, DataType.INTEGER, DataType.INTEGER),
-            new Descriptor("asc", null, DataType.INTEGER, DataType.STRING),
-            new Descriptor("rnd", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER),
-            new Descriptor("abs", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER),
-            new Descriptor("sgn", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER),
-            new Descriptor("pdl", MISC_LIBRARY, DataType.INTEGER, DataType.INTEGER),
-            new Descriptor("ipow", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER, DataType.INTEGER),
-            new Descriptor("integer", INPUT_LIBRARY, DataType.INTEGER),
-            new Descriptor("line_index", RUNTIME_LIBRARY, DataType.INTEGER, DataType.INTEGER, DataType.INTEGER)
-        ).forEach(d -> {
-            FUNCS.put(d.name(), d);
-        });
+    private static final String STRING_LIBRARY = "string";
+    public static final List<Descriptor> DESCRIPTORS = List.of(
+        new Descriptor("peek", null, DataType.INTEGER, DataType.INTEGER),
+        new Descriptor("peek", null, DataType.INTEGER, DataType.ADDRESS),
+        new Descriptor("peek", null, DataType.INTEGER, DataType.STRING),
+        new Descriptor("peekw", null, DataType.INTEGER, DataType.INTEGER),
+        new Descriptor("peekw", null, DataType.INTEGER, DataType.ADDRESS),
+        new Descriptor("peekw", null, DataType.INTEGER, DataType.STRING),
+        new Descriptor("scrn", LORES_LIBRARY, DataType.INTEGER, DataType.INTEGER, DataType.INTEGER),
+        new Descriptor("asc", null, DataType.INTEGER, DataType.STRING),
+        new Descriptor("rnd", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER),
+        new Descriptor("abs", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER),
+        new Descriptor("sgn", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER),
+        new Descriptor("pdl", MISC_LIBRARY, DataType.INTEGER, DataType.INTEGER),
+        new Descriptor("ipow", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER, DataType.INTEGER),
+        new Descriptor("integer", INPUT_LIBRARY, DataType.INTEGER),
+        new Descriptor("line_index", RUNTIME_LIBRARY, DataType.INTEGER, DataType.INTEGER, DataType.INTEGER),
+        new Descriptor("strlen", STRING_LIBRARY, DataType.INTEGER, DataType.STRING),
+        new Descriptor("strcmp", STRING_LIBRARY, DataType.INTEGER, DataType.STRING, DataType.STRING)
+    );
+    public static Optional<Descriptor> findDescriptor(String name, DataType... parameterTypes) {
+        String message = null;
+        for (var d : DESCRIPTORS) {
+            if (d.name.equalsIgnoreCase(name)) {
+                if (Arrays.equals(d.parameterTypes, parameterTypes)) {
+                    return Optional.of(d);
+                }
+                if (d.parameterTypes.length != parameterTypes.length) {
+                    message = String.format("wrong number of arguments to function '%s' expecting %d",
+                            d.name(), d.parameterTypes.length);
+                }
+                else {
+                    message = String.format("expecting parameters of %s but found %s instead",
+                            DataType.asString(d.parameterTypes()),
+                            DataType.asString(parameterTypes));
+                }
+            }
+        }
+        if (message != null) {
+            throw new RuntimeException(message);
+        }
+        return Optional.empty();
     }
+    public static Optional<Descriptor> findDescriptor(String name, List<Expression> parameters) {
+        return findDescriptor(name, parameters.stream().map(Expression::getType).toArray(DataType[]::new));
+    }
+
     public static boolean isIntrinsicFunction(String name) {
-        return getDescriptor(name).map(d -> d.library() == null).orElse(false);
+        return DESCRIPTORS.stream()
+                .filter(d -> d.name().equalsIgnoreCase(name))
+                .map(d -> d.library() == null)
+                .findAny()
+                .orElse(false);
     }
     public static boolean isLibraryFunction(String name) {
-        return getDescriptor(name).map(d -> d.library() != null).orElse(false);
-    }
-    public static Optional<Descriptor> getDescriptor(String name) {
-        return Optional.ofNullable(FUNCS.get(name));
+        return DESCRIPTORS.stream()
+                .filter(d -> d.name().equalsIgnoreCase(name))
+                .map(d -> d.library() != null)
+                .findAny()
+                .orElse(false);
     }
 
     private String name;
@@ -49,17 +84,11 @@ public class FunctionExpression implements Expression {
     public FunctionExpression(String name, List<Expression> parameters) {
         this.name = name;
         this.parameters = parameters;
-        var descriptor = FUNCS.get(name);
-        if (descriptor == null) {
+        var descriptor = findDescriptor(name, parameters);  // also validates
+        if (descriptor.isEmpty()) {
             throw new RuntimeException("Unknown function: " + name);
         }
-        if (this.parameters.size() != descriptor.parameterTypes.length) {
-            throw new RuntimeException("Wrong number of arguments to: " + name);
-        }
-        for (int i = 0; i<this.parameters.size(); i++) {
-            this.parameters.get(i).mustBe(descriptor.parameterTypes[i]);
-        }
-        this.returnType = descriptor.returnType;
+        this.returnType = descriptor.get().returnType();
     }
     public FunctionExpression(Function function, List<Expression> expr) {
         this.name = function.getName();

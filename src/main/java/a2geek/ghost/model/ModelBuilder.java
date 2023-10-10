@@ -230,12 +230,7 @@ public class ModelBuilder {
     public FunctionExpression callFunction(String name, List<Expression> params) {
         var id = fixCase(name);
         if (FunctionExpression.isLibraryFunction(id)) {
-            FunctionExpression.Descriptor descriptor = FunctionExpression.getDescriptor(id).orElseThrow();
-            var requiredParameterCount = descriptor.parameterTypes().length;
-            if (params.size() != requiredParameterCount) {
-                var msg = String.format("function '%s' requires %d parameters", id, requiredParameterCount);
-                throw new RuntimeException(msg);
-            }
+            FunctionExpression.Descriptor descriptor = FunctionExpression.findDescriptor(id, params).orElseThrow();
             uses(descriptor.library());
             id = fixCase(descriptor.fullName());
         }

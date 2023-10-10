@@ -1,0 +1,16 @@
+10 dim a$(3)
+20 a$="YES"
+30 gosub 200
+40 a$="NO"
+50 gosub 200
+60 a$="Y"
+70 gosub 200
+80 a$(2)="ES"
+90 gosub 200
+100 input "ENTER YES OR NO (MAX 3 CHARS): ",a$
+110 gosub 200
+190 end
+200 print "A$=";a$
+210 if a$="YES" or a$="Y" then print "A$ IS 'YES'"
+220 if a$#"YES" and a$#"Y" then print "A$ IS NOT 'YES', IT IS SOMETHING ELSE"
+230 return

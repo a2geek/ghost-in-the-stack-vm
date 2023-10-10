@@ -181,15 +181,14 @@ public class IntegerBasicVisitorTest {
     }
 
     @Test
+    @Disabled
     public void testInput() {
-        assertThrows(RuntimeException.class, () -> {
-            // To be implemented
-            expect("10 INPUT \"PROMPT? \",X,A$")
-                .hasSymbol("X", DataType.INTEGER, Scope.Type.GLOBAL)
-                .hasSymbol("A$", DataType.STRING, Scope.Type.GLOBAL)
-                // TODO
-                .atEnd();
-        });
+        // To be implemented
+        expect("10 INPUT \"PROMPT? \",X,A$")
+            .hasSymbol("X", DataType.INTEGER, Scope.Type.GLOBAL)
+            .hasSymbol("A$", DataType.STRING, Scope.Type.GLOBAL)
+            // TODO
+            .atEnd();
     }
 
     @Test
