@@ -4,6 +4,7 @@ import a2geek.ghost.model.*;
 import a2geek.ghost.model.expression.VariableReference;
 import a2geek.ghost.model.scope.Subroutine;
 import a2geek.ghost.model.statement.*;
+import org.junit.jupiter.api.Assertions;
 
 import java.util.List;
 import java.util.Optional;
@@ -69,7 +70,7 @@ public abstract class StatementTester {
     }
 
     public void fail(String message) {
-        fail(message);
+        Assertions.fail(message);
     }
 
     public StatementTester atEnd() {
