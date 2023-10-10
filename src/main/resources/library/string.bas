@@ -12,7 +12,9 @@ end function
 function string_strlen(str as string) as integer
     dim s as address, n as integer
 
-    s = str
+    ' skip the maxlen byte
+    s = str + 1
+
     while peek(s) <> 0
         n = n + 1
         s = s + 1
