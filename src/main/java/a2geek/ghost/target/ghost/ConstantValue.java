@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 public record ConstantValue(ConstantType constantType, int size, String string, List<Integer> integerArray, List<String> stringArray) {
     public static ConstantValue with(String string) {
         Objects.requireNonNull(string);
-        return new ConstantValue(ConstantType.STRING_VALUE, string.length()+1, string, null, null);
+        return new ConstantValue(ConstantType.STRING_VALUE, string.length()+2, string, null, null);
     }
     public static ConstantValue with(List<Integer> integerArray) {
         Objects.requireNonNull(integerArray);

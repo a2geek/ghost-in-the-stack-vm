@@ -191,7 +191,7 @@ public class CodeGenerationVisitor extends Visitor {
                     // TODO ^^ ARRAY ALLOCATED TO STACK FOR NOW! This should be configurable?
                     code.emit(Opcode.LOADSP);
                     emitStore(statement.getSymbol());
-                    // Need to set array size for dimension 0
+                    // Need to set array size for dimension 0 (cannot DUP due to PUSHZ)
                     dispatch(statement.getExpr());
                     emitLoad(statement.getSymbol());
                     code.emit(Opcode.ISTOREW);
@@ -201,17 +201,17 @@ public class CodeGenerationVisitor extends Visitor {
                     if (statement.getSymbol().numDimensions() > 0) {
                         throw new RuntimeException("actual string arrays not supported at this time");
                     }
-                    // Reserve N bytes on stack = Max length (2 bytes) + string length + 1 for extra zero byte.
+                    // Reserve N bytes on stack = Max length (1 byte) + string length + 1 for extra zero byte.
                     dispatch(statement.getExpr());
-                    code.emit(Opcode.DUP);
-                    code.emit(Opcode.LOADC, 3);
+                    code.emit(Opcode.LOADC, 2);
                     code.emit(Opcode.ADD);
                     code.emit(Opcode.PUSHZ);
                     code.emit(Opcode.LOADSP);
                     emitStore(statement.getSymbol());
-                    // Need to set array size for dimension 0 (DUP from before)
+                    // Need to set string max size (cannot DUP due to PUSHZ)
+                    dispatch(statement.getExpr());
                     emitLoad(statement.getSymbol());
-                    code.emit(Opcode.ISTOREW);
+                    code.emit(Opcode.ISTOREB);
                 }
                 default -> throw new RuntimeException("cannot DIM variable of type: " + statement.getSymbol());
             }

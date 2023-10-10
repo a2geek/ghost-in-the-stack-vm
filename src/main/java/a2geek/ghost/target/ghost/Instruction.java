@@ -53,6 +53,7 @@ public record Instruction (String label, Opcode opcode, Directive directive, Int
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         switch (constantValue.constantType()) {
             case STRING_VALUE -> {
+                bytes.write(constantValue.string().length());
                 for (byte ch : constantValue.string().getBytes()) {
                     bytes.write(ch|0x80);
                 }
