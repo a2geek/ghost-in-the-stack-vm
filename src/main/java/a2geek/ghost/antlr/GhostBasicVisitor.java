@@ -466,6 +466,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                     case INTEGER -> model.callLibrarySubroutine("integer", expr);
                     case BOOLEAN -> model.callLibrarySubroutine("boolean", expr);
                     case STRING -> model.callLibrarySubroutine("string", expr);
+                    case ADDRESS -> model.callLibrarySubroutine("address", expr);
                     default -> throw new RuntimeException("Unsupported PRINT type: " + expr.getType());
                 }
             }
