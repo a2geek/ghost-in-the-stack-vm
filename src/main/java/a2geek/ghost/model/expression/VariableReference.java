@@ -73,15 +73,14 @@ public class VariableReference implements Expression {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o instanceof VariableReference that) {
-            return Objects.equals(symbol, that.symbol);
-        }
-        return false;
+        if (o == null || getClass() != o.getClass()) return false;
+        VariableReference that = (VariableReference) o;
+        return Objects.equals(symbol, that.symbol) && Objects.equals(indexes, that.indexes);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(symbol);
+        return Objects.hash(symbol, indexes);
     }
 
     @Override
