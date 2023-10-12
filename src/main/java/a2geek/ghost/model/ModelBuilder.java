@@ -12,7 +12,6 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.util.*;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 /**
  * A shared component to help building the BASIC model between language variants.
