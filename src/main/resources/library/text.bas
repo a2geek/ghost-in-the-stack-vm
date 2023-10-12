@@ -23,7 +23,7 @@ sub inline text_htab(h as integer)
 end sub
 
 sub inline text_vtab(v as integer)
-    cpu.register.a = v
+    cpu.register.a = v - 1
     call MON_TABV
 end sub
 

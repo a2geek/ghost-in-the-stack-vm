@@ -1,0 +1,5 @@
+10 for i = 1 to 24
+20 vtab i:tab i:print i;
+30 next i
+40 vtab 10
+50 end
