@@ -18,7 +18,9 @@ Games:
 * animations 
 * apple-tone
 * echo
+* no-mis
 * slot-machine-2-with-sound
+* space-pilot
 
 Usage:
 ```basic
@@ -64,6 +66,8 @@ Modified:
 Games:
 * barricade
 * demo-l
+* slot-machine
+* sub-view
 
 Usage:
 ```basic
