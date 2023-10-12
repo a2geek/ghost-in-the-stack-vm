@@ -9,7 +9,12 @@ function string_strmax(s as string) as integer
     return peek(s)
 end function
 
-function string_strlen(str as string) as integer
+function string_asc(str as string) as integer
+    ' skip the maxlen byte
+    return peek(str + 1)
+end function
+
+function string_len(str as string) as integer
     dim s as address, n as integer
 
     ' skip the maxlen byte
@@ -55,7 +60,7 @@ sub string_strcpy(target as string, targetStart as integer, _
         source as String, sourceStart as integer, sourceEnd as integer)
     dim t as address, s as address
     if sourceEnd = 0 then
-        sourceEnd = string_strlen(source)
+        sourceEnd = len(source)
     end if
     t = target + targetStart
     s = source + sourceStart

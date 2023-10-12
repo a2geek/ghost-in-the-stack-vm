@@ -658,9 +658,6 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     @Override
     public Expression visitStrArgFunc(IntegerParser.StrArgFuncContext ctx) {
         var f = ctx.f.getText();
-        if ("len".equalsIgnoreCase(f)) {
-            f = "strlen";   // Correct for runtime library name
-        }
         var s = visit(ctx.s);
         return model.callFunction(f, Arrays.asList(s));
     }

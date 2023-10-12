@@ -18,6 +18,7 @@ import java.util.function.Supplier;
  * A shared component to help building the BASIC model between language variants.
  */
 public class ModelBuilder {
+    private ModelBuilder parent;
     private Function<String,String> caseStrategy;
     private Function<String,String> arrayNameStrategy = s -> s;
     private Function<String,String> controlCharsFn = s -> s;
@@ -40,6 +41,7 @@ public class ModelBuilder {
     }
     private ModelBuilder(ModelBuilder parent) {
         this(parent.caseStrategy);
+        this.parent = parent;
         this.trace = parent.trace;
         this.boundsCheck = parent.boundsCheck;
         this.includeLibraries = parent.includeLibraries;
@@ -51,8 +53,11 @@ public class ModelBuilder {
         }
         throw new RuntimeException("Program not found");
     }
-    public Optional<Scope> findScope(String name) {
-        return getProgram().findLocalScope(fixCase(name));
+    public Program getParentProgram() {
+        if (parent != null) {
+            return parent.getProgram();
+        }
+        return getProgram();
     }
 
     public String fixCase(String id) {
@@ -108,22 +113,6 @@ public class ModelBuilder {
     public boolean isCurrentScope(Class<? extends Scope> clazz) {
         return clazz.isAssignableFrom(this.scope.peek().getClass());
     }
-    public <T extends Scope> Optional<T> findScope(Class<T> clazz) {
-        for (int i = this.scope.size() - 1; i >= 0; i--) {
-            if (clazz.isAssignableFrom(this.scope.get(i).getClass())) {
-                return Optional.of(clazz.cast(this.scope.get(i)));
-            }
-        }
-        return Optional.empty();
-    }
-    public <T extends StatementBlock> Optional<T> findBlock(Class<T> clazz) {
-        for (int i=this.statementBlock.size()-1; i>=0; i--) {
-            if (clazz.isAssignableFrom(this.statementBlock.get(i).getClass())) {
-                return Optional.of(clazz.cast(this.statementBlock.get(i)));
-            }
-        }
-        return Optional.empty();
-    }
 
     public Optional<Symbol> findSymbol(String name) {
         return this.scope.peek().findSymbol(fixCase(name));
@@ -170,7 +159,12 @@ public class ModelBuilder {
     }
 
     public void uses(String libname) {
-        if (!includeLibraries || librariesIncluded.contains(libname)) {
+        if (parent != null) {
+            parent.uses(libname);
+            return;
+        }
+        //if (!includeLibraries || librariesIncluded.contains(libname)) {
+        if (librariesIncluded.contains(libname)) {
             return;
         }
         trace("loading library: %s", libname);
@@ -235,7 +229,11 @@ public class ModelBuilder {
             id = fixCase(descriptor.fullName());
         }
 
-        Optional<Scope> scope = getProgram().findLocalScope(id);
+        // FIXME: We have a scope with scopes and a stack of scopes both. Really confusing and suggests bad stuff.
+        Optional<Scope> scope = getProgram().findScope(id);
+        if (scope.isEmpty()) {
+            scope = getParentProgram().findScope(id);
+        }
         if (scope.isPresent()) {
             if (scope.get() instanceof a2geek.ghost.model.scope.Function fn) {
                 var requiredParameterCount = fn.findByType(Scope.Type.PARAMETER).size();

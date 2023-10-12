@@ -104,6 +104,13 @@ public class Scope extends StatementBlock {
     public Optional<Scope> findLocalScope(String name) {
         return scopes.stream().filter(s -> s.getName().equals(name)).findFirst();
     }
+    public Optional<Scope> findScope(String name) {
+        var scope = findLocalScope(name);
+        if (scope.isEmpty() && parent != null) {
+            return parent.findLocalScope(name);
+        }
+        return scope;
+    }
 
     public enum Type {
         GLOBAL,

@@ -23,7 +23,7 @@ public class FunctionExpression implements Expression {
         new Descriptor("peekw", null, DataType.INTEGER, DataType.ADDRESS),
         new Descriptor("peekw", null, DataType.INTEGER, DataType.STRING),
         new Descriptor("scrn", LORES_LIBRARY, DataType.INTEGER, DataType.INTEGER, DataType.INTEGER),
-        new Descriptor("asc", null, DataType.INTEGER, DataType.STRING),
+        new Descriptor("asc", STRING_LIBRARY, DataType.INTEGER, DataType.STRING),
         new Descriptor("rnd", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER),
         new Descriptor("abs", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER),
         new Descriptor("sgn", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER),
@@ -31,7 +31,7 @@ public class FunctionExpression implements Expression {
         new Descriptor("ipow", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER, DataType.INTEGER),
         new Descriptor("integer", INPUT_LIBRARY, DataType.INTEGER),
         new Descriptor("line_index", RUNTIME_LIBRARY, DataType.INTEGER, DataType.INTEGER, DataType.INTEGER),
-        new Descriptor("strlen", STRING_LIBRARY, DataType.INTEGER, DataType.STRING),
+        new Descriptor("len", STRING_LIBRARY, DataType.INTEGER, DataType.STRING),
         new Descriptor("strcmp", STRING_LIBRARY, DataType.INTEGER, DataType.STRING, DataType.STRING)
     );
     public static Optional<Descriptor> findDescriptor(String name, DataType... parameterTypes) {

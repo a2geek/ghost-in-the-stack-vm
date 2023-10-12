@@ -9,7 +9,7 @@ sub plotLine(color as integer, x0 as integer, y0 as integer, x1 as integer, y1 a
     dim dx as integer, dy as integer
     dim sx as integer, sy as integer
     dim error as integer
-    dim address as integer, topRow as boolean, cell as integer
+    dim addr as integer, topRow as boolean, cell as integer
     dim screenAddresses() as integer = { _
         0x400, 0x480, 0x500, 0x580, 0x600, 0x680, 0x700, 0x780, _
         0x428, 0x4a8, 0x528, 0x5a8, 0x628, 0x6a8, 0x728, 0x7a8, _
@@ -31,17 +31,17 @@ sub plotLine(color as integer, x0 as integer, y0 as integer, x1 as integer, y1 a
     error = dx + dy
 
     ' prep address and color
-    address = screenAddresses(y0/2)
+    addr = screenAddresses(y0/2)
     topRow = y0 mod 2 = 0
     color = color OR (color << 4)
 
     while true
         ' plot x0,y0
-        cell = peek(address+x0)
+        cell = peek(addr+x0)
         if topRow then
-            poke address+x0, (cell AND 0xf0) OR (color AND 0x0f)
+            poke addr+x0, (cell AND 0xf0) OR (color AND 0x0f)
         else
-            poke address+x0, (cell AND 0x0f) OR (color AND 0xf0)
+            poke addr+x0, (cell AND 0x0f) OR (color AND 0xf0)
         end if
 
         if x0 = x1 and y0 = y1 then
@@ -62,7 +62,7 @@ sub plotLine(color as integer, x0 as integer, y0 as integer, x1 as integer, y1 a
             error = error + dx
             y0 = y0 + sy
             ' update address
-            address = screenAddresses(y0/2)
+            addr = screenAddresses(y0/2)
             topRow = y0 mod 2 = 0
         end if
     end while

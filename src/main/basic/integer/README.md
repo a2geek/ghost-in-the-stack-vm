@@ -17,6 +17,7 @@ Games:
 * anti-aircraft 
 * animations 
 * apple-tone
+* echo
 * slot-machine-2-with-sound
 
 Usage:
