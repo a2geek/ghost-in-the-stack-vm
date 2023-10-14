@@ -21,8 +21,9 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     private ModelBuilder model;
     private SortedMap<Integer,Symbol> lineLabels = new TreeMap<>();
     private Map<Symbol,ForFrame> forFrames = new HashMap<>();
-    private Map<Symbol,Boolean> stringsDimmed = new HashMap<>();
+    private Map<Symbol,Expression> stringsDimmed = new HashMap<>();
     private Map<Symbol,Integer> knownSizeTempStringVariables = new HashMap<>();
+    private Map<Symbol,Set<Symbol>> unknownSizetempStringVariables = new HashMap<>();
     private Set<Symbol> tempStringVariablesInUse = new HashSet<>();
 
     public IntegerBasicVisitor(ModelBuilder model) {
@@ -65,14 +66,29 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         });
         // Any strings that do not have a DIM, we need to dim as length 1.
         // Note that we don't/can't validate that the strings dimmed are dimmed first.
-        stringsDimmed.forEach((symbol,flag) -> {
-            if (!flag) {
+        stringsDimmed.forEach((symbol,expr) -> {
+            if (expr == null) {
                 model.insertStatement(new DimStatement(symbol, IntegerConstant.ONE, null));
             }
         });
         // Need to generate temp string DIM statements
         knownSizeTempStringVariables.forEach((symbol,size) -> {
             model.insertStatement(new DimStatement(symbol, new IntegerConstant(size), null));
+        });
+        unknownSizetempStringVariables.forEach((symbol,symbols) -> {
+            var sizes = symbols.stream()
+                    .map(stringsDimmed::get)
+                    .map(e -> e == null ? IntegerConstant.ONE : e)
+                    .toList();
+            var constant = sizes.stream().map(Expression::isConstant).reduce((a,b) -> a && b).orElseThrow();
+            if (constant) {
+                int size = sizes.stream().map(Expression::asInteger).map(Optional::orElseThrow).reduce(Math::max).orElseThrow();
+                model.insertStatement(new DimStatement(symbol, new IntegerConstant(size), null));
+            }
+            else {
+                var msg = String.format("indeterminant temp string size for %s: based on %s", symbol, symbols);
+                throw new RuntimeException(msg);
+            }
         });
         return null;
     }
@@ -146,7 +162,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         var symbol = model.addVariable(ctx.n.getText(), DataType.STRING);
         var expr = visit(ctx.e);
         model.addDimArray(symbol, expr, null);
-        stringsDimmed.computeIfAbsent(symbol, k -> Boolean.TRUE);
+        stringsDimmed.compute(symbol, (k,v) -> expr);
         return null;
     }
 
@@ -679,7 +695,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     public Expression visitStrRef(IntegerParser.StrRefContext ctx) {
         // Note (LHS): A$(start)
         var ref = model.addVariable(ctx.n.getText(), DataType.STRING);
-        stringsDimmed.computeIfAbsent(ref, k -> Boolean.FALSE);
+        stringsDimmed.computeIfAbsent(ref, k -> null);
         if (ctx.start != null) {
             var start = visit(ctx.start);
             return VariableReference.with(ref, start);
@@ -705,7 +721,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     public Expression visitStrVar(IntegerParser.StrVarContext ctx) {
         // Note (RHS): A$ [ (start [,end] ) ]
         var ref = model.addVariable(ctx.n.getText(), DataType.STRING);
-        stringsDimmed.computeIfAbsent(ref, k -> Boolean.FALSE);
+        stringsDimmed.computeIfAbsent(ref, k -> null);
         if (ctx.start != null) {
             var start = visit(ctx.start);
             if (ctx.end != null) {
@@ -716,13 +732,34 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
                         VariableReference.with(ref), start, end);
                 return VariableReference.with(tempRef);
             }
-            throw new RuntimeException("TODO: " + ctx.getText());
-//            var tempRef = model.addTempVariable(DataType.STRING);
-//            model.callLibrarySubroutine("strcpy", VariableReference.with(tempRef), IntegerConstant.ONE,
-//                    VariableReference.with(ref), start, IntegerConstant.ZERO);
-//            return VariableReference.with(tempRef);
+            var tempRef = findUnknownSizeTempStringVariable(ref);   // Note we actually ignore start for this
+            model.callLibrarySubroutine("strcpy", VariableReference.with(tempRef), IntegerConstant.ONE,
+                    VariableReference.with(ref), start, IntegerConstant.ZERO);
+            return VariableReference.with(tempRef);
         }
         return VariableReference.with(ref);
+    }
+
+    public Symbol findUnknownSizeTempStringVariable(Symbol sourceSymbol) {
+        Symbol tempVar = null;
+        for (var symbol : unknownSizetempStringVariables.keySet()) {
+            if (!tempStringVariablesInUse.contains(symbol)) {
+                tempVar = symbol;
+                break;
+            }
+        }
+        if (tempVar == null) {
+            tempVar = model.addTempVariable(DataType.STRING);
+        }
+        unknownSizetempStringVariables.compute(tempVar, (k,v) -> {
+            if (v == null) {
+                v = new HashSet<>();
+            }
+            v.add(sourceSymbol);
+            return v;
+        });
+        tempStringVariablesInUse.add(tempVar);
+        return tempVar;
     }
 
     public Symbol findKnownSizeTempStringVariable(int distance) {
@@ -730,6 +767,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         for (var symbol : knownSizeTempStringVariables.keySet()) {
             if (!tempStringVariablesInUse.contains(symbol)) {
                 tempVar = symbol;
+                break;
             }
         }
         if (tempVar == null) {

@@ -20,6 +20,7 @@ Games:
 * color-demo
 * echo
 * no-mis
+* shoot-out
 * slot-machine-2-with-sound
 * space-pilot
 
@@ -69,6 +70,7 @@ Games:
 * demo-l
 * slot-machine
 * sub-view
+* texas-game
 
 Usage:
 ```basic
