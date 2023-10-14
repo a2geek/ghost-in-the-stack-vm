@@ -61,6 +61,8 @@ sub string_strcpy(target as string, targetStart as integer, _
     dim t as address, s as address
     if sourceEnd = 0 then
         sourceEnd = len(source)
+    else
+        sourceEnd = sourceEnd - sourceStart + 1
     end if
     t = target + targetStart
     s = source + sourceStart
