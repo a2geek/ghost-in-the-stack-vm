@@ -17,6 +17,7 @@ Games:
 * anti-aircraft 
 * animations 
 * apple-tone
+* color-demo
 * echo
 * no-mis
 * slot-machine-2-with-sound

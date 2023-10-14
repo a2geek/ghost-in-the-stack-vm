@@ -22,6 +22,8 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     private SortedMap<Integer,Symbol> lineLabels = new TreeMap<>();
     private Map<Symbol,ForFrame> forFrames = new HashMap<>();
     private Map<Symbol,Boolean> stringsDimmed = new HashMap<>();
+    private Map<Symbol,Integer> knownSizeTempStringVariables = new HashMap<>();
+    private Set<Symbol> tempStringVariablesInUse = new HashSet<>();
 
     public IntegerBasicVisitor(ModelBuilder model) {
         this.model = model;
@@ -30,6 +32,15 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     public ModelBuilder getModel() {
         return model;
+    }
+
+    @Override
+    public Expression visit(ParseTree tree) {
+        var expr = super.visit(tree);
+        if (expr == null) {
+            tempStringVariablesInUse.clear();
+        }
+        return expr;
     }
 
     @Override
@@ -58,6 +69,10 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
             if (!flag) {
                 model.insertStatement(new DimStatement(symbol, IntegerConstant.ONE, null));
             }
+        });
+        // Need to generate temp string DIM statements
+        knownSizeTempStringVariables.forEach((symbol,size) -> {
+            model.insertStatement(new DimStatement(symbol, new IntegerConstant(size), null));
         });
         return null;
     }
@@ -639,12 +654,6 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         return new StringConstant(model.fixControlChars(value));
     }
 
-//    @Override
-//    public Expression visitStrVarExpr(IntegerParser.StrVarExprContext ctx) {
-//        // TODO - is this needed? this specific one basically defers to #visitStrVar
-//        throw new RuntimeException("string variables not supported yet");
-//    }
-
     @Override
     public Expression visitIntArgFunc(IntegerParser.IntArgFuncContext ctx) {
         var f = ctx.f.getText();
@@ -694,19 +703,51 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     @Override
     public Expression visitStrVar(IntegerParser.StrVarContext ctx) {
-        // Note (RHS): A$(start,end)
+        // Note (RHS): A$ [ (start [,end] ) ]
         var ref = model.addVariable(ctx.n.getText(), DataType.STRING);
         stringsDimmed.computeIfAbsent(ref, k -> Boolean.FALSE);
         if (ctx.start != null) {
             var start = visit(ctx.start);
             if (ctx.end != null) {
                 var end = visit(ctx.end);
-                // FIXME need to make a copy?
-                return VariableReference.with(ref, start, end);
+                var distance = distance(start, end);
+                var tempRef = findKnownSizeTempStringVariable(distance);
+                model.callLibrarySubroutine("strcpy", VariableReference.with(tempRef), IntegerConstant.ONE,
+                        VariableReference.with(ref), start, end);
+                return VariableReference.with(tempRef);
             }
-            // FIXME need to make a copy?
-            return VariableReference.with(ref, start);
+            throw new RuntimeException("TODO: " + ctx.getText());
+//            var tempRef = model.addTempVariable(DataType.STRING);
+//            model.callLibrarySubroutine("strcpy", VariableReference.with(tempRef), IntegerConstant.ONE,
+//                    VariableReference.with(ref), start, IntegerConstant.ZERO);
+//            return VariableReference.with(tempRef);
         }
         return VariableReference.with(ref);
+    }
+
+    public Symbol findKnownSizeTempStringVariable(int distance) {
+        Symbol tempVar = null;
+        for (var symbol : knownSizeTempStringVariables.keySet()) {
+            if (!tempStringVariablesInUse.contains(symbol)) {
+                tempVar = symbol;
+            }
+        }
+        if (tempVar == null) {
+            tempVar = model.addTempVariable(DataType.STRING);
+        }
+        knownSizeTempStringVariables.compute(tempVar, (k,v) -> (v == null) ? distance : Math.max(v,distance));
+        tempStringVariablesInUse.add(tempVar);
+        return tempVar;
+    }
+
+    public int distance(Expression start, Expression end) {
+        if (start.isConstant() && end.isConstant()) {
+            return new BinaryExpression(new BinaryExpression(end, start, "-"),
+                    IntegerConstant.ONE, "+").asInteger().orElseThrow();
+        }
+        if (start.equals(end)) {
+            return 1;
+        }
+        throw new RuntimeException(String.format("cannot evaluate (%s - %s) + 1", end, start));
     }
 }
