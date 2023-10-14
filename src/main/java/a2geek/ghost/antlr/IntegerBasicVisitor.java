@@ -525,8 +525,8 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
             else {
                 Expression expr = pt.accept(this);
                 switch (expr.getType()) {
-                    case INTEGER -> callSubroutine("integer", pt);
-                    case STRING -> callSubroutine("string", pt);
+                    case INTEGER -> model.callLibrarySubroutine("integer", expr);
+                    case STRING -> model.callLibrarySubroutine("string", expr);
                     default -> throw new RuntimeException("Unsupported PRINT type: " + expr.getType());
                 }
             }
