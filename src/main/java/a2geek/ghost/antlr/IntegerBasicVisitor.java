@@ -364,9 +364,6 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
             String value = ctx.prompt.getText().replaceAll("^\"|\"$", "");
             model.callLibrarySubroutine("string", new StringConstant(model.fixControlChars(value)));
         }
-        else {
-            model.callLibrarySubroutine("string", new StringConstant("?"));
-        }
         for (var avar : ctx.var()) {
             var expr = visit(avar);
             if (expr instanceof VariableReference varRef) {
