@@ -395,12 +395,17 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
             String value = ctx.prompt.getText().replaceAll("^\"|\"$", "");
             model.callLibrarySubroutine("string", new StringConstant(model.fixControlChars(value)));
         }
+        if (!ctx.getText().contains("$")) {
+            // ? prompt is always shown for number input AFAICT.
+            model.callLibrarySubroutine("string", new StringConstant("?"));
+        }
+        model.callLibrarySubroutine("readline");
         for (var avar : ctx.var()) {
             var expr = visit(avar);
             if (expr instanceof VariableReference varRef) {
                 switch (varRef.getType()) {
-                    case INTEGER -> model.assignStmt(varRef, model.callFunction("integer", Collections.emptyList()));
-                    case STRING ->  model.callLibrarySubroutine("readstring", varRef);
+                    case INTEGER -> model.assignStmt(varRef, model.callFunction("scaninteger", Collections.emptyList()));
+                    case STRING ->  model.callLibrarySubroutine("scanstring", varRef);
                     default -> throw new RuntimeException("input statement not implemented yet: " + varRef.getType());
                 }
             }
@@ -433,6 +438,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     public Expression visitStringAssignment(IntegerParser.StringAssignmentContext ctx) {
         var srefExpr = visit(ctx.sref());       // LHS
         var stringExpr = visit(ctx.sexpr());    // RHS
+        // TODO: Are these being utilized with the rest of the string work?
         if (srefExpr instanceof VariableReference sref) {
             var targetVariable = sref.getSymbol();
             var targetStart = switch (sref.getIndexes().size()) {

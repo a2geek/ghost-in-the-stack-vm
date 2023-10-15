@@ -2,44 +2,62 @@
 ' Input support
 '
 
-const PROMPT = 0x33
-const GETLN1 = 0xfd6f
+const INPTR = 0x7f
 const BUFFER = 0x200
+const GETLN1 = 0xfd6f
 
-' Not really correct but first attempt
-function input_integer as integer
+sub input_readline()
+    call GETLN1
+    pokew INPTR,BUFFER
+end sub
+
+function input_scaninteger as integer
     dim n as integer, i as integer, ch as integer
+    dim p as address
     dim good as boolean
+
     while not good
-        call GETLN1
+        p = peekw(INPTR)
         do
-            ch = peek(BUFFER+i)
-            if ch = ASC(",") or ch = 0x8d then  ' need CHR$!!
-                exit while
+            ch = peek(p)
+            if ch = ASC(",") then
+                p = p + 1          ' skip the comma
+                exit do
+            elseif ch = 0x8d then  '  need CHR$!!
+                exit do
             end if
             if ch >= ASC("0") and ch <= ASC("9") then
                 n = n*10 + ch-ASC("0")
                 good = true
             end if
+            p = p + 1
             i = i + 1
         loop while i < 240
+        pokew INPTR,p
+        if not good then
+            print "?";
+            input_readline()
+        end if
     end while
     return n
 end function
 
-sub input_readstring(s as string)
+sub input_scanstring(s as string)
     dim i as integer, ch as integer
+    dim p as address
     dim maxlen as integer
 
     maxlen = peek(s)
-    call GETLN1
+    p = peekw(INPTR)
     while i < 240 and i < maxlen
-        ch = peek(BUFFER+i)
+        ch = peek(p)
         if ch = 0x8d then
             exit while
         end if
         poke s+1+i,ch
+        p = p + 1
         i = i + 1
     end while
     poke s+1+i,0
+    pokew INPTR,p
 end sub

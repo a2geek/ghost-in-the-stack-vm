@@ -19,7 +19,8 @@ public class CallSubroutine implements Statement {
     static {
         Arrays.asList(
             // input
-            new Descriptor("readstring", INPUT_LIBRARY, DataType.STRING),
+            new Descriptor("readline", INPUT_LIBRARY),
+            new Descriptor("scanstring", INPUT_LIBRARY, DataType.STRING),
             // lores
             new Descriptor("color", LORES_LIBRARY, DataType.INTEGER),
             new Descriptor("gr", LORES_LIBRARY),

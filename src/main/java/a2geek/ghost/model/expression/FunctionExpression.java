@@ -31,7 +31,7 @@ public class FunctionExpression implements Expression {
         new Descriptor("sgn", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER),
         new Descriptor("pdl", MISC_LIBRARY, DataType.INTEGER, DataType.INTEGER),
         new Descriptor("ipow", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER, DataType.INTEGER),
-        new Descriptor("integer", INPUT_LIBRARY, DataType.INTEGER),
+        new Descriptor("scaninteger", INPUT_LIBRARY, DataType.INTEGER),
         new Descriptor("line_index", RUNTIME_LIBRARY, DataType.INTEGER, DataType.INTEGER, DataType.INTEGER),
         new Descriptor("len", STRING_LIBRARY, DataType.INTEGER, DataType.STRING),
         new Descriptor("strcmp", STRING_LIBRARY, DataType.INTEGER, DataType.STRING, DataType.STRING)

@@ -1,3 +1,6 @@
-10 input "ENTER A VALUE: ",N
-20 print N
-30 end
+5 dim A$(20)
+10 input "ENTER TWO INTEGER VALUES: ",N,M
+20 print "N=";N;", M=";M
+30 input "ENTER A STRING: ",A$
+40 print "A$=";A$
+50 end
