@@ -8,14 +8,18 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class CallSubroutine implements Statement {
+    private static final String INPUT_LIBRARY = "input";
     private static final String LORES_LIBRARY = "lores";
     private static final String MISC_LIBRARY = "misc";
     private static final String PRINT_LIBRARY = "print";
     private static final String RUNTIME_LIBRARY = "runtime";
+    private static final String STRING_LIBRARY = "string";
     private static final String TEXT_LIBRARY = "text";
     private static final Map<String, Descriptor> SUBS = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     static {
         Arrays.asList(
+            // input
+            new Descriptor("readstring", INPUT_LIBRARY, DataType.STRING),
             // lores
             new Descriptor("color", LORES_LIBRARY, DataType.INTEGER),
             new Descriptor("gr", LORES_LIBRARY),
@@ -31,8 +35,11 @@ public class CallSubroutine implements Statement {
             new Descriptor("integer", PRINT_LIBRARY, DataType.INTEGER),
             new Descriptor("newline", PRINT_LIBRARY),
             new Descriptor("string", PRINT_LIBRARY, DataType.STRING),
+            new Descriptor("address", PRINT_LIBRARY, DataType.ADDRESS),
             // runtime
             new Descriptor("out_of_bounds", RUNTIME_LIBRARY, DataType.STRING, DataType.INTEGER),
+            // string
+            new Descriptor("strcpy", STRING_LIBRARY, DataType.STRING, DataType.INTEGER, DataType.STRING, DataType.INTEGER, DataType.INTEGER),
             // text
             new Descriptor("flash", TEXT_LIBRARY),
             new Descriptor("home", TEXT_LIBRARY),

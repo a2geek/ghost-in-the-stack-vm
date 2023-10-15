@@ -6,6 +6,7 @@ import a2geek.ghost.model.*;
 import a2geek.ghost.model.expression.*;
 import a2geek.ghost.model.scope.ForFrame;
 import a2geek.ghost.model.scope.Program;
+import a2geek.ghost.model.statement.DimStatement;
 import a2geek.ghost.model.statement.EndStatement;
 import a2geek.ghost.model.statement.IfStatement;
 import a2geek.ghost.model.statement.PopStatement;
@@ -19,7 +20,11 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     private ModelBuilder model;
     private SortedMap<Integer,Symbol> lineLabels = new TreeMap<>();
-    private Map<Symbol, ForFrame> forFrames = new HashMap<>();
+    private Map<Symbol,ForFrame> forFrames = new HashMap<>();
+    private Map<Symbol,Expression> stringsDimmed = new HashMap<>();
+    private Map<Symbol,Integer> knownSizeTempStringVariables = new HashMap<>();
+    private Map<Symbol,Set<Symbol>> unknownSizetempStringVariables = new HashMap<>();
+    private Set<Symbol> tempStringVariablesInUse = new HashSet<>();
 
     public IntegerBasicVisitor(ModelBuilder model) {
         this.model = model;
@@ -28,6 +33,15 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     public ModelBuilder getModel() {
         return model;
+    }
+
+    @Override
+    public Expression visit(ParseTree tree) {
+        var expr = super.visit(tree);
+        if (expr == null) {
+            tempStringVariablesInUse.clear();
+        }
+        return expr;
     }
 
     @Override
@@ -49,6 +63,32 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
                     lineLabels.values().stream()
                             .map(AddressOfFunction::new)
                             .toList());
+        });
+        // Any strings that do not have a DIM, we need to dim as length 1.
+        // Note that we don't/can't validate that the strings dimmed are dimmed first.
+        stringsDimmed.forEach((symbol,expr) -> {
+            if (expr == null) {
+                model.insertStatement(new DimStatement(symbol, IntegerConstant.ONE, null));
+            }
+        });
+        // Need to generate temp string DIM statements
+        knownSizeTempStringVariables.forEach((symbol,size) -> {
+            model.insertStatement(new DimStatement(symbol, new IntegerConstant(size), null));
+        });
+        unknownSizetempStringVariables.forEach((symbol,symbols) -> {
+            var sizes = symbols.stream()
+                    .map(stringsDimmed::get)
+                    .map(e -> e == null ? IntegerConstant.ONE : e)
+                    .toList();
+            var constant = sizes.stream().map(Expression::isConstant).reduce((a,b) -> a && b).orElseThrow();
+            if (constant) {
+                int size = sizes.stream().map(Expression::asInteger).map(Optional::orElseThrow).reduce(Math::max).orElseThrow();
+                model.insertStatement(new DimStatement(symbol, new IntegerConstant(size), null));
+            }
+            else {
+                var msg = String.format("indeterminant temp string size for %s: based on %s", symbol, symbols);
+                throw new RuntimeException(msg);
+            }
         });
         return null;
     }
@@ -76,6 +116,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         try {
             visit(ctx.statements());
         } catch (Exception ex) {
+            System.out.println(ctx.getText());
             throw new RuntimeException("Error in line " + lineNumber, ex);
         }
         return null;
@@ -115,9 +156,14 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         return null;
     }
 
+    /* Note: A string defaults to 1 character if not DIMmed. */
     @Override
     public Expression visitStrDimVar(IntegerParser.StrDimVarContext ctx) {
-        throw new RuntimeException("strings not supported");
+        var symbol = model.addVariable(ctx.n.getText(), DataType.STRING);
+        var expr = visit(ctx.e);
+        model.addDimArray(symbol, expr, null);
+        stringsDimmed.compute(symbol, (k,v) -> expr);
+        return null;
     }
 
     @Override
@@ -349,17 +395,13 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
             String value = ctx.prompt.getText().replaceAll("^\"|\"$", "");
             model.callLibrarySubroutine("string", new StringConstant(model.fixControlChars(value)));
         }
-        else {
-            model.callLibrarySubroutine("string", new StringConstant("?"));
-        }
         for (var avar : ctx.var()) {
             var expr = visit(avar);
             if (expr instanceof VariableReference varRef) {
-                if (varRef.getType() == DataType.INTEGER) {
-                    model.assignStmt(varRef, model.callFunction("integer", Collections.emptyList()));
-                }
-                else {
-                    throw new RuntimeException("string input statement not implemented yet");
+                switch (varRef.getType()) {
+                    case INTEGER -> model.assignStmt(varRef, model.callFunction("integer", Collections.emptyList()));
+                    case STRING ->  model.callLibrarySubroutine("readstring", varRef);
+                    default -> throw new RuntimeException("input statement not implemented yet: " + varRef.getType());
                 }
             }
             else {
@@ -382,9 +424,52 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         return null;
     }
 
+    /**
+     * Handle string assignments. An attempt is made to optimize the generated code a little
+     * bit since the string copy routine takes all the expected indexes as parameters, rather
+     * than generating substring parsing code elsewhere.
+     */
     @Override
     public Expression visitStringAssignment(IntegerParser.StringAssignmentContext ctx) {
-        throw new RuntimeException("string assignment TODO");
+        var srefExpr = visit(ctx.sref());       // LHS
+        var stringExpr = visit(ctx.sexpr());    // RHS
+        if (srefExpr instanceof VariableReference sref) {
+            var targetVariable = sref.getSymbol();
+            var targetStart = switch (sref.getIndexes().size()) {
+                case 0 -> IntegerConstant.ONE;
+                case 1 -> sref.getIndexes().get(0);
+                default -> throw new RuntimeException("string reference on left-hand side can only have 0 or 1 index");
+            };
+
+            if (stringExpr instanceof VariableReference expr) {
+                var sourceVariable = expr.getSymbol();
+                var sourceStart = switch (expr.getIndexes().size()) {
+                    case 0 -> IntegerConstant.ONE;
+                    case 1,2 -> expr.getIndexes().get(0);
+                    default -> throw new RuntimeException("string reference on right-hand side can only have 0, 1, or 2 index");
+                };
+                var sourceEnd = switch (expr.getIndexes().size()) {
+                    case 0,1 -> IntegerConstant.ZERO;
+                    case 2 -> expr.getIndexes().get(1);
+                    default -> throw new RuntimeException("string reference on right-hand side can only have 0, 1, or 2 index");
+                };
+                model.callLibrarySubroutine("strcpy", VariableReference.with(targetVariable), targetStart,
+                        VariableReference.with(sourceVariable), sourceStart, sourceEnd);
+            }
+            else if (stringExpr instanceof StringConstant expr) {
+                var sourceEnd = expr.getValue().length();
+                model.callLibrarySubroutine("strcpy", VariableReference.with(targetVariable), targetStart,
+                        expr, IntegerConstant.ONE, new IntegerConstant(sourceEnd));
+            }
+            else {
+                model.callLibrarySubroutine("strcpy", VariableReference.with(targetVariable), targetStart,
+                        stringExpr, IntegerConstant.ONE, IntegerConstant.ZERO);
+            }
+            return null;
+        }
+        else {
+            throw new RuntimeException("unknown variable type: " + srefExpr);
+        }
     }
 
     @Override
@@ -468,8 +553,8 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
             else {
                 Expression expr = pt.accept(this);
                 switch (expr.getType()) {
-                    case INTEGER -> callSubroutine("integer", pt);
-                    case STRING -> callSubroutine("string", pt);
+                    case INTEGER -> model.callLibrarySubroutine("integer", expr);
+                    case STRING -> model.callLibrarySubroutine("string", expr);
                     default -> throw new RuntimeException("Unsupported PRINT type: " + expr.getType());
                 }
             }
@@ -541,6 +626,24 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         return new BinaryExpression(left, right, op);
     }
 
+    /**
+     * String comparison only supports equals a not equals.
+     */
+    @Override
+    public Expression visitBinaryStrExpr(IntegerParser.BinaryStrExprContext ctx) {
+        var left = visit(ctx.left);
+        var right = visit(ctx.right);
+        var op = ctx.op.getText();
+
+        if ("#".equals(op)) {
+            op = "<>";
+        }
+        return new BinaryExpression(
+                model.callFunction("strcmp", Arrays.asList(left,right)),
+                IntegerConstant.ZERO,
+                op);
+    }
+
     @Override
     public Expression visitUnaryIntExpr(IntegerParser.UnaryIntExprContext ctx) {
         var op = ctx.op.getText();
@@ -568,12 +671,6 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     }
 
     @Override
-    public Expression visitStrVarExpr(IntegerParser.StrVarExprContext ctx) {
-        // FIXME
-        throw new RuntimeException("string variables not supported yet");
-    }
-
-    @Override
     public Expression visitIntArgFunc(IntegerParser.IntArgFuncContext ctx) {
         var f = ctx.f.getText();
         var e = visit(ctx.e);
@@ -596,7 +693,14 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     @Override
     public Expression visitStrRef(IntegerParser.StrRefContext ctx) {
-        throw new RuntimeException("strings not supported at this time");
+        // Note (LHS): A$(start)
+        var ref = model.addVariable(ctx.n.getText(), DataType.STRING);
+        stringsDimmed.computeIfAbsent(ref, k -> null);
+        if (ctx.start != null) {
+            var start = visit(ctx.start);
+            return VariableReference.with(ref, start);
+        }
+        return VariableReference.with(ref);
     }
 
     @Override
@@ -615,6 +719,73 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     @Override
     public Expression visitStrVar(IntegerParser.StrVarContext ctx) {
-        throw new RuntimeException("strings not supported yet");
+        // Note (RHS): A$ [ (start [,end] ) ]
+        var ref = model.addVariable(ctx.n.getText(), DataType.STRING);
+        stringsDimmed.computeIfAbsent(ref, k -> null);
+        if (ctx.start != null) {
+            var start = visit(ctx.start);
+            if (ctx.end != null) {
+                var end = visit(ctx.end);
+                var distance = distance(start, end);
+                var tempRef = findKnownSizeTempStringVariable(distance);
+                model.callLibrarySubroutine("strcpy", VariableReference.with(tempRef), IntegerConstant.ONE,
+                        VariableReference.with(ref), start, end);
+                return VariableReference.with(tempRef);
+            }
+            var tempRef = findUnknownSizeTempStringVariable(ref);   // Note we actually ignore start for this
+            model.callLibrarySubroutine("strcpy", VariableReference.with(tempRef), IntegerConstant.ONE,
+                    VariableReference.with(ref), start, IntegerConstant.ZERO);
+            return VariableReference.with(tempRef);
+        }
+        return VariableReference.with(ref);
+    }
+
+    public Symbol findUnknownSizeTempStringVariable(Symbol sourceSymbol) {
+        Symbol tempVar = null;
+        for (var symbol : unknownSizetempStringVariables.keySet()) {
+            if (!tempStringVariablesInUse.contains(symbol)) {
+                tempVar = symbol;
+                break;
+            }
+        }
+        if (tempVar == null) {
+            tempVar = model.addTempVariable(DataType.STRING);
+        }
+        unknownSizetempStringVariables.compute(tempVar, (k,v) -> {
+            if (v == null) {
+                v = new HashSet<>();
+            }
+            v.add(sourceSymbol);
+            return v;
+        });
+        tempStringVariablesInUse.add(tempVar);
+        return tempVar;
+    }
+
+    public Symbol findKnownSizeTempStringVariable(int distance) {
+        Symbol tempVar = null;
+        for (var symbol : knownSizeTempStringVariables.keySet()) {
+            if (!tempStringVariablesInUse.contains(symbol)) {
+                tempVar = symbol;
+                break;
+            }
+        }
+        if (tempVar == null) {
+            tempVar = model.addTempVariable(DataType.STRING);
+        }
+        knownSizeTempStringVariables.compute(tempVar, (k,v) -> (v == null) ? distance : Math.max(v,distance));
+        tempStringVariablesInUse.add(tempVar);
+        return tempVar;
+    }
+
+    public int distance(Expression start, Expression end) {
+        if (start.isConstant() && end.isConstant()) {
+            return new BinaryExpression(new BinaryExpression(end, start, "-"),
+                    IntegerConstant.ONE, "+").asInteger().orElseThrow();
+        }
+        if (start.equals(end)) {
+            return 1;
+        }
+        throw new RuntimeException(String.format("cannot evaluate (%s - %s) + 1", end, start));
     }
 }

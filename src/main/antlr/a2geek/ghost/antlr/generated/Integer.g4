@@ -73,7 +73,7 @@ iexpr
     | left=iexpr op=( '*' | '/' | 'mod' ) right=iexpr               # binaryIntExpr
     | left=iexpr op=( '+' | '-' ) right=iexpr                       # binaryIntExpr
     | left=iexpr op=('<'|'>'|'<='|'>='|'='|'<>'|'#') right=iexpr    # binaryIntExpr
-    | left=sexpr op=('<'|'>'|'<='|'>='|'='|'<>'|'#') right=sexpr    # binaryStrExpr
+    | left=sexpr op=('='|'#') right=sexpr                           # binaryStrExpr
     | op='not' e=iexpr                                              # unaryIntExpr
     | left=iexpr op=( 'and' | 'or' ) right=iexpr                    # binaryIntExpr
     | func=ifcall                                                   # funcExpr
@@ -83,8 +83,8 @@ iexpr
     ;
 
 sexpr
-    : value=STRING                                          # strConstExpr
-    | ref=svar                                              # strVarExpr
+    : value=STRING                                                  # strConstExpr
+    | ref=svar                                                      # strVarExpr
     ;
 
 ifcall
@@ -94,7 +94,7 @@ ifcall
     ;
 
 sref
-    : n=sname ( '(' start=iexpr ')' )?            # strRef
+    : n=sname ( '(' start=iexpr ')' )?                              # strRef
     ;
 
 var
@@ -107,8 +107,8 @@ iname
     ;
 
 ivar
-    : n=iname '(' e=iexpr ')'                     # intAryVar
-    | n=iname                                     # intVar
+    : n=iname '(' e=iexpr ')'                                       # intAryVar
+    | n=iname                                                       # intVar
     ;
 
 sname
@@ -116,7 +116,7 @@ sname
     ;
 
 svar
-    : n=sname ( '(' start=iexpr ( ',' length=iexpr )? ')' )?    # strVar
+    : n=sname ( '(' start=iexpr ( ',' end=iexpr )? ')' )?           # strVar
     ;
 
 REMARK : 'rem' ( LINE_CONTINUATION | ~[\r\n] )* ;

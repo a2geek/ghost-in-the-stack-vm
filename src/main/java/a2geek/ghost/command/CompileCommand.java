@@ -1,6 +1,8 @@
 package a2geek.ghost.command;
 
 import a2geek.ghost.antlr.ParseUtil;
+import a2geek.ghost.command.util.ByteFormatter;
+import a2geek.ghost.command.util.PrettyPrintVisitor;
 import a2geek.ghost.model.ModelBuilder;
 import a2geek.ghost.model.Scope;
 import a2geek.ghost.model.scope.Program;
@@ -70,8 +72,11 @@ public class CompileCommand implements Callable<Integer> {
     @ArgGroup(exclusive = false, heading = "Optimizations:%n")
     private OptimizationFlags optimizations = new OptimizationFlags();
 
-    @Option(names = { "-l", "--listing" }, description = "create listing file")
-    private Optional<String> programListing;
+    @Option(names = { "-il", "--intermediate-code-listing" }, description = "create intermediate code listing file")
+    private Optional<String> intermediateCodeListing;
+
+    @Option(names = { "-tl", "--target-code-listing" }, description = "create listing file")
+    private Optional<String> targetCodeListing;
 
     public static String convertControlCharacterMarkers(String value) {
         Pattern pattern = Pattern.compile("<CTRL-(.)>", Pattern.CASE_INSENSITIVE);
@@ -133,6 +138,14 @@ public class CompileCommand implements Callable<Integer> {
             System.out.println("=== REWRITTEN ===");
             System.out.println(program);
         }
+        intermediateCodeListing.ifPresent(filename -> {
+            try {
+                Files.write(Path.of(filename), PrettyPrintVisitor.format(program).getBytes());
+            }
+            catch (IOException ex) {
+                throw new UncheckedIOException(ex);
+            }
+        });
 
         CodeGenerationVisitor codeGenerationVisitor = new CodeGenerationVisitor();
         codeGenerationVisitor.visit(program);
@@ -179,7 +192,7 @@ public class CompileCommand implements Callable<Integer> {
             addr += instruction.size();
         }
 
-        programListing.ifPresent(filename -> {
+        targetCodeListing.ifPresent(filename -> {
             try {
                 Files.write(Path.of(filename), sw.toString().getBytes());
             } catch (IOException e) {
@@ -210,30 +223,6 @@ public class CompileCommand implements Callable<Integer> {
     private enum Language {
         BASIC,
         INTEGER_BASIC
-    }
-
-    public static class ByteFormatter {
-        private ByteArrayInputStream data;
-        public static ByteFormatter from(byte[] bytes) {
-            ByteFormatter bf = new ByteFormatter();
-            bf.data = new ByteArrayInputStream(bytes);
-            return bf;
-        }
-
-        public boolean hasMore() {
-            return data.available() > 0;
-        }
-
-        public String get(int nBytes) {
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            for (int i=0; i<nBytes; i++) {
-                int b = data.read();
-                if (b == -1) break;
-                pw.printf("%02x ", b);
-            }
-            return sw.toString();
-        }
     }
 
     public static class OptimizationFlags {

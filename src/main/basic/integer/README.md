@@ -17,7 +17,12 @@ Games:
 * anti-aircraft 
 * animations 
 * apple-tone
+* color-demo
+* echo
+* no-mis
+* shoot-out
 * slot-machine-2-with-sound
+* space-pilot
 
 Usage:
 ```basic
@@ -53,7 +58,7 @@ Modified:
 20170  POKE 0x30b,0xf0: POKE 0x30c,0x09: _
        POKE 0x30d,0xca: _
        POKE 0x30e,0xd0: POKE 0x30f,0xf5: _
-       POKE 0x310,0xae: POKE 0xe11,0x00: POKE 0xe12,0x03: _
+       POKE 0x310,0xae: POKE 0x311,0x00: POKE 0x312,0x03: _
        POKE 0x313,0x4c: POKE 0x314,0x02: POKE 0x315,0x03: _
        POKE 0x316,0x60
 ```
@@ -63,6 +68,9 @@ Modified:
 Games:
 * barricade
 * demo-l
+* slot-machine
+* sub-view
+* texas-game
 
 Usage:
 ```basic

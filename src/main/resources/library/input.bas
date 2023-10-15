@@ -26,3 +26,20 @@ function input_integer as integer
     end while
     return n
 end function
+
+sub input_readstring(s as string)
+    dim i as integer, ch as integer
+    dim maxlen as integer
+
+    maxlen = peek(s)
+    call GETLN1
+    while i < 240 and i < maxlen
+        ch = peek(BUFFER+i)
+        if ch = 0x8d then
+            exit while
+        end if
+        poke s+1+i,ch
+        i = i + 1
+    end while
+    poke s+1+i,0
+end sub

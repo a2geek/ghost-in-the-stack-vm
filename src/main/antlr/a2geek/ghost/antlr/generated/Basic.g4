@@ -112,6 +112,7 @@ datatype
     : 'integer'
     | 'boolean'
     | 'string'
+    | 'address'
     ;
 
 parameters

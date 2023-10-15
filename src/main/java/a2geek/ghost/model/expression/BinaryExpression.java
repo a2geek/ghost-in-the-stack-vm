@@ -10,8 +10,10 @@ public class BinaryExpression implements Expression {
     private static final List<Descriptor> DESCRIPTORS = List.of(
         // Arithmetic
         new Descriptor("+", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN),
+        new Descriptor("+", DataType.ADDRESS, DataType.STRING, DataType.INTEGER),       // STR + n  => ADDR
+        new Descriptor("+", DataType.ADDRESS, DataType.ADDRESS, DataType.INTEGER),      // ADDR + n => ADDR
         new Descriptor("-", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN),
-        new Descriptor("-", DataType.ADDRESS, DataType.ADDRESS, DataType.INTEGER),    // ADDR + n => ADDR.
+        new Descriptor("-", DataType.ADDRESS, DataType.ADDRESS, DataType.INTEGER),      // ADDR - n => ADDR
         new Descriptor("*", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN),
         new Descriptor("/", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN),
         new Descriptor("mod", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN),
@@ -33,7 +35,7 @@ public class BinaryExpression implements Expression {
         new Descriptor("xor", DataType.INTEGER, DataType.INTEGER),
         new Descriptor("<<", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN),
         // FIXME: STRING needs to be replaced here
-        new Descriptor(">>", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN, DataType.STRING)
+        new Descriptor(">>", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN, DataType.STRING, DataType.ADDRESS)
     );
     public static Optional<Descriptor> findDescriptor(String operator, DataType left, DataType right) {
         for (var d : DESCRIPTORS) {
