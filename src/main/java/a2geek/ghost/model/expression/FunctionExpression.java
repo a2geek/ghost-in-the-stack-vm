@@ -122,7 +122,7 @@ public class FunctionExpression implements Expression {
 
     @Override
     public boolean isConstant() {
-        if (matches("asc") && parameters.size() == 1) {
+        if (matches("asc", "string_asc") && parameters.size() == 1) {
             return parameters.get(0).isConstant();
         }
         else if (matches("sgn", "math_sgn") && parameters.size() == 1) {
@@ -139,7 +139,7 @@ public class FunctionExpression implements Expression {
 
     @Override
     public Optional<Integer> asInteger() {
-        if (matches("asc") && parameters.size() == 1 &&
+        if (matches("asc", "string_asc") && parameters.size() == 1 &&
                 parameters.get(0) instanceof StringConstant s) {
             return Optional.of(s.getValue().charAt(0)|0x80);
         }
