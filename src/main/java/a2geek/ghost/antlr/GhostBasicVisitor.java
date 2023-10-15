@@ -385,7 +385,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             case "for" -> forExitLabels;
             case "while" -> whileExitLabels;
             case "repeat" -> repeatExitLabels;
-            case "loop" -> doExitLabels;
+            case "do" -> doExitLabels;
             default -> throw new RuntimeException(String.format("unknown exit type: " + op));
         };
 
