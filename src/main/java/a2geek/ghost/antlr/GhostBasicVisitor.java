@@ -168,7 +168,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         // generating code
         model.assignStmt(ref, start);
         model.labelStmt(loopLabel);
-        model.ifStmt(new BinaryExpression(new FunctionExpression("SGN", Arrays.asList(step)), IntegerConstant.ZERO, ">="),
+        model.ifStmt(new BinaryExpression(model.callFunction("SGN", Arrays.asList(step)), IntegerConstant.ZERO, ">="),
                 StatementBlock.with(positive), StatementBlock.with(negative));
         model.labelStmt(exitLabel);
         return null;
