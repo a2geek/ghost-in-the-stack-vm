@@ -629,6 +629,15 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         if ("#".equals(op)) {
             op = "<>";
         }
+        else if ("or".equalsIgnoreCase(op) || "and".equalsIgnoreCase(op)) {
+            // Ensure we have Boolean lhs and rhs expression.
+            if (left.isType(DataType.INTEGER)) {
+                left = new BinaryExpression(left, IntegerConstant.ONE, "=");
+            }
+            if (right.isType(DataType.INTEGER)) {
+                right = new BinaryExpression(right, IntegerConstant.ONE, "=");
+            }
+        }
         return new BinaryExpression(left, right, op);
     }
 
@@ -654,6 +663,11 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     public Expression visitUnaryIntExpr(IntegerParser.UnaryIntExprContext ctx) {
         var op = ctx.op.getText();
         var e = visit(ctx.e);
+        if ("not".equalsIgnoreCase(op)) {
+            // The backend treats NOT(integer) as an XOR to flip all bits (following VB as model)
+            // So do an equality test instead.
+            return new BinaryExpression(e, IntegerConstant.ZERO, "=");
+        }
         return new UnaryExpression(op, e);
     }
 
