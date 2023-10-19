@@ -44,6 +44,22 @@ function math_sgn(n as integer) as integer
     end if
 end function
 
+function math_min(a as integer, b as integer) as integer
+    if a < b then
+        return a
+    else
+        return b
+    end if
+end function
+
+function math_max(a as integer, b as integer) as integer
+    if a > b then
+        return a
+    else
+        return b
+    end if
+end function
+
 ' See: https://stackoverflow.com/questions/101439/the-most-efficient-way-to-implement-an-integer-based-power-function-powint-int
 function math_ipow(base as integer, exp as integer) as integer
     dim result as integer

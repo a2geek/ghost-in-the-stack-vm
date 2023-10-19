@@ -34,7 +34,9 @@ public class FunctionExpression implements Expression {
         new Descriptor("scaninteger", INPUT_LIBRARY, DataType.INTEGER),
         new Descriptor("line_index", RUNTIME_LIBRARY, DataType.INTEGER, DataType.INTEGER, DataType.INTEGER),
         new Descriptor("len", STRING_LIBRARY, DataType.INTEGER, DataType.STRING),
-        new Descriptor("strcmp", STRING_LIBRARY, DataType.INTEGER, DataType.STRING, DataType.STRING)
+        new Descriptor("strcmp", STRING_LIBRARY, DataType.INTEGER, DataType.STRING, DataType.STRING),
+        new Descriptor("min", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER, DataType.INTEGER),
+        new Descriptor("max", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER, DataType.INTEGER)
     );
     public static Optional<Descriptor> findDescriptor(String name, DataType... parameterTypes) {
         String message = null;
