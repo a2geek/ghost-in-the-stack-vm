@@ -30,11 +30,10 @@ jobs:
         distribution: 'temurin'
     # Until a cc65 action is avilable, we build cc65 each time
     - name: Make cc65
-      working-directory: ./cc65
       run: |
-        git clone https://github.com/cc65/cc65.git .
+        git clone https://github.com/cc65/cc65.git
         make
-        sudo make avail
+        sudo make install
     - name: Build with Gradle
       uses: gradle/gradle-build-action@bd5760595778326ba7f1441bcf7e88b49de61a25 # v2.6.0
       with:
