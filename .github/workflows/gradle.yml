@@ -30,7 +30,7 @@ jobs:
         distribution: 'temurin'
     # Until a cc65 action is avilable, we build cc65 each time
     - name: Make cc65
-      working-directory: cc65
+      working-directory: ./cc65
       run: |
         git clone https://github.com/cc65/cc65.git .
         make
