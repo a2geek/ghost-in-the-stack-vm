@@ -22,19 +22,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # Until a cc65 action is avilable, we build cc65 each time
-    - name: Make cc65
-      run: |
-        git clone https://github.com/cc65/cc65.git
-        cd cc65
-        make
-        sudo make avail
     - uses: actions/checkout@v3
     - name: Set up JDK 18
       uses: actions/setup-java@v3
       with:
         java-version: '17'
         distribution: 'temurin'
+    # Until a cc65 action is avilable, we build cc65 each time
+    - name: Make cc65
+      working-directory: cc65
+      run: |
+        git clone https://github.com/cc65/cc65.git .
+        make
+        sudo make avail
     - name: Build with Gradle
       uses: gradle/gradle-build-action@bd5760595778326ba7f1441bcf7e88b49de61a25 # v2.6.0
       with:
