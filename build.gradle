@@ -15,7 +15,7 @@ dependencies {
     antlr "org.antlr:antlr4:4.13.1"
     implementation "org.antlr:antlr4-runtime:4.13.1"
     implementation 'info.picocli:picocli:4.7.5'
-    implementation "net.sf.applecommander:applesingle-api:1.2.1"
+    implementation "net.sf.applecommander:applesingle-api:1.2.2"
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.0'
     testImplementation 'org.hamcrest:hamcrest:2.2'
