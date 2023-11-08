@@ -23,18 +23,32 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Set up JDK 18
+    - name: Set up JDK 17
       uses: actions/setup-java@v3
       with:
         java-version: '17'
         distribution: 'temurin'
-    # Until a cc65 action is avilable, we build cc65 each time
-    - name: Make cc65
+
+    # Build cc65, attempting to cache prior builds (no specific version is utilized)
+    - name: Cache cc65
+      id: cache-cc65
+      uses: actions/cache@v3
+      with:
+        path: /usr/local/cc65
+        key: ${{ runner.os }}-cc65-build
+    - if: ${{ steps.cache-cc65.outputs.cache-hit != 'true' }}
+      name: Make cc65
       run: |
+        export PREFIX=/usr/local/cc65
+        mkdir -p ${PREFIX}
         git clone https://github.com/cc65/cc65.git
         cd cc65
         make
         sudo make install
+
+    - name: Setup PATH
+      run: |
+        export PATH=${PATH}:/usr/local/cc65/bin
     - name: Build with Gradle
       uses: gradle/gradle-build-action@bd5760595778326ba7f1441bcf7e88b49de61a25 # v2.6.0
       with:
