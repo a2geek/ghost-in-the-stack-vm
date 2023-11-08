@@ -46,7 +46,7 @@ jobs:
         git clone https://github.com/cc65/cc65.git
         cd cc65
         make PREFIX=${CC65_HOME}
-        sudo make install
+        sudo make PREFIX=${CC65_HOME} install
 
     - name: Setup PATH
       run: echo "${CC65_HOME}/bin" >> ${GITHUB_PATH}
