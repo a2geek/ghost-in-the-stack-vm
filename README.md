@@ -1,5 +1,8 @@
 # Ghost in the Stack
 
+[![Build](https://github.com/a2geek/ghost-in-the-stack-vm/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/a2geek/ghost-in-the-stack-vm/actions/workflows/build.yml)
+![License](https://img.shields.io/github/license/a2geek/ghost-in-the-stack-vm)
+
 Experimental bytecode interpreter that exists only in the 6502 stack. Also includes to beginnings
 of a multi-BASIC compiler. Support for Integer BASIC and "Ghost" BASIC (a more modern BASIC) exists
 at this time.
