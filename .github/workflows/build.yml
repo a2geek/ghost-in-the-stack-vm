@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      PREFIX: ~/cc65
+      CC65_HOME: /usr/local/cc65
 
     steps:
     - uses: actions/checkout@v3
@@ -37,20 +37,19 @@ jobs:
       id: cache-cc65
       uses: actions/cache@v3
       with:
-        path: /usr/local/cc65
+        path: ${CC65_HOME}/cc65
         key: ${{ runner.os }}-cc65-build
     - if: ${{ steps.cache-cc65.outputs.cache-hit != 'true' }}
       name: Make cc65
       run: |
-        mkdir -p ${PREFIX}
+        sudo mkdir -p ${CC65_HOME}
         git clone https://github.com/cc65/cc65.git
         cd cc65
-        make
+        make PREFIX=${CC65_HOME}
         sudo make install
 
     - name: Setup PATH
-      run: |
-        export PATH=${PATH}:${PREFIX}/bin
+      run: echo "${CC65_HOME}/bin" >> ${GITHUB_PATH}
     - name: Build with Gradle
       uses: gradle/gradle-build-action@bd5760595778326ba7f1441bcf7e88b49de61a25 # v2.6.0
       with:
