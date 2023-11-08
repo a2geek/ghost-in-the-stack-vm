@@ -21,6 +21,9 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    env:
+      PREFIX: ~/cc65
+
     steps:
     - uses: actions/checkout@v3
     - name: Set up JDK 17
@@ -39,7 +42,6 @@ jobs:
     - if: ${{ steps.cache-cc65.outputs.cache-hit != 'true' }}
       name: Make cc65
       run: |
-        export PREFIX=/usr/local/cc65
         mkdir -p ${PREFIX}
         git clone https://github.com/cc65/cc65.git
         cd cc65
@@ -48,7 +50,7 @@ jobs:
 
     - name: Setup PATH
       run: |
-        export PATH=${PATH}:/usr/local/cc65/bin
+        export PATH=${PATH}:${PREFIX}/bin
     - name: Build with Gradle
       uses: gradle/gradle-build-action@bd5760595778326ba7f1441bcf7e88b49de61a25 # v2.6.0
       with:
