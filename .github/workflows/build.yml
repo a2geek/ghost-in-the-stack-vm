@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      CC65_HOME: /usr/local/cc65
+      CC65_HOME: /home/runner/cc65
 
     steps:
     - uses: actions/checkout@v4
