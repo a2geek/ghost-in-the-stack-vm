@@ -12,6 +12,7 @@ some trouble due to the interpreter's ZP usage as well as various Applesoft rout
 This is just to track original and modified sources to (hopefully) get some reuse from the rewrite.
 
 ## Variant 1
+(from ["Simple Tone Subroutines", Apple II Reference Manual January 1978, page 43](https://archive.org/details/applerefjan78/page/n45/mode/2up))
 
 Games: 
 * anti-aircraft 
@@ -64,6 +65,7 @@ Modified:
 ```
 
 ## Variant 2
+(likely from ["Ludwig von Apple II" in Micro, December 1977, page 19](https://micro.applearchives.com/mags/micro_2_dec_1977.pdf))
 
 Games:
 * barricade
