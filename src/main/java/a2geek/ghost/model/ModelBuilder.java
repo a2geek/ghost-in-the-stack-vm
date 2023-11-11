@@ -128,6 +128,15 @@ public class ModelBuilder {
                       .dataType(dataType)
                       .dimensions(numDimensions));
     }
+    public Symbol addArrayDefaultVariable(String name, DataType dataType, int numDimensions,
+                                          List<Expression> defaultValues) {
+        return this.scope.peek().addLocalSymbol(
+            Symbol.variable(fixArrayName(name), scope.peek().getType())
+                .dataType(dataType)
+                .dimensions(numDimensions)
+                .defaultValues(defaultValues));
+    }
+
     public Symbol addConstant(String name, Expression value) {
         return this.scope.peek().addLocalSymbol(Symbol.constant(name, value));
     }
@@ -322,13 +331,13 @@ public class ModelBuilder {
         addStatement(returnStatement);
     }
 
-    public void insertDimArray(Symbol symbol, Expression size, List<? extends Expression> defaultValues) {
-        DimStatement dimStatement = new DimStatement(symbol, size, defaultValues);
+    public void insertDimArray(Symbol symbol, Expression size) {
+        DimStatement dimStatement = new DimStatement(symbol, size);
         insertStatement(dimStatement);
         arrayDims.put(symbol, size);
     }
-    public void addDimArray(Symbol symbol, Expression size, List<? extends Expression> defaultValues) {
-        DimStatement dimStatement = new DimStatement(symbol, size, defaultValues);
+    public void addDimArray(Symbol symbol, Expression size) {
+        DimStatement dimStatement = new DimStatement(symbol, size);
         addStatement(dimStatement);
         arrayDims.put(symbol, size);
     }

@@ -1,8 +1,14 @@
 package a2geek.ghost.model;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 
-public record Symbol(String name, Scope.Type type, Expression expr, DataType dataType, int numDimensions) {
+public record Symbol(String name, Scope.Type type, List<Expression> defaultValues, DataType dataType, int numDimensions) {
+    public boolean hasDefaultValue(int size) {
+        return defaultValues != null && defaultValues.size() == size;
+    }
+
     public static Builder label(String name) {
         return new Builder(name, Scope.Type.LABEL).dataType(DataType.ADDRESS);
     }
@@ -10,20 +16,23 @@ public record Symbol(String name, Scope.Type type, Expression expr, DataType dat
         return new Builder(name, type);
     }
     public static Builder constant(String name, Expression expr) {
-        return new Builder(name, Scope.Type.CONSTANT).expression(expr).dataType(expr.getType());
+        return new Builder(name, Scope.Type.CONSTANT).defaultValues(expr).dataType(expr.getType());
     }
     public static class Builder {
         private String name;
         private Scope.Type type;
-        private Expression expr;
         private DataType dataType;
         private int numDimensions = 0;  // not an array!
+        private List<Expression> defaultValues;
 
         Builder(String name, Scope.Type type) {
+            Objects.requireNonNull(name);
+            Objects.requireNonNull(type);
             this.name = name;
             this.type = type;
         }
         public Builder name(String name) {
+            Objects.requireNonNull(name);
             // Included for case correction
             this.name = name;
             return this;
@@ -32,17 +41,25 @@ public record Symbol(String name, Scope.Type type, Expression expr, DataType dat
             return type;
         }
         public Builder type(Scope.Type type) {
+            Objects.requireNonNull(type);
             this.type = type;
             return this;
         }
         public String name() {
             return name;
         }
-        public Builder expression(Expression expr) {
-            this.expr = expr;
+        public Builder defaultValues(Expression... exprs) {
+            Objects.requireNonNull(exprs);
+            this.defaultValues = Arrays.asList(exprs);
+            return this;
+        }
+        public Builder defaultValues(List<Expression> exprs) {
+            Objects.requireNonNull(exprs);
+            this.defaultValues = exprs;
             return this;
         }
         public Builder dataType(DataType dataType) {
+            Objects.requireNonNull(dataType);
             this.dataType = dataType;
             return this;
         }
@@ -55,14 +72,17 @@ public record Symbol(String name, Scope.Type type, Expression expr, DataType dat
         }
         public boolean equals(Symbol symbol) {
             if (symbol == null) return false;
-            return Objects.equals(this.name, symbol.name())
-                && Objects.equals(this.type, symbol.type())
-                && Objects.equals(this.expr, symbol.expr())
-                && Objects.equals(this.dataType, symbol.dataType())
+            return Objects.equals(this.name, symbol.name)
+                && Objects.equals(this.type, symbol.type)
+                && Objects.equals(this.defaultValues, symbol.defaultValues)
+                && Objects.equals(this.dataType, symbol.dataType)
                 && Objects.equals(this.numDimensions, symbol.numDimensions);
         }
         public Symbol build() {
-            return new Symbol(name, type, expr, dataType, numDimensions);
+            if (defaultValues != null && defaultValues.size() > 1 && numDimensions == 0) {
+                throw new RuntimeException("expecting array but no dimensions assigned " + name);
+            }
+            return new Symbol(name, type, defaultValues, dataType, numDimensions);
         }
     }
 }

@@ -156,15 +156,6 @@ public abstract class StatementTester {
         return this;
     }
 
-    public StatementTester dimDefaultStmt(String name, List<Expression> defaultValues) {
-        name = fixCase(name);
-        var stmt = nextStatement(DimStatement.class);
-        assertEquals(fixArrayName(name), stmt.getSymbol().name());
-        assertEquals(DataType.INTEGER, stmt.getSymbol().dataType());
-        assertEquals(defaultValues, stmt.getDefaultValues());
-        return this;
-    }
-
     public StatementTester end() {
         nextStatement(EndStatement.class);
         return this;

@@ -529,11 +529,11 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                 .map(TerminalNode::getSymbol)
                 .map(this::findGotoGosubLabel)
                 .map(AddressOfFunction::new)
+                .map(Expression.class::cast)
                 .toList();
 
         var name = String.format("ON_%s", op).toUpperCase();
-        var addrs = model.addArrayVariable(name, DataType.ADDRESS, 1);
-        model.addDimArray(addrs, new IntegerConstant(addrof.size()), addrof);
+        var addrs = model.addArrayDefaultVariable(name, DataType.ADDRESS, 1, addrof);
         // TODO optimize "expr" reference due to multiple references
         var test = new BinaryExpression(new BinaryExpression(expr, IntegerConstant.ZERO, ">"),
                 new BinaryExpression(expr, new ArrayLengthFunction(model, addrs), "<="), "and");
@@ -682,7 +682,6 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     public Expression visitDimStmt(BasicParser.DimStmtContext ctx) {
         buildDeclarationList(ctx.idDecl()).forEach(decl -> {
             if (decl.isArray()) {
-                var symbol = model.addArrayVariable(decl.name(), decl.dataType(), decl.dimensions().size());
                 // FIXME assuming 1 dimension
                 if (decl.hasDefaultValues()) {
                     decl.defaultValues().forEach(expr -> {
@@ -690,10 +689,12 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                             throw new RuntimeException("default array values must be constant");
                         }
                     });
-                    model.addDimArray(symbol, new IntegerConstant(1), decl.defaultValues());
+                    model.addArrayDefaultVariable(decl.name(), decl.dataType(),
+                        decl.dimensions().size(), decl.defaultValues());
                 }
                 else {
-                    model.addDimArray(symbol, decl.dimensions().get(0), null);
+                    var symbol = model.addArrayVariable(decl.name(), decl.dataType(), decl.dimensions().size());
+                    model.addDimArray(symbol, decl.dimensions().get(0));
                 }
             }
             else {
