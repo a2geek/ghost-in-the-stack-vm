@@ -104,6 +104,7 @@ var
 
 iname
     : NAME
+    | 'next'
     ;
 
 ivar
