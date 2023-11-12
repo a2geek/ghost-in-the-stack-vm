@@ -24,7 +24,7 @@ public class PokeStatement implements Statement {
     }
 
     public void setA(Expression a) {
-        a.mustBe(DataType.INTEGER, DataType.ADDRESS);
+        a.mustBe(DataType.INTEGER, DataType.ADDRESS, DataType.STRING);
         this.a = a;
     }
 

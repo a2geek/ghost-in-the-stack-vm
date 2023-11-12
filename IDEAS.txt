@@ -14,5 +14,4 @@ Structure assembly project; it's gonna get messier.
 ProDOS commands (OPEN, READ, WRITE, CLOSE). Is this SUB and/or FUNCTION?
 Add Applesoft
 DEF FN == Function
-Arrays - option to allocate on stack or heap
 Optimization - extract common code

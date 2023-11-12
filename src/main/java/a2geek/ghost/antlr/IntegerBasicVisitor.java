@@ -6,7 +6,6 @@ import a2geek.ghost.model.*;
 import a2geek.ghost.model.expression.*;
 import a2geek.ghost.model.scope.ForFrame;
 import a2geek.ghost.model.scope.Program;
-import a2geek.ghost.model.statement.DimStatement;
 import a2geek.ghost.model.statement.EndStatement;
 import a2geek.ghost.model.statement.IfStatement;
 import a2geek.ghost.model.statement.PopStatement;
@@ -52,28 +51,32 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         }
         // If we need the line number references for dynamic goto/gosub, create them...
         model.findSymbol(model.fixArrayName(LINE_NUMBERS)).ifPresent(symbol -> {
-            model.insertDimArray(symbol, new IntegerConstant(lineLabels.size()),
-                    lineLabels.keySet().stream()
-                            .map(IntegerConstant::new)
-                            .map(Expression.class::cast)
-                            .toList());
+            lineLabels.keySet().stream()
+                    .map(IntegerConstant::new)
+                    .map(Expression.class::cast)
+                    .forEach(expr -> symbol.defaultValues().add(expr));
         });
         model.findSymbol(model.fixArrayName(LINE_LABELS)).ifPresent(symbol -> {
-            model.insertDimArray(symbol, new IntegerConstant(lineLabels.size()),
-                    lineLabels.values().stream()
-                            .map(AddressOfFunction::new)
-                            .toList());
+            lineLabels.values().stream()
+                    .map(AddressOfFunction::new)
+                    .forEach(expr -> symbol.defaultValues().add(expr));
         });
         // Any strings that do not have a DIM, we need to dim as length 1.
         // Note that we don't/can't validate that the strings dimmed are dimmed first.
         stringsDimmed.forEach((symbol,expr) -> {
             if (expr == null) {
-                model.insertStatement(new DimStatement(symbol, IntegerConstant.ONE, null));
+                model.pushStatementBlock(new StatementBlock());
+                model.allocateStringArray(symbol, IntegerConstant.ONE);
+                var sb = model.popStatementBlock();
+                model.addInitializationStatements(sb);
             }
         });
         // Need to generate temp string DIM statements
         knownSizeTempStringVariables.forEach((symbol,size) -> {
-            model.insertStatement(new DimStatement(symbol, new IntegerConstant(size), null));
+            model.pushStatementBlock(new StatementBlock());
+            model.allocateStringArray(symbol, new IntegerConstant(size));
+            var sb = model.popStatementBlock();
+            model.addInitializationStatements(sb);
         });
         unknownSizetempStringVariables.forEach((symbol,symbols) -> {
             var sizes = symbols.stream()
@@ -83,7 +86,10 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
             var constant = sizes.stream().map(Expression::isConstant).reduce((a,b) -> a && b).orElseThrow();
             if (constant) {
                 int size = sizes.stream().map(Expression::asInteger).map(Optional::orElseThrow).reduce(Math::max).orElseThrow();
-                model.insertStatement(new DimStatement(symbol, new IntegerConstant(size), null));
+                model.pushStatementBlock(new StatementBlock());
+                model.allocateStringArray(symbol, new IntegerConstant(size));
+                var sb = model.popStatementBlock();
+                model.addInitializationStatements(sb);
             }
             else {
                 var msg = String.format("indeterminant temp string size for %s: based on %s", symbol, symbols);
@@ -152,17 +158,19 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     public Expression visitIntDimVar(IntegerParser.IntDimVarContext ctx) {
         var symbol = model.addArrayVariable(ctx.n.getText(), DataType.INTEGER, 1);
         var expr = visit(ctx.e);
-        model.addDimArray(symbol, expr, null);
+
+        model.allocateIntegerArray(symbol, expr);
+        model.registerDimArray(symbol, expr);
         return null;
     }
 
-    /* Note: A string defaults to 1 character if not DIMmed. */
     @Override
     public Expression visitStrDimVar(IntegerParser.StrDimVarContext ctx) {
         var symbol = model.addVariable(ctx.n.getText(), DataType.STRING);
         var expr = visit(ctx.e);
-        model.addDimArray(symbol, expr, null);
-        stringsDimmed.compute(symbol, (k,v) -> expr);
+
+        model.allocateStringArray(symbol, expr);
+        model.registerDimArray(symbol, expr);
         return null;
     }
 
@@ -327,8 +335,10 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
             model.gotoGosubStmt(op, line);
         }
         else {
-            var lineNumbers = model.addArrayVariable(LINE_NUMBERS, DataType.INTEGER, 1);
-            var lineLabels = model.addArrayVariable(LINE_LABELS, DataType.ADDRESS, 1);
+            var lineNumbers = model.addArrayDefaultVariable(LINE_NUMBERS, DataType.INTEGER, 1,
+                new ArrayList<>());
+            var lineLabels = model.addArrayDefaultVariable(LINE_LABELS, DataType.ADDRESS, 1,
+                new ArrayList<>());
 
             var temp = VariableReference.with(model.addTempVariable(DataType.INTEGER));
             var test = new BinaryExpression(new BinaryExpression(temp, IntegerConstant.ZERO, ">"),
@@ -805,6 +815,9 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         }
         if (start.equals(end)) {
             return 1;
+        }
+        if (model.isUsingMemory()) {
+            return 255;     // largest string supported, but only if we are using heap
         }
         throw new RuntimeException(String.format("cannot evaluate (%s - %s) + 1", end, start));
     }

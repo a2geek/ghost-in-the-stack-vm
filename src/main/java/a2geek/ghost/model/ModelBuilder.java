@@ -27,6 +27,7 @@ public class ModelBuilder {
     private boolean trace = false;
     private boolean boundsCheck = true;
     private boolean includeLibraries = true;
+    private String heapFunction;
     /** Track array dimensions */
     private Map<Symbol, Expression> arrayDims = new HashMap<>();
     /** Tracking a distinct label number globally (regardless of scope) to prevent name collisions. */
@@ -34,6 +35,7 @@ public class ModelBuilder {
 
     public ModelBuilder(Function<String,String> caseStrategy) {
         this.caseStrategy = caseStrategy;
+        useStackForHeap();  // default
         Program program = new Program(caseStrategy);
         this.scope.push(program);
         this.statementBlock.push(program);
@@ -44,6 +46,7 @@ public class ModelBuilder {
         this.trace = parent.trace;
         this.boundsCheck = parent.boundsCheck;
         this.includeLibraries = parent.includeLibraries;
+        this.heapFunction = parent.heapFunction;
     }
 
     public Program getProgram() {
@@ -85,8 +88,24 @@ public class ModelBuilder {
         this.controlCharsFn = controlCharsFn;
     }
 
-    public void insertStatement(Statement statement) {
-        this.statementBlock.peek().insertStatement(statement);
+    public void useStackForHeap() {
+        this.heapFunction = "alloc";
+    }
+    public void useMemoryForHeap(int startAddress) {
+        this.heapFunction = "heapalloc";
+        this.pushStatementBlock(new StatementBlock());
+        pokeStmt("pokew", new IntegerConstant(0x69), new IntegerConstant(startAddress));
+        var sb = this.popStatementBlock();
+        this.addInitializationStatements(sb);
+    }
+    public boolean isUsingMemory() {
+        return !"alloc".equals(this.heapFunction);
+    }
+
+    public void addInitializationStatements(StatementBlock statements) {
+        var sb = this.statementBlock.peek();
+        statements.getInitializationStatements().forEach(sb::addInitializationStatement);
+        statements.getStatements().forEach(sb::addInitializationStatement);
     }
     public void addStatement(Statement statement) {
         this.statementBlock.peek().addStatement(statement);
@@ -128,6 +147,15 @@ public class ModelBuilder {
                       .dataType(dataType)
                       .dimensions(numDimensions));
     }
+    public Symbol addArrayDefaultVariable(String name, DataType dataType, int numDimensions,
+                                          List<Expression> defaultValues) {
+        return this.scope.peek().addLocalSymbol(
+            Symbol.variable(fixArrayName(name), scope.peek().getType())
+                .dataType(dataType)
+                .dimensions(numDimensions)
+                .defaultValues(defaultValues));
+    }
+
     public Symbol addConstant(String name, Expression value) {
         return this.scope.peek().addLocalSymbol(Symbol.constant(name, value));
     }
@@ -322,15 +350,53 @@ public class ModelBuilder {
         addStatement(returnStatement);
     }
 
-    public void insertDimArray(Symbol symbol, Expression size, List<? extends Expression> defaultValues) {
-        DimStatement dimStatement = new DimStatement(symbol, size, defaultValues);
-        insertStatement(dimStatement);
-        arrayDims.put(symbol, size);
+    /**
+     * Allocate an integer array via the following code:
+     * <pre>
+     * symbol = ALLOC( (expr+2) * 2 )
+     * POKEW symbol, expr
+     * </pre>
+     * Note that physical array size is the length + 1 (BASIC array is like that) + 1 (for length).
+     * <pre>
+     * +------+-------+-------+-----+-------+
+     * | size | idx 0 | idx 1 | ... | idx N |
+     * +------+-------+-------+-----+-------+
+     * </pre>
+     */
+    public void allocateIntegerArray(Symbol symbol, Expression size) {
+        var varRef = VariableReference.with(symbol);
+        var bytes = new BinaryExpression(
+                new BinaryExpression(size, IntegerConstant.TWO, "+"),
+                IntegerConstant.TWO, "*");
+        var allocFn = callFunction(heapFunction, Arrays.asList(bytes));
+        assignStmt(varRef, allocFn);
+        pokeStmt("pokew", varRef, size);
     }
-    public void addDimArray(Symbol symbol, Expression size, List<? extends Expression> defaultValues) {
-        DimStatement dimStatement = new DimStatement(symbol, size, defaultValues);
-        addStatement(dimStatement);
-        arrayDims.put(symbol, size);
+    /**
+     * Allocate a string array via the following code:
+     * <pre>
+     * symbol = ALLOC( expr + 2 )
+     * POKEW symbol, expr
+     * </pre>
+     * Note:
+     * <li>A string has room for the string + 0 terminator + max length byte.
+     * <pre>
+     * +------+---------------------+
+     * | size | characters ... '\0' |
+     * +------+---------------------+
+     * </pre>
+     * <li>A string defaults to 1 character if not DIMmed.
+     */
+    public void allocateStringArray(Symbol symbol, Expression length) {
+        var varRef = VariableReference.with(symbol);
+        var bytes = new BinaryExpression(length, IntegerConstant.TWO, "+");
+        var allocFn = callFunction(heapFunction, Arrays.asList(bytes));
+        assignStmt(varRef, allocFn);
+        pokeStmt("poke", varRef, length);
+    }
+
+    public void registerDimArray(Symbol symbol, Expression size) {
+        arrayDims.merge(symbol, size, (oldSize, newSize) -> oldSize == null ? newSize : oldSize);
     }
     public Expression getArrayDim(Symbol symbol) {
         if (symbol.type() == Scope.Type.PARAMETER) {

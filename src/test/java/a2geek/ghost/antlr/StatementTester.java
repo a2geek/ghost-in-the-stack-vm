@@ -107,7 +107,10 @@ public abstract class StatementTester {
         var stmt = nextStatement(AssignmentStatement.class);
         assertFalse(stmt.getVar().isArray());
         assertEquals(fixCase(varName), stmt.getVar().getSymbol().name());
-        assertEquals(expr, stmt.getExpr());
+        // disable expression test if it is null
+        if (expr != null) {
+            assertEquals(expr, stmt.getExpr());
+        }
         return this;
     }
 
@@ -145,23 +148,6 @@ public abstract class StatementTester {
         for (int i=0; i<params.length; i++) {
             assertEquals(params[i], stmt.getParameters().get(i));
         }
-        return this;
-    }
-
-    public StatementTester dimStmt(String name, Expression expr) {
-        name = fixCase(name);
-        var stmt = nextStatement(DimStatement.class);
-        assertEquals(fixArrayName(name), stmt.getSymbol().name());
-        assertEquals(expr, stmt.getExpr());
-        return this;
-    }
-
-    public StatementTester dimDefaultStmt(String name, List<Expression> defaultValues) {
-        name = fixCase(name);
-        var stmt = nextStatement(DimStatement.class);
-        assertEquals(fixArrayName(name), stmt.getSymbol().name());
-        assertEquals(DataType.INTEGER, stmt.getSymbol().dataType());
-        assertEquals(defaultValues, stmt.getDefaultValues());
         return this;
     }
 

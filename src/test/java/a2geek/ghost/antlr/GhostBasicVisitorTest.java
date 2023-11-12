@@ -28,12 +28,11 @@ public class GhostBasicVisitorTest {
 
     @Test
     public void testDimStatement() {
+        // Note: DIM generates (potentially) dynamic code, so not testing generated DIM code.
         expect("dim a as integer, b as boolean, c(10) as integer")
             .hasSymbol("a", DataType.INTEGER, Scope.Type.GLOBAL)
             .hasSymbol("b", DataType.BOOLEAN, Scope.Type.GLOBAL)
-            .hasArrayReference("c", DataType.INTEGER, Scope.Type.GLOBAL, 1)
-            .dimStmt("c", constant(10))
-            .atEnd();
+            .hasArrayReference("c", DataType.INTEGER, Scope.Type.GLOBAL, 1);
     }
 
 
@@ -43,19 +42,27 @@ public class GhostBasicVisitorTest {
                 .dataType(DataType.INTEGER)
                 .dimensions(1)
                 .build();
+        // Note: DIM generates (potentially) dynamic code, so not testing generated DIM code.
         expect("dim a(10) as integer, b as integer : b = ubound(a)")
                 .hasSymbol("a", DataType.INTEGER, Scope.Type.GLOBAL)
                 .hasSymbol("b", DataType.INTEGER, Scope.Type.GLOBAL)
-                .dimStmt("a", constant(10))
+                .assignment("a", null)
+                .poke("pokew", VariableReference.with(arrayRef), constant(10))
                 .assignment("b", ubound(model, arrayRef))
                 .atEnd();
     }
 
     @Test
     public void testArrayReference() {
+        var arrayRef = Symbol.variable(model.fixCase("a"), Scope.Type.GLOBAL)
+                .dataType(DataType.INTEGER)
+                .dimensions(1)
+                .build();
+        // Note: DIM generates (potentially) dynamic code, so not testing generated DIM code.
         expect("dim a(10) as integer : a(5) = a(4) + 3")
             .hasArrayReference("a", DataType.INTEGER, Scope.Type.GLOBAL, 1)
-            .dimStmt("a", constant(10))
+            .assignment("a", null)
+            .poke("pokew", VariableReference.with(arrayRef), constant(10))
             .skipIfStmt()
             .skipIfStmt()   // because we don't really optimize them A(5) should be sufficient but we check A(4) as well
             .arrayAssignment("a", constant(5),
@@ -360,6 +367,7 @@ public class GhostBasicVisitorTest {
             .dataType(DataType.INTEGER)
             .dimensions(1)
             .build());
+        // Note: DIM generates (potentially) dynamic code, so not testing generated DIM code.
         expect("""
                 sub addArray(a() as integer)
                     ' code goes here
@@ -374,7 +382,8 @@ public class GhostBasicVisitorTest {
                 .returnStmt(null)
             .endScope()
             .hasArrayReference("a", DataType.INTEGER, Scope.Type.GLOBAL, 1)
-            .dimStmt("a", constant(10))
+            .assignment("a", null)
+            .poke("pokew", arraySymbol, constant(10))
             .callSub("addArray", arraySymbol)
             .atEnd();
     }

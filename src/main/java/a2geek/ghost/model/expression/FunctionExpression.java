@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 public class FunctionExpression implements Expression {
     private static final String INPUT_LIBRARY = "input";
     private static final String LORES_LIBRARY = "lores";
+    private static final String MEMORY_LIBRARY = "memory";
     private static final String MISC_LIBRARY = "misc";
     private static final String MATH_LIBRARY = "math";
     private static final String RUNTIME_LIBRARY = "runtime";
@@ -24,6 +25,8 @@ public class FunctionExpression implements Expression {
         new Descriptor("peekw", null, DataType.INTEGER, DataType.INTEGER),
         new Descriptor("peekw", null, DataType.INTEGER, DataType.ADDRESS),
         new Descriptor("peekw", null, DataType.INTEGER, DataType.STRING),
+        new Descriptor("alloc", null, DataType.ADDRESS, DataType.INTEGER),
+        new Descriptor("heapalloc", MEMORY_LIBRARY, DataType.ADDRESS, DataType.INTEGER),
         new Descriptor("scrn", LORES_LIBRARY, DataType.INTEGER, DataType.INTEGER, DataType.INTEGER),
         new Descriptor("asc", STRING_LIBRARY, DataType.INTEGER, DataType.STRING),
         new Descriptor("rnd", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER),

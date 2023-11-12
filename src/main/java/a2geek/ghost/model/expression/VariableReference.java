@@ -54,20 +54,20 @@ public class VariableReference implements Expression {
 
     @Override
     public Optional<Integer> asInteger() {
-        if (symbol.expr() == null) return Optional.empty();
-        return symbol.expr().asInteger();
+        if (symbol.hasDefaultValue(1)) return symbol.defaultValues().get(0).asInteger();
+        return Optional.empty();
     }
 
     @Override
     public Optional<Boolean> asBoolean() {
-        if (symbol.expr() == null) return Optional.empty();
-        return symbol.expr().asBoolean();
+        if (symbol.hasDefaultValue(1)) return symbol.defaultValues().get(0).asBoolean();
+        return Optional.empty();
     }
 
     @Override
     public Optional<String> asString() {
-        if (symbol.expr() == null) return Optional.empty();
-        return symbol.expr().asString();
+        if (symbol.hasDefaultValue(1)) return symbol.defaultValues().get(0).asString();
+        return Optional.empty();
     }
 
     @Override

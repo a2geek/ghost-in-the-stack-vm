@@ -4,10 +4,10 @@ import java.util.List;
 
 public class StatementContext {
     private int index;
-    private StatementBlock block;
+    private List<Statement> statements;
 
-    public StatementContext(StatementBlock block, int index) {
-        this.block = block;
+    public StatementContext(List<Statement> statements, int index) {
+        this.statements = statements;
         this.index = index;
     }
 
@@ -16,22 +16,22 @@ public class StatementContext {
     }
 
     public Statement currentStatement() {
-        return block.getStatements().get(index);
+        return statements.get(index);
     }
 
     public void insertAllBefore(StatementBlock block) {
         insertAllBefore(block.getStatements());
     }
-    public void insertAllBefore(List<Statement> statements) {
-        block.getStatements().addAll(index, statements);
-        index += statements.size();
+    public void insertAllBefore(List<Statement> initialStatements) {
+        statements.addAll(index, initialStatements);
+        index += initialStatements.size();
     }
 
     public void deleteStatement() {
         if (index == -1) {
             throw new RuntimeException("delete already called on this statement");
         }
-        block.getStatements().remove(index);
+        statements.remove(index);
         index = -1;
     }
 }

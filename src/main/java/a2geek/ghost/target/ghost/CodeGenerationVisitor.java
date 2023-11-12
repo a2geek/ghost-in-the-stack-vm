@@ -34,6 +34,7 @@ public class CodeGenerationVisitor extends Visitor {
     public void visit(Program program) {
         var frame = this.frames.push(Frame.create(program));
         code.emit(Opcode.GLOBAL_RESERVE, frame.localSize());
+        setupDefaultArrayValues(program);
 
         dispatchAll(program);
         // Note we don't have a GLOBAL_FREE; EXIT restores stack for us
@@ -54,6 +55,38 @@ public class CodeGenerationVisitor extends Visitor {
         } while (wroteCode);
 
         this.frames.pop();
+    }
+
+    public void setupDefaultArrayValues(Scope scope) {
+        scope.getLocalSymbols().forEach(symbol -> {
+            if (symbol.defaultValues() == null || symbol.type() == Scope.Type.CONSTANT) {
+                return;
+            }
+            var dataType = symbol.dataType();
+            if (dataType == DataType.INTEGER) {
+                List<Integer> integerArray = symbol.defaultValues().stream()
+                    .map(Expression::asInteger)
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .toList();
+                var label = label("INTARYCONST");
+                String actual = code.emitConstant(label.get(0), integerArray);
+                code.emit(Opcode.LOADA, actual);
+                emitStore(symbol);
+            } else if (dataType == DataType.ADDRESS) {
+                List<Symbol> labels = symbol.defaultValues().stream()
+                    .filter(AddressOfFunction.class::isInstance)
+                    .map(AddressOfFunction.class::cast)
+                    .map(AddressOfFunction::getSymbol)
+                    .toList();
+                var label = label("ADDRARYCONST");
+                var actual = code.emitConstantLabels(label.get(0), labels);
+                code.emit(Opcode.LOADA, actual);
+                emitStore(symbol);
+            } else {
+                throw new RuntimeException("unsupported symbol array with data type of " + dataType);
+            }
+        });
     }
 
     public int frameOffset(Symbol symbol) {
@@ -104,10 +137,11 @@ public class CodeGenerationVisitor extends Visitor {
                 }
             }
             case CONSTANT -> {
-                if (symbol.expr() instanceof IntegerConstant c) {
+                var expr = symbol.defaultValues().get(0);
+                if (expr instanceof IntegerConstant c) {
                     visit(c);
                 }
-                else if (symbol.expr() instanceof StringConstant s) {
+                else if (expr instanceof StringConstant s) {
                     visit(s);
                 }
                 else {
@@ -142,78 +176,7 @@ public class CodeGenerationVisitor extends Visitor {
                 }
             }
             case CONSTANT -> {
-                throw new RuntimeException("cannot store to a constant value");
-            }
-        }
-    }
-
-    @Override
-    public void visit(DimStatement statement, StatementContext context) {
-        if (statement.hasDefaultValues()) {
-            var dataType = statement.getSymbol().dataType();
-            if (dataType == DataType.INTEGER) {
-                List<Integer> integerArray = statement.getDefaultValues().stream()
-                        .map(Expression::asInteger)
-                        .filter(Optional::isPresent)
-                        .map(Optional::get)
-                        .toList();
-                var label = label("INTARYCONST");
-                String actual = code.emitConstant(label.get(0), integerArray);
-                code.emit(Opcode.LOADA, actual);
-                emitStore(statement.getSymbol());
-            } else if (dataType == DataType.ADDRESS) {
-                List<Symbol> labels = statement.getDefaultValues().stream()
-                        .filter(AddressOfFunction.class::isInstance)
-                        .map(AddressOfFunction.class::cast)
-                        .map(AddressOfFunction::getSymbol)
-                        .toList();
-                var label = label("ADDRARYCONST");
-                var actual = code.emitConstantLabels(label.get(0), labels);
-                code.emit(Opcode.LOADA, actual);
-                emitStore(statement.getSymbol());
-            } else {
-                throw new RuntimeException("unknown dim statement with data type of " + dataType);
-            }
-        }
-        else {
-            switch (statement.getSymbol().dataType()) {
-                case INTEGER, BOOLEAN -> {
-                    // TODO assuming element size of 2
-                    // TODO assuming array size of 1
-                    // Reserve N bytes on stack = (Size of Array+1) * (Element Size) + (Size of dimension) * Dimensions
-                    //  for now N = (array size+1) * 2 + 2 * 1 => (array size + 2) * 2 => (array size + 2) << 1
-                    dispatch(statement.getExpr());
-                    code.emit(Opcode.INCR); // INCR, INCR = TOS+2
-                    code.emit(Opcode.INCR);
-                    code.emit(Opcode.LOADC, 1);
-                    code.emit(Opcode.SHIFTL);
-                    code.emit(Opcode.PUSHZ);
-                    // TODO ^^ ARRAY ALLOCATED TO STACK FOR NOW! This should be configurable?
-                    code.emit(Opcode.LOADSP);
-                    emitStore(statement.getSymbol());
-                    // Need to set array size for dimension 0 (cannot DUP due to PUSHZ)
-                    dispatch(statement.getExpr());
-                    emitLoad(statement.getSymbol());
-                    code.emit(Opcode.ISTOREW);
-                }
-                case STRING -> {
-                    // TODO this is just an Integer BASIC string so not an array of strings!
-                    if (statement.getSymbol().numDimensions() > 0) {
-                        throw new RuntimeException("actual string arrays not supported at this time");
-                    }
-                    // Reserve N bytes on stack = Max length (1 byte) + string length + 1 for extra zero byte.
-                    dispatch(statement.getExpr());
-                    code.emit(Opcode.LOADC, 2);
-                    code.emit(Opcode.ADD);
-                    code.emit(Opcode.PUSHZ);
-                    code.emit(Opcode.LOADSP);
-                    emitStore(statement.getSymbol());
-                    // Need to set string max size (cannot DUP due to PUSHZ)
-                    dispatch(statement.getExpr());
-                    emitLoad(statement.getSymbol());
-                    code.emit(Opcode.ISTOREB);
-                }
-                default -> throw new RuntimeException("cannot DIM variable of type: " + statement.getSymbol());
+                throw new RuntimeException("cannot store to a constant value: " + symbol.name());
             }
         }
     }
@@ -382,6 +345,7 @@ public class CodeGenerationVisitor extends Visitor {
         var frame = frames.push(Frame.create(subroutine));
         code.emit(subroutine.getName());
         if (hasLocalScope) code.emit(Opcode.LOCAL_RESERVE, frame.localSize());
+        setupDefaultArrayValues(subroutine);
         if (subroutine.getStatements() != null) {
             dispatchAll(subroutine);
         }
@@ -399,6 +363,7 @@ public class CodeGenerationVisitor extends Visitor {
         function.setExitLabel(exitLabel);
         code.emit(function.getName());
         if (hasLocalScope) code.emit(Opcode.LOCAL_RESERVE, frame.localSize());
+        setupDefaultArrayValues(function);
         if (function.getStatements() != null) {
             dispatchAll(function);
         }
@@ -542,6 +507,11 @@ public class CodeGenerationVisitor extends Visitor {
             case "peekw" -> {
                 emitParameters.run();
                 code.emit(Opcode.ILOADW);
+            }
+            case "alloc" -> {
+                emitParameters.run();
+                code.emit(Opcode.PUSHZ);
+                code.emit(Opcode.LOADSP);
             }
             default -> {
                 if (function.getFunction() == null) {

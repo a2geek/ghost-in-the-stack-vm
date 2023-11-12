@@ -55,9 +55,6 @@ public abstract class Visitor {
         else if (statement instanceof CallSubroutine s) {
             visit(s, context);
         }
-        else if (statement instanceof DimStatement s) {
-            visit(s, context);
-        }
         else if (statement instanceof PopStatement s) {
             visit(s, context);
         }
@@ -109,12 +106,16 @@ public abstract class Visitor {
     }
 
     public void dispatchAll(StatementBlock block) {
-        for (int i=0; i<block.getStatements().size(); i++) {
-            StatementContext context = new StatementContext(block, i);
+        dispatchToList(block.getInitializationStatements());
+        dispatchToList(block.getStatements());
+    }
+    public void dispatchToList(List<Statement> statements) {
+        for (int i=0; i<statements.size(); i++) {
+            StatementContext context = new StatementContext(statements, i);
             dispatch(context);
             // If we insert or delete a row, we should reprocess it
-            while (context.getIndex() != i && i < block.getStatements().size()) {
-                context = new StatementContext(block, i);
+            while (context.getIndex() != i && i < statements.size()) {
+                context = new StatementContext(statements, i);
                 dispatch(context);
             }
         }
@@ -192,27 +193,6 @@ public abstract class Visitor {
         }
         if (changed) {
             statement.setParameters(exprs);
-        }
-    }
-
-    public void visit(DimStatement statement, StatementContext context) {
-        var expr = dispatch(statement.getExpr());
-        expr.ifPresent(statement::setExpr);
-        if (statement.hasDefaultValues()) {
-            boolean changed = false;
-            List<Expression> exprs = new ArrayList<>();
-            for (Expression expr2 : statement.getDefaultValues()) {
-                var newExpr = dispatch(expr2);
-                if (newExpr.isPresent()) {
-                    changed = true;
-                    exprs.add(newExpr.get());
-                } else {
-                    exprs.add(expr2);
-                }
-            }
-            if (changed) {
-                statement.setDefaultValues(exprs);
-            }
         }
     }
 
