@@ -72,27 +72,43 @@ rewritten model which has some minor optimizations at this time.
 The compiler can be invoked with `--help` to see a list of options:
 ```shell
 $ java -jar build/libs/GhostBasic-1.0-SNAPSHOT.jar --help
-Usage: compile [-hV] [--case-sensitive] [--debug] [--fix-control-chars]
-               [--integer] [--quiet] [--trace] [-l=<programListing>]
-               [-o=<outputFile>] <sourceCode>
+Usage: compile [-hV] [--case-sensitive] [--debug] [--fix-control-chars] [--heap] [--integer] [--quiet] [--trace] [-il=<intermediateCodeListing>] [--lomem=<heapStartAddress>] [-o=<outputFile>] [-tl=<targetCodeListing>] [[--[no-]optimizations] [--
+               [no-]bounds-checking] [--[no-]constant-reduction] [--[no-]strength-reduction] [--[no-]dead-code-elimination] [--[no-]peephole-optimizer] [--[no-]label-optimizer]] <sourceCode>
 Compile Ghost BASIC program.
-      <sourceCode>          program to compile
-      --case-sensitive      allow identifiers to be case sensitive (A is
-                              different from a)
-                              Default: false
-      --debug               use the debugging interpreter
-      --fix-control-chars   replace '<CONTROL-?>' with the actual control
-                              character
-  -h, --help                Show this help message and exit.
-      --integer             integer basic program
-  -l, --listing=<programListing>
-                            create listing file
-  -o, --output=<outputFile> output file name
-                              Default: a.out
-      --quiet               reduce output
-      --trace               enable stack traces
-  -V, --version             Print version information and exit.
+      <sourceCode>           program to compile
+      --case-sensitive       allow identifiers to be case sensitive (A is different from a)
+                               Default: false
+      --debug                use the debugging interpreter
+      --fix-control-chars    replace '<CONTROL-?>' with the actual control character
+  -h, --help                 Show this help message and exit.
+      --heap                 allocate memory on heap
+      -il, --intermediate-code-listing=<intermediateCodeListing>
+                             create intermediate code listing file
+      --integer              integer basic program
+      --lomem, --heap-start=<heapStartAddress>
+                             heap start address (default: 0x8000)
+  -o, --output=<outputFile>  output file name
+                               Default: a.out
+      --quiet                reduce output
+      -tl, --target-code-listing=<targetCodeListing>
+                             create listing file
+      --trace                enable stack traces
+  -V, --version              Print version information and exit.
+Optimizations:
+      --[no-]bounds-checking perform bounds checking on arrays (enabled: true)
+      --[no-]constant-reduction
+                             constant reduction (enabled: true)
+      --[no-]dead-code-elimination
+                             enable dead code elimination (enabled: true)
+      --[no-]label-optimizer enable label optimizer (enabled: true)
+      --[no-]optimizations   disable all optimizations (enabled: false)
+      --[no-]peephole-optimizer
+                             enable peephole optimizer (enabled: true)
+      --[no-]strength-reduction
+                             enable strength reduction (enabled: true)
 ```
+
+Note that bounds checking is enabled, so to optimize there, `--no-bounds-checking` should be used.
 
 ## Project structure
 

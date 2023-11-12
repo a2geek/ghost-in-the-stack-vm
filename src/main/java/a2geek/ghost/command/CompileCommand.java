@@ -242,40 +242,43 @@ public class CompileCommand implements Callable<Integer> {
     public static class OptimizationFlags {
         @Option(names = { "--optimizations" }, negatable = true, defaultValue = "false",
             fallbackValue = "false", showDefaultValue = Visibility.NEVER,
-            description = "disable all optimizations")
+            description = "disable all optimizations (enabled: ${DEFAULT-VALUE})")
         private boolean noOptimizations;
 
         @Option(names = { "--bounds-checking" }, negatable = true, defaultValue = "true",
                 fallbackValue = "true", showDefaultValue = Visibility.NEVER,
-                description = "perform bounds checking on arrays")
+                description = "perform bounds checking on arrays (enabled: ${DEFAULT-VALUE})")
         private boolean boundsChecking;
 
         @Option(names = { "--constant-reduction" }, negatable = true, defaultValue = "true",
                 fallbackValue = "true", showDefaultValue = Visibility.NEVER,
-                description = "constant reduction")
+                description = "constant reduction (enabled: ${DEFAULT-VALUE})")
         private boolean constantReduction;
 
         @Option(names = { "--strength-reduction" }, negatable = true, defaultValue = "true",
                 fallbackValue = "true", showDefaultValue = Visibility.NEVER,
-                description = "enable strength reduction")
+                description = "enable strength reduction (enabled: ${DEFAULT-VALUE})")
         private boolean strengthReduction;
 
         @Option(names = { "--dead-code-elimination" }, negatable = true, defaultValue = "true",
                 fallbackValue = "true", showDefaultValue = Visibility.NEVER,
-                description = "enable dead code elimination")
+                description = "enable dead code elimination (enabled: ${DEFAULT-VALUE})")
         private boolean deadCodeElimination;
 
         @Option(names = { "--peephole-optimizer" }, negatable = true, defaultValue = "true",
                 fallbackValue = "true", showDefaultValue = Visibility.NEVER,
-                description = "enable peephole optimizer")
+                description = "enable peephole optimizer (enabled: ${DEFAULT-VALUE})")
         private boolean peepholeOptimizer;
 
         @Option(names = { "--label-optimizer" }, negatable = true, defaultValue = "true",
                 fallbackValue = "true", showDefaultValue = Visibility.NEVER,
-                description = "enable label optimizer")
+                description = "enable label optimizer (enabled: ${DEFAULT-VALUE})")
         private boolean labelOptimizer;
 
         public void apply(ModelBuilder model) {
+            if (noOptimizations) {
+                return;
+            }
             model.setBoundsCheck(boundsChecking);
         }
 
