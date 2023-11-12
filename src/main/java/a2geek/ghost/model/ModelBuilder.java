@@ -27,6 +27,7 @@ public class ModelBuilder {
     private boolean trace = false;
     private boolean boundsCheck = true;
     private boolean includeLibraries = true;
+    private String heapFunction;
     /** Track array dimensions */
     private Map<Symbol, Expression> arrayDims = new HashMap<>();
     /** Tracking a distinct label number globally (regardless of scope) to prevent name collisions. */
@@ -34,6 +35,7 @@ public class ModelBuilder {
 
     public ModelBuilder(Function<String,String> caseStrategy) {
         this.caseStrategy = caseStrategy;
+        useStackForHeap();  // default
         Program program = new Program(caseStrategy);
         this.scope.push(program);
         this.statementBlock.push(program);
@@ -44,6 +46,7 @@ public class ModelBuilder {
         this.trace = parent.trace;
         this.boundsCheck = parent.boundsCheck;
         this.includeLibraries = parent.includeLibraries;
+        this.heapFunction = parent.heapFunction;
     }
 
     public Program getProgram() {
@@ -85,11 +88,24 @@ public class ModelBuilder {
         this.controlCharsFn = controlCharsFn;
     }
 
-    public void insertStatement(Statement statement) {
-        this.statementBlock.peek().insertStatement(statement);
+    public void useStackForHeap() {
+        this.heapFunction = "alloc";
     }
-    public void insertStatements(StatementBlock statements) {
-        this.statementBlock.peek().insertStatements(statements);
+    public void useMemoryForHeap(int startAddress) {
+        this.heapFunction = "heapalloc";
+        this.pushStatementBlock(new StatementBlock());
+        pokeStmt("pokew", new IntegerConstant(0x69), new IntegerConstant(startAddress));
+        var sb = this.popStatementBlock();
+        this.addInitializationStatements(sb);
+    }
+    public boolean isUsingMemory() {
+        return !"alloc".equals(this.heapFunction);
+    }
+
+    public void addInitializationStatements(StatementBlock statements) {
+        var sb = this.statementBlock.peek();
+        statements.getInitializationStatements().forEach(sb::addInitializationStatement);
+        statements.getStatements().forEach(sb::addInitializationStatement);
     }
     public void addStatement(Statement statement) {
         this.statementBlock.peek().addStatement(statement);
@@ -352,7 +368,7 @@ public class ModelBuilder {
         var bytes = new BinaryExpression(
                 new BinaryExpression(size, IntegerConstant.TWO, "+"),
                 IntegerConstant.TWO, "*");
-        var allocFn = callFunction("alloc", Arrays.asList(bytes));
+        var allocFn = callFunction(heapFunction, Arrays.asList(bytes));
         assignStmt(varRef, allocFn);
         pokeStmt("pokew", varRef, size);
     }
@@ -374,7 +390,7 @@ public class ModelBuilder {
     public void allocateStringArray(Symbol symbol, Expression length) {
         var varRef = VariableReference.with(symbol);
         var bytes = new BinaryExpression(length, IntegerConstant.TWO, "+");
-        var allocFn = callFunction("alloc", Arrays.asList(bytes));
+        var allocFn = callFunction(heapFunction, Arrays.asList(bytes));
         assignStmt(varRef, allocFn);
         pokeStmt("poke", varRef, length);
     }

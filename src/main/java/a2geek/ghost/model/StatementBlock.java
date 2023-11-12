@@ -5,6 +5,7 @@ import a2geek.ghost.model.statement.IfStatement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class StatementBlock {
     public static final StatementBlock EMPTY = new StatementBlock();
@@ -15,8 +16,12 @@ public class StatementBlock {
         }
         return sb;
     }
+    private List<Statement> initializationStatements = new ArrayList<>();
     private List<Statement> statements = new ArrayList<>();
 
+    public List<Statement> getInitializationStatements() {
+        return initializationStatements;
+    }
     public List<Statement> getStatements() {
         return statements;
     }
@@ -31,11 +36,8 @@ public class StatementBlock {
         }
         return false;
     }
-    public void insertStatement(Statement statement) {
-        this.statements.add(0, statement);
-    }
-    public void insertStatements(StatementBlock statements) {
-        this.statements.addAll(0, statements.statements);
+    public void addInitializationStatement(Statement statement) {
+        this.initializationStatements.add(statement);
     }
     public void addStatement(Statement statement) {
         this.statements.add(statement);
@@ -45,6 +47,7 @@ public class StatementBlock {
     }
 
     public String statementsAsString() {
-        return statements.stream().map(Statement::toString).collect(Collectors.joining(" : "));
+        return Stream.concat(initializationStatements.stream(), statements.stream())
+            .map(Statement::toString).collect(Collectors.joining(" : "));
     }
 }

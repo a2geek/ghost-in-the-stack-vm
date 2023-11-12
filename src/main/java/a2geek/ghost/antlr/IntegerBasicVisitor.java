@@ -68,7 +68,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
                 model.pushStatementBlock(new StatementBlock());
                 model.allocateStringArray(symbol, IntegerConstant.ONE);
                 var sb = model.popStatementBlock();
-                model.insertStatements(sb);
+                model.addInitializationStatements(sb);
             }
         });
         // Need to generate temp string DIM statements
@@ -76,7 +76,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
             model.pushStatementBlock(new StatementBlock());
             model.allocateStringArray(symbol, new IntegerConstant(size));
             var sb = model.popStatementBlock();
-            model.insertStatements(sb);
+            model.addInitializationStatements(sb);
         });
         unknownSizetempStringVariables.forEach((symbol,symbols) -> {
             var sizes = symbols.stream()
@@ -89,7 +89,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
                 model.pushStatementBlock(new StatementBlock());
                 model.allocateStringArray(symbol, new IntegerConstant(size));
                 var sb = model.popStatementBlock();
-                model.insertStatements(sb);
+                model.addInitializationStatements(sb);
             }
             else {
                 var msg = String.format("indeterminant temp string size for %s: based on %s", symbol, symbols);
@@ -815,6 +815,9 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         }
         if (start.equals(end)) {
             return 1;
+        }
+        if (model.isUsingMemory()) {
+            return 255;     // largest string supported, but only if we are using heap
         }
         throw new RuntimeException(String.format("cannot evaluate (%s - %s) + 1", end, start));
     }

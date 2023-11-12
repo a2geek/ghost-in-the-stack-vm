@@ -106,12 +106,16 @@ public abstract class Visitor {
     }
 
     public void dispatchAll(StatementBlock block) {
-        for (int i=0; i<block.getStatements().size(); i++) {
-            StatementContext context = new StatementContext(block, i);
+        dispatchToList(block.getInitializationStatements());
+        dispatchToList(block.getStatements());
+    }
+    public void dispatchToList(List<Statement> statements) {
+        for (int i=0; i<statements.size(); i++) {
+            StatementContext context = new StatementContext(statements, i);
             dispatch(context);
             // If we insert or delete a row, we should reprocess it
-            while (context.getIndex() != i && i < block.getStatements().size()) {
-                context = new StatementContext(block, i);
+            while (context.getIndex() != i && i < statements.size()) {
+                context = new StatementContext(statements, i);
                 dispatch(context);
             }
         }

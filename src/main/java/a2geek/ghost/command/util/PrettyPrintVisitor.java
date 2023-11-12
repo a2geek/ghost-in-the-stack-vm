@@ -2,6 +2,7 @@ package a2geek.ghost.command.util;
 
 import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.Scope;
+import a2geek.ghost.model.Statement;
 import a2geek.ghost.model.StatementBlock;
 import a2geek.ghost.model.scope.Function;
 import a2geek.ghost.model.scope.Program;
@@ -84,25 +85,27 @@ public class PrettyPrintVisitor {
     }
 
     public void formatStatementBlock(StatementBlock block) {
-        block.getStatements().forEach(statement -> {
-            if (statement instanceof LabelStatement label) {
-                sb.append(String.format("%s:", label.getLabel().name()).indent(0));
+        block.getInitializationStatements().forEach(this::formatStatement);
+        block.getStatements().forEach(this::formatStatement);
+    }
+    public void formatStatement(Statement statement) {
+        if (statement instanceof LabelStatement label) {
+            sb.append(String.format("%s:", label.getLabel().name()).indent(0));
+        }
+        else if (statement instanceof IfStatement ifStatement) {
+            sb.append(String.format("IF %s THEN", ifStatement.getExpression()).indent(indent));
+            indent += indentIncrement;
+            formatStatementBlock(ifStatement.getTrueStatements());
+            if (ifStatement.hasFalseStatements()) {
+                sb.append("ELSE".indent(indent - indentIncrement));
+                formatStatementBlock(ifStatement.getFalseStatements());
             }
-            else if (statement instanceof IfStatement ifStatement) {
-                sb.append(String.format("IF %s THEN", ifStatement.getExpression()).indent(indent));
-                indent += indentIncrement;
-                formatStatementBlock(ifStatement.getTrueStatements());
-                if (ifStatement.hasFalseStatements()) {
-                    sb.append("ELSE".indent(indent - indentIncrement));
-                    formatStatementBlock(ifStatement.getFalseStatements());
-                }
-                indent -= indentIncrement;
-                sb.append("END IF".indent(indent));
-            }
-            else {
-                sb.append(statement.toString().indent(indent));
-            }
-        });
+            indent -= indentIncrement;
+            sb.append("END IF".indent(indent));
+        }
+        else {
+            sb.append(statement.toString().indent(indent));
+        }
     }
 
     public String formatParameters(Scope scope) {
