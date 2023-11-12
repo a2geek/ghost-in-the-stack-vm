@@ -24,6 +24,7 @@ public class FunctionExpression implements Expression {
         new Descriptor("peekw", null, DataType.INTEGER, DataType.INTEGER),
         new Descriptor("peekw", null, DataType.INTEGER, DataType.ADDRESS),
         new Descriptor("peekw", null, DataType.INTEGER, DataType.STRING),
+        new Descriptor("alloc", null, DataType.ADDRESS, DataType.INTEGER),
         new Descriptor("scrn", LORES_LIBRARY, DataType.INTEGER, DataType.INTEGER, DataType.INTEGER),
         new Descriptor("asc", STRING_LIBRARY, DataType.INTEGER, DataType.STRING),
         new Descriptor("rnd", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER),

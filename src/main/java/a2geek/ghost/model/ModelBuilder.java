@@ -88,6 +88,9 @@ public class ModelBuilder {
     public void insertStatement(Statement statement) {
         this.statementBlock.peek().insertStatement(statement);
     }
+    public void insertStatements(StatementBlock statements) {
+        this.statementBlock.peek().insertStatements(statements);
+    }
     public void addStatement(Statement statement) {
         this.statementBlock.peek().addStatement(statement);
     }
@@ -331,15 +334,53 @@ public class ModelBuilder {
         addStatement(returnStatement);
     }
 
-    public void insertDimArray(Symbol symbol, Expression size) {
-        DimStatement dimStatement = new DimStatement(symbol, size);
-        insertStatement(dimStatement);
-        arrayDims.put(symbol, size);
+    /**
+     * Allocate an integer array via the following code:
+     * <pre>
+     * symbol = ALLOC( (expr+2) * 2 )
+     * POKEW symbol, expr
+     * </pre>
+     * Note that physical array size is the length + 1 (BASIC array is like that) + 1 (for length).
+     * <pre>
+     * +------+-------+-------+-----+-------+
+     * | size | idx 0 | idx 1 | ... | idx N |
+     * +------+-------+-------+-----+-------+
+     * </pre>
+     */
+    public void allocateIntegerArray(Symbol symbol, Expression size) {
+        var varRef = VariableReference.with(symbol);
+        var bytes = new BinaryExpression(
+                new BinaryExpression(size, IntegerConstant.TWO, "+"),
+                IntegerConstant.TWO, "*");
+        var allocFn = callFunction("alloc", Arrays.asList(bytes));
+        assignStmt(varRef, allocFn);
+        pokeStmt("pokew", varRef, size);
     }
-    public void addDimArray(Symbol symbol, Expression size) {
-        DimStatement dimStatement = new DimStatement(symbol, size);
-        addStatement(dimStatement);
-        arrayDims.put(symbol, size);
+    /**
+     * Allocate a string array via the following code:
+     * <pre>
+     * symbol = ALLOC( expr + 2 )
+     * POKEW symbol, expr
+     * </pre>
+     * Note:
+     * <li>A string has room for the string + 0 terminator + max length byte.
+     * <pre>
+     * +------+---------------------+
+     * | size | characters ... '\0' |
+     * +------+---------------------+
+     * </pre>
+     * <li>A string defaults to 1 character if not DIMmed.
+     */
+    public void allocateStringArray(Symbol symbol, Expression length) {
+        var varRef = VariableReference.with(symbol);
+        var bytes = new BinaryExpression(length, IntegerConstant.TWO, "+");
+        var allocFn = callFunction("alloc", Arrays.asList(bytes));
+        assignStmt(varRef, allocFn);
+        pokeStmt("poke", varRef, length);
+    }
+
+    public void registerDimArray(Symbol symbol, Expression size) {
+        arrayDims.merge(symbol, size, (oldSize, newSize) -> oldSize == null ? newSize : oldSize);
     }
     public Expression getArrayDim(Symbol symbol) {
         if (symbol.type() == Scope.Type.PARAMETER) {

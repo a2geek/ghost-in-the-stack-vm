@@ -55,9 +55,6 @@ public abstract class Visitor {
         else if (statement instanceof CallSubroutine s) {
             visit(s, context);
         }
-        else if (statement instanceof DimStatement s) {
-            visit(s, context);
-        }
         else if (statement instanceof PopStatement s) {
             visit(s, context);
         }
@@ -193,11 +190,6 @@ public abstract class Visitor {
         if (changed) {
             statement.setParameters(exprs);
         }
-    }
-
-    public void visit(DimStatement statement, StatementContext context) {
-        var expr = dispatch(statement.getExpr());
-        expr.ifPresent(statement::setExpr);
     }
 
     public void visit(PopStatement statement, StatementContext context) {

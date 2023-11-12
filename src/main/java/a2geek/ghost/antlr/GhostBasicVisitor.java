@@ -694,7 +694,8 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                 }
                 else {
                     var symbol = model.addArrayVariable(decl.name(), decl.dataType(), decl.dimensions().size());
-                    model.addDimArray(symbol, decl.dimensions().get(0));
+                    model.allocateIntegerArray(symbol, decl.dimensions().get(0));
+                    model.registerDimArray(symbol, decl.dimensions().get(0));
                 }
             }
             else {

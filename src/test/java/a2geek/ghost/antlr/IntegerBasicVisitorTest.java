@@ -3,6 +3,8 @@ package a2geek.ghost.antlr;
 import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.ModelBuilder;
 import a2geek.ghost.model.Scope;
+import a2geek.ghost.model.Symbol;
+import a2geek.ghost.model.expression.VariableReference;
 import a2geek.ghost.model.scope.Program;
 import org.antlr.v4.runtime.CharStreams;
 import org.junit.jupiter.api.Disabled;
@@ -54,10 +56,14 @@ public class IntegerBasicVisitorTest {
 
     @Test
     public void testDim() {
-        // Need to add strings
+        var b = Symbol.variable("B()", Scope.Type.GLOBAL)
+                .dataType(DataType.INTEGER)
+                .dimensions(1)
+                .build();
         expect("10 DIM B(5)")
             .lineNumber(10)
-            .dimStmt("B", constant(5))
+            .assignment("B()", null)
+            .poke("pokew", VariableReference.with(b), constant(5))
             .atEnd();
     }
 

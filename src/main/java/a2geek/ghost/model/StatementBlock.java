@@ -34,6 +34,9 @@ public class StatementBlock {
     public void insertStatement(Statement statement) {
         this.statements.add(0, statement);
     }
+    public void insertStatements(StatementBlock statements) {
+        this.statements.addAll(0, statements.statements);
+    }
     public void addStatement(Statement statement) {
         this.statements.add(statement);
     }
