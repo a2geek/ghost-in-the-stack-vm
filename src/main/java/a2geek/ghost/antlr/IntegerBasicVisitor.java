@@ -123,7 +123,8 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
             visit(ctx.statements());
         } catch (Exception ex) {
             System.out.println(ctx.getText());
-            throw new RuntimeException("Error in line " + lineNumber, ex);
+            var msg = String.format("Error in line %d: %s", lineNumber, ex.getMessage());
+            throw new RuntimeException(msg, ex);
         }
         return null;
     }
