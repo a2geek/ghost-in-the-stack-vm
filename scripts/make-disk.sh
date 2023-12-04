@@ -28,7 +28,11 @@ do
     filename="${filename%.*}"
     filename="${filename//-/}"
     asfilename="${filename}.as"
-    optname="${source/\.${extension}/\.opt}"
+    case "$(uname -s)" in
+      Linux*)   optname="${source/\.${extension}/\.opt}";;
+      Darwin*)  optname="${source/\.${extension}/.opt}";;
+      *)        echo "Unknown OS"; exit 1;;
+    esac
 
     FLAGS="--fix-control-chars"
     [ "${extension}" == "int" ] && FLAGS+=" --integer"
