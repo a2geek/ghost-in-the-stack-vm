@@ -54,9 +54,15 @@ jobs:
       uses: gradle/gradle-build-action@87a9a15658c426a54dd469d4fc7dc1a73ca9d4a6 # v2.10.0
       with:
         arguments: build
+
+    - name: Build all samples
+      run: ./scripts/make-disk.sh
+
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
         name: build-artifacts
-        path: build/libs/GhostBasic-*.jar
+        path: |
+          build/libs/GhostBasic-*.jar
+          disk1.po
         if-no-files-found: error
