@@ -31,7 +31,7 @@ instructive and enjoyable to write.
 ## Getting started
 
 Requirements (for development):
-* This project requires Java 17.
+* This project requires Java 21.
 * make. See `sourceSets.doFirst` in [build.gradle](build.gradle).
 * cc65. See [Makefile](src/main/asm/Makefile).
 
