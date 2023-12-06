@@ -137,15 +137,10 @@ public class CodeGenerationVisitor extends Visitor {
                 }
             }
             case CONSTANT -> {
-                var expr = symbol.defaultValues().get(0);
-                if (expr instanceof IntegerConstant c) {
-                    visit(c);
-                }
-                else if (expr instanceof StringConstant s) {
-                    visit(s);
-                }
-                else {
-                    throw new RuntimeException("unable to generate code for constant expression: " + symbol);
+                switch (symbol.defaultValues().get(0)) {
+                    case IntegerConstant c -> visit(c);
+                    case StringConstant s -> visit(s);
+                    default -> throw new RuntimeException("unable to generate code for constant expression: " + symbol);
                 }
             }
         }

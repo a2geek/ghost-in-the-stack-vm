@@ -38,14 +38,10 @@ public class PrettyPrintVisitor {
     }
 
     public void dispatch(Scope scope) {
-        if (scope instanceof Function func) {
-            formatFunction(func);
-        }
-        else if (scope instanceof Subroutine sub) {
-            formatSubroutine(sub);
-        }
-        else {
-            throw new RuntimeException("unexpected scope type: " + scope.getClass().getName());
+        switch (scope) {
+            case Function func -> formatFunction(func);
+            case Subroutine sub -> formatSubroutine(sub);
+            default -> throw new RuntimeException("unexpected scope type: " + scope.getClass().getName());
         }
     }
 
@@ -89,22 +85,24 @@ public class PrettyPrintVisitor {
         block.getStatements().forEach(this::formatStatement);
     }
     public void formatStatement(Statement statement) {
-        if (statement instanceof LabelStatement label) {
-            sb.append(String.format("%s:", label.getLabel().name()).indent(0));
-        }
-        else if (statement instanceof IfStatement ifStatement) {
-            sb.append(String.format("IF %s THEN", ifStatement.getExpression()).indent(indent));
-            indent += indentIncrement;
-            formatStatementBlock(ifStatement.getTrueStatements());
-            if (ifStatement.hasFalseStatements()) {
-                sb.append("ELSE".indent(indent - indentIncrement));
-                formatStatementBlock(ifStatement.getFalseStatements());
+        switch (statement) {
+            case LabelStatement label -> {
+                sb.append(String.format("%s:", label.getLabel().name()).indent(0));
             }
-            indent -= indentIncrement;
-            sb.append("END IF".indent(indent));
-        }
-        else {
-            sb.append(statement.toString().indent(indent));
+            case IfStatement ifStatement -> {
+                sb.append(String.format("IF %s THEN", ifStatement.getExpression()).indent(indent));
+                indent += indentIncrement;
+                formatStatementBlock(ifStatement.getTrueStatements());
+                if (ifStatement.hasFalseStatements()) {
+                    sb.append("ELSE".indent(indent - indentIncrement));
+                    formatStatementBlock(ifStatement.getFalseStatements());
+                }
+                indent -= indentIncrement;
+                sb.append("END IF".indent(indent));
+            }
+            default -> {
+                sb.append(statement.toString().indent(indent));
+            }
         }
     }
 

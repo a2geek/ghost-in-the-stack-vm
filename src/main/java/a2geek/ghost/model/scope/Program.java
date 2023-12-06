@@ -21,17 +21,15 @@ public class Program extends Scope {
     }
 
     public String getDescriptiveName(Scope scope) {
-        if (scope instanceof a2geek.ghost.model.scope.Function func) {
-            return String.format("%s (FUNC%s)", func.getName(), func.isInline() ? ", INLINE" : "");
-        }
-        else if (scope instanceof Subroutine sub) {
-            return String.format("%s (SUB%s)", sub.getName(), sub.isInline() ? ", INLINE" : "");
-        }
-        else if (scope instanceof Program program) {
-            return String.format("%s (PROGRAM)", program.getName());
-        }
-        else {
-            return String.format("%s (SCOPE)", scope.getName());
-        }
+        return switch (scope) {
+            case a2geek.ghost.model.scope.Function func ->
+                    String.format("%s (FUNC%s)", func.getName(), func.isInline() ? ", INLINE" : "");
+            case Subroutine sub ->
+                    String.format("%s (SUB%s)", sub.getName(), sub.isInline() ? ", INLINE" : "");
+            case Program program ->
+                    String.format("%s (PROGRAM)", program.getName());
+            default ->
+                    String.format("%s (SCOPE)", scope.getName());
+        };
     }
 }

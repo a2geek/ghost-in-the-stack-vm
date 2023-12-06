@@ -12,97 +12,49 @@ import java.util.Optional;
 
 public abstract class Visitor {
     public void dispatch(Scope scope) {
-        if (scope instanceof Program s) {
-            visit(s);
-        }
-        else if (scope instanceof Function s) {
-            visit(s);
-        }
-        else if (scope instanceof Subroutine s) {
-            visit(s);
-        }
-        else {
-            throw new RuntimeException("scope type not supported: " +
+        switch (scope) {
+            case Program s -> visit(s);
+            case Function s -> visit(s);
+            case Subroutine s -> visit(s);
+            default -> throw new RuntimeException("scope type not supported: " +
                     scope.getClass().getName());
         }
     }
     public void dispatch(StatementContext context) {
         var statement = context.currentStatement();
-        if (statement instanceof AssignmentStatement s) {
-            visit(s, context);
-        }
-        else if (statement instanceof EndStatement s) {
-            visit(s, context);
-        }
-        else if (statement instanceof IfStatement s) {
-            visit(s, context);
-        }
-        else if (statement instanceof PokeStatement s) {
-            visit(s, context);
-        }
-        else if (statement instanceof CallStatement s) {
-            visit(s, context);
-        }
-        else if (statement instanceof GotoGosubStatement s) {
-            visit(s, context);
-        }
-        else if (statement instanceof LabelStatement s) {
-            visit(s, context);
-        }
-        else if (statement instanceof ReturnStatement s) {
-            visit(s, context);
-        }
-        else if (statement instanceof CallSubroutine s) {
-            visit(s, context);
-        }
-        else if (statement instanceof PopStatement s) {
-            visit(s, context);
-        }
-        else if (statement instanceof DynamicGotoGosubStatement s) {
-            visit(s, context);
-        }
-        else {
-            throw new RuntimeException("statement type not supported: " +
+        switch (statement) {
+            case AssignmentStatement s -> visit(s, context);
+            case EndStatement s -> visit(s, context);
+            case IfStatement s -> visit(s, context);
+            case PokeStatement s -> visit(s, context);
+            case CallStatement s -> visit(s, context);
+            case GotoGosubStatement s -> visit(s, context);
+            case LabelStatement s -> visit(s, context);
+            case ReturnStatement s -> visit(s, context);
+            case CallSubroutine s -> visit(s, context);
+            case PopStatement s -> visit(s, context);
+            case DynamicGotoGosubStatement s -> visit(s, context);
+            default -> throw new RuntimeException("statement type not supported: " +
                     statement.getClass().getName());
         }
     }
     public Optional<Expression> dispatch(Expression expression) {
-        if (expression == null) {
+        return switch (expression) {
             // This occurs when the expression is optional, such as the RETURN statement.
             // Catching it here instead of testing everywhere else as issues are discovered.
-            return Optional.empty();
-        }
-        else if (expression instanceof BinaryExpression e) {
-            return Optional.ofNullable(visit(e));
-        }
-        else if (expression instanceof VariableReference e) {
-            return Optional.ofNullable(visit(e));
-        }
-        else if (expression instanceof IntegerConstant e) {
-            return Optional.ofNullable(visit(e));
-        }
-        else if (expression instanceof StringConstant e) {
-            return Optional.ofNullable(visit(e));
-        }
-        else if (expression instanceof BooleanConstant e) {
-            return Optional.ofNullable(visit(e));
-        }
-        else if (expression instanceof UnaryExpression e) {
-            return Optional.ofNullable(visit(e));
-        }
-        else if (expression instanceof FunctionExpression e) {
-            return Optional.ofNullable(visit(e));
-        }
-        else if (expression instanceof ArrayLengthFunction e) {
-            return Optional.ofNullable(visit(e));
-        }
-        else if (expression instanceof AddressOfFunction e) {
-            return Optional.ofNullable(visit(e));
-        }
-        else {
-            throw new RuntimeException("expression type not supported: " +
-                    expression.getClass().getName());
-        }
+            case null -> Optional.empty();
+            case BinaryExpression e -> Optional.ofNullable(visit(e));
+            case VariableReference e -> Optional.ofNullable(visit(e));
+            case IntegerConstant e -> Optional.ofNullable(visit(e));
+            case StringConstant e -> Optional.ofNullable(visit(e));
+            case BooleanConstant e -> Optional.ofNullable(visit(e));
+            case UnaryExpression e -> Optional.ofNullable(visit(e));
+            case FunctionExpression e -> Optional.ofNullable(visit(e));
+            case ArrayLengthFunction e -> Optional.ofNullable(visit(e));
+            case AddressOfFunction e -> Optional.ofNullable(visit(e));
+            default -> throw new RuntimeException("expression type not supported: " +
+                            expression.getClass().getName());
+        };
     }
 
     public void dispatchAll(StatementBlock block) {
