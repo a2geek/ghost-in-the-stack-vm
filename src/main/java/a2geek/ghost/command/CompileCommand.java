@@ -89,6 +89,9 @@ public class CompileCommand implements Callable<Integer> {
     @Option(names = { "-tl", "--target-code-listing" }, description = "create listing file")
     private Optional<String> targetCodeListing;
 
+    @Option(names = { "--symbols" }, description = "dump symbol table to file")
+    private Optional<String> symbolTableFile;
+
     public static String convertControlCharacterMarkers(String value) {
         Pattern pattern = Pattern.compile("<CTRL-(.)>", Pattern.CASE_INSENSITIVE);
         Matcher matcher = pattern.matcher(value);
@@ -214,6 +217,10 @@ public class CompileCommand implements Callable<Integer> {
             }
         });
 
+        symbolTableFile.ifPresent(filename -> {
+            saveSymbolTable(program, filename);
+        });
+
         saveAsAppleSingle(out.toByteArray());
     }
 
@@ -232,6 +239,24 @@ public class CompileCommand implements Callable<Integer> {
                 .dataFork(baos.toByteArray())
                 .build()
                 .save(outputFile);
+    }
+
+
+    public void saveSymbolTable(Program program, String filename) {
+        var fmt = "| %-20.20s | %-10.10s | %-10.10s | %-10.10s | %-20.20s | %4s | %-20.20s |\n";
+        try (PrintWriter pw = new PrintWriter(filename)) {
+            pw.printf(fmt, "Name", "SymType", "DeclType", "DataType", "Scope", "DIMs", "Default");
+            program.getLocalSymbols().forEach(symbol -> {
+                pw.printf(fmt, symbol.name(), symbol.type(), symbol.declarationType(), symbol.dataType(),
+                        "MAIN", symbol.numDimensions(), ifNull(symbol.defaultValues(),"-none-"));
+            });
+        }
+        catch (IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
+    }
+    private String ifNull(Object value, String defaultValue) {
+        return value == null ? defaultValue : value.toString();
     }
 
     private enum Language {
