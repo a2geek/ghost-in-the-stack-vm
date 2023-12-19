@@ -1,10 +1,13 @@
 package a2geek.ghost.model;
 
 public enum SymbolType {
-    VARIABLE,
+    CONSTANT,
+    FUNCTION,
+    INTRINSIC,
+    LABEL,
     PARAMETER,
     RETURN_VALUE,
-    INTRINSIC,
-    CONSTANT,
-    LABEL
+    SUBROUTINE,
+    VARIABLE
+
 }

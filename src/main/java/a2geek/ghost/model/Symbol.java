@@ -1,11 +1,16 @@
 package a2geek.ghost.model;
 
+import a2geek.ghost.model.scope.Function;
+import a2geek.ghost.model.scope.Subroutine;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
 
-public record Symbol(String name, SymbolType symbolType, DeclarationType declarationType, List<Expression> defaultValues, DataType dataType, int numDimensions) {
+public record Symbol(String name, SymbolType symbolType, DeclarationType declarationType,
+                     List<Expression> defaultValues, DataType dataType, int numDimensions,
+                     Scope scope) {
     public boolean hasDefaultValue(int size) {
         return defaultValues != null && defaultValues.size() == size;
     }
@@ -19,6 +24,14 @@ public record Symbol(String name, SymbolType symbolType, DeclarationType declara
     public static Builder constant(String name, Expression expr) {
         return new Builder(name, SymbolType.CONSTANT).defaultValues(expr).dataType(expr.getType());
     }
+    public static Builder scope(Scope scope) {
+        var symbolType = switch (scope) {
+            case Function f -> SymbolType.FUNCTION;
+            case Subroutine s -> SymbolType.SUBROUTINE;
+            default -> throw new RuntimeException("unexpected type of scope " + scope.getClass().getName());
+        };
+        return new Builder(scope.getName(), symbolType).declarationType(DeclarationType.GLOBAL).scope(scope);
+    }
     public static class Builder {
         private String name;
         private SymbolType symbolType;
@@ -26,6 +39,7 @@ public record Symbol(String name, SymbolType symbolType, DeclarationType declara
         private DataType dataType;
         private int numDimensions = 0;  // not an array!
         private List<Expression> defaultValues;
+        private Scope scope;
 
         Builder(String name, SymbolType symbolType) {
             Objects.requireNonNull(name);
@@ -79,6 +93,10 @@ public record Symbol(String name, SymbolType symbolType, DeclarationType declara
             this.numDimensions = numDimensions;
             return this;
         }
+        public Builder scope(Scope scope) {
+            this.scope = scope;
+            return this;
+        }
         public boolean equals(Symbol symbol) {
             if (symbol == null) return false;
             return Objects.equals(this.name, symbol.name)
@@ -92,7 +110,7 @@ public record Symbol(String name, SymbolType symbolType, DeclarationType declara
             if (defaultValues != null && defaultValues.size() > 1 && numDimensions == 0) {
                 throw new RuntimeException("expecting array but no dimensions assigned " + name);
             }
-            return new Symbol(name, symbolType, declarationType, defaultValues, dataType, numDimensions);
+            return new Symbol(name, symbolType, declarationType, defaultValues, dataType, numDimensions, scope);
         }
     }
 

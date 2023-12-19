@@ -13,6 +13,8 @@ import java.io.UncheckedIOException;
 import java.util.*;
 import java.util.function.Function;
 
+import static a2geek.ghost.model.Symbol.in;
+
 /**
  * A shared component to help building the BASIC model between language variants.
  */
@@ -206,8 +208,8 @@ public class ModelBuilder {
             Program library = ParseUtil.basicToModel(CharStreams.fromStream(inputStream), libraryModel);
             // at this time a library is simply a collection of subroutines and functions.
             boolean noStatements = library.getStatements().isEmpty();
-            boolean onlyConstants = library.getLocalSymbols().stream().noneMatch(ref -> ref.symbolType() != SymbolType.CONSTANT);
-            if (!noStatements || !onlyConstants) {
+            boolean noVariables = library.findAllLocalScope(in(SymbolType.VARIABLE)).isEmpty();
+            if (!noStatements || !noVariables) {
                 throw new RuntimeException("a library may only contain subroutines, functions, and constants");
             }
             // add subroutines and functions to our program!

@@ -9,13 +9,14 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static a2geek.ghost.model.Symbol.in;
+
 public class Scope extends StatementBlock {
     private Function<String,String> caseStrategy;
     private String name;
     private Scope parent;
     private DeclarationType defaultDeclarationType;
     private List<Symbol> symbols = new ArrayList<>();
-    private List<Scope> scopes = new ArrayList<>();
 
     public Scope(Function<String,String> caseStrategy, String name) {
         this.caseStrategy = caseStrategy;
@@ -31,7 +32,8 @@ public class Scope extends StatementBlock {
 
     @Override
     public boolean isEmpty() {
-        return super.isEmpty() && symbols.isEmpty() && scopes.isEmpty();
+        // no code and no symbols
+        return super.isEmpty() && symbols.isEmpty();
     }
 
     public String getName() {
@@ -96,14 +98,21 @@ public class Scope extends StatementBlock {
         Consumer<Scope> alreadyExists = s -> {
             throw new RuntimeException(s.getName() + " already exists");
         };
-        Runnable addNew = () -> this.scopes.add(scope);
+        Runnable addNew = () -> addLocalSymbol(Symbol.scope(scope));
         findLocalScope(scope.getName()).ifPresentOrElse(alreadyExists, addNew);
     }
     public List<Scope> getScopes() {
-        return scopes;
+        return symbols.stream()
+                .filter(in(SymbolType.FUNCTION, SymbolType.SUBROUTINE))
+                .map(Symbol::scope)
+                .toList();
     }
     public Optional<Scope> findLocalScope(String name) {
-        return scopes.stream().filter(s -> s.getName().equals(name)).findFirst();
+        return symbols.stream()
+                .filter(in(SymbolType.FUNCTION, SymbolType.SUBROUTINE))
+                .filter(s -> s.name().equals(name))
+                .map(Symbol::scope)
+                .findFirst();
     }
     public Optional<Scope> findScope(String name) {
         var scope = findLocalScope(name);
