@@ -248,7 +248,7 @@ public class CompileCommand implements Callable<Integer> {
             pw.printf(fmt, "Name", "SymType", "DeclType", "DataType", "Scope", "DIMs", "Default");
             program.getLocalSymbols().forEach(symbol -> {
                 pw.printf(fmt, symbol.name(), symbol.type(), symbol.declarationType(), symbol.dataType(),
-                        "MAIN", symbol.numDimensions(), ifNull(symbol.defaultValues(),"-none-"));
+                        program.getName(), symbol.numDimensions(), ifNull(symbol.defaultValues(),"-none-"));
             });
         }
         catch (IOException ex) {
