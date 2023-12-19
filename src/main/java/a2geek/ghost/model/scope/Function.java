@@ -8,6 +8,8 @@ import a2geek.ghost.model.SymbolType;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static a2geek.ghost.model.Symbol.in;
+
 public class Function extends Subroutine {
     private DataType dataType;
     private String exitLabel;
@@ -33,7 +35,7 @@ public class Function extends Subroutine {
     @Override
     public String toString() {
         return String.format("FUNCTION %s(%s) : %s : END FUNCTION", getName(),
-                findByType(SymbolType.PARAMETER).stream()
+                findAllLocalScope(in(SymbolType.PARAMETER)).stream()
                         .map(Symbol::name)
                         .collect(Collectors.joining(", ")),
                 statementsAsString());

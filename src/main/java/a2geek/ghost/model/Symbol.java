@@ -121,4 +121,7 @@ public record Symbol(String name, SymbolType symbolType, DeclarationType declara
     public static Predicate<Symbol> is(DeclarationType declarationType) {
         return symbol -> declarationType == symbol.declarationType();
     }
+    public static Predicate<Symbol> named(String name) {
+        return symbol -> symbol.name().equals(name);
+    }
 }

@@ -1,22 +1,21 @@
 package a2geek.ghost.model;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import static a2geek.ghost.model.Symbol.in;
+import static a2geek.ghost.model.Symbol.named;
 
 public class Scope extends StatementBlock {
     private Function<String,String> caseStrategy;
     private String name;
     private Scope parent;
     private DeclarationType defaultDeclarationType;
-    private List<Symbol> symbols = new ArrayList<>();
+    private List<Symbol> symbolTable = new ArrayList<>();
 
     public Scope(Function<String,String> caseStrategy, String name) {
         this.caseStrategy = caseStrategy;
@@ -33,7 +32,7 @@ public class Scope extends StatementBlock {
     @Override
     public boolean isEmpty() {
         // no code and no symbols
-        return super.isEmpty() && symbols.isEmpty();
+        return super.isEmpty() && symbolTable.isEmpty();
     }
 
     public String getName() {
@@ -46,7 +45,7 @@ public class Scope extends StatementBlock {
     }
 
     public List<Symbol> getLocalSymbols() {
-        return symbols;
+        return symbolTable;
     }
     public Symbol addLocalSymbol(Symbol.Builder builder) {
         var fixedName = caseStrategy.apply(builder.name());
@@ -54,7 +53,7 @@ public class Scope extends StatementBlock {
         if (builder.declarationType() == null) {
             builder.declarationType(defaultDeclarationType);
         }
-        return findLocalSymbols(builder.name())
+        return findFirstLocalScope(named(builder.name()))
             .map(symbol -> {
                 if (builder.equals(symbol)) {
                     return symbol;
@@ -64,34 +63,24 @@ public class Scope extends StatementBlock {
             })
             .orElseGet(() -> {
                 var symbol = builder.build();
-                symbols.add(symbol);
+                symbolTable.add(symbol);
                 return symbol;
             });
     }
 
-    public Optional<Symbol> findLocalSymbols(String name) {
-        var fixedName = caseStrategy.apply(name);
-        return symbols.stream().filter(r -> fixedName.equals(r.name())).findFirst();
+    public Optional<Symbol> findFirst(Predicate<Symbol> condition) {
+        return findFirstLocalScope(condition).or(() -> {
+            if (parent != null) {
+                return parent.findFirst(condition);
+            }
+            return Optional.empty();
+        });
     }
-    public Optional<Symbol> findSymbol(String name) {
-        var fixedName = caseStrategy.apply(name);
-        var found = findLocalSymbols(fixedName);
-        if (found.isPresent()) {
-            return found;
-        }
-        if (parent != null) {
-            return parent.findSymbol(fixedName);
-        }
-        return Optional.empty();
-    }
-    public List<Symbol> findByType(SymbolType... types) {
-        final var typesList = Arrays.asList(types);
-        return symbols.stream()
-                .filter(ref -> typesList.contains(ref.symbolType()))
-                .collect(Collectors.toList());
+    public Optional<Symbol> findFirstLocalScope(Predicate<Symbol> condition) {
+        return symbolTable.stream().filter(condition).findFirst();
     }
     public List<Symbol> findAllLocalScope(Predicate<Symbol> condition) {
-        return symbols.stream().filter(condition).toList();
+        return symbolTable.stream().filter(condition).toList();
     }
 
     public void addScope(Scope scope) {
@@ -102,13 +91,13 @@ public class Scope extends StatementBlock {
         findLocalScope(scope.getName()).ifPresentOrElse(alreadyExists, addNew);
     }
     public List<Scope> getScopes() {
-        return symbols.stream()
+        return symbolTable.stream()
                 .filter(in(SymbolType.FUNCTION, SymbolType.SUBROUTINE))
                 .map(Symbol::scope)
                 .toList();
     }
     public Optional<Scope> findLocalScope(String name) {
-        return symbols.stream()
+        return symbolTable.stream()
                 .filter(in(SymbolType.FUNCTION, SymbolType.SUBROUTINE))
                 .filter(s -> s.name().equals(name))
                 .map(Symbol::scope)

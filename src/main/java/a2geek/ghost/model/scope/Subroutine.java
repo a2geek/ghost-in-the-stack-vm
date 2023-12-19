@@ -8,6 +8,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static a2geek.ghost.model.Symbol.in;
+
 public class Subroutine extends Scope {
     private boolean inline;
 
@@ -27,7 +29,7 @@ public class Subroutine extends Scope {
     @Override
     public String toString() {
         return String.format("SUB %s(%s) : %s : END SUB", getName(),
-                findByType(SymbolType.PARAMETER).stream()
+                findAllLocalScope(in(SymbolType.PARAMETER)).stream()
                         .map(Symbol::name)
                         .collect(Collectors.joining(", ")),
                 statementsAsString());

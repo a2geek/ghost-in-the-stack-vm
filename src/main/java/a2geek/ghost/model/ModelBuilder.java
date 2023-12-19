@@ -14,6 +14,7 @@ import java.util.*;
 import java.util.function.Function;
 
 import static a2geek.ghost.model.Symbol.in;
+import static a2geek.ghost.model.Symbol.named;
 
 /**
  * A shared component to help building the BASIC model between language variants.
@@ -135,7 +136,7 @@ public class ModelBuilder {
     }
 
     public Optional<Symbol> findSymbol(String name) {
-        return this.scope.peek().findSymbol(fixCase(name));
+        return this.scope.peek().findFirst(named(fixCase(name)));
     }
     public Symbol addVariable(String name, DataType dataType) {
         return this.scope.peek().addLocalSymbol(Symbol.variable(name, SymbolType.VARIABLE).dataType(dataType));
@@ -265,7 +266,7 @@ public class ModelBuilder {
         }
         if (scope.isPresent()) {
             if (scope.get() instanceof a2geek.ghost.model.scope.Function fn) {
-                var requiredParameterCount = fn.findByType(SymbolType.PARAMETER).size();
+                var requiredParameterCount = fn.findAllLocalScope(in(SymbolType.PARAMETER)).size();
                 if (params.size() != requiredParameterCount) {
                     var msg = String.format("function '%s' requires %d parameters", id, requiredParameterCount);
                     throw new RuntimeException(msg);

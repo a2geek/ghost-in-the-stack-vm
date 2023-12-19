@@ -276,7 +276,7 @@ public class CodeGenerationVisitor extends Visitor {
     public void visit(ReturnStatement statement, StatementContext context) {
         boolean hasReturnValue = statement.getExpr() != null;
         if (this.frames.peek().scope() instanceof Function f) {
-            var refs = this.frames.peek().scope().findByType(SymbolType.RETURN_VALUE);
+            var refs = this.frames.peek().scope().findAllLocalScope(in(SymbolType.RETURN_VALUE));
             if (refs.size() == 1 && hasReturnValue) {
                 assignment(new VariableReference(refs.get(0)), statement.getExpr());
             } else if (refs.size() != 0 || hasReturnValue) {
@@ -301,12 +301,12 @@ public class CodeGenerationVisitor extends Visitor {
             Map<Symbol,Expression> map = new HashMap<>();
             inlineVariables.push(map);
             if (sub.isInline()) {
-                var parameters = sub.findByType(SymbolType.PARAMETER);
+                var parameters = sub.findAllLocalScope(in(SymbolType.PARAMETER));
                 if (parameters.size() != statement.getParameters().size()) {
                     throw new RuntimeException(String.format("parameter size mismatch for call to '%s'", statement.getName()));
                 }
                 // Subroutine parameters are REVERSED (for stack placement), so taking that into account:
-                Collections.reverse(parameters);
+                parameters = parameters.reversed();
                 for (int i=0; i<parameters.size(); i++) {
                     var param = parameters.get(i);
                     var value = statement.getParameters().get(i);

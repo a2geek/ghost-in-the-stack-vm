@@ -46,12 +46,12 @@ public record Frame(
         // frame overhead: return address (2 bytes) + stack index (1 byte)
         varOffset += 3;
         // parameters are above the frame details
-        for (var ref : subroutine.findByType(SymbolType.PARAMETER)) {
+        for (var ref : subroutine.findAllLocalScope(in(SymbolType.PARAMETER))) {
             varOffsets.put(ref, varOffset);
             varOffset += 2;
         }
         if (subroutine instanceof Function fn) {
-            var refs = fn.findByType(SymbolType.RETURN_VALUE);
+            var refs = fn.findAllLocalScope(in(SymbolType.RETURN_VALUE));
             if (refs.size() != 1) {
                 throw new RuntimeException("Expecting function to have 1 return value but have " + refs.size());
             }

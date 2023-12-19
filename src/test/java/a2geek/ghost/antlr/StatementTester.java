@@ -11,6 +11,8 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
+import static a2geek.ghost.model.Symbol.in;
+import static a2geek.ghost.model.Symbol.named;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.matchesPattern;
 import static org.junit.jupiter.api.Assertions.*;
@@ -231,7 +233,7 @@ public abstract class StatementTester {
 
     /** Validate that all parameters are in the correct order and have correct name and symbolType. */
     void checkParameters(Scope scope, List<Symbol> parameters) {
-        List<Symbol> symbols = scope.findByType(SymbolType.PARAMETER);
+        List<Symbol> symbols = scope.findAllLocalScope(in(SymbolType.PARAMETER));
         assertEquals(parameters.size(), symbols.size());
         for (int i=0; i<parameters.size(); i++) {
             Symbol symbol = symbols.get(i);
@@ -293,7 +295,7 @@ public abstract class StatementTester {
         }
         @Override
         public Optional<Symbol> findSymbol(String name) {
-            return scope.findSymbol(name);
+            return scope.findFirst(named(name));
         }
         @Override
         public List<Statement> getStatements() {
