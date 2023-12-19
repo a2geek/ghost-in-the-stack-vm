@@ -49,6 +49,9 @@ public class Scope extends StatementBlock {
     public Symbol addLocalSymbol(Symbol.Builder builder) {
         var fixedName = caseStrategy.apply(builder.name());
         builder.name(fixedName);
+        if (builder.declarationType() == null) {
+            builder.declarationType(defaultDeclarationType);
+        }
         return findLocalSymbols(builder.name())
             .map(symbol -> {
                 if (builder.equals(symbol)) {
@@ -58,9 +61,6 @@ public class Scope extends StatementBlock {
                 throw new RuntimeException(msg);
             })
             .orElseGet(() -> {
-                if (builder.declarationType() == null) {
-                    builder.declarationType(defaultDeclarationType);
-                }
                 var symbol = builder.build();
                 symbols.add(symbol);
                 return symbol;
