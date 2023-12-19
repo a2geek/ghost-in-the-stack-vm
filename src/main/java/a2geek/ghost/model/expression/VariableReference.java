@@ -2,8 +2,8 @@ package a2geek.ghost.model.expression;
 
 import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.Expression;
-import a2geek.ghost.model.Scope;
 import a2geek.ghost.model.Symbol;
+import a2geek.ghost.model.SymbolType;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -49,7 +49,7 @@ public class VariableReference implements Expression {
 
     @Override
     public boolean isConstant() {
-        return symbol.type() == Scope.Type.CONSTANT;
+        return symbol.symbolType() == SymbolType.CONSTANT;
     }
 
     @Override

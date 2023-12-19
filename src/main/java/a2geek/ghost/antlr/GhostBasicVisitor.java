@@ -738,7 +738,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         Symbol symbol = switch (id.toLowerCase()) {
             case Intrinsic.CPU_REGISTER_A,
                     Intrinsic.CPU_REGISTER_X,
-                    Intrinsic.CPU_REGISTER_Y -> model.addVariable(id, Scope.Type.INTRINSIC, DataType.INTEGER);
+                    Intrinsic.CPU_REGISTER_Y -> model.addVariable(id, SymbolType.INTRINSIC, DataType.INTEGER);
             default -> {
                 if (id.contains(".")) {
                     throw new RuntimeException("invalid identifier: " + id);
@@ -770,7 +770,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             if (params.size() > 0) {
                 throw new RuntimeException("Intrinsic reference takes no arguments: " + id);
             }
-            Symbol symbol = model.addVariable(id, Scope.Type.INTRINSIC, DataType.INTEGER);
+            Symbol symbol = model.addVariable(id, SymbolType.INTRINSIC, DataType.INTEGER);
             return new VariableReference(symbol);
         }
 
@@ -860,7 +860,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             if (!defaultValues().isEmpty()) {
                 throw new RuntimeException("parameters cannot have default values");
             }
-            return Symbol.variable(name, Scope.Type.PARAMETER)
+            return Symbol.variable(name, SymbolType.PARAMETER)
                     .dataType(dataType)
                     .dimensions(dimensions.size());
         }

@@ -2,6 +2,7 @@ package a2geek.ghost.model.scope;
 
 import a2geek.ghost.model.Scope;
 import a2geek.ghost.model.Symbol;
+import a2geek.ghost.model.SymbolType;
 
 import java.util.Collections;
 import java.util.List;
@@ -26,7 +27,7 @@ public class Subroutine extends Scope {
     @Override
     public String toString() {
         return String.format("SUB %s(%s) : %s : END SUB", getName(),
-                findByType(Type.PARAMETER).stream()
+                findByType(SymbolType.PARAMETER).stream()
                         .map(Symbol::name)
                         .collect(Collectors.joining(", ")),
                 statementsAsString());

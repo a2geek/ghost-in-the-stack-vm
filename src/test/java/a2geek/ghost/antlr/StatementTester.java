@@ -43,22 +43,22 @@ public abstract class StatementTester {
         return String.format("L%d_", lineNumber);
     }
 
-    public StatementTester hasSymbol(String name, DataType dataType, Scope.Type scopeType, DeclarationType declarationType) {
+    public StatementTester hasSymbol(String name, DataType dataType, SymbolType scopeType, DeclarationType declarationType) {
         name = fixCase(name);
         var symbol = findSymbol(name);
         assertTrue(symbol.isPresent(), "variable not found: " + name);
         assertEquals(dataType, symbol.get().dataType(), name);
-        assertEquals(scopeType, symbol.get().type(), name);
+        assertEquals(scopeType, symbol.get().symbolType(), name);
         assertEquals(declarationType, symbol.get().declarationType(), name);
         return this;
     }
 
-    public StatementTester hasArrayReference(String name, DataType dataType, Scope.Type scopeType, DeclarationType declarationType, int numDimensions) {
+    public StatementTester hasArrayReference(String name, DataType dataType, SymbolType scopeType, DeclarationType declarationType, int numDimensions) {
         name = fixCase(name);
         var symbol = findSymbol(fixArrayName(name));
         assertTrue(symbol.isPresent(), "array variable not found: " + name);
         assertEquals(dataType, symbol.get().dataType(), name);
-        assertEquals(scopeType, symbol.get().type(), name);
+        assertEquals(scopeType, symbol.get().symbolType(), name);
         assertEquals(declarationType, symbol.get().declarationType(), name);
         assertEquals(numDimensions, symbol.get().numDimensions());
         return this;
@@ -68,7 +68,7 @@ public abstract class StatementTester {
         return hasSymbol(expr.getSymbol());
     }
     public StatementTester hasSymbol(Symbol symbol) {
-        return hasSymbol(symbol.name(), symbol.dataType(), symbol.type(), symbol.declarationType());
+        return hasSymbol(symbol.name(), symbol.dataType(), symbol.symbolType(), symbol.declarationType());
     }
 
     public void fail(String message) {
@@ -229,9 +229,9 @@ public abstract class StatementTester {
         return this;
     }
 
-    /** Validate that all parameters are in the correct order and have correct name and type. */
+    /** Validate that all parameters are in the correct order and have correct name and symbolType. */
     void checkParameters(Scope scope, List<Symbol> parameters) {
-        List<Symbol> symbols = scope.findByType(Scope.Type.PARAMETER);
+        List<Symbol> symbols = scope.findByType(SymbolType.PARAMETER);
         assertEquals(parameters.size(), symbols.size());
         for (int i=0; i<parameters.size(); i++) {
             Symbol symbol = symbols.get(i);

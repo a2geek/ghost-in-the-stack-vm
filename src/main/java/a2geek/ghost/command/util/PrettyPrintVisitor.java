@@ -1,9 +1,6 @@
 package a2geek.ghost.command.util;
 
-import a2geek.ghost.model.DataType;
-import a2geek.ghost.model.Scope;
-import a2geek.ghost.model.Statement;
-import a2geek.ghost.model.StatementBlock;
+import a2geek.ghost.model.*;
 import a2geek.ghost.model.scope.Function;
 import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.scope.Subroutine;
@@ -69,7 +66,7 @@ public class PrettyPrintVisitor {
     public void formatScope(Scope scope) {
         scope.getLocalSymbols().stream()
                 // Only variables
-                .filter(s -> s.type() == Scope.Type.VARIABLE)
+                .filter(s -> s.symbolType() == SymbolType.VARIABLE)
                 // Strings should have their own DIM statement at this time
                 .filter(s -> s.dataType() != DataType.STRING)
                 // Arrays should have their own DIM statement
@@ -108,7 +105,7 @@ public class PrettyPrintVisitor {
 
     public String formatParameters(Scope scope) {
         return scope.getLocalSymbols().stream()
-                .filter(s -> s.type() == Scope.Type.PARAMETER)
+                .filter(s -> s.symbolType() == SymbolType.PARAMETER)
                 .map(s -> String.format("%s AS %s", s.name(), s.dataType()))
                 .collect(Collectors.joining(", "));
     }

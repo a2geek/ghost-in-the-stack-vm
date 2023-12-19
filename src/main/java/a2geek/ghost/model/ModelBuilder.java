@@ -136,21 +136,21 @@ public class ModelBuilder {
         return this.scope.peek().findSymbol(fixCase(name));
     }
     public Symbol addVariable(String name, DataType dataType) {
-        return this.scope.peek().addLocalSymbol(Symbol.variable(name, Scope.Type.VARIABLE).dataType(dataType));
+        return this.scope.peek().addLocalSymbol(Symbol.variable(name, SymbolType.VARIABLE).dataType(dataType));
     }
-    public Symbol addVariable(String name, Scope.Type type, DataType dataType) {
+    public Symbol addVariable(String name, SymbolType type, DataType dataType) {
         return this.scope.peek().addLocalSymbol(Symbol.variable(name, type).dataType(dataType));
     }
     public Symbol addArrayVariable(String name, DataType dataType, int numDimensions) {
         return this.scope.peek().addLocalSymbol(
-                Symbol.variable(fixArrayName(name), Scope.Type.VARIABLE)
+                Symbol.variable(fixArrayName(name), SymbolType.VARIABLE)
                       .dataType(dataType)
                       .dimensions(numDimensions));
     }
     public Symbol addArrayDefaultVariable(String name, DataType dataType, int numDimensions,
                                           List<Expression> defaultValues) {
         return this.scope.peek().addLocalSymbol(
-            Symbol.variable(fixArrayName(name), Scope.Type.VARIABLE)
+            Symbol.variable(fixArrayName(name), SymbolType.VARIABLE)
                 .dataType(dataType)
                 .dimensions(numDimensions)
                 .defaultValues(defaultValues));
@@ -163,7 +163,7 @@ public class ModelBuilder {
         labelNumber+= 1;    // just reusing the counter
         var name = String.format("_temp%d", labelNumber);
         return this.scope.peek().addLocalSymbol(
-                Symbol.variable(name, Scope.Type.VARIABLE)
+                Symbol.variable(name, SymbolType.VARIABLE)
                       .dataType(dataType));
     }
     /** Generate labels for code. The multiple values is to allow grouping of labels (same label number) for complex structures. */
@@ -206,7 +206,7 @@ public class ModelBuilder {
             Program library = ParseUtil.basicToModel(CharStreams.fromStream(inputStream), libraryModel);
             // at this time a library is simply a collection of subroutines and functions.
             boolean noStatements = library.getStatements().isEmpty();
-            boolean onlyConstants = library.getLocalSymbols().stream().noneMatch(ref -> ref.type() != Scope.Type.CONSTANT);
+            boolean onlyConstants = library.getLocalSymbols().stream().noneMatch(ref -> ref.symbolType() != SymbolType.CONSTANT);
             if (!noStatements || !onlyConstants) {
                 throw new RuntimeException("a library may only contain subroutines, functions, and constants");
             }
@@ -263,7 +263,7 @@ public class ModelBuilder {
         }
         if (scope.isPresent()) {
             if (scope.get() instanceof a2geek.ghost.model.scope.Function fn) {
-                var requiredParameterCount = fn.findByType(Scope.Type.PARAMETER).size();
+                var requiredParameterCount = fn.findByType(SymbolType.PARAMETER).size();
                 if (params.size() != requiredParameterCount) {
                     var msg = String.format("function '%s' requires %d parameters", id, requiredParameterCount);
                     throw new RuntimeException(msg);
@@ -305,7 +305,7 @@ public class ModelBuilder {
         // FIXME? naming is really awkward due to naming conflicts!
         a2geek.ghost.model.scope.Function func =
             new a2geek.ghost.model.scope.Function(scope.peek(),
-                Symbol.variable(name, Scope.Type.RETURN_VALUE).dataType(returnType), params);
+                Symbol.variable(name, SymbolType.RETURN_VALUE).dataType(returnType), params);
         addScope(func);
 
         pushScope(func);
@@ -399,7 +399,7 @@ public class ModelBuilder {
         arrayDims.merge(symbol, size, (oldSize, newSize) -> oldSize == null ? newSize : oldSize);
     }
     public Expression getArrayDim(Symbol symbol) {
-        if (symbol.type() == Scope.Type.PARAMETER) {
+        if (symbol.symbolType() == SymbolType.PARAMETER) {
             // Expression has only one required method to implement at this time; may need to adjust in future!
             return symbol::dataType;
         } else if (!arrayDims.containsKey(symbol)) {

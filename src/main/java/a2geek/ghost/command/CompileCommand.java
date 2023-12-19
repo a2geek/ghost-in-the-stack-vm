@@ -247,7 +247,7 @@ public class CompileCommand implements Callable<Integer> {
         try (PrintWriter pw = new PrintWriter(filename)) {
             pw.printf(fmt, "Name", "SymType", "DeclType", "DataType", "Scope", "DIMs", "Default");
             program.getLocalSymbols().forEach(symbol -> {
-                pw.printf(fmt, symbol.name(), symbol.type(), symbol.declarationType(), symbol.dataType(),
+                pw.printf(fmt, symbol.name(), symbol.symbolType(), symbol.declarationType(), symbol.dataType(),
                         program.getName(), symbol.numDimensions(), ifNull(symbol.defaultValues(),"-none-"));
             });
         }

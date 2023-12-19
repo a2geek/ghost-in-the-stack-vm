@@ -62,7 +62,7 @@ public class CodeGenerationVisitor extends Visitor {
 
     public void setupDefaultArrayValues(Scope scope) {
         scope.getLocalSymbols().forEach(symbol -> {
-            if (symbol.defaultValues() == null || symbol.type() == Scope.Type.CONSTANT) {
+            if (symbol.defaultValues() == null || symbol.symbolType() == SymbolType.CONSTANT) {
                 return;
             }
             var dataType = symbol.dataType();
@@ -87,7 +87,7 @@ public class CodeGenerationVisitor extends Visitor {
                 code.emit(Opcode.LOADA, actual);
                 emitStore(symbol);
             } else {
-                throw new RuntimeException("unsupported symbol array with data type of " + dataType);
+                throw new RuntimeException("unsupported symbol array with data symbolType of " + dataType);
             }
         });
     }
@@ -124,12 +124,12 @@ public class CodeGenerationVisitor extends Visitor {
             return;
         }
         var symbol = var.getSymbol();
-        switch (symbol.type()) {
+        switch (symbol.symbolType()) {
             case VARIABLE, PARAMETER, RETURN_VALUE -> {
                 switch (symbol.declarationType()) {
                     case LOCAL -> this.code.emit(Opcode.LOCAL_LOAD, frameOffset(symbol));
                     case GLOBAL -> this.code.emit(Opcode.GLOBAL_LOAD, frameOffset(symbol));
-                    default -> throw new RuntimeException("expecting declaration type but it was: " + symbol.declarationType());
+                    default -> throw new RuntimeException("expecting declaration symbolType but it was: " + symbol.declarationType());
                 }
             }
             case INTRINSIC -> {
@@ -159,12 +159,12 @@ public class CodeGenerationVisitor extends Visitor {
             return;
         }
         var symbol = var.getSymbol();
-        switch (symbol.type()) {
+        switch (symbol.symbolType()) {
             case VARIABLE, PARAMETER, RETURN_VALUE -> {
                 switch (symbol.declarationType()) {
                     case LOCAL -> this.code.emit(Opcode.LOCAL_STORE, frameOffset(symbol));
                     case GLOBAL -> this.code.emit(Opcode.GLOBAL_STORE, frameOffset(symbol));
-                    default -> throw new RuntimeException("expecting declaration type but it was: " + symbol.declarationType());
+                    default -> throw new RuntimeException("expecting declaration symbolType but it was: " + symbol.declarationType());
                 }
             }
             case INTRINSIC -> {
@@ -276,7 +276,7 @@ public class CodeGenerationVisitor extends Visitor {
     public void visit(ReturnStatement statement, StatementContext context) {
         boolean hasReturnValue = statement.getExpr() != null;
         if (this.frames.peek().scope() instanceof Function f) {
-            var refs = this.frames.peek().scope().findByType(Scope.Type.RETURN_VALUE);
+            var refs = this.frames.peek().scope().findByType(SymbolType.RETURN_VALUE);
             if (refs.size() == 1 && hasReturnValue) {
                 assignment(new VariableReference(refs.get(0)), statement.getExpr());
             } else if (refs.size() != 0 || hasReturnValue) {
@@ -301,7 +301,7 @@ public class CodeGenerationVisitor extends Visitor {
             Map<Symbol,Expression> map = new HashMap<>();
             inlineVariables.push(map);
             if (sub.isInline()) {
-                var parameters = sub.findByType(Scope.Type.PARAMETER);
+                var parameters = sub.findByType(SymbolType.PARAMETER);
                 if (parameters.size() != statement.getParameters().size()) {
                     throw new RuntimeException(String.format("parameter size mismatch for call to '%s'", statement.getName()));
                 }
@@ -341,7 +341,7 @@ public class CodeGenerationVisitor extends Visitor {
             // We are already inlining this, so do not generate code.
             return;
         }
-        var hasLocalScope = subroutine.findAllLocalScope(is(DeclarationType.LOCAL).and(in(Scope.Type.VARIABLE, Scope.Type.PARAMETER))).size() != 0;
+        var hasLocalScope = subroutine.findAllLocalScope(is(DeclarationType.LOCAL).and(in(SymbolType.VARIABLE, SymbolType.PARAMETER))).size() != 0;
         var frame = frames.push(Frame.create(subroutine));
         code.emit(subroutine.getName());
         if (hasLocalScope) code.emit(Opcode.LOCAL_RESERVE, frame.localSize());
@@ -356,7 +356,7 @@ public class CodeGenerationVisitor extends Visitor {
 
     @Override
     public void visit(Function function) {
-        var hasLocalScope = function.findAllLocalScope(is(DeclarationType.LOCAL).and(in(Scope.Type.VARIABLE, Scope.Type.PARAMETER))).size() != 0;
+        var hasLocalScope = function.findAllLocalScope(is(DeclarationType.LOCAL).and(in(SymbolType.VARIABLE, SymbolType.PARAMETER))).size() != 0;
         var frame = frames.push(Frame.create(function));
         var labels = label("FUNCXIT");
         var exitLabel = labels.get(0);

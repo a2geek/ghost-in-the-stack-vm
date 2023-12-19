@@ -82,10 +82,10 @@ public class Scope extends StatementBlock {
         }
         return Optional.empty();
     }
-    public List<Symbol> findByType(Type... types) {
+    public List<Symbol> findByType(SymbolType... types) {
         final var typesList = Arrays.asList(types);
         return symbols.stream()
-                .filter(ref -> typesList.contains(ref.type()))
+                .filter(ref -> typesList.contains(ref.symbolType()))
                 .collect(Collectors.toList());
     }
     public List<Symbol> findAllLocalScope(Predicate<Symbol> condition) {
@@ -113,12 +113,4 @@ public class Scope extends StatementBlock {
         return scope;
     }
 
-    public enum Type {
-        VARIABLE,
-        PARAMETER,
-        RETURN_VALUE,
-        INTRINSIC,
-        CONSTANT,
-        LABEL
-    }
 }

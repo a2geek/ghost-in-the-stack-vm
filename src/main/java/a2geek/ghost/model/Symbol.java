@@ -5,33 +5,33 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
 
-public record Symbol(String name, Scope.Type type, DeclarationType declarationType, List<Expression> defaultValues, DataType dataType, int numDimensions) {
+public record Symbol(String name, SymbolType symbolType, DeclarationType declarationType, List<Expression> defaultValues, DataType dataType, int numDimensions) {
     public boolean hasDefaultValue(int size) {
         return defaultValues != null && defaultValues.size() == size;
     }
 
     public static Builder label(String name) {
-        return new Builder(name, Scope.Type.LABEL).dataType(DataType.ADDRESS);
+        return new Builder(name, SymbolType.LABEL).dataType(DataType.ADDRESS);
     }
-    public static Builder variable(String name, Scope.Type type) {
+    public static Builder variable(String name, SymbolType type) {
         return new Builder(name, type);
     }
     public static Builder constant(String name, Expression expr) {
-        return new Builder(name, Scope.Type.CONSTANT).defaultValues(expr).dataType(expr.getType());
+        return new Builder(name, SymbolType.CONSTANT).defaultValues(expr).dataType(expr.getType());
     }
     public static class Builder {
         private String name;
-        private Scope.Type type;
+        private SymbolType symbolType;
         private DeclarationType declarationType;
         private DataType dataType;
         private int numDimensions = 0;  // not an array!
         private List<Expression> defaultValues;
 
-        Builder(String name, Scope.Type type) {
+        Builder(String name, SymbolType symbolType) {
             Objects.requireNonNull(name);
-            Objects.requireNonNull(type);
+            Objects.requireNonNull(symbolType);
             this.name = name;
-            this.type = type;
+            this.symbolType = symbolType;
         }
         public Builder name(String name) {
             Objects.requireNonNull(name);
@@ -39,12 +39,12 @@ public record Symbol(String name, Scope.Type type, DeclarationType declarationTy
             this.name = name;
             return this;
         }
-        public Scope.Type type() {
-            return type;
+        public SymbolType symbolType() {
+            return symbolType;
         }
-        public Builder type(Scope.Type type) {
-            Objects.requireNonNull(type);
-            this.type = type;
+        public Builder symbolType(SymbolType symbolType) {
+            Objects.requireNonNull(symbolType);
+            this.symbolType = symbolType;
             return this;
         }
         public Builder declarationType(DeclarationType declarationType) {
@@ -82,7 +82,8 @@ public record Symbol(String name, Scope.Type type, DeclarationType declarationTy
         public boolean equals(Symbol symbol) {
             if (symbol == null) return false;
             return Objects.equals(this.name, symbol.name)
-                && Objects.equals(this.type, symbol.type)
+                && Objects.equals(this.symbolType, symbol.symbolType)
+                && Objects.equals(this.declarationType, symbol.declarationType)
                 && Objects.equals(this.defaultValues, symbol.defaultValues)
                 && Objects.equals(this.dataType, symbol.dataType)
                 && Objects.equals(this.numDimensions, symbol.numDimensions);
@@ -91,13 +92,13 @@ public record Symbol(String name, Scope.Type type, DeclarationType declarationTy
             if (defaultValues != null && defaultValues.size() > 1 && numDimensions == 0) {
                 throw new RuntimeException("expecting array but no dimensions assigned " + name);
             }
-            return new Symbol(name, type, declarationType, defaultValues, dataType, numDimensions);
+            return new Symbol(name, symbolType, declarationType, defaultValues, dataType, numDimensions);
         }
     }
 
-    public static Predicate<Symbol> in(Scope.Type... types) {
-        final var typesList = Arrays.asList(types);
-        return symbol -> typesList.contains(symbol.type());
+    public static Predicate<Symbol> in(SymbolType... symbolTypes) {
+        final var typesList = Arrays.asList(symbolTypes);
+        return symbol -> typesList.contains(symbol.symbolType());
     }
     public static Predicate<Symbol> is(DeclarationType declarationType) {
         return symbol -> declarationType == symbol.declarationType();

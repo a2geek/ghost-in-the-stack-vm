@@ -19,17 +19,17 @@ public class ExpressionBuilder {
          * Create a symbol. Since the case strategy <em>is not attached</em>,
          * the case strategy needs to be applied outside of this method.
          */
-        public static VariableReference identifier(String name, DataType dataType, Scope.Type scopeType,
+        public static VariableReference identifier(String name, DataType dataType, SymbolType symbolType,
                                                    DeclarationType declarationType) {
-            var symbol = Symbol.variable(name, scopeType)
+            var symbol = Symbol.variable(name, symbolType)
                     .dataType(dataType)
                     .declarationType(declarationType)
                     .build();
             return new VariableReference(symbol);
         }
-        public static VariableReference arrayReference(String name, DataType dataType, Scope.Type scopeType,
+        public static VariableReference arrayReference(String name, DataType dataType, SymbolType symbolType,
                                                        DeclarationType declarationType, Expression expr) {
-            var symbol = Symbol.variable(name + "()", scopeType)
+            var symbol = Symbol.variable(name + "()", symbolType)
                     .dataType(dataType)
                     .declarationType(declarationType)
                     .dimensions(1)
