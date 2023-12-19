@@ -6,26 +6,27 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class Scope extends StatementBlock {
     private Function<String,String> caseStrategy;
     private String name;
     private Scope parent;
-    private Type type;
+    private DeclarationType defaultDeclarationType;
     private List<Symbol> symbols = new ArrayList<>();
     private List<Scope> scopes = new ArrayList<>();
 
     public Scope(Function<String,String> caseStrategy, String name) {
         this.caseStrategy = caseStrategy;
         this.name = caseStrategy.apply(name);
-        this.type = Type.GLOBAL;
+        this.defaultDeclarationType = DeclarationType.GLOBAL;
     }
     public Scope(Scope parent, String name) {
         this.caseStrategy = parent.caseStrategy;
         this.name = caseStrategy.apply(name);
         this.parent = parent;
-        this.type = Type.LOCAL;
+        this.defaultDeclarationType = DeclarationType.LOCAL;
     }
 
     @Override
@@ -35,9 +36,6 @@ public class Scope extends StatementBlock {
 
     public String getName() {
         return name;
-    }
-    public Type getType() {
-        return type;
     }
 
     public void setName(String name) {
@@ -60,8 +58,8 @@ public class Scope extends StatementBlock {
                 throw new RuntimeException(msg);
             })
             .orElseGet(() -> {
-                if (builder.type() == null) {
-                    builder.type(type);
+                if (builder.declarationType() == null) {
+                    builder.declarationType(defaultDeclarationType);
                 }
                 var symbol = builder.build();
                 symbols.add(symbol);
@@ -90,6 +88,9 @@ public class Scope extends StatementBlock {
                 .filter(ref -> typesList.contains(ref.type()))
                 .collect(Collectors.toList());
     }
+    public List<Symbol> findAllLocalScope(Predicate<Symbol> condition) {
+        return symbols.stream().filter(condition).toList();
+    }
 
     public void addScope(Scope scope) {
         Consumer<Scope> alreadyExists = s -> {
@@ -113,8 +114,7 @@ public class Scope extends StatementBlock {
     }
 
     public enum Type {
-        GLOBAL,
-        LOCAL,
+        VARIABLE,
         PARAMETER,
         RETURN_VALUE,
         INTRINSIC,

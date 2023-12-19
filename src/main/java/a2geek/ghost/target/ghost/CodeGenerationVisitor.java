@@ -9,6 +9,9 @@ import a2geek.ghost.model.statement.*;
 
 import java.util.*;
 
+import static a2geek.ghost.model.Symbol.in;
+import static a2geek.ghost.model.Symbol.is;
+
 public class CodeGenerationVisitor extends Visitor {
     private Stack<Frame> frames = new Stack<>();
     private CodeBlock code = new CodeBlock();
@@ -122,11 +125,12 @@ public class CodeGenerationVisitor extends Visitor {
         }
         var symbol = var.getSymbol();
         switch (symbol.type()) {
-            case LOCAL, PARAMETER, RETURN_VALUE -> {
-                this.code.emit(Opcode.LOCAL_LOAD, frameOffset(symbol));
-            }
-            case GLOBAL -> {
-                this.code.emit(Opcode.GLOBAL_LOAD, frameOffset(symbol));
+            case VARIABLE, PARAMETER, RETURN_VALUE -> {
+                switch (symbol.declarationType()) {
+                    case LOCAL -> this.code.emit(Opcode.LOCAL_LOAD, frameOffset(symbol));
+                    case GLOBAL -> this.code.emit(Opcode.GLOBAL_LOAD, frameOffset(symbol));
+                    default -> throw new RuntimeException("expecting declaration type but it was: " + symbol.declarationType());
+                }
             }
             case INTRINSIC -> {
                 switch (symbol.name().toLowerCase()) {
@@ -156,11 +160,12 @@ public class CodeGenerationVisitor extends Visitor {
         }
         var symbol = var.getSymbol();
         switch (symbol.type()) {
-            case LOCAL, PARAMETER, RETURN_VALUE -> {
-                this.code.emit(Opcode.LOCAL_STORE, frameOffset(symbol));
-            }
-            case GLOBAL -> {
-                this.code.emit(Opcode.GLOBAL_STORE, frameOffset(symbol));
+            case VARIABLE, PARAMETER, RETURN_VALUE -> {
+                switch (symbol.declarationType()) {
+                    case LOCAL -> this.code.emit(Opcode.LOCAL_STORE, frameOffset(symbol));
+                    case GLOBAL -> this.code.emit(Opcode.GLOBAL_STORE, frameOffset(symbol));
+                    default -> throw new RuntimeException("expecting declaration type but it was: " + symbol.declarationType());
+                }
             }
             case INTRINSIC -> {
                 switch (symbol.name().toLowerCase()) {
@@ -336,7 +341,7 @@ public class CodeGenerationVisitor extends Visitor {
             // We are already inlining this, so do not generate code.
             return;
         }
-        var hasLocalScope = subroutine.findByType(Scope.Type.PARAMETER, Scope.Type.LOCAL).size() != 0;
+        var hasLocalScope = subroutine.findAllLocalScope(is(DeclarationType.LOCAL).and(in(Scope.Type.VARIABLE, Scope.Type.PARAMETER))).size() != 0;
         var frame = frames.push(Frame.create(subroutine));
         code.emit(subroutine.getName());
         if (hasLocalScope) code.emit(Opcode.LOCAL_RESERVE, frame.localSize());
@@ -351,7 +356,7 @@ public class CodeGenerationVisitor extends Visitor {
 
     @Override
     public void visit(Function function) {
-        var hasLocalScope = function.findByType(Scope.Type.PARAMETER, Scope.Type.LOCAL).size() != 0;
+        var hasLocalScope = function.findAllLocalScope(is(DeclarationType.LOCAL).and(in(Scope.Type.VARIABLE, Scope.Type.PARAMETER))).size() != 0;
         var frame = frames.push(Frame.create(function));
         var labels = label("FUNCXIT");
         var exitLabel = labels.get(0);

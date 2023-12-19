@@ -69,7 +69,7 @@ public class PrettyPrintVisitor {
     public void formatScope(Scope scope) {
         scope.getLocalSymbols().stream()
                 // Only variables
-                .filter(s -> s.type() == Scope.Type.GLOBAL || s.type() == Scope.Type.LOCAL)
+                .filter(s -> s.type() == Scope.Type.VARIABLE)
                 // Strings should have their own DIM statement at this time
                 .filter(s -> s.dataType() != DataType.STRING)
                 // Arrays should have their own DIM statement

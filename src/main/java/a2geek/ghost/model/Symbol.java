@@ -3,8 +3,9 @@ package a2geek.ghost.model;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Predicate;
 
-public record Symbol(String name, Scope.Type type, List<Expression> defaultValues, DataType dataType, int numDimensions) {
+public record Symbol(String name, Scope.Type type, DeclarationType declarationType, List<Expression> defaultValues, DataType dataType, int numDimensions) {
     public boolean hasDefaultValue(int size) {
         return defaultValues != null && defaultValues.size() == size;
     }
@@ -21,6 +22,7 @@ public record Symbol(String name, Scope.Type type, List<Expression> defaultValue
     public static class Builder {
         private String name;
         private Scope.Type type;
+        private DeclarationType declarationType;
         private DataType dataType;
         private int numDimensions = 0;  // not an array!
         private List<Expression> defaultValues;
@@ -44,6 +46,13 @@ public record Symbol(String name, Scope.Type type, List<Expression> defaultValue
             Objects.requireNonNull(type);
             this.type = type;
             return this;
+        }
+        public Builder declarationType(DeclarationType declarationType) {
+            this.declarationType = declarationType;
+            return this;
+        }
+        public DeclarationType declarationType() {
+            return declarationType;
         }
         public String name() {
             return name;
@@ -82,7 +91,15 @@ public record Symbol(String name, Scope.Type type, List<Expression> defaultValue
             if (defaultValues != null && defaultValues.size() > 1 && numDimensions == 0) {
                 throw new RuntimeException("expecting array but no dimensions assigned " + name);
             }
-            return new Symbol(name, type, defaultValues, dataType, numDimensions);
+            return new Symbol(name, type, declarationType, defaultValues, dataType, numDimensions);
         }
+    }
+
+    public static Predicate<Symbol> in(Scope.Type... types) {
+        final var typesList = Arrays.asList(types);
+        return symbol -> typesList.contains(symbol.type());
+    }
+    public static Predicate<Symbol> is(DeclarationType declarationType) {
+        return symbol -> declarationType == symbol.declarationType();
     }
 }

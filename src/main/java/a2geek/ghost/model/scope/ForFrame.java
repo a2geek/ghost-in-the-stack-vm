@@ -17,7 +17,7 @@ public class ForFrame {
     public ForFrame(Symbol varRef, Scope scope) {
         this.varRef = varRef;
         var num = forNumber++;
-        BiFunction<String,DataType,Symbol.Builder> mkBuilder = (fmt, dt) -> Symbol.variable(String.format(fmt, varRef.name(), num), Scope.Type.GLOBAL).dataType(dt);
+        BiFunction<String,DataType,Symbol.Builder> mkBuilder = (fmt, dt) -> Symbol.variable(String.format(fmt, varRef.name(), num), Scope.Type.VARIABLE).dataType(dt);
         this.endRef = scope.addLocalSymbol(mkBuilder.apply("for_%s_end%d", varRef.dataType()));
         this.stepRef = scope.addLocalSymbol(mkBuilder.apply("for_%s_step%d", varRef.dataType()));
         this.nextRef = scope.addLocalSymbol(mkBuilder.apply("for_%s_next%d", DataType.ADDRESS));

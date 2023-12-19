@@ -136,21 +136,21 @@ public class ModelBuilder {
         return this.scope.peek().findSymbol(fixCase(name));
     }
     public Symbol addVariable(String name, DataType dataType) {
-        return this.scope.peek().addLocalSymbol(Symbol.variable(name, scope.peek().getType()).dataType(dataType));
+        return this.scope.peek().addLocalSymbol(Symbol.variable(name, Scope.Type.VARIABLE).dataType(dataType));
     }
     public Symbol addVariable(String name, Scope.Type type, DataType dataType) {
         return this.scope.peek().addLocalSymbol(Symbol.variable(name, type).dataType(dataType));
     }
     public Symbol addArrayVariable(String name, DataType dataType, int numDimensions) {
         return this.scope.peek().addLocalSymbol(
-                Symbol.variable(fixArrayName(name), scope.peek().getType())
+                Symbol.variable(fixArrayName(name), Scope.Type.VARIABLE)
                       .dataType(dataType)
                       .dimensions(numDimensions));
     }
     public Symbol addArrayDefaultVariable(String name, DataType dataType, int numDimensions,
                                           List<Expression> defaultValues) {
         return this.scope.peek().addLocalSymbol(
-            Symbol.variable(fixArrayName(name), scope.peek().getType())
+            Symbol.variable(fixArrayName(name), Scope.Type.VARIABLE)
                 .dataType(dataType)
                 .dimensions(numDimensions)
                 .defaultValues(defaultValues));
@@ -163,7 +163,7 @@ public class ModelBuilder {
         labelNumber+= 1;    // just reusing the counter
         var name = String.format("_temp%d", labelNumber);
         return this.scope.peek().addLocalSymbol(
-                Symbol.variable(name, scope.peek().getType())
+                Symbol.variable(name, Scope.Type.VARIABLE)
                       .dataType(dataType));
     }
     /** Generate labels for code. The multiple values is to allow grouping of labels (same label number) for complex structures. */

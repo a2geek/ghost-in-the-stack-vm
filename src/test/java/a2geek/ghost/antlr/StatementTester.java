@@ -43,21 +43,23 @@ public abstract class StatementTester {
         return String.format("L%d_", lineNumber);
     }
 
-    public StatementTester hasSymbol(String name, DataType dataType, Scope.Type scopeType) {
+    public StatementTester hasSymbol(String name, DataType dataType, Scope.Type scopeType, DeclarationType declarationType) {
         name = fixCase(name);
         var symbol = findSymbol(name);
         assertTrue(symbol.isPresent(), "variable not found: " + name);
         assertEquals(dataType, symbol.get().dataType(), name);
         assertEquals(scopeType, symbol.get().type(), name);
+        assertEquals(declarationType, symbol.get().declarationType(), name);
         return this;
     }
 
-    public StatementTester hasArrayReference(String name, DataType dataType, Scope.Type scopeType, int numDimensions) {
+    public StatementTester hasArrayReference(String name, DataType dataType, Scope.Type scopeType, DeclarationType declarationType, int numDimensions) {
         name = fixCase(name);
         var symbol = findSymbol(fixArrayName(name));
         assertTrue(symbol.isPresent(), "array variable not found: " + name);
         assertEquals(dataType, symbol.get().dataType(), name);
         assertEquals(scopeType, symbol.get().type(), name);
+        assertEquals(declarationType, symbol.get().declarationType(), name);
         assertEquals(numDimensions, symbol.get().numDimensions());
         return this;
     }
@@ -66,7 +68,7 @@ public abstract class StatementTester {
         return hasSymbol(expr.getSymbol());
     }
     public StatementTester hasSymbol(Symbol symbol) {
-        return hasSymbol(symbol.name(), symbol.dataType(), symbol.type());
+        return hasSymbol(symbol.name(), symbol.dataType(), symbol.type(), symbol.declarationType());
     }
 
     public void fail(String message) {

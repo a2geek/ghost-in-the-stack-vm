@@ -1,9 +1,6 @@
 package a2geek.ghost.antlr;
 
-import a2geek.ghost.model.DataType;
-import a2geek.ghost.model.ModelBuilder;
-import a2geek.ghost.model.Scope;
-import a2geek.ghost.model.Symbol;
+import a2geek.ghost.model.*;
 import a2geek.ghost.model.expression.VariableReference;
 import a2geek.ghost.model.scope.Program;
 import org.antlr.v4.runtime.CharStreams;
@@ -56,8 +53,9 @@ public class IntegerBasicVisitorTest {
 
     @Test
     public void testDim() {
-        var b = Symbol.variable("B()", Scope.Type.GLOBAL)
+        var b = Symbol.variable("B()", Scope.Type.VARIABLE)
                 .dataType(DataType.INTEGER)
+                .declarationType(DeclarationType.GLOBAL)
                 .dimensions(1)
                 .build();
         expect("10 DIM B(5)")
@@ -151,7 +149,7 @@ public class IntegerBasicVisitorTest {
 
     @Test
     public void testIfGoto() {
-        var aRef = identifier("A",DataType.INTEGER, Scope.Type.GLOBAL);
+        var aRef = identifier("A",DataType.INTEGER, Scope.Type.VARIABLE, DeclarationType.GLOBAL);
         expect("10 IF A=1 THEN 50: PRINT \"OUTSIDE OF IF\"")
             .hasSymbol(aRef)
             .lineNumber(10)
@@ -165,7 +163,7 @@ public class IntegerBasicVisitorTest {
 
     @Test
     public void testIfWithStatement() {
-        var aRef = identifier("A",DataType.INTEGER, Scope.Type.GLOBAL);
+        var aRef = identifier("A",DataType.INTEGER, Scope.Type.VARIABLE, DeclarationType.GLOBAL);
         expect("10 IF A=1 THEN PRINT \"IN IF\": PRINT \"OUTSIDE OF IF\"")
             .hasSymbol(aRef)
             .lineNumber(10)
@@ -191,8 +189,8 @@ public class IntegerBasicVisitorTest {
     public void testInput() {
         // To be implemented
         expect("10 INPUT \"PROMPT? \",X,A$")
-            .hasSymbol("X", DataType.INTEGER, Scope.Type.GLOBAL)
-            .hasSymbol("A$", DataType.STRING, Scope.Type.GLOBAL)
+            .hasSymbol("X", DataType.INTEGER, Scope.Type.VARIABLE, DeclarationType.GLOBAL)
+            .hasSymbol("A$", DataType.STRING, Scope.Type.VARIABLE, DeclarationType.GLOBAL)
             // TODO
             .atEnd();
     }
@@ -202,13 +200,13 @@ public class IntegerBasicVisitorTest {
         // TODO string assignment
         // Normal
         expect("10 A = 1")
-            .hasSymbol("A", DataType.INTEGER, Scope.Type.GLOBAL)
+            .hasSymbol("A", DataType.INTEGER, Scope.Type.VARIABLE, DeclarationType.GLOBAL)
             .lineNumber(10)
             .assignment("A", constant(1))
             .atEnd();
         // LET keyword
         expect("10 LET A = 1")
-            .hasSymbol("A", DataType.INTEGER, Scope.Type.GLOBAL)
+            .hasSymbol("A", DataType.INTEGER, Scope.Type.VARIABLE, DeclarationType.GLOBAL)
             .lineNumber(10)
             .assignment("A", constant(1))
             .atEnd();
@@ -218,18 +216,19 @@ public class IntegerBasicVisitorTest {
     public void testArrayReferences() {
         // Normal
         expect("10 A(2) = 1")
-                .hasArrayReference("A", DataType.INTEGER, Scope.Type.GLOBAL, 1)
+                .hasArrayReference("A", DataType.INTEGER, Scope.Type.VARIABLE, DeclarationType.GLOBAL, 1)
                 .lineNumber(10)
                 .skipIfStmt()
                 .arrayAssignment("A", constant(2), constant(1))
                 .atEnd();
         // LET keyword
         expect("10 A = A(1)")
-                .hasSymbol("A", DataType.INTEGER, Scope.Type.GLOBAL)
-                .hasArrayReference("A", DataType.INTEGER, Scope.Type.GLOBAL, 1)
+                .hasSymbol("A", DataType.INTEGER, Scope.Type.VARIABLE, DeclarationType.GLOBAL)
+                .hasArrayReference("A", DataType.INTEGER, Scope.Type.VARIABLE, DeclarationType.GLOBAL, 1)
                 .lineNumber(10)
                 .skipIfStmt()
-                .assignment("A", arrayReference("A", DataType.INTEGER, Scope.Type.GLOBAL, constant(1)))
+                .assignment("A", arrayReference("A", DataType.INTEGER, Scope.Type.VARIABLE,
+                        DeclarationType.GLOBAL, constant(1)))
                 .atEnd();
     }
 
@@ -302,11 +301,11 @@ public class IntegerBasicVisitorTest {
     @Test
     public void testPrint() {
         expect("10 PRINT \"X=\",X; : PRINT \"...\"")
-            .hasSymbol("X", DataType.INTEGER, Scope.Type.GLOBAL)
+            .hasSymbol("X", DataType.INTEGER, Scope.Type.VARIABLE, DeclarationType.GLOBAL)
             .lineNumber(10)
             .callLibrarySub("string", constant("X="))
             .callLibrarySub("comma")
-            .callLibrarySub("integer", identifier("X", DataType.INTEGER, Scope.Type.GLOBAL))
+            .callLibrarySub("integer", identifier("X", DataType.INTEGER, Scope.Type.VARIABLE, DeclarationType.GLOBAL))
             .callLibrarySub("string", constant("..."))
             .callLibrarySub("newline")
             .atEnd();

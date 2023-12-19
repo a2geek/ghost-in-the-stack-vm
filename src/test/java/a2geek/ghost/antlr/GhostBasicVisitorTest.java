@@ -1,9 +1,6 @@
 package a2geek.ghost.antlr;
 
-import a2geek.ghost.model.DataType;
-import a2geek.ghost.model.ModelBuilder;
-import a2geek.ghost.model.Scope;
-import a2geek.ghost.model.Symbol;
+import a2geek.ghost.model.*;
 import a2geek.ghost.model.expression.VariableReference;
 import a2geek.ghost.model.scope.Program;
 import org.antlr.v4.runtime.CharStreams;
@@ -30,22 +27,23 @@ public class GhostBasicVisitorTest {
     public void testDimStatement() {
         // Note: DIM generates (potentially) dynamic code, so not testing generated DIM code.
         expect("dim a as integer, b as boolean, c(10) as integer")
-            .hasSymbol("a", DataType.INTEGER, Scope.Type.GLOBAL)
-            .hasSymbol("b", DataType.BOOLEAN, Scope.Type.GLOBAL)
-            .hasArrayReference("c", DataType.INTEGER, Scope.Type.GLOBAL, 1);
+            .hasSymbol("a", DataType.INTEGER, Scope.Type.VARIABLE, DeclarationType.GLOBAL)
+            .hasSymbol("b", DataType.BOOLEAN, Scope.Type.VARIABLE, DeclarationType.GLOBAL)
+            .hasArrayReference("c", DataType.INTEGER, Scope.Type.VARIABLE, DeclarationType.GLOBAL, 1);
     }
 
 
     @Test
     public void testUbound() {
-        var arrayRef = Symbol.variable(model.fixCase("a"), Scope.Type.GLOBAL)
+        var arrayRef = Symbol.variable(model.fixCase("a"), Scope.Type.VARIABLE)
                 .dataType(DataType.INTEGER)
+                .declarationType(DeclarationType.GLOBAL)
                 .dimensions(1)
                 .build();
         // Note: DIM generates (potentially) dynamic code, so not testing generated DIM code.
         expect("dim a(10) as integer, b as integer : b = ubound(a)")
-                .hasSymbol("a", DataType.INTEGER, Scope.Type.GLOBAL)
-                .hasSymbol("b", DataType.INTEGER, Scope.Type.GLOBAL)
+                .hasSymbol("a", DataType.INTEGER, Scope.Type.VARIABLE, DeclarationType.GLOBAL)
+                .hasSymbol("b", DataType.INTEGER, Scope.Type.VARIABLE, DeclarationType.GLOBAL)
                 .assignment("a", null)
                 .poke("pokew", VariableReference.with(arrayRef), constant(10))
                 .assignment("b", ubound(model, arrayRef))
@@ -54,19 +52,20 @@ public class GhostBasicVisitorTest {
 
     @Test
     public void testArrayReference() {
-        var arrayRef = Symbol.variable(model.fixCase("a"), Scope.Type.GLOBAL)
+        var arrayRef = Symbol.variable(model.fixCase("a"), Scope.Type.VARIABLE)
                 .dataType(DataType.INTEGER)
+                .declarationType(DeclarationType.GLOBAL)
                 .dimensions(1)
                 .build();
         // Note: DIM generates (potentially) dynamic code, so not testing generated DIM code.
         expect("dim a(10) as integer : a(5) = a(4) + 3")
-            .hasArrayReference("a", DataType.INTEGER, Scope.Type.GLOBAL, 1)
+            .hasArrayReference("a", DataType.INTEGER, Scope.Type.VARIABLE, DeclarationType.GLOBAL, 1)
             .assignment("a", null)
             .poke("pokew", VariableReference.with(arrayRef), constant(10))
             .skipIfStmt()
             .skipIfStmt()   // because we don't really optimize them A(5) should be sufficient but we check A(4) as well
             .arrayAssignment("a", constant(5),
-                    binary("+", arrayReference("a", DataType.INTEGER, Scope.Type.GLOBAL, constant(4)),
+                    binary("+", arrayReference("a", DataType.INTEGER, Scope.Type.VARIABLE, DeclarationType.GLOBAL, constant(4)),
                             constant(3)))
             .atEnd();
     }
@@ -74,7 +73,7 @@ public class GhostBasicVisitorTest {
     @Test
     public void testAssignment() {
         expect("a = 5")
-            .hasSymbol("a", DataType.INTEGER, Scope.Type.GLOBAL)
+            .hasSymbol("a", DataType.INTEGER, Scope.Type.VARIABLE, DeclarationType.GLOBAL)
             .assignment("a", constant(5))
             .atEnd();
     }
@@ -97,7 +96,7 @@ public class GhostBasicVisitorTest {
 
     @Test
     public void testIfElse() {
-        var a = identifier("a", DataType.INTEGER, Scope.Type.GLOBAL);
+        var a = identifier("a", DataType.INTEGER, Scope.Type.VARIABLE, DeclarationType.GLOBAL);
         expect("""
                 if a=10 then
                     a=5
@@ -342,8 +341,10 @@ public class GhostBasicVisitorTest {
     public void testFunctionDeclaration() {
         var expectedParameters = Arrays.asList(
             // These are in reverse order
-            Symbol.variable("b", Scope.Type.PARAMETER).dataType(DataType.INTEGER).build(),
-            Symbol.variable("a", Scope.Type.PARAMETER).dataType(DataType.INTEGER).build()
+            Symbol.variable("b", Scope.Type.PARAMETER).dataType(DataType.INTEGER)
+                    .declarationType(DeclarationType.LOCAL).build(),
+            Symbol.variable("a", Scope.Type.PARAMETER).dataType(DataType.INTEGER)
+                    .declarationType(DeclarationType.LOCAL).build()
         );
         expect("""
                 function addThings(a as integer, b as integer)
@@ -352,8 +353,8 @@ public class GhostBasicVisitorTest {
                 """)
             .functionScope("addThings", expectedParameters, DataType.INTEGER)
                 .returnStmt(binary("+",
-                    identifier("A", DataType.INTEGER, Scope.Type.PARAMETER),
-                    identifier("B", DataType.INTEGER, Scope.Type.PARAMETER)))
+                    identifier("A", DataType.INTEGER, Scope.Type.PARAMETER, DeclarationType.LOCAL),
+                    identifier("B", DataType.INTEGER, Scope.Type.PARAMETER, DeclarationType.LOCAL)))
             .endScope()
             .atEnd();
     }
@@ -363,8 +364,9 @@ public class GhostBasicVisitorTest {
         var expectedParameters = Arrays.asList(
             Symbol.variable("a", Scope.Type.PARAMETER).dataType(DataType.INTEGER).dimensions(1).build()
         );
-        var arraySymbol = new VariableReference(Symbol.variable("A", Scope.Type.GLOBAL)
+        var arraySymbol = new VariableReference(Symbol.variable("A", Scope.Type.VARIABLE)
             .dataType(DataType.INTEGER)
+            .declarationType(DeclarationType.GLOBAL)
             .dimensions(1)
             .build());
         // Note: DIM generates (potentially) dynamic code, so not testing generated DIM code.
@@ -378,10 +380,10 @@ public class GhostBasicVisitorTest {
                 addArray(a)
                 """)
             .subScope("addArray", expectedParameters)
-                .hasArrayReference("a", DataType.INTEGER, Scope.Type.PARAMETER, 1)
+                .hasArrayReference("a", DataType.INTEGER, Scope.Type.PARAMETER, DeclarationType.LOCAL, 1)
                 .returnStmt(null)
             .endScope()
-            .hasArrayReference("a", DataType.INTEGER, Scope.Type.GLOBAL, 1)
+            .hasArrayReference("a", DataType.INTEGER, Scope.Type.VARIABLE, DeclarationType.GLOBAL, 1)
             .assignment("a", null)
             .poke("pokew", arraySymbol, constant(10))
             .callSub("addArray", arraySymbol)

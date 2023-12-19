@@ -1,5 +1,6 @@
 package a2geek.ghost.target.ghost;
 
+import a2geek.ghost.model.DeclarationType;
 import a2geek.ghost.model.Scope;
 import a2geek.ghost.model.Symbol;
 import a2geek.ghost.model.scope.Function;
@@ -8,6 +9,9 @@ import a2geek.ghost.model.scope.Subroutine;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import static a2geek.ghost.model.Symbol.in;
+import static a2geek.ghost.model.Symbol.is;
 
 public record Frame(
             Scope scope,
@@ -20,7 +24,7 @@ public record Frame(
         int varOffset = 0;
         int reservation = 0;
         // program treats global variables as local
-        for (var ref : program.findByType(Scope.Type.GLOBAL)) {
+        for (var ref : program.findAllLocalScope(is(DeclarationType.GLOBAL).and(in(Scope.Type.VARIABLE)))) {
             varOffsets.put(ref, varOffset);
             varOffset += 2;
             reservation += 2;
@@ -33,7 +37,7 @@ public record Frame(
         int varOffset = 0;
         int reservation = 0;
         // local variables are at TOS
-        for (var ref : subroutine.findByType(Scope.Type.LOCAL)) {
+        for (var ref : subroutine.findAllLocalScope(is(DeclarationType.LOCAL).and(in(Scope.Type.VARIABLE)))) {
             varOffsets.put(ref, varOffset);
             varOffset += 2;
             reservation += 2;
