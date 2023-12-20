@@ -3,7 +3,6 @@ package a2geek.ghost.model;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -83,13 +82,6 @@ public class Scope extends StatementBlock {
         return symbolTable.stream().filter(condition).toList();
     }
 
-    public void addScope(Scope scope) {
-        Consumer<Scope> alreadyExists = s -> {
-            throw new RuntimeException(s.getName() + " already exists");
-        };
-        Runnable addNew = () -> addLocalSymbol(Symbol.scope(scope));
-        findLocalScope(scope.getName()).ifPresentOrElse(alreadyExists, addNew);
-    }
     public List<Scope> getScopes() {
         return symbolTable.stream()
                 .filter(in(SymbolType.FUNCTION, SymbolType.SUBROUTINE))

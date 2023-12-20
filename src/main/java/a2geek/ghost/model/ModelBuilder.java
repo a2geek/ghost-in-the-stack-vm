@@ -119,9 +119,6 @@ public class ModelBuilder {
     public StatementBlock popStatementBlock() {
         return this.statementBlock.pop();
     }
-    public void addScope(Scope scope) {
-        this.scope.peek().addScope(scope);
-    }
     public Scope pushScope(Scope scope) {
         return this.scope.push(scope);
     }
@@ -216,7 +213,9 @@ public class ModelBuilder {
             // add subroutines and functions to our program!
             // constants are intentionally left off -- the included code has the reference and we don't want to clutter the namespace
             Program program = getProgram();
-            library.getScopes().forEach(program::addScope);
+            library.getScopes().forEach(scope -> {
+                program.addLocalSymbol(Symbol.scope(scope));
+            });
         }
         catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -292,7 +291,7 @@ public class ModelBuilder {
 
     public Subroutine subDeclBegin(String name, List<Symbol.Builder> params) {
         Subroutine sub = new Subroutine(scope.peek(), fixCase(name), params);
-        addScope(sub);
+        this.scope.peek().addLocalSymbol(Symbol.scope(sub));
 
         pushScope(sub);
         pushStatementBlock(sub);
@@ -309,7 +308,7 @@ public class ModelBuilder {
         a2geek.ghost.model.scope.Function func =
             new a2geek.ghost.model.scope.Function(scope.peek(),
                 Symbol.variable(name, SymbolType.RETURN_VALUE).dataType(returnType), params);
-        addScope(func);
+        this.scope.peek().addLocalSymbol(Symbol.scope(func));
 
         pushScope(func);
         pushStatementBlock(func);
