@@ -1,10 +1,13 @@
 package a2geek.ghost.model.scope;
 
 import a2geek.ghost.model.Scope;
+import a2geek.ghost.model.SymbolType;
 
 import java.util.ArrayList;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static a2geek.ghost.model.Symbol.in;
 
 public class Program extends Scope {
     public Program(Function<String,String> caseStrategy) {
@@ -13,7 +16,10 @@ public class Program extends Scope {
 
     @Override
     public String toString() {
-        var allScopes = new ArrayList<>(getScopes());
+        var allScopes = new ArrayList<Scope>();
+        findAllLocalScope(in(SymbolType.FUNCTION,SymbolType.SUBROUTINE)).forEach(symbol -> {
+            allScopes.add(symbol.scope());
+        });
         allScopes.add(this);
         return allScopes.stream()
             .map(scope -> String.format("%s: %s", getDescriptiveName(scope), scope.statementsAsString()))

@@ -213,8 +213,8 @@ public class ModelBuilder {
             // add subroutines and functions to our program!
             // constants are intentionally left off -- the included code has the reference and we don't want to clutter the namespace
             Program program = getProgram();
-            library.getScopes().forEach(scope -> {
-                program.addLocalSymbol(Symbol.scope(scope));
+            library.findAllLocalScope(in(SymbolType.FUNCTION,SymbolType.SUBROUTINE)).forEach(symbol -> {
+                    program.addLocalSymbol(Symbol.scope(symbol.scope()));
             });
         }
         catch (IOException e) {

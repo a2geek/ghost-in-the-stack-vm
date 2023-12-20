@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static a2geek.ghost.model.Symbol.in;
+
 public abstract class Visitor {
     public void dispatch(Scope scope) {
         switch (scope) {
@@ -75,7 +77,9 @@ public abstract class Visitor {
 
     public void visit(Program program) {
         dispatchAll(program);
-        program.getScopes().forEach(this::dispatch);
+        program.findAllLocalScope(in(SymbolType.FUNCTION,SymbolType.SUBROUTINE)).forEach(symbol -> {
+            dispatch(symbol.scope());
+        });
     }
     public void visit(Subroutine subroutine) {
         dispatchAll(subroutine);

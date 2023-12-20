@@ -9,6 +9,8 @@ import a2geek.ghost.model.statement.LabelStatement;
 
 import java.util.stream.Collectors;
 
+import static a2geek.ghost.model.Symbol.in;
+
 public class PrettyPrintVisitor {
     public static String format(Program program) {
         PrettyPrintVisitor visitor = new PrettyPrintVisitor(4);
@@ -31,7 +33,9 @@ public class PrettyPrintVisitor {
         formatStatementBlock(program);
         sb.append("\n");
         indent -= indentIncrement;
-        program.getScopes().forEach(this::dispatch);
+        program.findAllLocalScope(in(SymbolType.FUNCTION,SymbolType.SUBROUTINE)).forEach(symbol -> {
+            dispatch(symbol.scope());
+        });
     }
 
     public void dispatch(Scope scope) {

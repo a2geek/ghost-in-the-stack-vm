@@ -6,7 +6,6 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import static a2geek.ghost.model.Symbol.in;
 import static a2geek.ghost.model.Symbol.named;
 
 public class Scope extends StatementBlock {
@@ -80,12 +79,5 @@ public class Scope extends StatementBlock {
     }
     public List<Symbol> findAllLocalScope(Predicate<Symbol> condition) {
         return symbolTable.stream().filter(condition).toList();
-    }
-
-    public List<Scope> getScopes() {
-        return symbolTable.stream()
-                .filter(in(SymbolType.FUNCTION, SymbolType.SUBROUTINE))
-                .map(Symbol::scope)
-                .toList();
     }
 }
