@@ -24,6 +24,9 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
     public GhostBasicVisitor(ModelBuilder model) {
         this.model = model;
+        Intrinsic.CPU_REGISTERS.forEach(name -> {
+            model.addVariable(name, SymbolType.INTRINSIC, DataType.INTEGER);
+        });
     }
 
     public ModelBuilder getModel() {
@@ -735,19 +738,12 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         }
 
         // Look for a likely symbol - and it might already exist
-        Symbol symbol = switch (id.toLowerCase()) {
-            case Intrinsic.CPU_REGISTER_A,
-                    Intrinsic.CPU_REGISTER_X,
-                    Intrinsic.CPU_REGISTER_Y -> model.addVariable(id, SymbolType.INTRINSIC, DataType.INTEGER);
-            default -> {
-                if (id.contains(".")) {
-                    throw new RuntimeException("invalid identifier: " + id);
-                }
-                // Look through local and parent scopes; otherwise assume it's a new integer
-                var existing = model.findSymbol(id);
-                yield existing.orElseGet(() -> model.addVariable(id, DataType.INTEGER));
+        var symbol = model.findSymbol(id).orElseGet(() -> {
+            if (id.contains(".")) {
+                throw new RuntimeException("invalid identifier: " + id);
             }
-        };
+            return model.addVariable(id, DataType.INTEGER);
+        });
         return new VariableReference(symbol);
     }
 
@@ -764,14 +760,6 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                 return new ArrayLengthFunction(model, varRef.getSymbol());
             }
             throw new RuntimeException("ubound expects a variable name as its argument: " + ctx.getText());
-        }
-
-        if (Intrinsic.CPU_REGISTERS.contains(id.toLowerCase())) {
-            if (params.size() > 0) {
-                throw new RuntimeException("Intrinsic reference takes no arguments: " + id);
-            }
-            Symbol symbol = model.addVariable(id, SymbolType.INTRINSIC, DataType.INTEGER);
-            return new VariableReference(symbol);
         }
 
         if (model.isFunction(id)) {
