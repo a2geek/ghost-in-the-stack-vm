@@ -95,12 +95,4 @@ public class Scope extends StatementBlock {
                 .map(Symbol::scope)
                 .findFirst();
     }
-    public Optional<Scope> findScope(String name) {
-        var scope = findLocalScope(name);
-        if (scope.isEmpty() && parent != null) {
-            return parent.findLocalScope(name);
-        }
-        return scope;
-    }
-
 }

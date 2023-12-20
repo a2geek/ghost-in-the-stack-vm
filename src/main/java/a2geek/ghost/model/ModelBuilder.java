@@ -259,9 +259,12 @@ public class ModelBuilder {
         }
 
         // FIXME: We have a scope with scopes and a stack of scopes both. Really confusing and suggests bad stuff.
-        Optional<Scope> scope = getProgram().findScope(id);
+        Optional<Scope> scope = getProgram().findFirst(named(id).and(in(SymbolType.FUNCTION, SymbolType.SUBROUTINE)))
+                .map(Symbol::scope);
         if (scope.isEmpty()) {
-            scope = getParentProgram().findScope(id);
+            // FIXME: Hopefully short-term until namespacing really works
+            scope = getParentProgram().findFirst(named(id).and(in(SymbolType.FUNCTION, SymbolType.SUBROUTINE)))
+                    .map(Symbol::scope);
         }
         if (scope.isPresent()) {
             if (scope.get() instanceof a2geek.ghost.model.scope.Function fn) {
