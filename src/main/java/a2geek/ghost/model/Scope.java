@@ -88,11 +88,4 @@ public class Scope extends StatementBlock {
                 .map(Symbol::scope)
                 .toList();
     }
-    public Optional<Scope> findLocalScope(String name) {
-        return symbolTable.stream()
-                .filter(in(SymbolType.FUNCTION, SymbolType.SUBROUTINE))
-                .filter(s -> s.name().equals(name))
-                .map(Symbol::scope)
-                .findFirst();
-    }
 }

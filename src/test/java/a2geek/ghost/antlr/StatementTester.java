@@ -303,7 +303,7 @@ public abstract class StatementTester {
         }
         @Override
         Optional<Scope> findScope(String name) {
-            return scope.findLocalScope(name);
+            return scope.findFirstLocalScope(named(name)).map(Symbol::scope);
         }
         @Override
         public StatementTester endScope() {

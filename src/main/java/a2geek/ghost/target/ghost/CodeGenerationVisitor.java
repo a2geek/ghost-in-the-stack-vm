@@ -9,8 +9,7 @@ import a2geek.ghost.model.statement.*;
 
 import java.util.*;
 
-import static a2geek.ghost.model.Symbol.in;
-import static a2geek.ghost.model.Symbol.is;
+import static a2geek.ghost.model.Symbol.*;
 
 public class CodeGenerationVisitor extends Visitor {
     private Stack<Frame> frames = new Stack<>();
@@ -50,7 +49,8 @@ public class CodeGenerationVisitor extends Visitor {
             var detachedScopesUsed = new HashSet<>(scopesUsed);
             for (String scopeName : detachedScopesUsed) {
                 if (!scopesProcessed.contains(scopeName)) {
-                    program.findLocalScope(scopeName).ifPresent(this::dispatch);
+                    program.findFirstLocalScope(named(scopeName).and(in(SymbolType.FUNCTION, SymbolType.SUBROUTINE)))
+                            .map(Symbol::scope).ifPresent(this::dispatch);
                     scopesProcessed.add(scopeName);
                     wroteCode = true;
                 }
@@ -295,7 +295,9 @@ public class CodeGenerationVisitor extends Visitor {
     @Override
     public void visit(CallSubroutine statement, StatementContext context) {
         // Using the "program" frame
-        var scope = frames.get(0).scope().findLocalScope(statement.getName())
+        var scope = frames.getFirst().scope()
+                .findFirstLocalScope(named(statement.getName()).and(in(SymbolType.SUBROUTINE)))
+                .map(Symbol::scope)
                 .orElseThrow(() -> new RuntimeException(statement.getName() + " not found"));
         if (scope instanceof Subroutine sub) {
             Map<Symbol,Expression> map = new HashMap<>();

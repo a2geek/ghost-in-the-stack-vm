@@ -232,7 +232,8 @@ public class ModelBuilder {
         var subName = fixCase(name);
         // We can only validate for the primary program; libraries are trusted and sometimes circular!
         if (includeLibraries) {
-            var subScope = getProgram().findLocalScope(subName).orElse(null);
+            var subScope = getProgram().findFirstLocalScope(named(subName).and(in(SymbolType.FUNCTION, SymbolType.SUBROUTINE)))
+                    .map(Symbol::scope).orElse(null);
             if (subScope instanceof Subroutine) {
                 // TODO validate argument count and types
             } else {
@@ -247,7 +248,7 @@ public class ModelBuilder {
         var id = fixCase(name);
         return FunctionExpression.isLibraryFunction(id)
             || FunctionExpression.isIntrinsicFunction(id)
-            || getProgram().findLocalScope(id).map(s -> s instanceof a2geek.ghost.model.scope.Function).orElse(false);
+            || getProgram().findFirstLocalScope(named(id).and(in(SymbolType.FUNCTION))).isPresent();
     }
 
     public FunctionExpression callFunction(String name, List<Expression> params) {
