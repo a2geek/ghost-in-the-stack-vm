@@ -1,43 +1,40 @@
 package a2geek.ghost.model;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.stream.Collectors;
+import java.util.function.Predicate;
+
+import static a2geek.ghost.model.Symbol.named;
 
 public class Scope extends StatementBlock {
     private Function<String,String> caseStrategy;
     private String name;
     private Scope parent;
-    private Type type;
-    private List<Symbol> symbols = new ArrayList<>();
-    private List<Scope> scopes = new ArrayList<>();
+    private DeclarationType defaultDeclarationType;
+    private List<Symbol> symbolTable = new ArrayList<>();
 
     public Scope(Function<String,String> caseStrategy, String name) {
         this.caseStrategy = caseStrategy;
         this.name = caseStrategy.apply(name);
-        this.type = Type.GLOBAL;
+        this.defaultDeclarationType = DeclarationType.GLOBAL;
     }
     public Scope(Scope parent, String name) {
         this.caseStrategy = parent.caseStrategy;
         this.name = caseStrategy.apply(name);
         this.parent = parent;
-        this.type = Type.LOCAL;
+        this.defaultDeclarationType = DeclarationType.LOCAL;
     }
 
     @Override
     public boolean isEmpty() {
-        return super.isEmpty() && symbols.isEmpty() && scopes.isEmpty();
+        // no code and no symbols
+        return super.isEmpty() && symbolTable.isEmpty();
     }
 
     public String getName() {
         return name;
-    }
-    public Type getType() {
-        return type;
     }
 
     public void setName(String name) {
@@ -46,12 +43,15 @@ public class Scope extends StatementBlock {
     }
 
     public List<Symbol> getLocalSymbols() {
-        return symbols;
+        return symbolTable;
     }
     public Symbol addLocalSymbol(Symbol.Builder builder) {
         var fixedName = caseStrategy.apply(builder.name());
         builder.name(fixedName);
-        return findLocalSymbols(builder.name())
+        if (builder.declarationType() == null) {
+            builder.declarationType(defaultDeclarationType);
+        }
+        return findFirstLocalScope(named(builder.name()))
             .map(symbol -> {
                 if (builder.equals(symbol)) {
                     return symbol;
@@ -60,65 +60,24 @@ public class Scope extends StatementBlock {
                 throw new RuntimeException(msg);
             })
             .orElseGet(() -> {
-                if (builder.type() == null) {
-                    builder.type(type);
-                }
                 var symbol = builder.build();
-                symbols.add(symbol);
+                symbolTable.add(symbol);
                 return symbol;
             });
     }
 
-    public Optional<Symbol> findLocalSymbols(String name) {
-        var fixedName = caseStrategy.apply(name);
-        return symbols.stream().filter(r -> fixedName.equals(r.name())).findFirst();
+    public Optional<Symbol> findFirst(Predicate<Symbol> condition) {
+        return findFirstLocalScope(condition).or(() -> {
+            if (parent != null) {
+                return parent.findFirst(condition);
+            }
+            return Optional.empty();
+        });
     }
-    public Optional<Symbol> findSymbol(String name) {
-        var fixedName = caseStrategy.apply(name);
-        var found = findLocalSymbols(fixedName);
-        if (found.isPresent()) {
-            return found;
-        }
-        if (parent != null) {
-            return parent.findSymbol(fixedName);
-        }
-        return Optional.empty();
+    public Optional<Symbol> findFirstLocalScope(Predicate<Symbol> condition) {
+        return symbolTable.stream().filter(condition).findFirst();
     }
-    public List<Symbol> findByType(Type... types) {
-        final var typesList = Arrays.asList(types);
-        return symbols.stream()
-                .filter(ref -> typesList.contains(ref.type()))
-                .collect(Collectors.toList());
-    }
-
-    public void addScope(Scope scope) {
-        Consumer<Scope> alreadyExists = s -> {
-            throw new RuntimeException(s.getName() + " already exists");
-        };
-        Runnable addNew = () -> this.scopes.add(scope);
-        findLocalScope(scope.getName()).ifPresentOrElse(alreadyExists, addNew);
-    }
-    public List<Scope> getScopes() {
-        return scopes;
-    }
-    public Optional<Scope> findLocalScope(String name) {
-        return scopes.stream().filter(s -> s.getName().equals(name)).findFirst();
-    }
-    public Optional<Scope> findScope(String name) {
-        var scope = findLocalScope(name);
-        if (scope.isEmpty() && parent != null) {
-            return parent.findLocalScope(name);
-        }
-        return scope;
-    }
-
-    public enum Type {
-        GLOBAL,
-        LOCAL,
-        PARAMETER,
-        RETURN_VALUE,
-        INTRINSIC,
-        CONSTANT,
-        LABEL
+    public List<Symbol> findAllLocalScope(Predicate<Symbol> condition) {
+        return symbolTable.stream().filter(condition).toList();
     }
 }

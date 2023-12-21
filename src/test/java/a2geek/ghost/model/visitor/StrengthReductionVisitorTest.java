@@ -1,8 +1,9 @@
 package a2geek.ghost.model.visitor;
 
 import a2geek.ghost.model.DataType;
+import a2geek.ghost.model.DeclarationType;
 import a2geek.ghost.model.Expression;
-import a2geek.ghost.model.Scope;
+import a2geek.ghost.model.SymbolType;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -17,7 +18,7 @@ public class StrengthReductionVisitorTest {
 
     @Test
     public void testMultiplication() {
-        var id = identifier("A", DataType.INTEGER, Scope.Type.GLOBAL);
+    var id = identifier("A", DataType.INTEGER, SymbolType.VARIABLE, DeclarationType.GLOBAL);
         // identity
         assertEquals(id, binary("*", id, constant(1)));
         assertEquals(id, binary("*", constant(1), id));
@@ -31,7 +32,7 @@ public class StrengthReductionVisitorTest {
 
     @Test
     public void testDivision() {
-        var id = identifier("A", DataType.INTEGER, Scope.Type.GLOBAL);
+        var id = identifier("A", DataType.INTEGER, SymbolType.VARIABLE, DeclarationType.GLOBAL);
         // identity
         assertEquals(id, binary("/", id, constant(1)));
         // reduction
@@ -40,7 +41,7 @@ public class StrengthReductionVisitorTest {
 
     @Test
     public void testAddition() {
-        var id = identifier("A", DataType.INTEGER, Scope.Type.GLOBAL);
+        var id = identifier("A", DataType.INTEGER, SymbolType.VARIABLE, DeclarationType.GLOBAL);
         // identity
         assertEquals(id, binary("+", id, constant(0)));
         assertEquals(id, binary("+", constant(0), id));
@@ -50,7 +51,7 @@ public class StrengthReductionVisitorTest {
 
     @Test
     public void testSubtraction() {
-        var id = identifier("A", DataType.INTEGER, Scope.Type.GLOBAL);
+        var id = identifier("A", DataType.INTEGER, SymbolType.VARIABLE, DeclarationType.GLOBAL);
         // identity
         assertEquals(id, binary("-", id, constant(0)));
         // negate
@@ -59,7 +60,7 @@ public class StrengthReductionVisitorTest {
 
     @Test
     public void testModulus() {
-        var id = identifier("A", DataType.INTEGER, Scope.Type.GLOBAL);
+        var id = identifier("A", DataType.INTEGER, SymbolType.VARIABLE, DeclarationType.GLOBAL);
         // identity
         assertEquals(binary("and", id, constant(15)), binary("mod", id, constant(16)));
     }

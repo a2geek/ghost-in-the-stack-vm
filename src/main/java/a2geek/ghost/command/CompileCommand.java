@@ -6,6 +6,7 @@ import a2geek.ghost.command.util.IntegerTypeConverter;
 import a2geek.ghost.command.util.PrettyPrintVisitor;
 import a2geek.ghost.model.ModelBuilder;
 import a2geek.ghost.model.Scope;
+import a2geek.ghost.model.SymbolType;
 import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.visitor.ConstantReductionVisitor;
 import a2geek.ghost.model.visitor.DeadCodeEliminationVisitor;
@@ -31,6 +32,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static a2geek.ghost.model.Symbol.in;
 import static picocli.CommandLine.ArgGroup;
 
 @Command(name = "compile", mixinStandardHelpOptions = true, usageHelpAutoWidth = true,
@@ -89,6 +91,9 @@ public class CompileCommand implements Callable<Integer> {
     @Option(names = { "-tl", "--target-code-listing" }, description = "create listing file")
     private Optional<String> targetCodeListing;
 
+    @Option(names = { "--symbols" }, description = "dump symbol table to file")
+    private Optional<String> symbolTableFile;
+
     public static String convertControlCharacterMarkers(String value) {
         Pattern pattern = Pattern.compile("<CTRL-(.)>", Pattern.CASE_INSENSITIVE);
         Matcher matcher = pattern.matcher(value);
@@ -139,7 +144,10 @@ public class CompileCommand implements Callable<Integer> {
             System.out.println("=== MODEL ===");
             System.out.println(program);
             System.out.println("=== VARIABLES ===");
-            var allScopes = new ArrayList<>(program.getScopes());
+            var allScopes = new ArrayList<Scope>();
+            program.findAllLocalScope(in(SymbolType.FUNCTION,SymbolType.SUBROUTINE)).forEach(symbol -> {
+                allScopes.add(symbol.scope());
+            });
             allScopes.add(program);
             for (Scope scope : allScopes) {
                 System.out.printf("%s - %s\n", scope.getName(), scope.getLocalSymbols());
@@ -214,6 +222,10 @@ public class CompileCommand implements Callable<Integer> {
             }
         });
 
+        symbolTableFile.ifPresent(filename -> {
+            saveSymbolTable(program, filename);
+        });
+
         saveAsAppleSingle(out.toByteArray());
     }
 
@@ -232,6 +244,32 @@ public class CompileCommand implements Callable<Integer> {
                 .dataFork(baos.toByteArray())
                 .build()
                 .save(outputFile);
+    }
+
+
+    public void saveSymbolTable(Program program, String filename) {
+        var fmt = "| %-20.20s | %-10.10s | %-10.10s | %-10.10s | %-20.20s | %4s | %-20.20s |\n";
+        var scopes = new ArrayList<Scope>();
+        scopes.addLast(program);
+        try (PrintWriter pw = new PrintWriter(filename)) {
+            pw.printf(fmt, "Name", "SymType", "DeclType", "DataType", "Scope", "DIMs", "Default");
+            while (!scopes.isEmpty()) {
+                var scope = scopes.removeFirst();
+                scope.getLocalSymbols().forEach(symbol -> {
+                    pw.printf(fmt, symbol.name(), symbol.symbolType(), symbol.declarationType(), symbol.dataType(),
+                            scope.getName(), symbol.numDimensions(), ifNull(symbol.defaultValues(),"-none-"));
+                    if (symbol.scope() != null) {
+                        scopes.addLast(symbol.scope());
+                    }
+                });
+            }
+        }
+        catch (IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
+    }
+    private String ifNull(Object value, String defaultValue) {
+        return value == null ? defaultValue : value.toString();
     }
 
     private enum Language {

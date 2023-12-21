@@ -13,6 +13,9 @@ import java.io.UncheckedIOException;
 import java.util.*;
 import java.util.function.Function;
 
+import static a2geek.ghost.model.Symbol.in;
+import static a2geek.ghost.model.Symbol.named;
+
 /**
  * A shared component to help building the BASIC model between language variants.
  */
@@ -116,9 +119,6 @@ public class ModelBuilder {
     public StatementBlock popStatementBlock() {
         return this.statementBlock.pop();
     }
-    public void addScope(Scope scope) {
-        this.scope.peek().addScope(scope);
-    }
     public Scope pushScope(Scope scope) {
         return this.scope.push(scope);
     }
@@ -133,24 +133,24 @@ public class ModelBuilder {
     }
 
     public Optional<Symbol> findSymbol(String name) {
-        return this.scope.peek().findSymbol(fixCase(name));
+        return this.scope.peek().findFirst(named(fixCase(name)));
     }
     public Symbol addVariable(String name, DataType dataType) {
-        return this.scope.peek().addLocalSymbol(Symbol.variable(name, scope.peek().getType()).dataType(dataType));
+        return this.scope.peek().addLocalSymbol(Symbol.variable(name, SymbolType.VARIABLE).dataType(dataType));
     }
-    public Symbol addVariable(String name, Scope.Type type, DataType dataType) {
+    public Symbol addVariable(String name, SymbolType type, DataType dataType) {
         return this.scope.peek().addLocalSymbol(Symbol.variable(name, type).dataType(dataType));
     }
     public Symbol addArrayVariable(String name, DataType dataType, int numDimensions) {
         return this.scope.peek().addLocalSymbol(
-                Symbol.variable(fixArrayName(name), scope.peek().getType())
+                Symbol.variable(fixArrayName(name), SymbolType.VARIABLE)
                       .dataType(dataType)
                       .dimensions(numDimensions));
     }
     public Symbol addArrayDefaultVariable(String name, DataType dataType, int numDimensions,
                                           List<Expression> defaultValues) {
         return this.scope.peek().addLocalSymbol(
-            Symbol.variable(fixArrayName(name), scope.peek().getType())
+            Symbol.variable(fixArrayName(name), SymbolType.VARIABLE)
                 .dataType(dataType)
                 .dimensions(numDimensions)
                 .defaultValues(defaultValues));
@@ -163,7 +163,7 @@ public class ModelBuilder {
         labelNumber+= 1;    // just reusing the counter
         var name = String.format("_temp%d", labelNumber);
         return this.scope.peek().addLocalSymbol(
-                Symbol.variable(name, scope.peek().getType())
+                Symbol.variable(name, SymbolType.VARIABLE)
                       .dataType(dataType));
     }
     /** Generate labels for code. The multiple values is to allow grouping of labels (same label number) for complex structures. */
@@ -206,14 +206,16 @@ public class ModelBuilder {
             Program library = ParseUtil.basicToModel(CharStreams.fromStream(inputStream), libraryModel);
             // at this time a library is simply a collection of subroutines and functions.
             boolean noStatements = library.getStatements().isEmpty();
-            boolean onlyConstants = library.getLocalSymbols().stream().noneMatch(ref -> ref.type() != Scope.Type.CONSTANT);
-            if (!noStatements || !onlyConstants) {
+            boolean noVariables = library.findAllLocalScope(in(SymbolType.VARIABLE)).isEmpty();
+            if (!noStatements || !noVariables) {
                 throw new RuntimeException("a library may only contain subroutines, functions, and constants");
             }
             // add subroutines and functions to our program!
             // constants are intentionally left off -- the included code has the reference and we don't want to clutter the namespace
             Program program = getProgram();
-            library.getScopes().forEach(program::addScope);
+            library.findAllLocalScope(in(SymbolType.FUNCTION,SymbolType.SUBROUTINE)).forEach(symbol -> {
+                    program.addLocalSymbol(Symbol.scope(symbol.scope()));
+            });
         }
         catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -230,7 +232,8 @@ public class ModelBuilder {
         var subName = fixCase(name);
         // We can only validate for the primary program; libraries are trusted and sometimes circular!
         if (includeLibraries) {
-            var subScope = getProgram().findLocalScope(subName).orElse(null);
+            var subScope = getProgram().findFirstLocalScope(named(subName).and(in(SymbolType.FUNCTION, SymbolType.SUBROUTINE)))
+                    .map(Symbol::scope).orElse(null);
             if (subScope instanceof Subroutine) {
                 // TODO validate argument count and types
             } else {
@@ -245,7 +248,7 @@ public class ModelBuilder {
         var id = fixCase(name);
         return FunctionExpression.isLibraryFunction(id)
             || FunctionExpression.isIntrinsicFunction(id)
-            || getProgram().findLocalScope(id).map(s -> s instanceof a2geek.ghost.model.scope.Function).orElse(false);
+            || getProgram().findFirstLocalScope(named(id).and(in(SymbolType.FUNCTION))).isPresent();
     }
 
     public FunctionExpression callFunction(String name, List<Expression> params) {
@@ -257,13 +260,16 @@ public class ModelBuilder {
         }
 
         // FIXME: We have a scope with scopes and a stack of scopes both. Really confusing and suggests bad stuff.
-        Optional<Scope> scope = getProgram().findScope(id);
+        Optional<Scope> scope = getProgram().findFirst(named(id).and(in(SymbolType.FUNCTION, SymbolType.SUBROUTINE)))
+                .map(Symbol::scope);
         if (scope.isEmpty()) {
-            scope = getParentProgram().findScope(id);
+            // FIXME: Hopefully short-term until namespacing really works
+            scope = getParentProgram().findFirst(named(id).and(in(SymbolType.FUNCTION, SymbolType.SUBROUTINE)))
+                    .map(Symbol::scope);
         }
         if (scope.isPresent()) {
             if (scope.get() instanceof a2geek.ghost.model.scope.Function fn) {
-                var requiredParameterCount = fn.findByType(Scope.Type.PARAMETER).size();
+                var requiredParameterCount = fn.findAllLocalScope(in(SymbolType.PARAMETER)).size();
                 if (params.size() != requiredParameterCount) {
                     var msg = String.format("function '%s' requires %d parameters", id, requiredParameterCount);
                     throw new RuntimeException(msg);
@@ -289,7 +295,7 @@ public class ModelBuilder {
 
     public Subroutine subDeclBegin(String name, List<Symbol.Builder> params) {
         Subroutine sub = new Subroutine(scope.peek(), fixCase(name), params);
-        addScope(sub);
+        this.scope.peek().addLocalSymbol(Symbol.scope(sub));
 
         pushScope(sub);
         pushStatementBlock(sub);
@@ -305,8 +311,8 @@ public class ModelBuilder {
         // FIXME? naming is really awkward due to naming conflicts!
         a2geek.ghost.model.scope.Function func =
             new a2geek.ghost.model.scope.Function(scope.peek(),
-                Symbol.variable(name, Scope.Type.RETURN_VALUE).dataType(returnType), params);
-        addScope(func);
+                Symbol.variable(name, SymbolType.RETURN_VALUE).dataType(returnType), params);
+        this.scope.peek().addLocalSymbol(Symbol.scope(func));
 
         pushScope(func);
         pushStatementBlock(func);
@@ -399,7 +405,7 @@ public class ModelBuilder {
         arrayDims.merge(symbol, size, (oldSize, newSize) -> oldSize == null ? newSize : oldSize);
     }
     public Expression getArrayDim(Symbol symbol) {
-        if (symbol.type() == Scope.Type.PARAMETER) {
+        if (symbol.symbolType() == SymbolType.PARAMETER) {
             // Expression has only one required method to implement at this time; may need to adjust in future!
             return symbol::dataType;
         } else if (!arrayDims.containsKey(symbol)) {

@@ -1,9 +1,6 @@
 package a2geek.ghost.command.util;
 
-import a2geek.ghost.model.DataType;
-import a2geek.ghost.model.Scope;
-import a2geek.ghost.model.Statement;
-import a2geek.ghost.model.StatementBlock;
+import a2geek.ghost.model.*;
 import a2geek.ghost.model.scope.Function;
 import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.scope.Subroutine;
@@ -11,6 +8,8 @@ import a2geek.ghost.model.statement.IfStatement;
 import a2geek.ghost.model.statement.LabelStatement;
 
 import java.util.stream.Collectors;
+
+import static a2geek.ghost.model.Symbol.in;
 
 public class PrettyPrintVisitor {
     public static String format(Program program) {
@@ -34,7 +33,9 @@ public class PrettyPrintVisitor {
         formatStatementBlock(program);
         sb.append("\n");
         indent -= indentIncrement;
-        program.getScopes().forEach(this::dispatch);
+        program.findAllLocalScope(in(SymbolType.FUNCTION,SymbolType.SUBROUTINE)).forEach(symbol -> {
+            dispatch(symbol.scope());
+        });
     }
 
     public void dispatch(Scope scope) {
@@ -69,7 +70,7 @@ public class PrettyPrintVisitor {
     public void formatScope(Scope scope) {
         scope.getLocalSymbols().stream()
                 // Only variables
-                .filter(s -> s.type() == Scope.Type.GLOBAL || s.type() == Scope.Type.LOCAL)
+                .filter(s -> s.symbolType() == SymbolType.VARIABLE)
                 // Strings should have their own DIM statement at this time
                 .filter(s -> s.dataType() != DataType.STRING)
                 // Arrays should have their own DIM statement
@@ -108,7 +109,7 @@ public class PrettyPrintVisitor {
 
     public String formatParameters(Scope scope) {
         return scope.getLocalSymbols().stream()
-                .filter(s -> s.type() == Scope.Type.PARAMETER)
+                .filter(s -> s.symbolType() == SymbolType.PARAMETER)
                 .map(s -> String.format("%s AS %s", s.name(), s.dataType()))
                 .collect(Collectors.joining(", "));
     }

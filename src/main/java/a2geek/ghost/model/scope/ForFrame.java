@@ -3,6 +3,7 @@ package a2geek.ghost.model.scope;
 import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.Scope;
 import a2geek.ghost.model.Symbol;
+import a2geek.ghost.model.SymbolType;
 
 import java.util.function.BiFunction;
 
@@ -17,7 +18,7 @@ public class ForFrame {
     public ForFrame(Symbol varRef, Scope scope) {
         this.varRef = varRef;
         var num = forNumber++;
-        BiFunction<String,DataType,Symbol.Builder> mkBuilder = (fmt, dt) -> Symbol.variable(String.format(fmt, varRef.name(), num), Scope.Type.GLOBAL).dataType(dt);
+        BiFunction<String,DataType,Symbol.Builder> mkBuilder = (fmt, dt) -> Symbol.variable(String.format(fmt, varRef.name(), num), SymbolType.VARIABLE).dataType(dt);
         this.endRef = scope.addLocalSymbol(mkBuilder.apply("for_%s_end%d", varRef.dataType()));
         this.stepRef = scope.addLocalSymbol(mkBuilder.apply("for_%s_step%d", varRef.dataType()));
         this.nextRef = scope.addLocalSymbol(mkBuilder.apply("for_%s_next%d", DataType.ADDRESS));
