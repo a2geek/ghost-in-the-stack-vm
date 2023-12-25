@@ -4,7 +4,6 @@ import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.scope.Function;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -19,12 +18,8 @@ public class FunctionExpression implements Expression {
     private static final String RUNTIME_LIBRARY = "runtime";
     private static final String STRING_LIBRARY = "string";
     public static final List<Descriptor> DESCRIPTORS = List.of(
-        new Descriptor("peek", null, DataType.INTEGER, DataType.INTEGER),
         new Descriptor("peek", null, DataType.INTEGER, DataType.ADDRESS),
-        new Descriptor("peek", null, DataType.INTEGER, DataType.STRING),
-        new Descriptor("peekw", null, DataType.INTEGER, DataType.INTEGER),
         new Descriptor("peekw", null, DataType.INTEGER, DataType.ADDRESS),
-        new Descriptor("peekw", null, DataType.INTEGER, DataType.STRING),
         new Descriptor("alloc", null, DataType.ADDRESS, DataType.INTEGER),
         new Descriptor("heapalloc", MEMORY_LIBRARY, DataType.ADDRESS, DataType.INTEGER),
         new Descriptor("scrn", LORES_LIBRARY, DataType.INTEGER, DataType.INTEGER, DataType.INTEGER),
@@ -41,21 +36,26 @@ public class FunctionExpression implements Expression {
         new Descriptor("min", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER, DataType.INTEGER),
         new Descriptor("max", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER, DataType.INTEGER)
     );
-    public static Optional<Descriptor> findDescriptor(String name, DataType... parameterTypes) {
+    public static Optional<Descriptor> findDescriptor(String name, List<Expression> parameters) {
         String message = null;
         for (var d : DESCRIPTORS) {
             if (d.name.equalsIgnoreCase(name)) {
-                if (Arrays.equals(d.parameterTypes, parameterTypes)) {
+                if (d.parameterTypes.length != parameters.size()) {
+                    message = String.format("wrong number of arguments to function '%s' expecting %d",
+                        d.name(), d.parameterTypes.length);
+                }
+                try {
+                    for (int i = 0; i < d.parameterTypes.length; i++) {
+                        parameters.get(i).checkAndCoerce(d.parameterTypes[i]);
+                    }
                     return Optional.of(d);
                 }
-                if (d.parameterTypes.length != parameterTypes.length) {
-                    message = String.format("wrong number of arguments to function '%s' expecting %d",
-                            d.name(), d.parameterTypes.length);
-                }
-                else {
+                catch (RuntimeException ex) {
                     message = String.format("expecting parameters of %s but found %s instead",
-                            DataType.asString(d.parameterTypes()),
-                            DataType.asString(parameterTypes));
+                        DataType.asString(d.parameterTypes()),
+                        parameters.stream().map(Expression::getType)
+                            .map(DataType::toString)
+                            .collect(Collectors.joining(",")));
                 }
             }
         }
@@ -63,9 +63,7 @@ public class FunctionExpression implements Expression {
             throw new RuntimeException(message);
         }
         return Optional.empty();
-    }
-    public static Optional<Descriptor> findDescriptor(String name, List<Expression> parameters) {
-        return findDescriptor(name, parameters.stream().map(Expression::getType).toArray(DataType[]::new));
+
     }
 
     public static boolean isIntrinsicFunction(String name) {
