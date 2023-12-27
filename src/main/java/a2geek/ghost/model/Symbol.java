@@ -10,7 +10,7 @@ import java.util.function.Predicate;
 
 public record Symbol(String name, SymbolType symbolType, DeclarationType declarationType,
                      List<Expression> defaultValues, DataType dataType, int numDimensions,
-                     Scope scope) {
+                     Scope scope, String targetName) {
     public boolean hasDefaultValue(int size) {
         return defaultValues != null && defaultValues.size() == size;
     }
@@ -40,6 +40,7 @@ public record Symbol(String name, SymbolType symbolType, DeclarationType declara
         private int numDimensions = 0;  // not an array!
         private List<Expression> defaultValues;
         private Scope scope;
+        private String targetName;
 
         Builder(String name, SymbolType symbolType) {
             Objects.requireNonNull(name);
@@ -97,10 +98,15 @@ public record Symbol(String name, SymbolType symbolType, DeclarationType declara
             this.scope = scope;
             return this;
         }
+        public Builder targetName(String targetName) {
+            this.targetName = targetName;
+            return this;
+        }
         public boolean equals(Symbol symbol) {
             if (symbol == null) return false;
             return Objects.equals(this.name, symbol.name)
                 && Objects.equals(this.symbolType, symbol.symbolType)
+                && Objects.equals(this.targetName, symbol.targetName)
                 && Objects.equals(this.declarationType, symbol.declarationType)
                 && Objects.equals(this.defaultValues, symbol.defaultValues)
                 && Objects.equals(this.dataType, symbol.dataType)
@@ -110,7 +116,8 @@ public record Symbol(String name, SymbolType symbolType, DeclarationType declara
             if (defaultValues != null && defaultValues.size() > 1 && numDimensions == 0) {
                 throw new RuntimeException("expecting array but no dimensions assigned " + name);
             }
-            return new Symbol(name, symbolType, declarationType, defaultValues, dataType, numDimensions, scope);
+            return new Symbol(name, symbolType, declarationType, defaultValues, dataType, numDimensions,
+                    scope, targetName);
         }
     }
 
@@ -122,6 +129,24 @@ public record Symbol(String name, SymbolType symbolType, DeclarationType declara
         return symbol -> declarationType == symbol.declarationType();
     }
     public static Predicate<Symbol> named(String name) {
-        return symbol -> symbol.name().equals(name);
+        return new NamedPredicate(name);
+    }
+
+    private static class NamedPredicate implements Predicate<Symbol> {
+        private String targetName;
+
+        NamedPredicate(String targetName) {
+            this.targetName = targetName;
+        }
+
+        @Override
+        public boolean test(Symbol symbol) {
+            boolean found = symbol.name().equals(targetName);
+            if (found && symbol.symbolType() == SymbolType.ALIAS) {
+                targetName = symbol.targetName();
+                return false;
+            }
+            return found;
+        }
     }
 }

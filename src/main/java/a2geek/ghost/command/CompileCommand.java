@@ -248,16 +248,17 @@ public class CompileCommand implements Callable<Integer> {
 
 
     public void saveSymbolTable(Program program, String filename) {
-        var fmt = "| %-20.20s | %-10.10s | %-10.10s | %-10.10s | %-20.20s | %4s | %-20.20s |\n";
+        var fmt = "| %-20.20s | %-10.10s | %-10.10s | %-10.10s | %-20.20s | %4s | %-20.20s | %-20.20s |\n";
         var scopes = new ArrayList<Scope>();
         scopes.addLast(program);
         try (PrintWriter pw = new PrintWriter(filename)) {
-            pw.printf(fmt, "Name", "SymType", "DeclType", "DataType", "Scope", "DIMs", "Default");
+            pw.printf(fmt, "Name", "SymType", "DeclType", "DataType", "Scope", "DIMs", "Default", "TargetName");
             while (!scopes.isEmpty()) {
                 var scope = scopes.removeFirst();
                 scope.getLocalSymbols().forEach(symbol -> {
                     pw.printf(fmt, symbol.name(), symbol.symbolType(), symbol.declarationType(), symbol.dataType(),
-                            scope.getName(), symbol.numDimensions(), ifNull(symbol.defaultValues(),"-none-"));
+                            scope.getName(), symbol.numDimensions(), ifNull(symbol.defaultValues(),"-none-"),
+                            symbol.targetName());
                     if (symbol.scope() != null) {
                         scopes.addLast(symbol.scope());
                     }

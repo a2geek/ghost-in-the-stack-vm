@@ -20,6 +20,16 @@ import static a2geek.ghost.model.Symbol.named;
  * A shared component to help building the BASIC model between language variants.
  */
 public class ModelBuilder {
+    public static final String INPUT_LIBRARY = "input";
+    public static final String LORES_LIBRARY = "lores";
+    public static final String MEMORY_LIBRARY = "memory";
+    public static final String MISC_LIBRARY = "misc";
+    public static final String MATH_LIBRARY = "math";
+    public static final String PRINT_LIBRARY = "print";
+    public static final String RUNTIME_LIBRARY = "runtime";
+    public static final String STRING_LIBRARY = "string";
+    public static final String TEXT_LIBRARY = "text";
+
     private ModelBuilder parent;
     private Function<String,String> caseStrategy;
     private Function<String,String> arrayNameStrategy = s -> s;
@@ -37,19 +47,37 @@ public class ModelBuilder {
     private static int labelNumber;
 
     public ModelBuilder(Function<String,String> caseStrategy) {
-        this.caseStrategy = caseStrategy;
-        useStackForHeap();  // default
-        Program program = new Program(caseStrategy);
-        this.scope.push(program);
-        this.statementBlock.push(program);
+        commonInit(caseStrategy);
+
+        // --- PRE-LOAD ALL LIBRARIES ---
+        // No dependencies
+        uses(LORES_LIBRARY);
+        uses(MATH_LIBRARY);
+        uses(MEMORY_LIBRARY);
+        uses(MISC_LIBRARY);
+        uses(STRING_LIBRARY);
+        uses(TEXT_LIBRARY);
+        // Needs: STRING
+        uses(PRINT_LIBRARY);
+        uses(INPUT_LIBRARY);
+        // Needs: PRINT
+        uses(RUNTIME_LIBRARY);
     }
     private ModelBuilder(ModelBuilder parent) {
-        this(parent.caseStrategy);
+        commonInit(parent.caseStrategy);
         this.parent = parent;
         this.trace = parent.trace;
         this.boundsCheck = parent.boundsCheck;
         this.includeLibraries = parent.includeLibraries;
         this.heapFunction = parent.heapFunction;
+    }
+
+    private void commonInit(Function<String,String> caseStrategy) {
+        this.caseStrategy = caseStrategy;
+        useStackForHeap();  // default
+        Program program = new Program(caseStrategy);
+        this.scope.push(program);
+        this.statementBlock.push(program);
     }
 
     public Program getProgram() {
@@ -213,7 +241,13 @@ public class ModelBuilder {
             // add subroutines and functions to our program!
             // constants are intentionally left off -- the included code has the reference and we don't want to clutter the namespace
             Program program = getProgram();
+            // FIXME and TODO: The prefix should not be needed once modules are in place
+            final String prefix = fixCase(String.format("%s_", libname));
             library.findAllLocalScope(in(SymbolType.FUNCTION,SymbolType.SUBROUTINE)).forEach(symbol -> {
+                    if (symbol.name().startsWith(prefix) && symbol.symbolType() == SymbolType.FUNCTION) {
+                        // Intentionally adding alias for functions before actual symbol so we can find it!
+                        program.addAliasToParent(symbol.name().substring(prefix.length()), symbol);
+                    }
                     program.addLocalSymbol(Symbol.scope(symbol.scope()));
             });
         }
@@ -232,7 +266,7 @@ public class ModelBuilder {
         var subName = fixCase(name);
         // We can only validate for the primary program; libraries are trusted and sometimes circular!
         if (includeLibraries) {
-            var subScope = getProgram().findFirstLocalScope(named(subName).and(in(SymbolType.FUNCTION, SymbolType.SUBROUTINE)))
+            var subScope = getProgram().findFirst(named(subName).and(in(SymbolType.FUNCTION, SymbolType.SUBROUTINE)))
                     .map(Symbol::scope).orElse(null);
             if (subScope instanceof Subroutine) {
                 // TODO validate argument count and types
@@ -269,10 +303,22 @@ public class ModelBuilder {
         }
         if (scope.isPresent()) {
             if (scope.get() instanceof a2geek.ghost.model.scope.Function fn) {
-                var requiredParameterCount = fn.findAllLocalScope(in(SymbolType.PARAMETER)).size();
-                if (params.size() != requiredParameterCount) {
-                    var msg = String.format("function '%s' requires %d parameters", id, requiredParameterCount);
+                var requiredParameters = fn.findAllLocalScope(in(SymbolType.PARAMETER));
+                if (params.size() != requiredParameters.size()) {
+                    var msg = String.format("function '%s' requires %d parameters", id, requiredParameters.size());
                     throw new RuntimeException(msg);
+                }
+                for (int i = 0; i<requiredParameters.size(); i++) {
+                    var param = params.get(i);
+                    var requiredParam = requiredParameters.get(i);
+                    try {
+                        params.set(i, param.checkAndCoerce(requiredParam.dataType()));
+                    }
+                    catch (RuntimeException ex) {
+                        var msg = String.format("function '%s' parameter %d is not of type %s: %s", id,
+                                i, requiredParam.dataType(), ex.getMessage());
+                        throw new RuntimeException(msg);
+                    }
                 }
                 return new FunctionExpression(fn, params);
             }

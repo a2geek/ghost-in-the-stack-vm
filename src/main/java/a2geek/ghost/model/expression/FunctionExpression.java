@@ -21,20 +21,8 @@ public class FunctionExpression implements Expression {
         new Descriptor("peek", null, DataType.INTEGER, DataType.ADDRESS),
         new Descriptor("peekw", null, DataType.INTEGER, DataType.ADDRESS),
         new Descriptor("alloc", null, DataType.ADDRESS, DataType.INTEGER),
-        new Descriptor("heapalloc", MEMORY_LIBRARY, DataType.ADDRESS, DataType.INTEGER),
-        new Descriptor("scrn", LORES_LIBRARY, DataType.INTEGER, DataType.INTEGER, DataType.INTEGER),
         new Descriptor("asc", STRING_LIBRARY, DataType.INTEGER, DataType.STRING),
-        new Descriptor("rnd", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER),
-        new Descriptor("abs", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER),
-        new Descriptor("sgn", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER),
-        new Descriptor("pdl", MISC_LIBRARY, DataType.INTEGER, DataType.INTEGER),
-        new Descriptor("ipow", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER, DataType.INTEGER),
-        new Descriptor("scaninteger", INPUT_LIBRARY, DataType.INTEGER),
-        new Descriptor("line_index", RUNTIME_LIBRARY, DataType.INTEGER, DataType.INTEGER, DataType.INTEGER),
-        new Descriptor("len", STRING_LIBRARY, DataType.INTEGER, DataType.STRING),
-        new Descriptor("strcmp", STRING_LIBRARY, DataType.INTEGER, DataType.STRING, DataType.STRING),
-        new Descriptor("min", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER, DataType.INTEGER),
-        new Descriptor("max", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER, DataType.INTEGER)
+        new Descriptor("sgn", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER)
     );
     public static Optional<Descriptor> findDescriptor(String name, List<Expression> parameters) {
         String message = null;

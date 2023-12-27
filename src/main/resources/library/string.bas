@@ -60,7 +60,7 @@ sub string_strcpy(target as string, targetStart as integer, _
         source as String, sourceStart as integer, sourceEnd as integer)
     dim t as address, s as address
     if sourceEnd = 0 then
-        sourceEnd = len(source)
+        sourceEnd = string_len(source)
     else
         sourceEnd = sourceEnd - sourceStart + 1
     end if

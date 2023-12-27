@@ -65,6 +65,12 @@ public class Scope extends StatementBlock {
                 return symbol;
             });
     }
+    public Symbol addAliasToParent(String aliasName, Symbol target) {
+        if (parent != null) {
+            return parent.addAliasToParent(aliasName, target);
+        }
+        return addLocalSymbol(Symbol.variable(aliasName, SymbolType.ALIAS).targetName(target.name()));
+    }
 
     public Optional<Symbol> findFirst(Predicate<Symbol> condition) {
         return findFirstLocalScope(condition).or(() -> {
