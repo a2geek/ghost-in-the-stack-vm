@@ -1,78 +1,75 @@
-'
-' Math routines.
-'
+module Math
+    const RNDL = 0x4e
 
-const RNDL = 0x4e
-const RNDH = 0x4f
+    ' See https://en.wikipedia.org/wiki/Linear-feedback_shift_register
+    ' See http://www.retroprogramming.com/2017/07/xorshift-pseudorandom-numbers-in-z80.html
+    function random() as integer
+        r = peekw(RNDL)
+        r = r xor (r << 7)
+        r = r xor (r >> 9)
+        r = r xor (r << 8)
+        pokew RNDL, r
+        return r
+    end function
 
-' See https://en.wikipedia.org/wiki/Linear-feedback_shift_register
-' See http://www.retroprogramming.com/2017/07/xorshift-pseudorandom-numbers-in-z80.html
-function random() as integer
-    r = peekw(RNDL)
-    r = r xor (r << 7)
-    r = r xor (r >> 9)
-    r = r xor (r << 8)
-    pokew RNDL, r
-    return r
-end function
+    ' Note: Simulated Integer BASIC random generator
+    export function rnd(n as integer) as integer
+        r = random() mod n
+        if r < 0 then
+            return -r
+        end if
+        return r
+    end function
 
-' Note: Simulated Integer BASIC random generator
-function math_rnd(n as integer) as integer
-    r = random() mod n
-    if r < 0 then
-        return -r
-    end if
-    return r
-end function
+    export function abs(n as integer) as integer
+        if n < 0 then
+            return -n
+        end if
+        return n
+    end function
 
-function math_abs(n as integer) as integer
-    if n < 0 then
-        return -n
-    end if
-    return n
-end function
-
-function math_sgn(n as integer) as integer
-    if n < 0 then
-        return -1
-    else
-        if n > 0 then
-            return 1
+    export function sgn(n as integer) as integer
+        if n < 0 then
+            return -1
         else
-            return 0
+            if n > 0 then
+                return 1
+            else
+                return 0
+            end if
         end if
-    end if
-end function
+    end function
 
-function math_min(a as integer, b as integer) as integer
-    if a < b then
-        return a
-    else
-        return b
-    end if
-end function
-
-function math_max(a as integer, b as integer) as integer
-    if a > b then
-        return a
-    else
-        return b
-    end if
-end function
-
-' See: https://stackoverflow.com/questions/101439/the-most-efficient-way-to-implement-an-integer-based-power-function-powint-int
-function math_ipow(base as integer, exp as integer) as integer
-    dim result as integer
-    result = 1
-    while true
-        if exp AND 1 then
-            result = result * base
+    export function min(a as integer, b as integer) as integer
+        if a < b then
+            return a
+        else
+            return b
         end if
-        exp = exp >> 1
-        if exp = 0 then
-            exit while
+    end function
+
+    export function max(a as integer, b as integer) as integer
+        if a > b then
+            return a
+        else
+            return b
         end if
-        base = base * base
-    end while
-    return result
-end function
+    end function
+
+    ' See: https://stackoverflow.com/questions/101439/the-most-efficient-way-to-implement-an-integer-based-power-function-powint-int
+    export function ipow(base as integer, exp as integer) as integer
+        dim result as integer
+        result = 1
+        while true
+            if exp AND 1 then
+                result = result * base
+            end if
+            exp = exp >> 1
+            if exp = 0 then
+                exit while
+            end if
+            base = base * base
+        end while
+        return result
+    end function
+end module

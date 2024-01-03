@@ -12,6 +12,7 @@ import static a2geek.ghost.model.Symbol.in;
 
 public class Subroutine extends Scope {
     private boolean inline;
+    private boolean export;
 
     public Subroutine(Scope parent, String name, List<Symbol.Builder> parameters) {
         super(parent, name);
@@ -26,9 +27,19 @@ public class Subroutine extends Scope {
         return inline;
     }
 
+    public void setExport(boolean export) {
+        this.export = export;
+    }
+    public boolean isExport() {
+        return export;
+    }
+
     @Override
     public String toString() {
-        return String.format("SUB %s(%s) : %s : END SUB", getName(),
+        return String.format("%s%sSUB %s(%s) : %s : END SUB",
+                export ? "EXPORT " : "",
+                inline ? "INLINE " : "",
+                getName(),
                 findAllLocalScope(in(SymbolType.PARAMETER)).stream()
                         .map(Symbol::name)
                         .collect(Collectors.joining(", ")),

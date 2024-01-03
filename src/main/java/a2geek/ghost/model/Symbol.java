@@ -15,6 +15,9 @@ public record Symbol(String name, SymbolType symbolType, DeclarationType declara
         return defaultValues != null && defaultValues.size() == size;
     }
 
+    public static Builder from(Symbol original) {
+        return new Builder(original);
+    }
     public static Builder label(String name) {
         return new Builder(name, SymbolType.LABEL).dataType(DataType.ADDRESS);
     }
@@ -28,7 +31,7 @@ public record Symbol(String name, SymbolType symbolType, DeclarationType declara
         var symbolType = switch (scope) {
             case Function f -> SymbolType.FUNCTION;
             case Subroutine s -> SymbolType.SUBROUTINE;
-            default -> throw new RuntimeException("unexpected type of scope " + scope.getClass().getName());
+            default -> SymbolType.MODULE;
         };
         return new Builder(scope.getName(), symbolType).declarationType(DeclarationType.GLOBAL).scope(scope);
     }
@@ -47,6 +50,16 @@ public record Symbol(String name, SymbolType symbolType, DeclarationType declara
             Objects.requireNonNull(symbolType);
             this.name = name;
             this.symbolType = symbolType;
+        }
+        Builder(Symbol original) {
+            this.name = original.name;
+            this.symbolType = original.symbolType;
+            this.declarationType = original.declarationType;
+            this.defaultValues = original.defaultValues;
+            this.dataType = original.dataType;
+            this.numDimensions = original.numDimensions;
+            this.scope = original.scope;
+            this.targetName = original.targetName;
         }
         public Builder name(String name) {
             Objects.requireNonNull(name);

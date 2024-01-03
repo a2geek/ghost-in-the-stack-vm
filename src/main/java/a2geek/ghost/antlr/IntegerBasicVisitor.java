@@ -349,7 +349,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
             model.dynamicGotoGosubStmt(op, VariableReference.with(lineLabels, new BinaryExpression(temp, IntegerConstant.ONE, "-")), true);
             var sb = model.popStatementBlock();
 
-            model.assignStmt(temp, model.callFunction("line_index", Arrays.asList(expr, new VariableReference(lineNumbers))));
+            model.assignStmt(temp, model.callFunction("runtime.line_index", Arrays.asList(expr, new VariableReference(lineNumbers))));
             model.ifStmt(test, sb, null);
         }
         return null;
@@ -404,19 +404,19 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     public Expression visitInputStatement(IntegerParser.InputStatementContext ctx) {
         if (ctx.prompt != null) {
             String value = ctx.prompt.getText().replaceAll("^\"|\"$", "");
-            model.callLibrarySubroutine("string", new StringConstant(model.fixControlChars(value)));
+            model.callLibrarySubroutine("print_string", new StringConstant(model.fixControlChars(value)));
         }
         if (!ctx.getText().contains("$")) {
             // ? prompt is always shown for number input AFAICT.
-            model.callLibrarySubroutine("string", new StringConstant("?"));
+            model.callLibrarySubroutine("print_string", new StringConstant("?"));
         }
-        model.callLibrarySubroutine("readline");
+        model.callLibrarySubroutine("input_readline");
         for (var avar : ctx.var()) {
             var expr = visit(avar);
             if (expr instanceof VariableReference varRef) {
                 switch (varRef.getType()) {
-                    case INTEGER -> model.assignStmt(varRef, model.callFunction("scaninteger", Collections.emptyList()));
-                    case STRING ->  model.callLibrarySubroutine("scanstring", varRef);
+                    case INTEGER -> model.assignStmt(varRef, model.callFunction("runtime.input_scaninteger", Collections.emptyList()));
+                    case STRING ->  model.callLibrarySubroutine("input_scanstring", varRef);
                     default -> throw new RuntimeException("input statement not implemented yet: " + varRef.getType());
                 }
             }
@@ -565,19 +565,19 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
                 semiColonAtEnd = true;
             }
             else if (",".equals(pt.getText())) {
-                callSubroutine("comma");
+                callSubroutine("print_comma");
             }
             else {
                 Expression expr = pt.accept(this);
                 switch (expr.getType()) {
-                    case INTEGER -> model.callLibrarySubroutine("integer", expr);
-                    case STRING -> model.callLibrarySubroutine("string", expr);
+                    case INTEGER -> model.callLibrarySubroutine("print_integer", expr);
+                    case STRING -> model.callLibrarySubroutine("print_string", expr);
                     default -> throw new RuntimeException("Unsupported PRINT type: " + expr.getType());
                 }
             }
         }
         if (!semiColonAtEnd) {
-            callSubroutine("newline");
+            callSubroutine("print_newline");
         }
         return null;
     }
@@ -665,7 +665,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
             op = "<>";
         }
         return new BinaryExpression(
-                model.callFunction("strcmp", Arrays.asList(left,right)),
+                model.callFunction("strings.strcmp", Arrays.asList(left,right)),
                 IntegerConstant.ZERO,
                 op);
     }

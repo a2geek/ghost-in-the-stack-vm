@@ -20,17 +20,14 @@ import static a2geek.ghost.model.Symbol.named;
  * A shared component to help building the BASIC model between language variants.
  */
 public class ModelBuilder {
-    public static final String INPUT_LIBRARY = "input";
     public static final String LORES_LIBRARY = "lores";
     public static final String MEMORY_LIBRARY = "memory";
     public static final String MISC_LIBRARY = "misc";
     public static final String MATH_LIBRARY = "math";
-    public static final String PRINT_LIBRARY = "print";
     public static final String RUNTIME_LIBRARY = "runtime";
-    public static final String STRING_LIBRARY = "string";
+    public static final String STRINGS_LIBRARY = "strings";
     public static final String TEXT_LIBRARY = "text";
 
-    private ModelBuilder parent;
     private Function<String,String> caseStrategy;
     private Function<String,String> arrayNameStrategy = s -> s;
     private Function<String,String> controlCharsFn = s -> s;
@@ -51,25 +48,13 @@ public class ModelBuilder {
 
         // --- PRE-LOAD ALL LIBRARIES ---
         // No dependencies
-        uses(LORES_LIBRARY);
         uses(MATH_LIBRARY);
+        uses(RUNTIME_LIBRARY);  // has an implicit dependency on math
+        uses(LORES_LIBRARY);
         uses(MEMORY_LIBRARY);
         uses(MISC_LIBRARY);
-        uses(STRING_LIBRARY);
+        uses(STRINGS_LIBRARY);
         uses(TEXT_LIBRARY);
-        // Needs: STRING
-        uses(PRINT_LIBRARY);
-        uses(INPUT_LIBRARY);
-        // Needs: PRINT
-        uses(RUNTIME_LIBRARY);
-    }
-    private ModelBuilder(ModelBuilder parent) {
-        commonInit(parent.caseStrategy);
-        this.parent = parent;
-        this.trace = parent.trace;
-        this.boundsCheck = parent.boundsCheck;
-        this.includeLibraries = parent.includeLibraries;
-        this.heapFunction = parent.heapFunction;
     }
 
     private void commonInit(Function<String,String> caseStrategy) {
@@ -85,12 +70,6 @@ public class ModelBuilder {
             return program;
         }
         throw new RuntimeException("Program not found");
-    }
-    public Program getParentProgram() {
-        if (parent != null) {
-            return parent.getProgram();
-        }
-        return getProgram();
     }
 
     public String fixCase(String id) {
@@ -214,11 +193,6 @@ public class ModelBuilder {
     }
 
     public void uses(String libname) {
-        if (parent != null) {
-            parent.uses(libname);
-            return;
-        }
-        //if (!includeLibraries || librariesIncluded.contains(libname)) {
         if (librariesIncluded.contains(libname)) {
             return;
         }
@@ -229,27 +203,7 @@ public class ModelBuilder {
             if (inputStream == null) {
                 throw new RuntimeException("unknown library: " + libname);
             }
-            ModelBuilder libraryModel = new ModelBuilder(this);
-            libraryModel.setIncludeLibraries(false);
-            Program library = ParseUtil.basicToModel(CharStreams.fromStream(inputStream), libraryModel);
-            // at this time a library is simply a collection of subroutines and functions.
-            boolean noStatements = library.getStatements().isEmpty();
-            boolean noVariables = library.findAllLocalScope(in(SymbolType.VARIABLE)).isEmpty();
-            if (!noStatements || !noVariables) {
-                throw new RuntimeException("a library may only contain subroutines, functions, and constants");
-            }
-            // add subroutines and functions to our program!
-            // constants are intentionally left off -- the included code has the reference and we don't want to clutter the namespace
-            Program program = getProgram();
-            // FIXME and TODO: The prefix should not be needed once modules are in place
-            final String prefix = fixCase(String.format("%s_", libname));
-            library.findAllLocalScope(in(SymbolType.FUNCTION,SymbolType.SUBROUTINE)).forEach(symbol -> {
-                    if (symbol.name().startsWith(prefix) && symbol.symbolType() == SymbolType.FUNCTION) {
-                        // Intentionally adding alias for functions before actual symbol so we can find it!
-                        program.addAliasToParent(symbol.name().substring(prefix.length()), symbol);
-                    }
-                    program.addLocalSymbol(Symbol.scope(symbol.scope()));
-            });
+            ParseUtil.basicToModel(CharStreams.fromStream(inputStream), this);
         }
         catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -266,10 +220,10 @@ public class ModelBuilder {
         var subName = fixCase(name);
         // We can only validate for the primary program; libraries are trusted and sometimes circular!
         if (includeLibraries) {
-            var subScope = getProgram().findFirst(named(subName).and(in(SymbolType.FUNCTION, SymbolType.SUBROUTINE)))
+            var subScope = this.scope.peek().findFirst(named(subName).and(in(SymbolType.SUBROUTINE)))
                     .map(Symbol::scope).orElse(null);
-            if (subScope instanceof Subroutine) {
-                // TODO validate argument count and types
+            if (subScope instanceof Subroutine sub) {
+                checkCallParameters(sub, params);
             } else {
                 throw new RuntimeException("subroutine does not exist: " + subName);
             }
@@ -278,11 +232,35 @@ public class ModelBuilder {
         addStatement(callSubroutine);
     }
 
+    void checkCallParameters(Subroutine subOrFunc, List<Expression> params) {
+        var requiredParameters = subOrFunc.findAllLocalScope(in(SymbolType.PARAMETER));
+        if (params.size() != requiredParameters.size()) {
+            // fixme - this should be fixed for clarity
+            var msg = String.format("sub/func '%s' requires %d parameters", subOrFunc.getName(),
+                    requiredParameters.size());
+            throw new RuntimeException(msg);
+        }
+        params = params.reversed(); // call parameters are reversed fixing to make comparison easier
+        for (int i = 0; i<requiredParameters.size(); i++) {
+            var param = params.get(i);
+            var requiredParam = requiredParameters.get(i);
+            try {
+                params.set(i, param.checkAndCoerce(requiredParam.dataType()));
+            }
+            catch (RuntimeException ex) {
+                var msg = String.format("sub/func '%s' parameter %d is not of type %s: %s", subOrFunc.getName(),
+                        i, requiredParam.dataType(), ex.getMessage());
+                throw new RuntimeException(msg);
+            }
+        }
+
+    }
+
     public boolean isFunction(String name) {
         var id = fixCase(name);
         return FunctionExpression.isLibraryFunction(id)
             || FunctionExpression.isIntrinsicFunction(id)
-            || getProgram().findFirstLocalScope(named(id).and(in(SymbolType.FUNCTION))).isPresent();
+            || scope.peek().findFirst(named(id).and(in(SymbolType.FUNCTION))).isPresent();
     }
 
     public FunctionExpression callFunction(String name, List<Expression> params) {
@@ -293,33 +271,11 @@ public class ModelBuilder {
             id = fixCase(descriptor.fullName());
         }
 
-        // FIXME: We have a scope with scopes and a stack of scopes both. Really confusing and suggests bad stuff.
-        Optional<Scope> scope = getProgram().findFirst(named(id).and(in(SymbolType.FUNCTION, SymbolType.SUBROUTINE)))
+        Optional<Scope> scope = this.scope.peek().findFirst(named(id).and(in(SymbolType.FUNCTION)))
                 .map(Symbol::scope);
-        if (scope.isEmpty()) {
-            // FIXME: Hopefully short-term until namespacing really works
-            scope = getParentProgram().findFirst(named(id).and(in(SymbolType.FUNCTION, SymbolType.SUBROUTINE)))
-                    .map(Symbol::scope);
-        }
         if (scope.isPresent()) {
             if (scope.get() instanceof a2geek.ghost.model.scope.Function fn) {
-                var requiredParameters = fn.findAllLocalScope(in(SymbolType.PARAMETER));
-                if (params.size() != requiredParameters.size()) {
-                    var msg = String.format("function '%s' requires %d parameters", id, requiredParameters.size());
-                    throw new RuntimeException(msg);
-                }
-                for (int i = 0; i<requiredParameters.size(); i++) {
-                    var param = params.get(i);
-                    var requiredParam = requiredParameters.get(i);
-                    try {
-                        params.set(i, param.checkAndCoerce(requiredParam.dataType()));
-                    }
-                    catch (RuntimeException ex) {
-                        var msg = String.format("function '%s' parameter %d is not of type %s: %s", id,
-                                i, requiredParam.dataType(), ex.getMessage());
-                        throw new RuntimeException(msg);
-                    }
-                }
+                checkCallParameters(fn, params);
                 return new FunctionExpression(fn, params);
             }
         }
@@ -339,6 +295,19 @@ public class ModelBuilder {
         addStatement(statement);
     }
 
+    public Scope moduleDeclBegin(String name) {
+        Scope module = new Scope(scope.peek(), fixCase(name));
+        this.scope.peek().addLocalSymbol(Symbol.scope(module));
+
+        pushScope(module);
+        pushStatementBlock(module);
+        return module;
+    }
+    public void moduleDeclEnd() {
+        popScope();
+        popStatementBlock();
+    }
+
     public Subroutine subDeclBegin(String name, List<Symbol.Builder> params) {
         Subroutine sub = new Subroutine(scope.peek(), fixCase(name), params);
         this.scope.peek().addLocalSymbol(Symbol.scope(sub));
@@ -353,7 +322,7 @@ public class ModelBuilder {
         popStatementBlock();
     }
 
-    public void funcDeclBegin(String name, DataType returnType, List<Symbol.Builder> params) {
+    public a2geek.ghost.model.scope.Function funcDeclBegin(String name, DataType returnType, List<Symbol.Builder> params) {
         // FIXME? naming is really awkward due to naming conflicts!
         a2geek.ghost.model.scope.Function func =
             new a2geek.ghost.model.scope.Function(scope.peek(),
@@ -362,6 +331,7 @@ public class ModelBuilder {
 
         pushScope(func);
         pushStatementBlock(func);
+        return func;
     }
     public void funcDeclEnd() {
         // TODO does this need to be validated?

@@ -1,11 +1,15 @@
 package a2geek.ghost.model;
 
+import a2geek.ghost.model.scope.Subroutine;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
+import static a2geek.ghost.model.Symbol.in;
 import static a2geek.ghost.model.Symbol.named;
 
 public class Scope extends StatementBlock {
@@ -65,12 +69,6 @@ public class Scope extends StatementBlock {
                 return symbol;
             });
     }
-    public Symbol addAliasToParent(String aliasName, Symbol target) {
-        if (parent != null) {
-            return parent.addAliasToParent(aliasName, target);
-        }
-        return addLocalSymbol(Symbol.variable(aliasName, SymbolType.ALIAS).targetName(target.name()));
-    }
 
     public Optional<Symbol> findFirst(Predicate<Symbol> condition) {
         return findFirstLocalScope(condition).or(() -> {
@@ -81,9 +79,52 @@ public class Scope extends StatementBlock {
         });
     }
     public Optional<Symbol> findFirstLocalScope(Predicate<Symbol> condition) {
-        return symbolTable.stream().filter(condition).findFirst();
+        return streamAllLocalScope().filter(condition).findFirst();
     }
     public List<Symbol> findAllLocalScope(Predicate<Symbol> condition) {
-        return symbolTable.stream().filter(condition).toList();
+        return streamAllLocalScope().filter(condition).toList();
+    }
+
+    public Stream<Symbol> streamAll() {
+        if (parent != null) {
+            return Stream.concat(streamAllLocalScope(), parent.streamAll());
+        }
+        return streamAllLocalScope();
+    }
+    public Stream<Symbol> streamAllLocalScope() {
+        return this.streamAllLocalScope("");
+    }
+
+    /**
+     * Synthetically generates exported function aliases as well as "public" members of nested
+     * scopes. ("Public" are things like CONST, SUB, and FUNCTION declarations from a module.)
+     * Note that nested scopes get renamed on the fly, so the MIN function in the MATH module
+     * becomes "MATH.MIN" _except_ when it's the local scope.
+     */
+    Stream<Symbol> streamAllLocalScope(String prefix) {
+        return symbolTable.stream().flatMap(original -> {
+            Symbol namespaced = Symbol.from(original).name(prefix + original.name()).build();
+            if (namespaced.symbolType() == SymbolType.MODULE) {
+                var newPrefix = String.format("%s%s.", prefix, namespaced.name());
+                return Stream.concat(
+                        Stream.of(namespaced),
+                        namespaced.scope().streamAllLocalScope(newPrefix)
+                            .filter(in(SymbolType.FUNCTION, SymbolType.SUBROUTINE))
+                            .flatMap(symbol -> {
+                                if (symbol.scope() instanceof Subroutine sub) {
+                                    if (sub.isExport()) {
+                                        String origName = sub.getName();
+                                        String targetName = String.format("%s.%s", namespaced.name(), origName);
+                                        var alias = Symbol.variable(origName, SymbolType.ALIAS).targetName(targetName).build();
+                                        return Stream.of(alias, symbol);
+                                    }
+                                }
+                                return Stream.of(symbol);
+                            }));
+            }
+            else {
+                return Stream.of(namespaced);
+            }
+        });
     }
 }

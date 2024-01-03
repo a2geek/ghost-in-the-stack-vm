@@ -6,9 +6,9 @@ public enum SymbolType {
     FUNCTION,
     INTRINSIC,
     LABEL,
+    MODULE,
     PARAMETER,
     RETURN_VALUE,
     SUBROUTINE,
     VARIABLE
-
 }

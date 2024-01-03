@@ -210,28 +210,28 @@ public class GhostBasicVisitorTest {
 
     @Test
     public void testColor() {
-        expect("color=5")
+        expect("color(5)")
             .callLibrarySub("color", constant(5))
             .atEnd();
     }
 
     @Test
     public void testPlot() {
-        expect("plot 5,6")
+        expect("plot(5,6)")
             .callLibrarySub("plot", constant(5), constant(6))
             .atEnd();
     }
 
     @Test
     public void testVlin() {
-        expect("vlin 1,2 at 3")
+        expect("vlin(1,2,3)")
             .callLibrarySub("vlin", constant(1), constant(2), constant(3))
             .atEnd();
     }
 
     @Test
     public void testHlin() {
-        expect("hlin 1,2 at 3")
+        expect("hlin(1,2,3)")
             .callLibrarySub("hlin", constant(1), constant(2), constant(3))
             .atEnd();
     }
@@ -252,9 +252,9 @@ public class GhostBasicVisitorTest {
     @Test
     public void testPrint() {
         expect("print 5, \"HELLO\";")
-            .callLibrarySub("integer", constant(5))
-            .callLibrarySub("comma")
-            .callLibrarySub("string", constant("HELLO"))
+            .callLibrarySub("print_integer", constant(5))
+            .callLibrarySub("print_comma")
+            .callLibrarySub("print_string", constant("HELLO"))
             .atEnd();
     }
 
@@ -304,14 +304,14 @@ public class GhostBasicVisitorTest {
 
     @Test
     public void testVtab() {
-        expect("vtab 5")
+        expect("vtab(5)")
             .callLibrarySub("vtab", constant(5))
             .atEnd();
     }
 
     @Test
     public void testHtab() {
-        expect("htab 5")
+        expect("htab(5)")
             .callLibrarySub("htab", constant(5))
             .atEnd();
     }

@@ -10,18 +10,13 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class FunctionExpression implements Expression {
-    private static final String INPUT_LIBRARY = "input";
-    private static final String LORES_LIBRARY = "lores";
-    private static final String MEMORY_LIBRARY = "memory";
-    private static final String MISC_LIBRARY = "misc";
     private static final String MATH_LIBRARY = "math";
-    private static final String RUNTIME_LIBRARY = "runtime";
-    private static final String STRING_LIBRARY = "string";
+    private static final String STRINGS_LIBRARY = "strings";
     public static final List<Descriptor> DESCRIPTORS = List.of(
         new Descriptor("peek", null, DataType.INTEGER, DataType.ADDRESS),
         new Descriptor("peekw", null, DataType.INTEGER, DataType.ADDRESS),
         new Descriptor("alloc", null, DataType.ADDRESS, DataType.INTEGER),
-        new Descriptor("asc", STRING_LIBRARY, DataType.INTEGER, DataType.STRING),
+        new Descriptor("asc", STRINGS_LIBRARY, DataType.INTEGER, DataType.STRING),
         new Descriptor("sgn", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER)
     );
     public static Optional<Descriptor> findDescriptor(String name, List<Expression> parameters) {
@@ -170,10 +165,10 @@ public class FunctionExpression implements Expression {
         DataType... parameterTypes
     ) {
         public String fullName() {
-            if (library() == null) {
-                return name();
+            if (library == null) {
+                return name;
             }
-            return String.format("%s_%s", library(), name());
+            return String.format("%s.%s", library, name);
         }
     }
 }
