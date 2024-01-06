@@ -218,18 +218,15 @@ public class ModelBuilder {
 
     public void callSubroutine(String name, List<Expression> params) {
         var subName = fixCase(name);
-        // We can only validate for the primary program; libraries are trusted and sometimes circular!
-        if (includeLibraries) {
-            var subScope = this.scope.peek().findFirst(named(subName).and(in(SymbolType.SUBROUTINE)))
-                    .map(Symbol::scope).orElse(null);
-            if (subScope instanceof Subroutine sub) {
-                checkCallParameters(sub, params);
-            } else {
-                throw new RuntimeException("subroutine does not exist: " + subName);
-            }
+        var subScope = this.scope.peek().findFirst(named(subName).and(in(SymbolType.SUBROUTINE)))
+                .map(Symbol::scope).orElse(null);
+        if (subScope instanceof Subroutine sub) {
+            checkCallParameters(sub, params);
+            CallSubroutine callSubroutine = new CallSubroutine(sub, params);
+            addStatement(callSubroutine);
+        } else {
+            throw new RuntimeException("subroutine does not exist: " + subName);
         }
-        CallSubroutine callSubroutine = new CallSubroutine(subName, params);
-        addStatement(callSubroutine);
     }
 
     void checkCallParameters(Subroutine subOrFunc, List<Expression> params) {

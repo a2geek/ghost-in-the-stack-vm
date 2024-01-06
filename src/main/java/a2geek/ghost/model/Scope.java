@@ -46,6 +46,17 @@ public class Scope extends StatementBlock {
         this.name = name;
     }
 
+    public String getFullPathName() {
+        if (parent == null) {
+            return null;  // we don't want MAIN in our name list
+        }
+        var parentName = parent.getFullPathName();
+        if (parentName == null) {
+            return name;
+        }
+        return String.format("%s.%s", parentName, name);
+    }
+
     public List<Symbol> getLocalSymbols() {
         return symbolTable;
     }

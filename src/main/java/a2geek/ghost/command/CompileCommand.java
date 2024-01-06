@@ -256,9 +256,10 @@ public class CompileCommand implements Callable<Integer> {
             while (!scopes.isEmpty()) {
                 var scope = scopes.removeFirst();
                 scope.getLocalSymbols().forEach(symbol -> {
-                    pw.printf(fmt, symbol.name(), symbol.symbolType(), symbol.declarationType(), symbol.dataType(),
-                            scope.getName(), symbol.numDimensions(), ifNull(symbol.defaultValues(),"-none-"),
-                            symbol.targetName());
+                    pw.printf(fmt, symbol.name(), symbol.symbolType(), symbol.declarationType(),
+                            ifNull(symbol.dataType(), "-n/a-"), scope.getName(),
+                            symbol.numDimensions(), ifNull(symbol.defaultValues(),"-none-"),
+                            ifNull(symbol.targetName(), "-"));
                     if (symbol.scope() != null) {
                         scopes.addLast(symbol.scope());
                     }

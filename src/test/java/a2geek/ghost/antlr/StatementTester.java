@@ -145,7 +145,7 @@ public abstract class StatementTester {
 
     public StatementTester callSub(String name, Expression... params) {
         var stmt = nextStatement(CallSubroutine.class);
-        assertEquals(fixCase(name), stmt.getName());
+        assertEquals(fixCase(name), stmt.getSubroutine().getName());
         assertEquals(stmt.getParameters().size(), params.length);
         for (int i=0; i<params.length; i++) {
             assertEquals(params[i], stmt.getParameters().get(i));

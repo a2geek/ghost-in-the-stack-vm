@@ -79,7 +79,7 @@ public class FunctionExpression implements Expression {
         this.returnType = descriptor.get().returnType();
     }
     public FunctionExpression(Function function, List<Expression> expr) {
-        this.name = function.getName();
+        this.name = function.getFullPathName();
         this.function = function;
         this.parameters = expr;
         this.returnType = function.getDataType();
@@ -108,10 +108,10 @@ public class FunctionExpression implements Expression {
 
     @Override
     public boolean isConstant() {
-        if (matches("asc", "string_asc") && parameters.size() == 1) {
+        if (matches("asc", "strings.asc") && parameters.size() == 1) {
             return parameters.get(0).isConstant();
         }
-        else if (matches("sgn", "math_sgn") && parameters.size() == 1) {
+        else if (matches("sgn", "math.sgn") && parameters.size() == 1) {
             return parameters.get(0).isConstant();
         }
         return false;
@@ -125,11 +125,11 @@ public class FunctionExpression implements Expression {
 
     @Override
     public Optional<Integer> asInteger() {
-        if (matches("asc", "string_asc") && parameters.size() == 1 &&
+        if (matches("asc", "strings.asc") && parameters.size() == 1 &&
                 parameters.get(0) instanceof StringConstant s) {
             return Optional.of(s.getValue().charAt(0)|0x80);
         }
-        else if (matches("sgn", "math_sgn") && parameters.size() == 1 &&
+        else if (matches("sgn", "math.sgn") && parameters.size() == 1 &&
                 parameters.get(0) instanceof IntegerConstant i) {
             return Optional.of(Integer.signum(i.getValue()));
         }

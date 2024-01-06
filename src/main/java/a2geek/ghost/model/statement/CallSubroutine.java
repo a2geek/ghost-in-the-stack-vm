@@ -3,6 +3,7 @@ package a2geek.ghost.model.statement;
 import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.Statement;
+import a2geek.ghost.model.scope.Subroutine;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -55,19 +56,16 @@ public class CallSubroutine implements Statement {
         return Optional.ofNullable(SUBS.get(name));
     }
 
-    private String name;
+    private Subroutine subroutine;
     private List<Expression> parameters;
 
-    public CallSubroutine(String name, List<Expression> parameters) {
-        this.name = name;
+    public CallSubroutine(Subroutine subroutine, List<Expression> parameters) {
+        this.subroutine = subroutine;
         this.parameters = parameters;
     }
 
-    public String getName() {
-        return name;
-    }
-    public void setName(String name) {
-        this.name = name;
+    public Subroutine getSubroutine() {
+        return subroutine;
     }
 
     public List<Expression> getParameters() {
@@ -79,7 +77,7 @@ public class CallSubroutine implements Statement {
 
     @Override
     public String toString() {
-        return String.format("CALL %s(%s)", name,
+        return String.format("CALL %s(%s)", subroutine.getFullPathName(),
                 parameters.stream().map(Expression::toString).collect(Collectors.joining(", ")));
     }
 
