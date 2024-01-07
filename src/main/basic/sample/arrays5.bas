@@ -11,7 +11,7 @@ gr
 while true
     for c=1 to 15
         print "COLOR=";c
-        color=c
+        color(c)
         for x=0 to 15
             plot(20+x,20+y(x))
             plot(20-x,20+y(x))
