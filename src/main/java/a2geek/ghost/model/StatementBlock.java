@@ -26,7 +26,7 @@ public class StatementBlock {
         return statements;
     }
     public boolean isLastStatement(Class<? extends Statement> clazz) {
-        Statement stmt = statements.get(statements.size() - 1);
+        Statement stmt = statements.getLast();
         if (clazz.isAssignableFrom(stmt.getClass())) {
             return true;
         }

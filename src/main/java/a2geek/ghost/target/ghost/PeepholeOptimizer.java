@@ -24,7 +24,7 @@ public class PeepholeOptimizer {
             //     GOTO label ==> remove GOTO
             // label:
             if (inst1.opcode() == Opcode.GOTO && inst1.label().equals(inst2.label())) {
-                list.remove(0);
+                list.removeFirst();
                 return true;
             }
             // GLOBAL_STORE offset ==>  DUP
