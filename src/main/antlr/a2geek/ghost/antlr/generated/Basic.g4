@@ -47,8 +47,8 @@ statements
 
 statement
     : 'dim' idDecl (',' idDecl)*                                        # dimStmt
-    | id=expressionID '=' a=expr                                          # assignment
-    | id=ID ':'                                                         # label
+    | id=expressionID '=' a=expr                                        # assignment
+    | id=ID ':' EOL                                                     # label
     | 'if' a=expr 'then' t=statement                                    # ifShortStatement
     | 'if' ifFragment
       ('elseif' ifFragment)*

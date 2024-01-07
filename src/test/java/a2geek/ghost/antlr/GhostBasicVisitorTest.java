@@ -80,7 +80,9 @@ public class GhostBasicVisitorTest {
 
     @Test
     public void testLabel() {
-        expect("alabel:")
+        // Note that labels must be in a separate line (or else it could look like a method invocation
+        // like "GR:PLOT X,Y" where "GR:" becomes a label!
+        expect("alabel:\n")
             .label("alabel")
             .atEnd();
     }
