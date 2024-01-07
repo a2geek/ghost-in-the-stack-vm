@@ -20,8 +20,7 @@ public class IfStatement implements Statement {
         return expression;
     }
     public void setExpression(Expression expression) {
-        expression.mustBe(DataType.INTEGER, DataType.BOOLEAN);
-        this.expression = expression;
+        this.expression = expression.checkAndCoerce(DataType.INTEGER);
     }
 
     public StatementBlock getTrueStatements() {

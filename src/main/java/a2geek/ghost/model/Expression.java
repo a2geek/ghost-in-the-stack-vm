@@ -1,8 +1,6 @@
 package a2geek.ghost.model;
 
-import java.util.Arrays;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 public interface Expression {
     public DataType getType();
@@ -12,15 +10,6 @@ public interface Expression {
             if (type == getType()) return true;
         }
         return false;
-    }
-
-    public default void mustBe(DataType...types) {
-        if (isType(types)) return;
-
-        String message = String.format("Must be type %s but is %s",
-                Arrays.stream(types).map(DataType::toString).collect(Collectors.joining(",")),
-                getType());
-        throw new RuntimeException(message);
     }
 
     public default Expression checkAndCoerce(DataType target) {
@@ -41,7 +30,7 @@ public interface Expression {
                 }
             }
             case STRING -> {
-                if (isType(DataType.STRING)) {
+                if (isType(DataType.STRING, DataType.ADDRESS)) {
                     return this;
                 }
             }
