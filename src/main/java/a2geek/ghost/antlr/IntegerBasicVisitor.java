@@ -454,7 +454,6 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     public Expression visitStringAssignment(IntegerParser.StringAssignmentContext ctx) {
         var srefExpr = visit(ctx.sref());       // LHS
         var stringExpr = visit(ctx.sexpr());    // RHS
-        // TODO: Are these being utilized with the rest of the string work?
         if (srefExpr instanceof VariableReference sref) {
             var targetVariable = sref.getSymbol();
             var targetStart = switch (sref.getIndexes().size()) {
