@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static a2geek.ghost.model.Symbol.in;
@@ -36,7 +37,6 @@ public class ModelBuilder {
     private Set<String> librariesIncluded = new HashSet<>();
     private boolean trace = false;
     private boolean boundsCheck = true;
-    private boolean includeLibraries = true;
     private String heapFunction;
     /** Track array dimensions */
     private Map<Symbol, Expression> arrayDims = new HashMap<>();
@@ -44,20 +44,6 @@ public class ModelBuilder {
     private static int labelNumber;
 
     public ModelBuilder(Function<String,String> caseStrategy) {
-        commonInit(caseStrategy);
-
-        // --- PRE-LOAD ALL LIBRARIES ---
-        // No dependencies
-        uses(MATH_LIBRARY);
-        uses(RUNTIME_LIBRARY);  // has an implicit dependency on math
-        uses(LORES_LIBRARY);
-        uses(MEMORY_LIBRARY);
-        uses(MISC_LIBRARY);
-        uses(STRINGS_LIBRARY);
-        uses(TEXT_LIBRARY);
-    }
-
-    private void commonInit(Function<String,String> caseStrategy) {
         this.caseStrategy = caseStrategy;
         useStackForHeap();  // default
         Program program = new Program(caseStrategy);
@@ -66,7 +52,7 @@ public class ModelBuilder {
     }
 
     public Program getProgram() {
-        if (!scope.isEmpty() && scope.get(0) instanceof Program program) {
+        if (!scope.isEmpty() && scope.getFirst() instanceof Program program) {
             return program;
         }
         throw new RuntimeException("Program not found");
@@ -88,9 +74,6 @@ public class ModelBuilder {
     public void setBoundsCheck(boolean boundsCheck) {
         this.boundsCheck = boundsCheck;
     }
-    public void setIncludeLibraries(boolean includeLibraries) {
-        this.includeLibraries = includeLibraries;
-    }
     public void setArrayNameStrategy(Function<String,String> arrayNameStrategy) {
         this.arrayNameStrategy = arrayNameStrategy;
     }
@@ -102,7 +85,7 @@ public class ModelBuilder {
         this.heapFunction = "alloc";
     }
     public void useMemoryForHeap(int startAddress) {
-        this.heapFunction = "heapalloc";
+        this.heapFunction = "memory.heapalloc";
         this.pushStatementBlock(new StatementBlock());
         pokeStmt("pokew", new IntegerConstant(0x69), new IntegerConstant(startAddress));
         var sb = this.popStatementBlock();
@@ -192,7 +175,7 @@ public class ModelBuilder {
         }
     }
 
-    public void uses(String libname) {
+    public void uses(String libname, Consumer<Symbol> exportHandler) {
         if (librariesIncluded.contains(libname)) {
             return;
         }
@@ -203,20 +186,50 @@ public class ModelBuilder {
             if (inputStream == null) {
                 throw new RuntimeException("unknown library: " + libname);
             }
+            // These gyrations are to ensure that anything included is at the PROGRAM level and not in some sub-scope
+            // (such as FUNCTION, SUB, or MODULE).
+            var program = getProgram();
+            var oldScopeStack = this.scope;
+            this.scope = new Stack<>();
+            this.scope.push(program);
             ParseUtil.basicToModel(CharStreams.fromStream(inputStream), this);
+            this.scope = oldScopeStack;
+            // Apply the export strategy to all components of the module
+            var module = program.findFirst(named(fixCase(libname)).and(in(SymbolType.MODULE))).map(Symbol::scope)
+                    .orElseThrow(() -> new RuntimeException("not a module: " + libname));
+            module.streamAllLocalScope().forEach(exportHandler);
         }
         catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
+    public static Consumer<Symbol> defaultExport() {
+        return symbol -> {};
+    }
+    public static Consumer<Symbol> nothingExported() {
+        return symbol -> {
+            if (symbol.scope() instanceof Subroutine sub) {
+                sub.setExport(false);
+            }
+        };
+    }
+    public static Consumer<Symbol> exportSpecified(String... names) {
+        final var set = Set.of(names);
+        return symbol -> {
+            if (symbol.scope() instanceof Subroutine sub) {
+                sub.setExport(set.contains(sub.getName()));
+            }
+        };
+    }
 
     public void callLibrarySubroutine(String name, Expression... params) {
         var descriptor = CallSubroutine.getDescriptor(name).orElseThrow();
-        uses(descriptor.library());
+        uses(descriptor.library(), nothingExported());
         callSubroutine(descriptor.fullName(), Arrays.asList(params));
     }
 
     public void callSubroutine(String name, List<Expression> params) {
+        ensureModuleIncluded(name);
         var subName = fixCase(name);
         var subScope = this.scope.peek().findFirst(named(subName).and(in(SymbolType.SUBROUTINE)))
                 .map(Symbol::scope).orElse(null);
@@ -226,6 +239,13 @@ public class ModelBuilder {
             addStatement(callSubroutine);
         } else {
             throw new RuntimeException("subroutine does not exist: " + subName);
+        }
+    }
+
+    public void ensureModuleIncluded(String fullPathName) {
+        var parts = fullPathName.split("\\.");
+        if (parts.length == 2) {
+            uses(parts[0], nothingExported());
         }
     }
 
@@ -254,6 +274,9 @@ public class ModelBuilder {
     }
 
     public boolean isFunction(String name) {
+        if (name.contains(".")) {
+            ensureModuleIncluded(name);
+        }
         var id = fixCase(name);
         return FunctionExpression.isLibraryFunction(id)
             || FunctionExpression.isIntrinsicFunction(id)
@@ -261,10 +284,11 @@ public class ModelBuilder {
     }
 
     public FunctionExpression callFunction(String name, List<Expression> params) {
+        ensureModuleIncluded(name);
         var id = fixCase(name);
         if (FunctionExpression.isLibraryFunction(id)) {
             FunctionExpression.Descriptor descriptor = FunctionExpression.findDescriptor(id, params).orElseThrow();
-            uses(descriptor.library());
+            uses(descriptor.library(), nothingExported());
             id = fixCase(descriptor.fullName());
         }
 

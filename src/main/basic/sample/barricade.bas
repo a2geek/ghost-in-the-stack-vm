@@ -1,3 +1,7 @@
+uses "lores"
+uses "strings"
+uses "text"
+
 main:
     GOSUB showTitle
 
@@ -20,11 +24,11 @@ main:
     KR=-16368:KY=-16384:SP=-16336
 
 startGameRound:
-    CALL -936:GR :COLOR= 5:VLIN 0,39 AT 0:HLIN 0,39 AT 0:VLIN 0,39 AT 39:HLIN 0,39 AT 39
+    CALL -936:GR :COLOR(5):VLIN(0,39,0):HLIN(0,39,0):VLIN(0,39,39):HLIN(0,39,39)
     W= ASC("W"):A= ASC("A"):X= ASC("X"):D= ASC("D"):I= ASC("I"):J= ASC("J"):M= ASC("M"):L= ASC("L")
     IF GN>4 THEN GOTO gameOver
     GN=GN+1
-    VTAB 21:PRINT "***HIT ANY KEY TO START GAME***"
+    VTAB(21):PRINT "***HIT ANY KEY TO START GAME***"
 waitForKey:
     IF  PEEK (KY)<128 THEN GOTO waitForKey
     POKE KR,0:CALL -936
@@ -39,7 +43,7 @@ gameLoop:
     IF  SCRN(H1,V1)<>0 THEN GOTO player2Wins
     IF  SCRN(H2,V2)<>0 THEN GOTO player1Wins
     POKE AD+1,100: POKE AD+2,1: POKE AD+0,8:CALL AD+2
-    COLOR= 3:HLIN H1,H1+1 AT V1:HLIN H1,H1+1 AT V1+1:COLOR= 9:HLIN H2,H2+1 AT V2:HLIN H2,H2+1 AT V2+1
+    COLOR(3):HLIN(H1,H1+1,V1):HLIN(H1,H1+1,V1+1):COLOR(9):HLIN(H2,H2+1,V2):HLIN(H2,H2+1,V2+1)
     POKE AD+1,100: POKE AD+2,2: POKE AD+0,7:CALL AD+2
     GOTO gameLoop
 player2Wins:
@@ -54,7 +58,7 @@ buzzSpeaker:
     FOR A=1 TO 10:P= PEEK (SP):NEXT A:FOR A=1 TO 100:P= PEEK (SP):NEXT A:RETURN
 
 gameOver:
-    TEXT :CALL -936:VTAB 12:HTAB 10:PRINT "<<<< GAME OVER >>>>":VTAB 20
+    TEXT :CALL -936:VTAB(12):HTAB(10):PRINT "<<<< GAME OVER >>>>":VTAB(20)
     PRINT
     PRINT "   PLAYER #1 : ";P1;"   TO  PLAYER #2 : ";P2
     END
@@ -70,4 +74,4 @@ showTitle:
     PRINT "   W                 I"
     PRINT "A     D           J     L"
     PRINT "   X                 M"
-    VTAB 23:PRINT "   HIT RETURN TO CONTINUE";:CALL -756:RETURN
+    VTAB(23):PRINT "   HIT RETURN TO CONTINUE";:CALL -756:RETURN

@@ -47,7 +47,7 @@ statements
 
 statement
     : 'dim' idDecl (',' idDecl)*                                        # dimStmt
-    | id=extendedID '=' a=expr                                          # assignment
+    | id=expressionID '=' a=expr                                          # assignment
     | id=ID ':'                                                         # label
     | 'if' a=expr 'then' t=statement                                    # ifShortStatement
     | 'if' ifFragment
@@ -78,7 +78,7 @@ statement
     | op=( 'goto' | 'gosub' ) l=ID                                      # gotoGosubStmt
     | 'on' a=expr op=( 'goto' | 'gosub' ) ID (',' ID)*                  # onGotoGosubStmt
     | 'return' e=expr?                                                  # returnStmt
-    | id=ID p=parameters?                                               # callSub
+    | id=extendedID p=parameters?                                       # callSub
     ;
 ifFragment
     : expr 'then' EOL+
@@ -90,8 +90,12 @@ constantDecl
     ;
 
 extendedID
-    : ID '(' ( anyExpr ( ',' anyExpr )* )? ')'                          # arrayOrFunctionRef
-    | ID ('.' ID)*                                                      # variableOrFunctionRef
+    : ID ('.' ID)*
+    ;
+
+expressionID
+    : extendedID '(' ( anyExpr ( ',' anyExpr )* )? ')'                # arrayOrFunctionRef
+    | extendedID                                                      # variableOrFunctionRef
     ;
 
 paramDecl
@@ -136,7 +140,7 @@ expr
     | a=expr op=( '<<' | '>>' ) b=expr                                  # binaryExpr
     | a=expr op=( 'or' | 'and' | 'xor' ) b=expr                         # binaryExpr
     | op=('-' | 'not') a=expr                                           # unaryExpr
-    | id=extendedID                                                     # extendedIdExpr
+    | id=expressionID                                                   # expressionIDExpr
     | a=INT                                                             # intConstant
     | b=('true' | 'false')                                              # boolConstant
     | '(' a=expr ')'                                                    # parenExpr

@@ -7,7 +7,7 @@ module misc
     const MON_OUTPORT = 0xfe95
 
     export function pdl(n as integer) as integer
-        cpu.register.x = n and 4
+        cpu.register.x = n and 3
         call MON_PREAD
         return cpu.register.y
     end function

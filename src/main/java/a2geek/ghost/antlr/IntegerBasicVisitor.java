@@ -13,6 +13,8 @@ import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.util.*;
 
+import static a2geek.ghost.model.ModelBuilder.*;
+
 public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     public static final String LINE_NUMBERS = "_line_numbers";
     public static final String LINE_LABELS = "_line_labels";
@@ -28,6 +30,9 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     public IntegerBasicVisitor(ModelBuilder model) {
         this.model = model;
         model.setArrayNameStrategy(s -> s + "()");
+        model.uses(MATH_LIBRARY, exportSpecified("ABS", "SGN", "RND"));
+        model.uses(STRINGS_LIBRARY, exportSpecified("LEN"));
+        model.uses(MISC_LIBRARY, exportSpecified("PDL"));
     }
 
     public ModelBuilder getModel() {
@@ -719,7 +724,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     public Expression visitScrnFunc(IntegerParser.ScrnFuncContext ctx) {
         var x = visit(ctx.x);
         var y = visit(ctx.y);
-        return model.callFunction("scrn", Arrays.asList(x, y));
+        return model.callFunction("lores.scrn", Arrays.asList(x, y));
     }
 
     @Override

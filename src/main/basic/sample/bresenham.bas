@@ -1,3 +1,5 @@
+uses "math"
+uses "lores"
 
 ' See: https://en.wikipedia.org/wiki/Bresenham's_line_algorithm
 sub plotLine(x0 as integer, y0 as integer, x1 as integer, y1 as integer)
@@ -20,7 +22,7 @@ sub plotLine(x0 as integer, y0 as integer, x1 as integer, y1 as integer)
     error = dx + dy
 
     while true
-        plot x0, y0
+        plot(x0, y0)
         if x0 = x1 and y0 = y1 then
             exit while
         end if
@@ -67,7 +69,7 @@ while peek(-16384) < 128
         x = 0
     end if
 
-    color= c
+    color(c)
     plotLine(20,20,x,y)
 
 end while

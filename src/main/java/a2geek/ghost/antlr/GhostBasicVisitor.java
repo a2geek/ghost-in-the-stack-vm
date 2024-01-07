@@ -49,7 +49,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     public Expression visitUseDirective(BasicParser.UseDirectiveContext ctx) {
         for (var str : ctx.STR()) {
             String libname = str.getText().replaceAll("^\"|\"$", "");
-            model.uses(libname);
+            model.uses(libname, ModelBuilder.defaultExport());
         }
         return null;
     }
@@ -707,7 +707,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
     @Override
     public Expression visitArrayOrFunctionRef(BasicParser.ArrayOrFunctionRefContext ctx) {
-        var id = ctx.ID().getText();
+        var id = ctx.extendedID().getText();
         List<Expression> params = new ArrayList<>();
         if (ctx.anyExpr() != null) {
             ctx.anyExpr().stream().map(this::visit).forEach(params::add);
@@ -771,7 +771,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         String op = ctx.op.getText();
 
         if ("^".equals(op)) {
-            return model.callFunction("ipow", Arrays.asList(l,r));
+            return model.callFunction("math.ipow", Arrays.asList(l,r));
         }
         return new BinaryExpression(l, r, op);
     }

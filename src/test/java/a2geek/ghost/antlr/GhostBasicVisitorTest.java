@@ -114,7 +114,7 @@ public class GhostBasicVisitorTest {
 
     @Test
     public void testGr() {
-        expect("gr")
+        expect("lores.gr")
             .callLibrarySub("gr")
             .atEnd();
     }
@@ -210,28 +210,28 @@ public class GhostBasicVisitorTest {
 
     @Test
     public void testColor() {
-        expect("color(5)")
+        expect("lores.color(5)")
             .callLibrarySub("color", constant(5))
             .atEnd();
     }
 
     @Test
     public void testPlot() {
-        expect("plot(5,6)")
+        expect("lores.plot(5,6)")
             .callLibrarySub("plot", constant(5), constant(6))
             .atEnd();
     }
 
     @Test
     public void testVlin() {
-        expect("vlin(1,2,3)")
+        expect("lores.vlin(1,2,3)")
             .callLibrarySub("vlin", constant(1), constant(2), constant(3))
             .atEnd();
     }
 
     @Test
     public void testHlin() {
-        expect("hlin(1,2,3)")
+        expect("lores.hlin(1,2,3)")
             .callLibrarySub("hlin", constant(1), constant(2), constant(3))
             .atEnd();
     }
@@ -244,7 +244,7 @@ public class GhostBasicVisitorTest {
 
     @Test
     public void testHome() {
-        expect("home")
+        expect("text.home")
             .callLibrarySub("home")
             .atEnd();
     }
@@ -297,21 +297,21 @@ public class GhostBasicVisitorTest {
 
     @Test
     public void testText() {
-        expect("text")
+        expect("text.text")
             .callLibrarySub("text")
             .atEnd();
     }
 
     @Test
     public void testVtab() {
-        expect("vtab(5)")
+        expect("text.vtab(5)")
             .callLibrarySub("vtab", constant(5))
             .atEnd();
     }
 
     @Test
     public void testHtab() {
-        expect("htab(5)")
+        expect("text.htab(5)")
             .callLibrarySub("htab", constant(5))
             .atEnd();
     }

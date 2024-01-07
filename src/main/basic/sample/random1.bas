@@ -1,10 +1,11 @@
 uses "math"
+uses "text"
 
 text : home
 
 print "RANDOM()"
 for i = 1 to 10
-    print random()
+    print math.random()
 next i
 
 print "RND(10)"
