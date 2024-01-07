@@ -1,5 +1,7 @@
 ' Some stupid testing of htab/vtab
 
+uses "text"
+
 text
 home
 
@@ -12,15 +14,15 @@ home
 ' next y
 
 for y = 20 to 5 step -3
-  vtab y
+  vtab(y)
   for x = 35 to 5 step -7
-    htab x
+    htab(x)
     print x+y;
   next x
 next y
 
 ' position nicely at end?
-vtab 22
+vtab(22)
 print
 
 end

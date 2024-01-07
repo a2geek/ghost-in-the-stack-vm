@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static a2geek.ghost.model.Symbol.in;
@@ -20,7 +21,14 @@ import static a2geek.ghost.model.Symbol.named;
  * A shared component to help building the BASIC model between language variants.
  */
 public class ModelBuilder {
-    private ModelBuilder parent;
+    public static final String LORES_LIBRARY = "lores";
+    public static final String MEMORY_LIBRARY = "memory";
+    public static final String MISC_LIBRARY = "misc";
+    public static final String MATH_LIBRARY = "math";
+    public static final String RUNTIME_LIBRARY = "runtime";
+    public static final String STRINGS_LIBRARY = "strings";
+    public static final String TEXT_LIBRARY = "text";
+
     private Function<String,String> caseStrategy;
     private Function<String,String> arrayNameStrategy = s -> s;
     private Function<String,String> controlCharsFn = s -> s;
@@ -29,7 +37,6 @@ public class ModelBuilder {
     private Set<String> librariesIncluded = new HashSet<>();
     private boolean trace = false;
     private boolean boundsCheck = true;
-    private boolean includeLibraries = true;
     private String heapFunction;
     /** Track array dimensions */
     private Map<Symbol, Expression> arrayDims = new HashMap<>();
@@ -43,26 +50,12 @@ public class ModelBuilder {
         this.scope.push(program);
         this.statementBlock.push(program);
     }
-    private ModelBuilder(ModelBuilder parent) {
-        this(parent.caseStrategy);
-        this.parent = parent;
-        this.trace = parent.trace;
-        this.boundsCheck = parent.boundsCheck;
-        this.includeLibraries = parent.includeLibraries;
-        this.heapFunction = parent.heapFunction;
-    }
 
     public Program getProgram() {
-        if (!scope.isEmpty() && scope.get(0) instanceof Program program) {
+        if (!scope.isEmpty() && scope.getFirst() instanceof Program program) {
             return program;
         }
         throw new RuntimeException("Program not found");
-    }
-    public Program getParentProgram() {
-        if (parent != null) {
-            return parent.getProgram();
-        }
-        return getProgram();
     }
 
     public String fixCase(String id) {
@@ -81,9 +74,6 @@ public class ModelBuilder {
     public void setBoundsCheck(boolean boundsCheck) {
         this.boundsCheck = boundsCheck;
     }
-    public void setIncludeLibraries(boolean includeLibraries) {
-        this.includeLibraries = includeLibraries;
-    }
     public void setArrayNameStrategy(Function<String,String> arrayNameStrategy) {
         this.arrayNameStrategy = arrayNameStrategy;
     }
@@ -95,7 +85,7 @@ public class ModelBuilder {
         this.heapFunction = "alloc";
     }
     public void useMemoryForHeap(int startAddress) {
-        this.heapFunction = "heapalloc";
+        this.heapFunction = "memory.heapalloc";
         this.pushStatementBlock(new StatementBlock());
         pokeStmt("pokew", new IntegerConstant(0x69), new IntegerConstant(startAddress));
         var sb = this.popStatementBlock();
@@ -185,12 +175,7 @@ public class ModelBuilder {
         }
     }
 
-    public void uses(String libname) {
-        if (parent != null) {
-            parent.uses(libname);
-            return;
-        }
-        //if (!includeLibraries || librariesIncluded.contains(libname)) {
+    public void uses(String libname, Consumer<Symbol> exportHandler) {
         if (librariesIncluded.contains(libname)) {
             return;
         }
@@ -201,79 +186,117 @@ public class ModelBuilder {
             if (inputStream == null) {
                 throw new RuntimeException("unknown library: " + libname);
             }
-            ModelBuilder libraryModel = new ModelBuilder(this);
-            libraryModel.setIncludeLibraries(false);
-            Program library = ParseUtil.basicToModel(CharStreams.fromStream(inputStream), libraryModel);
-            // at this time a library is simply a collection of subroutines and functions.
-            boolean noStatements = library.getStatements().isEmpty();
-            boolean noVariables = library.findAllLocalScope(in(SymbolType.VARIABLE)).isEmpty();
-            if (!noStatements || !noVariables) {
-                throw new RuntimeException("a library may only contain subroutines, functions, and constants");
-            }
-            // add subroutines and functions to our program!
-            // constants are intentionally left off -- the included code has the reference and we don't want to clutter the namespace
-            Program program = getProgram();
-            library.findAllLocalScope(in(SymbolType.FUNCTION,SymbolType.SUBROUTINE)).forEach(symbol -> {
-                    program.addLocalSymbol(Symbol.scope(symbol.scope()));
-            });
+            // These gyrations are to ensure that anything included is at the PROGRAM level and not in some sub-scope
+            // (such as FUNCTION, SUB, or MODULE).
+            var program = getProgram();
+            var oldScopeStack = this.scope;
+            this.scope = new Stack<>();
+            this.scope.push(program);
+            ParseUtil.basicToModel(CharStreams.fromStream(inputStream), this);
+            this.scope = oldScopeStack;
+            // Apply the export strategy to all components of the module
+            var module = program.findFirst(named(fixCase(libname)).and(in(SymbolType.MODULE))).map(Symbol::scope)
+                    .orElseThrow(() -> new RuntimeException("not a module: " + libname));
+            module.streamAllLocalScope().forEach(exportHandler);
         }
         catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
+    public static Consumer<Symbol> defaultExport() {
+        return symbol -> {};
+    }
+    public static Consumer<Symbol> nothingExported() {
+        return symbol -> {
+            if (symbol.scope() instanceof Subroutine sub) {
+                sub.setExport(false);
+            }
+        };
+    }
+    public static Consumer<Symbol> exportSpecified(String... names) {
+        final var set = Set.of(names);
+        return symbol -> {
+            if (symbol.scope() instanceof Subroutine sub) {
+                sub.setExport(set.contains(sub.getName()));
+            }
+        };
+    }
 
     public void callLibrarySubroutine(String name, Expression... params) {
         var descriptor = CallSubroutine.getDescriptor(name).orElseThrow();
-        uses(descriptor.library());
+        uses(descriptor.library(), nothingExported());
         callSubroutine(descriptor.fullName(), Arrays.asList(params));
     }
 
     public void callSubroutine(String name, List<Expression> params) {
+        ensureModuleIncluded(name);
         var subName = fixCase(name);
-        // We can only validate for the primary program; libraries are trusted and sometimes circular!
-        if (includeLibraries) {
-            var subScope = getProgram().findFirstLocalScope(named(subName).and(in(SymbolType.FUNCTION, SymbolType.SUBROUTINE)))
-                    .map(Symbol::scope).orElse(null);
-            if (subScope instanceof Subroutine) {
-                // TODO validate argument count and types
-            } else {
-                throw new RuntimeException("subroutine does not exist: " + subName);
+        var subScope = this.scope.peek().findFirst(named(subName).and(in(SymbolType.SUBROUTINE)))
+                .map(Symbol::scope).orElse(null);
+        if (subScope instanceof Subroutine sub) {
+            checkCallParameters(sub, params);
+            CallSubroutine callSubroutine = new CallSubroutine(sub, params);
+            addStatement(callSubroutine);
+        } else {
+            throw new RuntimeException("subroutine does not exist: " + subName);
+        }
+    }
+
+    public void ensureModuleIncluded(String fullPathName) {
+        var parts = fullPathName.split("\\.");
+        if (parts.length == 2) {
+            uses(parts[0], nothingExported());
+        }
+    }
+
+    void checkCallParameters(Subroutine subOrFunc, List<Expression> params) {
+        var requiredParameters = subOrFunc.findAllLocalScope(in(SymbolType.PARAMETER));
+        if (params.size() != requiredParameters.size()) {
+            // fixme - this should be fixed for clarity
+            var msg = String.format("sub/func '%s' requires %d parameters", subOrFunc.getName(),
+                    requiredParameters.size());
+            throw new RuntimeException(msg);
+        }
+        params = params.reversed(); // call parameters are reversed fixing to make comparison easier
+        for (int i = 0; i<requiredParameters.size(); i++) {
+            var param = params.get(i);
+            var requiredParam = requiredParameters.get(i);
+            try {
+                params.set(i, param.checkAndCoerce(requiredParam.dataType()));
+            }
+            catch (RuntimeException ex) {
+                var msg = String.format("sub/func '%s' parameter %d is not of type %s: %s", subOrFunc.getName(),
+                        i, requiredParam.dataType(), ex.getMessage());
+                throw new RuntimeException(msg);
             }
         }
-        CallSubroutine callSubroutine = new CallSubroutine(subName, params);
-        addStatement(callSubroutine);
+
     }
 
     public boolean isFunction(String name) {
+        if (name.contains(".")) {
+            ensureModuleIncluded(name);
+        }
         var id = fixCase(name);
         return FunctionExpression.isLibraryFunction(id)
             || FunctionExpression.isIntrinsicFunction(id)
-            || getProgram().findFirstLocalScope(named(id).and(in(SymbolType.FUNCTION))).isPresent();
+            || scope.peek().findFirst(named(id).and(in(SymbolType.FUNCTION))).isPresent();
     }
 
     public FunctionExpression callFunction(String name, List<Expression> params) {
+        ensureModuleIncluded(name);
         var id = fixCase(name);
         if (FunctionExpression.isLibraryFunction(id)) {
             FunctionExpression.Descriptor descriptor = FunctionExpression.findDescriptor(id, params).orElseThrow();
-            uses(descriptor.library());
+            uses(descriptor.library(), nothingExported());
             id = fixCase(descriptor.fullName());
         }
 
-        // FIXME: We have a scope with scopes and a stack of scopes both. Really confusing and suggests bad stuff.
-        Optional<Scope> scope = getProgram().findFirst(named(id).and(in(SymbolType.FUNCTION, SymbolType.SUBROUTINE)))
+        Optional<Scope> scope = this.scope.peek().findFirst(named(id).and(in(SymbolType.FUNCTION)))
                 .map(Symbol::scope);
-        if (scope.isEmpty()) {
-            // FIXME: Hopefully short-term until namespacing really works
-            scope = getParentProgram().findFirst(named(id).and(in(SymbolType.FUNCTION, SymbolType.SUBROUTINE)))
-                    .map(Symbol::scope);
-        }
         if (scope.isPresent()) {
             if (scope.get() instanceof a2geek.ghost.model.scope.Function fn) {
-                var requiredParameterCount = fn.findAllLocalScope(in(SymbolType.PARAMETER)).size();
-                if (params.size() != requiredParameterCount) {
-                    var msg = String.format("function '%s' requires %d parameters", id, requiredParameterCount);
-                    throw new RuntimeException(msg);
-                }
+                checkCallParameters(fn, params);
                 return new FunctionExpression(fn, params);
             }
         }
@@ -293,6 +316,19 @@ public class ModelBuilder {
         addStatement(statement);
     }
 
+    public Scope moduleDeclBegin(String name) {
+        Scope module = new Scope(scope.peek(), fixCase(name));
+        this.scope.peek().addLocalSymbol(Symbol.scope(module));
+
+        pushScope(module);
+        pushStatementBlock(module);
+        return module;
+    }
+    public void moduleDeclEnd() {
+        popScope();
+        popStatementBlock();
+    }
+
     public Subroutine subDeclBegin(String name, List<Symbol.Builder> params) {
         Subroutine sub = new Subroutine(scope.peek(), fixCase(name), params);
         this.scope.peek().addLocalSymbol(Symbol.scope(sub));
@@ -307,7 +343,7 @@ public class ModelBuilder {
         popStatementBlock();
     }
 
-    public void funcDeclBegin(String name, DataType returnType, List<Symbol.Builder> params) {
+    public a2geek.ghost.model.scope.Function funcDeclBegin(String name, DataType returnType, List<Symbol.Builder> params) {
         // FIXME? naming is really awkward due to naming conflicts!
         a2geek.ghost.model.scope.Function func =
             new a2geek.ghost.model.scope.Function(scope.peek(),
@@ -316,6 +352,7 @@ public class ModelBuilder {
 
         pushScope(func);
         pushStatementBlock(func);
+        return func;
     }
     public void funcDeclEnd() {
         // TODO does this need to be validated?

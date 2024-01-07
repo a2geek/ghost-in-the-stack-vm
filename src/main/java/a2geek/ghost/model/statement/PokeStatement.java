@@ -24,8 +24,7 @@ public class PokeStatement implements Statement {
     }
 
     public void setA(Expression a) {
-        a.mustBe(DataType.INTEGER, DataType.ADDRESS, DataType.STRING);
-        this.a = a;
+        this.a = a.checkAndCoerce(DataType.ADDRESS);
     }
 
     public Expression getB() {
@@ -33,8 +32,7 @@ public class PokeStatement implements Statement {
     }
 
     public void setB(Expression b) {
-        b.mustBe(DataType.INTEGER, DataType.BOOLEAN, DataType.ADDRESS);
-        this.b = b;
+        this.b = b.checkAndCoerce(DataType.ADDRESS);
     }
 
     @Override

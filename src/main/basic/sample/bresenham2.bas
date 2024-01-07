@@ -1,8 +1,6 @@
 ' Experiment to try a full Ghost implementation without using ROM routines.
 
-uses "print"
-uses "lores"
-
+uses "math"
 
 ' See: https://en.wikipedia.org/wiki/Bresenham's_line_algorithm
 sub plotLine(color as integer, x0 as integer, y0 as integer, x1 as integer, y1 as integer)
@@ -73,7 +71,7 @@ end sub
 dim c as integer, i as integer
 dim x as integer, y as integer
 
-gr
+lores.gr
 
 while peek(-16384) < 128
     c = (c + 1) mod 16

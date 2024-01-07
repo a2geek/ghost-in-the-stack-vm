@@ -1,4 +1,6 @@
 ' stupid drawing program
+uses "text"
+uses "lores"
 
 text
 home
@@ -11,10 +13,10 @@ while true
     c = scrn(x,y)
 
     ' blink cursor
-    color= 15-c
-    plot x,y
-    color= c
-    plot x,y
+    color(15-c)
+    plot(x,y)
+    color(c)
+    plot(x,y)
 
     ch = peek(-16384)
     if ch > 128 then
@@ -22,8 +24,8 @@ while true
 
         ' We don't have ELSEIF (or whatever) as a construct
         if ch >= asc("0") and ch <= asc("9") then
-            color= ch - asc("0")
-            plot x,y
+            color(ch - asc("0"))
+            plot(x,y)
         end if
         if (ch = asc("U") or ch = asc("u")) and y > 0 then
             y = y - 1

@@ -34,7 +34,10 @@ public class Function extends Subroutine {
 
     @Override
     public String toString() {
-        return String.format("FUNCTION %s(%s) : %s : END FUNCTION", getName(),
+        return String.format("%s%sFUNCTION %s(%s) : %s : END FUNCTION",
+                isExport() ? "EXPORT " : "",
+                isInline() ? "INLINE " : "",
+                getName(),
                 findAllLocalScope(in(SymbolType.PARAMETER)).stream()
                         .map(Symbol::name)
                         .collect(Collectors.joining(", ")),

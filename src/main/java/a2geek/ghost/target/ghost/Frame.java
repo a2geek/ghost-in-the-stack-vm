@@ -60,7 +60,6 @@ public record Frame(
                 varOffset += 2;
             }
         }
-        // FIXME: We don't track/declare variables, so cannot handle globals yet.
         return new Frame(subroutine, varOffsets, reservation, varOffset);
     }
 }

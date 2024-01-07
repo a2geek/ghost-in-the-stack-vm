@@ -1,3 +1,5 @@
+uses "text"
+
 text : home
 
 print "positive step"

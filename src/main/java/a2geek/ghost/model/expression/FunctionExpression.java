@@ -4,58 +4,41 @@ import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.scope.Function;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class FunctionExpression implements Expression {
-    private static final String INPUT_LIBRARY = "input";
-    private static final String LORES_LIBRARY = "lores";
-    private static final String MEMORY_LIBRARY = "memory";
-    private static final String MISC_LIBRARY = "misc";
     private static final String MATH_LIBRARY = "math";
-    private static final String RUNTIME_LIBRARY = "runtime";
-    private static final String STRING_LIBRARY = "string";
+    private static final String STRINGS_LIBRARY = "strings";
     public static final List<Descriptor> DESCRIPTORS = List.of(
-        new Descriptor("peek", null, DataType.INTEGER, DataType.INTEGER),
         new Descriptor("peek", null, DataType.INTEGER, DataType.ADDRESS),
-        new Descriptor("peek", null, DataType.INTEGER, DataType.STRING),
-        new Descriptor("peekw", null, DataType.INTEGER, DataType.INTEGER),
         new Descriptor("peekw", null, DataType.INTEGER, DataType.ADDRESS),
-        new Descriptor("peekw", null, DataType.INTEGER, DataType.STRING),
         new Descriptor("alloc", null, DataType.ADDRESS, DataType.INTEGER),
-        new Descriptor("heapalloc", MEMORY_LIBRARY, DataType.ADDRESS, DataType.INTEGER),
-        new Descriptor("scrn", LORES_LIBRARY, DataType.INTEGER, DataType.INTEGER, DataType.INTEGER),
-        new Descriptor("asc", STRING_LIBRARY, DataType.INTEGER, DataType.STRING),
-        new Descriptor("rnd", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER),
-        new Descriptor("abs", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER),
-        new Descriptor("sgn", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER),
-        new Descriptor("pdl", MISC_LIBRARY, DataType.INTEGER, DataType.INTEGER),
-        new Descriptor("ipow", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER, DataType.INTEGER),
-        new Descriptor("scaninteger", INPUT_LIBRARY, DataType.INTEGER),
-        new Descriptor("line_index", RUNTIME_LIBRARY, DataType.INTEGER, DataType.INTEGER, DataType.INTEGER),
-        new Descriptor("len", STRING_LIBRARY, DataType.INTEGER, DataType.STRING),
-        new Descriptor("strcmp", STRING_LIBRARY, DataType.INTEGER, DataType.STRING, DataType.STRING),
-        new Descriptor("min", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER, DataType.INTEGER),
-        new Descriptor("max", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER, DataType.INTEGER)
+        new Descriptor("asc", STRINGS_LIBRARY, DataType.INTEGER, DataType.STRING),
+        new Descriptor("sgn", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER)
     );
-    public static Optional<Descriptor> findDescriptor(String name, DataType... parameterTypes) {
+    public static Optional<Descriptor> findDescriptor(String name, List<Expression> parameters) {
         String message = null;
         for (var d : DESCRIPTORS) {
             if (d.name.equalsIgnoreCase(name)) {
-                if (Arrays.equals(d.parameterTypes, parameterTypes)) {
+                if (d.parameterTypes.length != parameters.size()) {
+                    message = String.format("wrong number of arguments to function '%s' expecting %d",
+                        d.name(), d.parameterTypes.length);
+                }
+                try {
+                    for (int i = 0; i < d.parameterTypes.length; i++) {
+                        parameters.get(i).checkAndCoerce(d.parameterTypes[i]);
+                    }
                     return Optional.of(d);
                 }
-                if (d.parameterTypes.length != parameterTypes.length) {
-                    message = String.format("wrong number of arguments to function '%s' expecting %d",
-                            d.name(), d.parameterTypes.length);
-                }
-                else {
+                catch (RuntimeException ex) {
                     message = String.format("expecting parameters of %s but found %s instead",
-                            DataType.asString(d.parameterTypes()),
-                            DataType.asString(parameterTypes));
+                        DataType.asString(d.parameterTypes()),
+                        parameters.stream().map(Expression::getType)
+                            .map(DataType::toString)
+                            .collect(Collectors.joining(",")));
                 }
             }
         }
@@ -63,9 +46,7 @@ public class FunctionExpression implements Expression {
             throw new RuntimeException(message);
         }
         return Optional.empty();
-    }
-    public static Optional<Descriptor> findDescriptor(String name, List<Expression> parameters) {
-        return findDescriptor(name, parameters.stream().map(Expression::getType).toArray(DataType[]::new));
+
     }
 
     public static boolean isIntrinsicFunction(String name) {
@@ -98,7 +79,7 @@ public class FunctionExpression implements Expression {
         this.returnType = descriptor.get().returnType();
     }
     public FunctionExpression(Function function, List<Expression> expr) {
-        this.name = function.getName();
+        this.name = function.getFullPathName();
         this.function = function;
         this.parameters = expr;
         this.returnType = function.getDataType();
@@ -127,10 +108,10 @@ public class FunctionExpression implements Expression {
 
     @Override
     public boolean isConstant() {
-        if (matches("asc", "string_asc") && parameters.size() == 1) {
+        if (matches("asc", "strings.asc") && parameters.size() == 1) {
             return parameters.get(0).isConstant();
         }
-        else if (matches("sgn", "math_sgn") && parameters.size() == 1) {
+        else if (matches("sgn", "math.sgn") && parameters.size() == 1) {
             return parameters.get(0).isConstant();
         }
         return false;
@@ -144,11 +125,11 @@ public class FunctionExpression implements Expression {
 
     @Override
     public Optional<Integer> asInteger() {
-        if (matches("asc", "string_asc") && parameters.size() == 1 &&
+        if (matches("asc", "strings.asc") && parameters.size() == 1 &&
                 parameters.get(0) instanceof StringConstant s) {
             return Optional.of(s.getValue().charAt(0)|0x80);
         }
-        else if (matches("sgn", "math_sgn") && parameters.size() == 1 &&
+        else if (matches("sgn", "math.sgn") && parameters.size() == 1 &&
                 parameters.get(0) instanceof IntegerConstant i) {
             return Optional.of(Integer.signum(i.getValue()));
         }
@@ -184,10 +165,10 @@ public class FunctionExpression implements Expression {
         DataType... parameterTypes
     ) {
         public String fullName() {
-            if (library() == null) {
-                return name();
+            if (library == null) {
+                return name;
             }
-            return String.format("%s_%s", library(), name());
+            return String.format("%s.%s", library, name);
         }
     }
 }

@@ -5,6 +5,7 @@ import a2geek.ghost.antlr.generated.BasicParser;
 import a2geek.ghost.antlr.generated.BasicParser.IfStatementContext;
 import a2geek.ghost.model.*;
 import a2geek.ghost.model.expression.*;
+import a2geek.ghost.model.scope.Subroutine;
 import a2geek.ghost.model.statement.GotoGosubStatement;
 import a2geek.ghost.model.statement.IfStatement;
 import org.antlr.v4.runtime.Token;
@@ -38,10 +39,17 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     }
 
     @Override
+    public Expression visitModule(BasicParser.ModuleContext ctx) {
+        model.moduleDeclBegin(ctx.ID().getText());
+        super.visitModule(ctx);
+        model.moduleDeclEnd();
+        return null;    }
+
+    @Override
     public Expression visitUseDirective(BasicParser.UseDirectiveContext ctx) {
         for (var str : ctx.STR()) {
             String libname = str.getText().replaceAll("^\"|\"$", "");
-            model.uses(libname);
+            model.uses(libname, ModelBuilder.defaultExport());
         }
         return null;
     }
@@ -56,12 +64,6 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         else {
             throw new RuntimeException("expecting a variable type for assignment: " + ctx.id.getText());
         }
-    }
-
-    @Override
-    public Expression visitGrStmt(BasicParser.GrStmtContext ctx) {
-        model.callLibrarySubroutine("gr");
-        return null;
     }
 
     @Override
@@ -402,47 +404,8 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     }
 
     @Override
-    public Expression visitColorStmt(BasicParser.ColorStmtContext ctx) {
-        Expression expr = visit(ctx.a);
-        model.callLibrarySubroutine("color", expr);
-        return null;
-    }
-
-    @Override
-    public Expression visitPlotStmt(BasicParser.PlotStmtContext ctx) {
-        Expression x = visit(ctx.a);
-        Expression y = visit(ctx.b);
-        model.callLibrarySubroutine("plot", x, y);
-        return null;
-    }
-
-    @Override
-    public Expression visitHlinStmt(BasicParser.HlinStmtContext ctx) {
-        var a = visit(ctx.a);
-        var b = visit(ctx.b);
-        var y = visit(ctx.y);
-        model.callLibrarySubroutine("hlin", a, b, y);
-        return null;
-    }
-
-    @Override
-    public Expression visitVlinStmt(BasicParser.VlinStmtContext ctx) {
-        var a = visit(ctx.a);
-        var b = visit(ctx.b);
-        var x = visit(ctx.x);
-        model.callLibrarySubroutine("vlin", a, b, x);
-        return null;
-    }
-
-    @Override
     public Expression visitEndStmt(BasicParser.EndStmtContext ctx) {
         model.endStmt();
-        return null;
-    }
-
-    @Override
-    public Expression visitHomeStmt(BasicParser.HomeStmtContext ctx) {
-        model.callLibrarySubroutine("home");
         return null;
     }
 
@@ -461,21 +424,21 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                 semiColonAtEnd = true;
             }
             else if (",".equals(pt.getText())) {
-                model.callLibrarySubroutine("comma");
+                model.callLibrarySubroutine("print_comma");
             }
             else {
                 Expression expr = pt.accept(this);
                 switch (expr.getType()) {
-                    case INTEGER -> model.callLibrarySubroutine("integer", expr);
-                    case BOOLEAN -> model.callLibrarySubroutine("boolean", expr);
-                    case STRING -> model.callLibrarySubroutine("string", expr);
-                    case ADDRESS -> model.callLibrarySubroutine("address", expr);
+                    case INTEGER -> model.callLibrarySubroutine("print_integer", expr);
+                    case BOOLEAN -> model.callLibrarySubroutine("print_boolean", expr);
+                    case STRING -> model.callLibrarySubroutine("print_string", expr);
+                    case ADDRESS -> model.callLibrarySubroutine("print_address", expr);
                     default -> throw new RuntimeException("Unsupported PRINT type: " + expr.getType());
                 }
             }
         }
         if (!semiColonAtEnd) {
-            model.callLibrarySubroutine("newline");
+            model.callLibrarySubroutine("print_newline");
         }
         return null;
     }
@@ -559,26 +522,6 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         return null;
     }
 
-    @Override
-    public Expression visitTextStmt(BasicParser.TextStmtContext ctx) {
-        model.callLibrarySubroutine("text");
-        return null;
-    }
-
-    @Override
-    public Expression visitHtabStmt(BasicParser.HtabStmtContext ctx) {
-        var a = visit(ctx.a);
-        model.callLibrarySubroutine("htab", a);
-        return null;
-    }
-
-    @Override
-    public Expression visitVtabStmt(BasicParser.VtabStmtContext ctx) {
-        var a = visit(ctx.a);
-        model.callLibrarySubroutine("vtab", a);
-        return null;
-    }
-
     List<IdDeclaration> buildDeclarationList(List<BasicParser.IdDeclContext> params) {
         var decls = new ArrayList<IdDeclaration>();
         var names = new HashSet<>();
@@ -646,13 +589,27 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                 .map(IdDeclaration::toParameter)
                 .collect(Collectors.toList());
         }
-        boolean inline = ctx.f != null && "inline".equalsIgnoreCase(ctx.f.getText());
 
         var sub = model.subDeclBegin(ctx.id.getText(), params);
-        sub.setInline(inline);
+        applyModifiers(ctx.modifiers(), sub);
         visit(ctx.s);
         model.subDeclEnd();
         return null;
+    }
+
+    void applyModifiers(List<BasicParser.ModifiersContext> ctx, Subroutine subOrFunc) {
+        if (ctx != null) {
+            ctx.forEach(modifier -> {
+                switch (modifier.getText().toLowerCase()) {
+                    case "inline" -> subOrFunc.setInline(true);
+                    case "export" -> subOrFunc.setExport(true);
+                    default -> {
+                        var msg = String.format("Unknown modifier '%s' encountered", modifier.getText());
+                        throw new RuntimeException(msg);
+                    }
+                }
+            });
+        }
     }
 
     @Override
@@ -665,7 +622,8 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         }
         DataType dt = buildDataType(ctx.datatype());
 
-        model.funcDeclBegin(ctx.id.getText(), dt, params);
+        var func = model.funcDeclBegin(ctx.id.getText(), dt, params);
+        applyModifiers(ctx.modifiers(), func);
         visit(ctx.s);
         model.funcDeclEnd();
         return null;
@@ -749,7 +707,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
     @Override
     public Expression visitArrayOrFunctionRef(BasicParser.ArrayOrFunctionRefContext ctx) {
-        var id = ctx.ID().getText();
+        var id = ctx.extendedID().getText();
         List<Expression> params = new ArrayList<>();
         if (ctx.anyExpr() != null) {
             ctx.anyExpr().stream().map(this::visit).forEach(params::add);
@@ -813,7 +771,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         String op = ctx.op.getText();
 
         if ("^".equals(op)) {
-            return model.callFunction("ipow", Arrays.asList(l,r));
+            return model.callFunction("math.ipow", Arrays.asList(l,r));
         }
         return new BinaryExpression(l, r, op);
     }

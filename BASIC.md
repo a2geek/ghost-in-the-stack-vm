@@ -13,12 +13,46 @@ Notes:
   available, the untyped usage (and assumption of being an integer) will move towards  
   a legacy compiler.
 
+## Programs and Modules
+
+Some namespace capabilities are enabled via modules. Modules are included via the `uses` statement.
+Any function or subroutine in a module marked as `export` will automatically be aliased as the simple function
+name. For instance, to use the `min` function that is in the Math package, it can be referenced as 
+`math.min(a,b)`, or if a `uses "math"` is done, as `min(a,b)`. Note that a module name must match the filename.
+
+The primary compilation unit must be a program (aka, no module statement). However, routines can be separated 
+and included with a `uses` statement without modules.
+
+Examples:
+
+`mymodule.bas`:
+```basic
+module mymodule
+  export sub hithere()
+    print "in hithere"
+  end sub
+  
+  sub heythere()
+    print "in heythere"
+  end sub
+end module
+```
+
+`myprogram.bas`:
+```basic
+uses "mymodule"
+
+hithere()             ' exported function aliased into primary namespace
+mymodule.heythere()   ' unexportedfunction not available
+```
+
 ## Data types
 
 All variables are assumed to be 16 bit integers. Other data types exist in expressions.
 
 | Data Type | Notes                                                                                                                              |
 |:---------:|:-----------------------------------------------------------------------------------------------------------------------------------|
+|  Address  | Represents a generic pointer.                                                                                                      |
 |  Integer  | 16-bit integer (-32768..32767).                                                                                                    |
 |  Boolean  | True/False. All inequalities resolve to a Boolean. When added to an Integer, a Boolean is valued as `0` for False or `1` for True. |
 |  String   | String constants. Enclosed in quotes (`"`). Mostly used by `print` statement or `asc(..)` function.                                |
@@ -28,10 +62,12 @@ All variables are assumed to be 16 bit integers. Other data types exist in expre
 Subroutines may be declared at the top of the program. They have their own variable scope and, at this time,
 do not share any access to global variables.
 
-> Note that the inline flag is optional and only applies to `sub`.
+> Notes:
+> * The `export` declaration is optional. Applies to `sub` and `function`.
+> * The `inline` flag is optional and only applies to `sub`.
 
 ```basic
-sub [inline] name(a,b,c)
+[export] [inline] sub name(a,b,c)
     ...
 end sub
 ```
@@ -138,11 +174,12 @@ The usual commands are available for lores graphics.  Note that `color=` needs t
 interpreted as variable assignment.
 
 ```basic
-gr
-color= n
-plot x,y
-hlin x0,x1 at y
-vlin y0,y1 at x
+uses "lores"
+gr()
+color(n)
+plot(x,y)
+hlin(x0,x1,y)
+vlin(y0,y1,x)
 c = scrn(x,y)
 ```
 
@@ -239,10 +276,13 @@ loop [ while | until ] expr
 Text screen support matching Applesoft/Integer BASIC.
 
 ```basic
-text
-home
-vtab expr
-htab expr
+uses "text"
+text()
+home()
+vtab(expr)
+htab(expr)
+
+' Note that print is part of the runtime and not associated to the `text` module.
 print [ expr | sexpr | ',' | ';' ]
 ```
 

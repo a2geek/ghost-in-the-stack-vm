@@ -1,5 +1,7 @@
 ' Use the number keys to change tones
 
+uses "lores"
+
 initialize:
     ' Moved this to $300 to not conflict with interpreter
     AD=768
@@ -16,15 +18,15 @@ initialize:
 
 reset:
     A=0
-    GR :COLOR= 10
+    GR :COLOR(10)
     FOR L=16 TO 24 STEP 2
-        HLIN 0,39 AT L
+        HLIN(0,39,L)
     NEXT L
 
 again:
     A=A+1
     IF A=40 THEN goto reset
-    COLOR= 12
+    COLOR(12)
 
 keyloop:
     X= PEEK (-16384):IF X<128 THEN GOTO keyloop: POKE -16368,0:X=X-176
@@ -54,7 +56,7 @@ keyloop:
     IF X=-3 THEN B=19
     IF X=45 THEN B=18
     IF X=-40 THEN B=17
-    PLOT A,B
+    PLOT(A,B)
     D=80
     GOSUB tone
     GOTO again

@@ -82,13 +82,11 @@ public class IntegerBasicVisitorTest {
     }
 
     @Test
-    @Disabled
-    public void testFor() {
-//        expect("10 FOR X = 1 TO 10")
-//            .hasSymbol("X", DataType.INTEGER, Scope.Type.GLOBAL)
-//            .lineNumber(10)
-//            .forStmt("X", constant(1), constant(10))
-//            .atEnd();
+    public void testForNext() {
+        expect("10 FOR X = 1 TO 10:NEXT X")
+            .hasSymbol("X", DataType.INTEGER, SymbolType.VARIABLE, DeclarationType.GLOBAL)
+            .lineNumber(10);
+            // unable to test more but need to confirm that the generated code compiles
     }
 
     @Test
@@ -156,8 +154,8 @@ public class IntegerBasicVisitorTest {
             .ifStmt(binary("=", aRef, constant(1)))
                 .gotoStmt(50)
             .endIf()
-            .callLibrarySub("string", constant("OUTSIDE OF IF"))
-            .callLibrarySub("newline")
+            .callLibrarySub("print_string", constant("OUTSIDE OF IF"))
+            .callLibrarySub("print_newline")
             .atEnd();
     }
 
@@ -168,11 +166,11 @@ public class IntegerBasicVisitorTest {
             .hasSymbol(aRef)
             .lineNumber(10)
             .ifStmt(binary("=", aRef, constant(1)))
-                .callLibrarySub("string", constant("IN IF"))
-                .callLibrarySub("newline")
+                .callLibrarySub("print_string", constant("IN IF"))
+                .callLibrarySub("print_newline")
             .endIf()
-            .callLibrarySub("string", constant("OUTSIDE OF IF"))
-            .callLibrarySub("newline")
+            .callLibrarySub("print_string", constant("OUTSIDE OF IF"))
+            .callLibrarySub("print_newline")
             .atEnd();
     }
 
@@ -257,16 +255,6 @@ public class IntegerBasicVisitorTest {
     }
 
     @Test
-    @Disabled
-    public void testNext() {
-//        expect("10 NEXT X")
-//            .hasSymbol("X", DataType.INTEGER, Scope.Type.GLOBAL)
-//            .lineNumber(10)
-//            .nextStmt("X")
-//            .atEnd();
-    }
-
-    @Test
     public void testPlot() {
         expect("10 PLOT 1,1")
             .lineNumber(10)
@@ -303,11 +291,11 @@ public class IntegerBasicVisitorTest {
         expect("10 PRINT \"X=\",X; : PRINT \"...\"")
             .hasSymbol("X", DataType.INTEGER, SymbolType.VARIABLE, DeclarationType.GLOBAL)
             .lineNumber(10)
-            .callLibrarySub("string", constant("X="))
-            .callLibrarySub("comma")
-            .callLibrarySub("integer", identifier("X", DataType.INTEGER, SymbolType.VARIABLE, DeclarationType.GLOBAL))
-            .callLibrarySub("string", constant("..."))
-            .callLibrarySub("newline")
+            .callLibrarySub("print_string", constant("X="))
+            .callLibrarySub("print_comma")
+            .callLibrarySub("print_integer", identifier("X", DataType.INTEGER, SymbolType.VARIABLE, DeclarationType.GLOBAL))
+            .callLibrarySub("print_string", constant("..."))
+            .callLibrarySub("print_newline")
             .atEnd();
     }
 

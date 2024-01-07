@@ -50,7 +50,9 @@ public class CodeGenerationVisitor extends Visitor {
             for (String scopeName : detachedScopesUsed) {
                 if (!scopesProcessed.contains(scopeName)) {
                     program.findFirstLocalScope(named(scopeName).and(in(SymbolType.FUNCTION, SymbolType.SUBROUTINE)))
-                            .map(Symbol::scope).ifPresent(this::dispatch);
+                            .map(Symbol::scope).ifPresentOrElse(this::dispatch, () -> {
+                                throw new RuntimeException("unable to generate code for: " + scopeName);
+                            });
                     scopesProcessed.add(scopeName);
                     wroteCode = true;
                 }
@@ -295,17 +297,18 @@ public class CodeGenerationVisitor extends Visitor {
     @Override
     public void visit(CallSubroutine statement, StatementContext context) {
         // Using the "program" frame
+        var subFullName = statement.getSubroutine().getFullPathName();
         var scope = frames.getFirst().scope()
-                .findFirstLocalScope(named(statement.getName()).and(in(SymbolType.SUBROUTINE)))
+                .findFirstLocalScope(named(subFullName).and(in(SymbolType.SUBROUTINE)))
                 .map(Symbol::scope)
-                .orElseThrow(() -> new RuntimeException(statement.getName() + " not found"));
+                .orElseThrow(() -> new RuntimeException(subFullName + " not found"));
         if (scope instanceof Subroutine sub) {
             Map<Symbol,Expression> map = new HashMap<>();
             inlineVariables.push(map);
             if (sub.isInline()) {
                 var parameters = sub.findAllLocalScope(in(SymbolType.PARAMETER));
                 if (parameters.size() != statement.getParameters().size()) {
-                    throw new RuntimeException(String.format("parameter size mismatch for call to '%s'", statement.getName()));
+                    throw new RuntimeException(String.format("parameter size mismatch for call to '%s'", subFullName));
                 }
                 // Subroutine parameters are REVERSED (for stack placement), so taking that into account:
                 parameters = parameters.reversed();
@@ -320,12 +323,12 @@ public class CodeGenerationVisitor extends Visitor {
                 dispatchAll(sub);
             }
             else {
-                scopesUsed.add(statement.getName());
+                scopesUsed.add(sub.getFullPathName());
                 boolean hasParameters = statement.getParameters().size() != 0;
                 for (Expression expr : statement.getParameters()) {
                     dispatch(expr);
                 }
-                code.emit(Opcode.GOSUB, statement.getName());
+                code.emit(Opcode.GOSUB, sub.getFullPathName());
                 if (hasParameters) {
                     // FIXME when we have more datatypes this will be incorrect
                     code.emit(Opcode.POPN, statement.getParameters().size() * 2);
@@ -334,7 +337,7 @@ public class CodeGenerationVisitor extends Visitor {
             inlineVariables.pop();
             return;
         }
-        throw new RuntimeException(String.format("calling a subroutine but '%s' is not a subroutine?", statement.getName()));
+        throw new RuntimeException(String.format("calling a subroutine but '%s' is not a subroutine?", subFullName));
     }
 
     @Override
@@ -345,7 +348,7 @@ public class CodeGenerationVisitor extends Visitor {
         }
         var hasLocalScope = subroutine.findAllLocalScope(is(DeclarationType.LOCAL).and(in(SymbolType.VARIABLE, SymbolType.PARAMETER))).size() != 0;
         var frame = frames.push(Frame.create(subroutine));
-        code.emit(subroutine.getName());
+        code.emit(subroutine.getFullPathName());
         if (hasLocalScope) code.emit(Opcode.LOCAL_RESERVE, frame.localSize());
         setupDefaultArrayValues(subroutine);
         if (subroutine.getStatements() != null) {
@@ -363,7 +366,7 @@ public class CodeGenerationVisitor extends Visitor {
         var labels = label("FUNCXIT");
         var exitLabel = labels.get(0);
         function.setExitLabel(exitLabel);
-        code.emit(function.getName());
+        code.emit(function.getFullPathName());
         if (hasLocalScope) code.emit(Opcode.LOCAL_RESERVE, frame.localSize());
         setupDefaultArrayValues(function);
         if (function.getStatements() != null) {
@@ -519,11 +522,12 @@ public class CodeGenerationVisitor extends Visitor {
                 if (function.getFunction() == null) {
                     throw new RuntimeException("unimplemented standard function: " + function.getName());
                 }
-                scopesUsed.add(function.getName());
+                var func = function.getFunction();
+                scopesUsed.add(func.getFullPathName());
                 // FIXME need to reserve by return type when types are in place!
                 code.emit(Opcode.LOADC, 0);
                 emitParameters.run();
-                code.emit(Opcode.GOSUB, function.getName());
+                code.emit(Opcode.GOSUB, func.getFullPathName());
                 var hasParameters = function.getParameters().size() != 0;
                 if (hasParameters) {
                     // FIXME when we have more datatypes this will be incorrect

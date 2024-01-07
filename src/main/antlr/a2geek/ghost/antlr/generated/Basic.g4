@@ -8,8 +8,10 @@ package a2geek.ghost.antlr.generated;
 
 program
     : directives*
-      declarations*
-      statements
+      ( module
+      | declarations*
+        statements
+      )
       EOF
     ;
 
@@ -18,15 +20,25 @@ directives
     | EOL                                                               # emptyDirective
     ;
 
+module
+    : 'module' ID EOL+
+      ( declarations | statements )*
+      'end' 'module' EOL+
+    ;
+
 declarations
-    : 'const' constantDecl ( ',' constantDecl )*                        # constant
-    | 'sub' (f='inline')? id=ID p=paramDecl? EOL+
+    : 'const' constantDecl ( ',' constantDecl )*          # constant
+    | modifiers* 'sub' id=ID p=paramDecl? EOL+
         (s=statements)?
       'end' 'sub'                                                       # subDecl
-    | 'function' id=ID p=paramDecl? ('as' datatype)? EOL+
+    | modifiers* 'function' id=ID p=paramDecl? ('as' datatype)? EOL+
         (s=statements)?
       'end' 'function'                                                  # funcDecl
     | EOL                                                               # emptyDecl
+    ;
+modifiers
+    : 'export'
+    | 'inline'
     ;
 
 statements
@@ -35,15 +47,14 @@ statements
 
 statement
     : 'dim' idDecl (',' idDecl)*                                        # dimStmt
-    | id=extendedID '=' a=expr                                          # assignment
-    | id=ID ':'                                                         # label
+    | id=expressionID '=' a=expr                                        # assignment
+    | id=ID ':' EOL                                                     # label
     | 'if' a=expr 'then' t=statement                                    # ifShortStatement
     | 'if' ifFragment
       ('elseif' ifFragment)*
       ('else' EOL+
         f=statements)?
       'end' 'if' EOL+                                                   # ifStatement
-    | 'gr'                                                              # grStmt
     | 'do' op=('while' | 'until') a=expr (EOL|':')+
         s=statements? (EOL|':')*  // EOL is included in statements itself
       'loop'                                                            # doLoop1
@@ -60,22 +71,14 @@ statement
         s=statements? (EOL|':')*  // EOL is included in statements itself
       'until' a=expr                                                    # repeatLoop
     | 'exit' n=('do' | 'for' | 'repeat' | 'while')                      # exitStmt
-    | 'color=' a=expr                                                   # colorStmt
-    | 'plot' a=expr ',' b=expr                                          # plotStmt
-    | 'vlin' a=expr ',' b=expr 'at' x=expr                              # vlinStmt
-    | 'hlin' a=expr ',' b=expr 'at' y=expr                              # hlinStmt
     | 'end'                                                             # endStmt
-    | 'home'                                                            # homeStmt
     | 'print' (expr | sexpr | ',' | ';')*                               # printStmt
     | op=( 'poke' | 'pokew' ) a=expr ',' b=expr                         # pokeStmt
     | 'call' a=expr                                                     # callStmt
     | op=( 'goto' | 'gosub' ) l=ID                                      # gotoGosubStmt
     | 'on' a=expr op=( 'goto' | 'gosub' ) ID (',' ID)*                  # onGotoGosubStmt
     | 'return' e=expr?                                                  # returnStmt
-    | 'text'                                                            # textStmt
-    | 'vtab' a=expr                                                     # vtabStmt
-    | 'htab' a=expr                                                     # htabStmt
-    | id=ID p=parameters?                                               # callSub
+    | id=extendedID p=parameters?                                       # callSub
     ;
 ifFragment
     : expr 'then' EOL+
@@ -87,8 +90,12 @@ constantDecl
     ;
 
 extendedID
-    : ID '(' ( anyExpr ( ',' anyExpr )* )? ')'                          # arrayOrFunctionRef
-    | ID ('.' ID)*                                                      # variableOrFunctionRef
+    : ID ('.' ID)*
+    ;
+
+expressionID
+    : extendedID '(' ( anyExpr ( ',' anyExpr )* )? ')'                # arrayOrFunctionRef
+    | extendedID                                                      # variableOrFunctionRef
     ;
 
 paramDecl
@@ -133,7 +140,7 @@ expr
     | a=expr op=( '<<' | '>>' ) b=expr                                  # binaryExpr
     | a=expr op=( 'or' | 'and' | 'xor' ) b=expr                         # binaryExpr
     | op=('-' | 'not') a=expr                                           # unaryExpr
-    | id=extendedID                                                     # extendedIdExpr
+    | id=expressionID                                                   # expressionIDExpr
     | a=INT                                                             # intConstant
     | b=('true' | 'false')                                              # boolConstant
     | '(' a=expr ')'                                                    # parenExpr

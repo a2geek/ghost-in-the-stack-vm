@@ -47,7 +47,7 @@ public class PrettyPrintVisitor {
     }
 
     public void formatFunction(Function func) {
-        sb.append(String.format("FUNCTION %s(%s) AS %s", func.getName(),
+        sb.append(String.format("FUNCTION %s(%s) AS %s", func.getFullPathName(),
                 formatParameters(func), func.getDataType()).indent(0));
         indent += indentIncrement;
         formatScope(func);
@@ -58,7 +58,7 @@ public class PrettyPrintVisitor {
     }
 
     public void formatSubroutine(Subroutine sub) {
-        sb.append(String.format("SUB %s(%s)", sub.getName(), formatParameters(sub)).indent(0));
+        sb.append(String.format("SUB %s(%s)", sub.getFullPathName(), formatParameters(sub)).indent(0));
         indent += indentIncrement;
         formatScope(sub);
         formatStatementBlock(sub);

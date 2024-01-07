@@ -1,6 +1,5 @@
 package a2geek.ghost.model.statement;
 
-import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.Statement;
 import a2geek.ghost.model.expression.VariableReference;
@@ -11,9 +10,7 @@ public class AssignmentStatement implements Statement {
 
     public AssignmentStatement(VariableReference var, Expression expr) {
         this.var = var;
-        this.expr = expr;
-        // FIXME really need to check if the expression can be assigned to the variable
-        expr.mustBe(DataType.INTEGER, DataType.BOOLEAN, DataType.STRING, DataType.ADDRESS);
+        this.expr = expr.checkAndCoerce(var.getType());
     }
 
     public VariableReference getVar() {

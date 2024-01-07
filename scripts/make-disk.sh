@@ -15,7 +15,23 @@ ACX="java -jar build/libs/${ACX_JAR}"
 export ACX_DISK_NAME=disk1.po
 ${ACX} mkdisk --format=src/main/asm/template.po --name=MYDISK --size=800k --prodos --prodos-order
 
-for dir in $(ls src/main/basic)
+DIRS=$(ls src/main/basic)
+if [ $# -ge 1 ]
+then
+    case "$1" in
+      --sample)
+          DIRS="sample"
+          shift
+          ;;
+      --integer)
+          DIRS="integer"
+          shift
+          ;;
+    esac
+fi
+echo "Building from these directories: ${DIRS}"
+
+for dir in ${DIRS}
 do
   ${ACX} mkdir ${dir}
 
