@@ -16,7 +16,7 @@ Notes:
 ## Programs and Modules
 
 Some namespace capabilities are enabled via modules. Modules are included via the `uses` statement.
-Any function or subroutine in a module marked as `public` will automatically be aliased as the simple function
+Any function or subroutine in a module marked as `export` will automatically be aliased as the simple function
 name. For instance, to use the `min` function that is in the Math package, it can be referenced as 
 `math.min(a,b)`, or if a `uses "math"` is done, as `min(a,b)`. Note that a module name must match the filename.
 
@@ -28,7 +28,7 @@ Examples:
 `mymodule.bas`:
 ```basic
 module mymodule
-  public sub hithere()
+  export sub hithere()
     print "in hithere"
   end sub
   
@@ -42,8 +42,8 @@ end module
 ```basic
 uses "mymodule"
 
-hithere()             ' public function aliased into primary namespace
-mymodule.heythere()   ' private function not available
+hithere()             ' exported function aliased into primary namespace
+mymodule.heythere()   ' unexportedfunction not available
 ```
 
 ## Data types
@@ -63,11 +63,11 @@ Subroutines may be declared at the top of the program. They have their own varia
 do not share any access to global variables.
 
 > Notes:
-> * The `public` or `private` declaration are optional. Default is `private`. Applies to `sub` and `function`.
+> * The `export` declaration is optional. Applies to `sub` and `function`.
 > * The `inline` flag is optional and only applies to `sub`.
 
 ```basic
-[public|private] sub [inline] name(a,b,c)
+[export] [inline] sub name(a,b,c)
     ...
 end sub
 ```
