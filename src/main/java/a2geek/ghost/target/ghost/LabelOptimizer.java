@@ -34,7 +34,7 @@ public class LabelOptimizer {
     static void populateUsedLabels(InstructionContext ctx) {
         var oneInstruction = ctx.slice(1);
         if (oneInstruction.isPresent()) {
-            var inst = oneInstruction.get().get(0);
+            var inst = oneInstruction.get().getFirst();
             if (inst.opcode() != null && inst.label() != null) {
                 usedLabels.add(inst.label());
             }
@@ -49,12 +49,12 @@ public class LabelOptimizer {
         var oneInstruction = ctx.slice(1);
         if (oneInstruction.isPresent()) {
             var list = oneInstruction.get();
-            var inst = list.get(0);
+            var inst = list.getFirst();
             if (inst.isLabelOnly()
                     && inst.label().startsWith("_")     // HACK: don't remove library labels, even if not used. TBD.
                     && !LINE_NUMBER.matcher(inst.label()).matches()
                     && !usedLabels.contains(inst.label())) {
-                list.remove(0);
+                list.removeFirst();
             }
         }
     }
@@ -68,7 +68,7 @@ public class LabelOptimizer {
             // Tracking two consecutive labels and removing the first as unneeded... (skips if 1st label is line number format)
             if (inst1.isLabelOnly() && inst2.isLabelOnly() && !LINE_NUMBER.matcher(inst1.label()).matches()
                     && !replaceLabels.containsKey(inst1.label())) {
-                list.remove(0);
+                list.removeFirst();
                 replaceLabels.put(inst1.label(), inst2.label());
                 // if we already have A->B and we get B->C, make the first A->C to shorten work!
                 replaceLabels.replaceAll((k,v) -> v.equals(inst1.label()) ? inst2.label() : v);
@@ -80,7 +80,7 @@ public class LabelOptimizer {
         var oneInstruction = ctx.slice(1);
         if (oneInstruction.isPresent()) {
             var list = oneInstruction.get();
-            var inst = list.get(0);
+            var inst = list.getFirst();
             if (is(inst.opcode(), Opcode.LOADA, Opcode.IFTRUE, Opcode.IFFALSE, Opcode.GOTO, Opcode.GOSUB)
                     && replaceLabels.containsKey(inst.label())) {
                 list.set(0, new Instruction(replaceLabels.get(inst.label()), inst.opcode(), null, null, null));

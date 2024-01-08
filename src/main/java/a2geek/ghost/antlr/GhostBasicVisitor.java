@@ -460,7 +460,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     public Symbol findGotoGosubLabel(Token id) {
         return gotoGosubLabels.computeIfAbsent(
                 model.fixCase(id.getText()),
-                x -> model.addLabels(x).get(0));
+                x -> model.addLabels(x).getFirst());
     }
 
     @Override
@@ -655,8 +655,8 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                 }
                 else {
                     var symbol = model.addArrayVariable(decl.name(), decl.dataType(), decl.dimensions().size());
-                    model.allocateIntegerArray(symbol, decl.dimensions().get(0));
-                    model.registerDimArray(symbol, decl.dimensions().get(0));
+                    model.allocateIntegerArray(symbol, decl.dimensions().getFirst());
+                    model.registerDimArray(symbol, decl.dimensions().getFirst());
                 }
             }
             else {
@@ -665,7 +665,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                     if (decl.defaultValues().size() != 1) {
                         throw new RuntimeException("can only assign one default value: " + decl.name());
                     }
-                    model.assignStmt(new VariableReference(symbol), decl.defaultValues().get(0));
+                    model.assignStmt(new VariableReference(symbol), decl.defaultValues().getFirst());
                 }
             }
         });
@@ -714,7 +714,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         }
 
         if ("ubound".equalsIgnoreCase(id)) {
-            if (params.size() == 1 && params.get(0) instanceof VariableReference varRef) {
+            if (params.size() == 1 && params.getFirst() instanceof VariableReference varRef) {
                 return new ArrayLengthFunction(model, varRef.getSymbol());
             }
             throw new RuntimeException("ubound expects a variable name as its argument: " + ctx.getText());
@@ -742,7 +742,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         if (params.size() > 1) {
             throw new RuntimeException("only single dimension arrays supported at this time: " + ctx.getText());
         }
-        model.checkArrayBounds(existing.get(), params.get(0), ctx.getStart().getLine());
+        model.checkArrayBounds(existing.get(), params.getFirst(), ctx.getStart().getLine());
         return new VariableReference(existing.get(), params);
     }
 

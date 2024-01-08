@@ -97,7 +97,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
                 model.addInitializationStatements(sb);
             }
             else {
-                var msg = String.format("indeterminant temp string size for %s: based on %s", symbol, symbols);
+                var msg = String.format("indeterminate temp string size for %s: based on %s", symbol, symbols);
                 throw new RuntimeException(msg);
             }
         });
@@ -115,7 +115,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     Symbol gotoGosubLabel(int linenum) {
         return lineLabels.computeIfAbsent(
                 linenum,
-                n -> model.addLabels(String.format("L%d_", n)).get(0));
+                n -> model.addLabels(String.format("L%d_", n)).getFirst());
     }
 
     @Override
@@ -305,7 +305,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
             var exitRef = new VariableReference(frame.getExitRef());
 
             var labels = model.addLabels("FOR_EXIT");
-            var exitLabel = labels.get(0);
+            var exitLabel = labels.getFirst();
 
             model.assignStmt(exitRef, new BinaryExpression(new AddressOfFunction(exitLabel), IntegerConstant.ONE, "-"));
             model.dynamicGotoGosubStmt("goto", VariableReference.with(frame.getNextRef()), false);
@@ -458,7 +458,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
             var targetVariable = sref.getSymbol();
             var targetStart = switch (sref.getIndexes().size()) {
                 case 0 -> IntegerConstant.ONE;
-                case 1 -> sref.getIndexes().get(0);
+                case 1 -> sref.getIndexes().getFirst();
                 default -> throw new RuntimeException("string reference on left-hand side can only have 0 or 1 index");
             };
 
@@ -466,7 +466,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
                 var sourceVariable = expr.getSymbol();
                 var sourceStart = switch (expr.getIndexes().size()) {
                     case 0 -> IntegerConstant.ONE;
-                    case 1,2 -> expr.getIndexes().get(0);
+                    case 1,2 -> expr.getIndexes().getFirst();
                     default -> throw new RuntimeException("string reference on right-hand side can only have 0, 1, or 2 index");
                 };
                 var sourceEnd = switch (expr.getIndexes().size()) {

@@ -109,10 +109,10 @@ public class FunctionExpression implements Expression {
     @Override
     public boolean isConstant() {
         if (matches("asc", "strings.asc") && parameters.size() == 1) {
-            return parameters.get(0).isConstant();
+            return parameters.getFirst().isConstant();
         }
         else if (matches("sgn", "math.sgn") && parameters.size() == 1) {
-            return parameters.get(0).isConstant();
+            return parameters.getFirst().isConstant();
         }
         return false;
     }
@@ -126,11 +126,11 @@ public class FunctionExpression implements Expression {
     @Override
     public Optional<Integer> asInteger() {
         if (matches("asc", "strings.asc") && parameters.size() == 1 &&
-                parameters.get(0) instanceof StringConstant s) {
+                parameters.getFirst() instanceof StringConstant s) {
             return Optional.of(s.getValue().charAt(0)|0x80);
         }
         else if (matches("sgn", "math.sgn") && parameters.size() == 1 &&
-                parameters.get(0) instanceof IntegerConstant i) {
+                parameters.getFirst() instanceof IntegerConstant i) {
             return Optional.of(Integer.signum(i.getValue()));
         }
         return Optional.empty();

@@ -143,7 +143,7 @@ public class CodeGenerationVisitor extends Visitor {
                 }
             }
             case CONSTANT -> {
-                switch (symbol.defaultValues().get(0)) {
+                switch (symbol.defaultValues().getFirst()) {
                     case IntegerConstant c -> visit(c);
                     case StringConstant s -> visit(s);
                     default -> throw new RuntimeException("unable to generate code for constant expression: " + symbol);
@@ -254,7 +254,7 @@ public class CodeGenerationVisitor extends Visitor {
     @Override
     public void visit(DynamicGotoGosubStatement statement, StatementContext context) {
         var labels = label("RETURN");
-        var returnLabel = labels.get(0);
+        var returnLabel = labels.getFirst();
         if ("gosub".equalsIgnoreCase(statement.getOp())) {
             // GOSUB needs a return address on the stack
             code.emit(Opcode.LOADA, returnLabel);
@@ -280,7 +280,7 @@ public class CodeGenerationVisitor extends Visitor {
         if (this.frames.peek().scope() instanceof Function f) {
             var refs = this.frames.peek().scope().findAllLocalScope(in(SymbolType.RETURN_VALUE));
             if (refs.size() == 1 && hasReturnValue) {
-                assignment(new VariableReference(refs.get(0)), statement.getExpr());
+                assignment(new VariableReference(refs.getFirst()), statement.getExpr());
             } else if (refs.size() != 0 || hasReturnValue) {
                 throw new RuntimeException("function return mismatch");
             }
@@ -365,7 +365,7 @@ public class CodeGenerationVisitor extends Visitor {
         var hasLocalScope = true;
         var frame = frames.push(Frame.create(function));
         var labels = label("FUNCXIT");
-        var exitLabel = labels.get(0);
+        var exitLabel = labels.getFirst();
         function.setExitLabel(exitLabel);
         code.emit(function.getFullPathName());
         if (hasLocalScope) code.emit(Opcode.LOCAL_RESERVE, frame.localSize());
@@ -493,7 +493,7 @@ public class CodeGenerationVisitor extends Visitor {
     @Override
     public Expression visit(StringConstant expression) {
         var label = label("STRCONST");
-        String actual = code.emitConstant(label.get(0), expression.getValue());
+        String actual = code.emitConstant(label.getFirst(), expression.getValue());
         code.emit(Opcode.LOADA, actual);
         return null;
     }
