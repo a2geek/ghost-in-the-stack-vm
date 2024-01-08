@@ -5,9 +5,6 @@
 ip:        .addr 0
 temp:      .byte 0
 workptr:   .word 0
-acc:       .byte 0
-yreg:      .byte 0
-xreg:      .byte 0
 locals:    .byte 0
 globals:   .byte 0
 baseip:    .addr 0
@@ -29,6 +26,12 @@ prbyte = $fdda
 cout = $fded
 
     .code
+
+    jmp main
+
+acc:       .byte 0
+yreg:      .byte 0
+xreg:      .byte 0
 
 main:
 ;    TODO initialization???
@@ -176,7 +179,8 @@ loop:
     bmi :+
     jmp @noflag
 :   jsr print
-    .byte "IP=",$82,ip,", A/Y/X=",$81,acc,$81,yreg,$81,xreg,",",$d
+    .byte "IP=",$82,ip,$d
+    ;.byte ", A/Y/X=",$81,acc,$81,yreg,$81,xreg,",",$d
     .byte "WP=",$82,workptr,", LCL=",$81,locals,", GBL=",$81,globals,", S=",0
     tsx
     txa
