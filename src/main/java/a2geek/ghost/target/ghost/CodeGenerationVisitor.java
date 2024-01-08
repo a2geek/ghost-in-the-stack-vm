@@ -361,7 +361,8 @@ public class CodeGenerationVisitor extends Visitor {
 
     @Override
     public void visit(Function function) {
-        var hasLocalScope = function.findAllLocalScope(is(DeclarationType.LOCAL).and(in(SymbolType.VARIABLE, SymbolType.PARAMETER))).size() != 0;
+        //var hasLocalScope = function.findAllLocalScope(is(DeclarationType.LOCAL).and(in(SymbolType.VARIABLE, SymbolType.PARAMETER))).size() != 0;
+        var hasLocalScope = true;
         var frame = frames.push(Frame.create(function));
         var labels = label("FUNCXIT");
         var exitLabel = labels.get(0);
