@@ -2,6 +2,9 @@ module prodos
     const CODE = 0x300
     const PARAMS = 0x310
     const MLI = 0xbf00
+    const DEVNUM = 0xbf30
+    const MACHID = 0xbf98
+    const PFXPTR = 0xbf9a
 
     sub callMLI(functionCode as Integer)
         dim rc as integer
@@ -25,6 +28,54 @@ module prodos
         callMLI(0xc7)
         poke buffer+peek(buffer)+1,0
         return buffer
+    end function
+
+    export inline function lastDevice() as integer
+        return peek(DEVNUM)
+    end function
+
+    export inline function isPrefixActive() as boolean
+        return peek(PFXPTR) <> 0
+    end function
+
+    export inline function isAppleII() as boolean
+        return (peek(MACHID) AND 0b11001000) = 0
+    end function
+
+    export inline function isAppleIIplus() as boolean
+        return (peek(MACHID) AND 0b11001000) = 0b01000000
+    end function
+
+    export inline function isAppleIIe() as boolean
+        return (peek(MACHID) AND 0b11001000) = 0b10000000
+    end function
+
+    export inline function isAppleIII() as boolean
+        return (peek(MACHID) AND 0b11001000) = 0b11000000
+    end function
+
+    export inline function isAppleIIc() as boolean
+        return (peek(MACHID) AND 0b11001000) = 0b10001000
+    end function
+
+    export inline function has48K() as boolean
+        return (peek(MACHID) AND 0b00110000) = 0b00010000
+    end function
+
+    export inline function has64K() as boolean
+        return (peek(MACHID) AND 0b00110000) = 0b00100000
+    end function
+
+    export inline function has128K() as boolean
+        return (peek(MACHID) AND 0b00110000) = 0b00110000
+    end function
+
+    export inline function has80Cols() as boolean
+        return (peek(MACHID) AND 0b00000010) <> 0
+    end function
+
+    export inline function hasClock() as boolean
+        return (peek(MACHID) AND 0b00000001) <> 0
     end function
 
 end module
