@@ -361,20 +361,20 @@ public class CodeGenerationVisitor extends Visitor {
 
     @Override
     public void visit(Function function) {
-        //var hasLocalScope = function.findAllLocalScope(is(DeclarationType.LOCAL).and(in(SymbolType.VARIABLE, SymbolType.PARAMETER))).size() != 0;
-        var hasLocalScope = true;
+        // NOTE/WARNING: Function cannot have the optimization to drop LOCAL_RESERVE/LOCAL_FREE
+        //               because the RETURN_VALUE is always present and relative to function entry.
         var frame = frames.push(Frame.create(function));
         var labels = label("FUNCXIT");
         var exitLabel = labels.getFirst();
         function.setExitLabel(exitLabel);
         code.emit(function.getFullPathName());
-        if (hasLocalScope) code.emit(Opcode.LOCAL_RESERVE, frame.localSize());
+        code.emit(Opcode.LOCAL_RESERVE, frame.localSize());
         setupDefaultArrayValues(function);
         if (function.getStatements() != null) {
             dispatchAll(function);
         }
         code.emit(exitLabel);
-        if (hasLocalScope) code.emit(Opcode.LOCAL_FREE, frame.localSize());
+        code.emit(Opcode.LOCAL_FREE, frame.localSize());
         code.emit(Opcode.RETURN);
         frames.pop();
     }
