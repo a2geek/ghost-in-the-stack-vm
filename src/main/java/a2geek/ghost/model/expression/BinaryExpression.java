@@ -19,12 +19,12 @@ public class BinaryExpression implements Expression {
         new Descriptor("mod", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN),
         new Descriptor("^", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN),
         // Comparison
-        new Descriptor("<", DataType.BOOLEAN, DataType.INTEGER, DataType.BOOLEAN),
-        new Descriptor(">", DataType.BOOLEAN, DataType.INTEGER, DataType.BOOLEAN),
-        new Descriptor("<=", DataType.BOOLEAN, DataType.INTEGER, DataType.BOOLEAN),
-        new Descriptor(">=", DataType.BOOLEAN, DataType.INTEGER, DataType.BOOLEAN),
-        new Descriptor("=", DataType.BOOLEAN, DataType.INTEGER, DataType.BOOLEAN),
-        new Descriptor("<>", DataType.BOOLEAN, DataType.INTEGER, DataType.BOOLEAN),
+        new Descriptor("<", DataType.BOOLEAN, DataType.INTEGER, DataType.BOOLEAN, DataType.ADDRESS),
+        new Descriptor(">", DataType.BOOLEAN, DataType.INTEGER, DataType.BOOLEAN, DataType.ADDRESS),
+        new Descriptor("<=", DataType.BOOLEAN, DataType.INTEGER, DataType.BOOLEAN, DataType.ADDRESS),
+        new Descriptor(">=", DataType.BOOLEAN, DataType.INTEGER, DataType.BOOLEAN, DataType.ADDRESS),
+        new Descriptor("=", DataType.BOOLEAN, DataType.INTEGER, DataType.BOOLEAN, DataType.ADDRESS),
+        new Descriptor("<>", DataType.BOOLEAN, DataType.INTEGER, DataType.BOOLEAN, DataType.ADDRESS),
         // Logical
         new Descriptor("or", DataType.BOOLEAN, DataType.BOOLEAN),
         new Descriptor("and", DataType.BOOLEAN, DataType.BOOLEAN),

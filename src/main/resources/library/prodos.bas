@@ -21,6 +21,22 @@ module prodos
         end if
     end sub
 
+    export sub readBlock(unitNumber as integer, blockNumber as integer, dataBuffer as address)
+        poke PARAMS, 0x03
+        poke PARAMS+1, unitNumber
+        pokew PARAMS+2, dataBuffer
+        pokew PARAMS+4, blockNumber
+        callMLI(0x80)
+    end sub
+
+    export sub writeBlock(unitNumber as integer, blockNumber as integer, dataBuffer as address)
+        poke PARAMS, 0x03
+        poke PARAMS+1, unitNumber
+        pokew PARAMS+2, dataBuffer
+        pokew PARAMS+4, blockNumber
+        callMLI(0x81)
+    end sub
+
     export function getPrefix() as string
         dim buffer as address = 0x280
         poke PARAMS, 0x01
