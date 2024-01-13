@@ -13,6 +13,7 @@ import static a2geek.ghost.model.Symbol.in;
 public class Subroutine extends Scope {
     private boolean inline;
     private boolean export;
+    private String exitLabel;
 
     public Subroutine(Scope parent, String name, List<Symbol.Builder> parameters) {
         super(parent, name);
@@ -32,6 +33,13 @@ public class Subroutine extends Scope {
     }
     public boolean isExport() {
         return export;
+    }
+
+    public String getExitLabel() {
+        return exitLabel;
+    }
+    public void setExitLabel(String exitLabel) {
+        this.exitLabel = exitLabel;
     }
 
     @Override

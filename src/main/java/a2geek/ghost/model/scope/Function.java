@@ -12,7 +12,6 @@ import static a2geek.ghost.model.Symbol.in;
 
 public class Function extends Subroutine {
     private DataType dataType;
-    private String exitLabel;
 
     public Function(Scope parent, Symbol.Builder func, List<Symbol.Builder> parameters) {
         super(parent, func.name(), parameters);
@@ -22,14 +21,6 @@ public class Function extends Subroutine {
 
     public DataType getDataType() {
         return dataType;
-    }
-
-    public String getExitLabel() {
-        return exitLabel;
-    }
-
-    public void setExitLabel(String exitLabel) {
-        this.exitLabel = exitLabel;
     }
 
     @Override

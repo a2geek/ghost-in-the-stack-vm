@@ -289,6 +289,9 @@ public class CodeGenerationVisitor extends Visitor {
         else if (hasReturnValue) {
             throw new RuntimeException("cannot return value from a subroutine");
         }
+        else if (this.frames.peek().scope() instanceof Subroutine s) {
+            code.emit(Opcode.GOTO, s.getExitLabel());
+        }
         else {
             code.emit(Opcode.RETURN);
         }
@@ -346,6 +349,8 @@ public class CodeGenerationVisitor extends Visitor {
             // We are already inlining this, so do not generate code.
             return;
         }
+        var exitLabel = label("SUBEXIT").getFirst();
+        subroutine.setExitLabel(exitLabel);
         var hasLocalScope = subroutine.findAllLocalScope(is(DeclarationType.LOCAL).and(in(SymbolType.VARIABLE, SymbolType.PARAMETER))).size() != 0;
         var frame = frames.push(Frame.create(subroutine));
         code.emit(subroutine.getFullPathName());
@@ -354,6 +359,7 @@ public class CodeGenerationVisitor extends Visitor {
         if (subroutine.getStatements() != null) {
             dispatchAll(subroutine);
         }
+        code.emit(exitLabel);
         if (hasLocalScope) code.emit(Opcode.LOCAL_FREE, frame.localSize());
         code.emit(Opcode.RETURN);
         frames.pop();
