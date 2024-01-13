@@ -15,3 +15,9 @@ ProDOS commands (OPEN, READ, WRITE, CLOSE). Is this SUB and/or FUNCTION?
 Add Applesoft
 DEF FN == Function
 Optimization - extract common code
+Basic needs actual string handling.
+Bytes would be good to define buffers.
+ON ERR capability
+Need to determine if interpreter should keep signed and unsigned operations or can that just be replaced with wrapper code (removes DIVS/MULS/MODS)
+Enhance USES statement to allow custom imports (example: USES MIN,MAX FROM "MATH")
+With LOADFP and STOREFP can LOCAL_RESERVE/LOCAL_FREE be removed? (LOADFP/PUSHZ, STOREFP/POPN)
