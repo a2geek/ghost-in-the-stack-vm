@@ -318,6 +318,7 @@ public class ModelBuilder {
 
     public Scope moduleDeclBegin(String name) {
         Scope module = new Scope(scope.peek(), fixCase(name));
+        Scope module = new Scope(scope.peek(), fixCase(name), DeclarationType.GLOBAL);
         this.scope.peek().addLocalSymbol(Symbol.scope(module));
 
         pushScope(module);

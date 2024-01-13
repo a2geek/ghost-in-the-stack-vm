@@ -24,11 +24,11 @@ public class Scope extends StatementBlock {
         this.name = caseStrategy.apply(name);
         this.defaultDeclarationType = DeclarationType.GLOBAL;
     }
-    public Scope(Scope parent, String name) {
+    public Scope(Scope parent, String name, DeclarationType defaultDeclarationType) {
         this.caseStrategy = parent.caseStrategy;
         this.name = caseStrategy.apply(name);
         this.parent = parent;
-        this.defaultDeclarationType = DeclarationType.LOCAL;
+        this.defaultDeclarationType = defaultDeclarationType;
     }
 
     @Override

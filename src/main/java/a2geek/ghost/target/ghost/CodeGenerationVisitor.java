@@ -94,11 +94,17 @@ public class CodeGenerationVisitor extends Visitor {
         });
     }
 
-    public int frameOffset(Symbol symbol) {
-        if (this.frames.peek().offsets().containsKey(symbol)) {
-            return this.frames.peek().offsets().get(symbol);
+    public int localFrameOffset(Symbol symbol) {
+        if (this.frames.getLast().offsets().containsKey(symbol)) {
+            return this.frames.getLast().offsets().get(symbol);
         }
-       throw new RuntimeException("symbol not in frame: " + symbol);
+       throw new RuntimeException("symbol not in local frame: " + symbol);
+    }
+    public int globalFrameOffset(Symbol symbol) {
+        if (this.frames.getFirst().offsets().containsKey(symbol)) {
+            return this.frames.getFirst().offsets().get(symbol);
+        }
+        throw new RuntimeException("symbol not in global frame: " + symbol);
     }
 
     public void emitArrayAddressCalc(VariableReference var) {
@@ -129,8 +135,8 @@ public class CodeGenerationVisitor extends Visitor {
         switch (symbol.symbolType()) {
             case VARIABLE, PARAMETER, RETURN_VALUE -> {
                 switch (symbol.declarationType()) {
-                    case LOCAL -> this.code.emit(Opcode.LOCAL_LOAD, frameOffset(symbol));
-                    case GLOBAL -> this.code.emit(Opcode.GLOBAL_LOAD, frameOffset(symbol));
+                    case LOCAL -> this.code.emit(Opcode.LOCAL_LOAD, localFrameOffset(symbol));
+                    case GLOBAL -> this.code.emit(Opcode.GLOBAL_LOAD, globalFrameOffset(symbol));
                     default -> throw new RuntimeException("expecting declaration symbolType but it was: " + symbol.declarationType());
                 }
             }
@@ -164,8 +170,8 @@ public class CodeGenerationVisitor extends Visitor {
         switch (symbol.symbolType()) {
             case VARIABLE, PARAMETER, RETURN_VALUE -> {
                 switch (symbol.declarationType()) {
-                    case LOCAL -> this.code.emit(Opcode.LOCAL_STORE, frameOffset(symbol));
-                    case GLOBAL -> this.code.emit(Opcode.GLOBAL_STORE, frameOffset(symbol));
+                    case LOCAL -> this.code.emit(Opcode.LOCAL_STORE, localFrameOffset(symbol));
+                    case GLOBAL -> this.code.emit(Opcode.GLOBAL_STORE, globalFrameOffset(symbol));
                     default -> throw new RuntimeException("expecting declaration symbolType but it was: " + symbol.declarationType());
                 }
             }
