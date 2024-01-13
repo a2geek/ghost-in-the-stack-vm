@@ -317,7 +317,7 @@ public class ModelBuilder {
     }
 
     public Scope moduleDeclBegin(String name) {
-        Scope module = new Scope(scope.peek(), fixCase(name));
+        trace("compiling module '%s'", name);
         Scope module = new Scope(scope.peek(), fixCase(name), DeclarationType.GLOBAL);
         this.scope.peek().addLocalSymbol(Symbol.scope(module));
 
@@ -331,6 +331,7 @@ public class ModelBuilder {
     }
 
     public Subroutine subDeclBegin(String name, List<Symbol.Builder> params) {
+        trace("compiling subroutine '%s'", name);
         Subroutine sub = new Subroutine(scope.peek(), fixCase(name), params);
         this.scope.peek().addLocalSymbol(Symbol.scope(sub));
 
@@ -345,6 +346,7 @@ public class ModelBuilder {
     }
 
     public a2geek.ghost.model.scope.Function funcDeclBegin(String name, DataType returnType, List<Symbol.Builder> params) {
+        trace("compiling function '%s'", name);
         // FIXME? naming is really awkward due to naming conflicts!
         a2geek.ghost.model.scope.Function func =
             new a2geek.ghost.model.scope.Function(scope.peek(),
