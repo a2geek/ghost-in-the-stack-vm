@@ -3,15 +3,8 @@
     .zeropage
 
 ip:        .addr 0
-temp:      .byte 0
 workptr:   .word 0
-locals:    .byte 0
-globals:   .byte 0
-baseip:    .addr 0
-basesp:    .byte 0
 .ifdef DEBUG
-           .res 11      ; I can't do math to get to $17?
-flags:     .byte 0
 traceptr:  .addr 0
 .endif
 
@@ -32,9 +25,17 @@ cout = $fded
 acc:       .byte 0
 yreg:      .byte 0
 xreg:      .byte 0
+temp:      .byte 0
+locals:    .byte 0
+globals:   .byte 0
+baseip:    .addr 0
+basesp:    .byte 0
+
+.ifdef DEBUG
+flags:     .byte 0
+.endif
 
 main:
-;    TODO initialization???
     lda #<(code-1)
     sta ip
     sta baseip
@@ -180,8 +181,9 @@ loop:
     jmp @noflag
 :   jsr print
     .byte "IP=",$82,ip,$d
+    ; TODO these have moved out of ZP
     ;.byte ", A/Y/X=",$81,acc,$81,yreg,$81,xreg,",",$d
-    .byte "WP=",$82,workptr,", LCL=",$81,locals,", GBL=",$81,globals,", S=",0
+    ;.byte "WP=",$82,workptr,", LCL=",$81,locals,", GBL=",$81,globals,", S=",0
     tsx
     txa
     jsr prbyte
