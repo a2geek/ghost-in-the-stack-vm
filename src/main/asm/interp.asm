@@ -254,10 +254,12 @@ brtable:
     .addr _decr-1
     .addr _pushz-1
     .addr _loadsp-1
+    .addr _storesp-1
+    .addr _loadlp-1
+    .addr _storelp-1
+    .addr _loadgp-1
+    .addr _storegp-1
     .addr _fixa-1
-    .addr _global_reserve-1
-    .addr _local_reserve-1
-    .addr _local_free-1
     .addr _local_load-1
     .addr _local_store-1
     .addr _global_load-1
@@ -564,54 +566,6 @@ _call:
     sty yreg
     jmp loop
 
-; GLOBAL_RESERVE <n>: () => (0 ...); globals=SP
-_global_reserve:
-    jsr fetch
-    beq @noglobals
-    tay
-    lda #0
-@pushloop:
-    pha
-    dey
-    bne @pushloop
-@noglobals:
-    tsx
-    stx globals
-    stx locals      ; for safety?
-    jmp loop
-
-; LOCAL_RESERVE <n> <m>: () => (<old locals> 0 ...); locals=SP
-_local_reserve:
-    lda locals
-    pha
-    ; "n" => number of bytes to reserve on stack
-    jsr fetch
-    beq @nolocals
-    tay
-    lda #0
-@pushloop:
-    pha
-    dey
-    bne @pushloop
-@nolocals:
-    tsx
-    stx locals
-    jmp loop
-
-; LOCAL_FREE <n>: (<old locals> 0 ...) => (); locals=old locals
-_local_free:
-    jsr fetch
-    beq @nolocals
-    tay
-@poploop:
-    pla
-    dey
-    bne @poploop
-@nolocals:
-    pla
-    sta locals
-    jmp loop
-
 ; POPN <n>: (TOS-n ... TOS-1 TOS) => ()
 _popn:
     jsr fetch
@@ -652,6 +606,41 @@ _loadsp:    ; X already has SP
     lda #1
     inx ; S was pointing to next place to store a byte - we want the _last_ place a byte was stored
     jmp setaxloop
+
+; STORESP: (SP) => ()
+_storesp:
+    pla
+    tax
+    pla
+    dex ; reverse of LOADSP note
+    txs
+    jmp loop
+
+; LOADLP: () => (locals)
+_loadlp:
+    lda #1
+    ldx locals
+    jmp setaxloop
+
+; STORELP: (locals) => ()
+_storelp:
+    pla
+    sta locals
+    pla
+    jmp loop
+
+; LOADGP: () => (globals)
+_loadgp:
+    lda #1
+    ldx globals
+    jmp setaxloop
+
+; STOREGP: (globals) => ()
+_storegp:
+    pla
+    sta globals
+    pla
+    jmp loop
 
 ; LOCAL_LOAD <offset>: () => *(locals+offset)
 _local_load:

@@ -7,12 +7,26 @@ public class PeepholeOptimizer {
         var changed = 0;
         var ctx = new InstructionContext(code);
         while (ctx.hasNext()) {
-            if (optimize2(ctx) || optimize3(ctx)) {
+            if (optimize1(ctx) || optimize2(ctx) || optimize3(ctx)) {
                 changed++;
             }
             ctx.next();
         }
         return changed;
+    }
+
+    static boolean optimize1(InstructionContext ctx) {
+        var oneInstruction = ctx.slice(1);
+        if (oneInstruction.isPresent()) {
+            var list = oneInstruction.get();
+            var inst = list.getFirst();
+            // POPN 0  ==>  remove
+            if (inst.opcode() == Opcode.POPN && Integer.valueOf(0).equals(inst.arg())) {
+                list.removeFirst();
+                return true;
+            }
+        }
+        return false;
     }
 
     static boolean optimize2(InstructionContext ctx) {
@@ -67,6 +81,13 @@ public class PeepholeOptimizer {
             // GOTO _IF_EXIT19  ==>  remove ANY CODE after a GOTO!
             if (inst1.opcode() == Opcode.GOTO && inst2.opcode() != null) {
                 list.remove(1);
+                return true;
+            }
+            // LOADC 0000  ==> remove
+            // PUSHZ       ==> remove
+            if (inst1.opcode() == Opcode.LOADC && Integer.valueOf(0).equals(inst1.arg()) && inst2.opcode() == Opcode.PUSHZ) {
+                list.remove(1);
+                list.remove(0);
                 return true;
             }
         };

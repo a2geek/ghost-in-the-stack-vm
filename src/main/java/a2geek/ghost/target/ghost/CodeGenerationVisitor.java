@@ -35,7 +35,13 @@ public class CodeGenerationVisitor extends Visitor {
     @Override
     public void visit(Program program) {
         var frame = this.frames.push(Frame.create(program));
-        code.emit(Opcode.GLOBAL_RESERVE, frame.localSize());
+        code.emit(Opcode.LOADC, frame.localSize());
+        code.emit(Opcode.PUSHZ);
+        code.emit(Opcode.LOADSP);
+        code.emit(Opcode.DECR);
+        code.emit(Opcode.DUP);
+        code.emit(Opcode.STOREGP);
+        code.emit(Opcode.STORELP);
         setupDefaultArrayValues(program);
 
         dispatchAll(program);
@@ -360,15 +366,28 @@ public class CodeGenerationVisitor extends Visitor {
         var hasLocalScope = subroutine.findAllLocalScope(is(DeclarationType.LOCAL).and(in(SymbolType.VARIABLE, SymbolType.PARAMETER))).size() != 0;
         var frame = frames.push(Frame.create(subroutine));
         code.emit(subroutine.getFullPathName());
-        if (hasLocalScope) code.emit(Opcode.LOCAL_RESERVE, frame.localSize());
+        if (hasLocalScope) setupLocalFrame(frame);
         setupDefaultArrayValues(subroutine);
         if (subroutine.getStatements() != null) {
             dispatchAll(subroutine);
         }
         code.emit(exitLabel);
-        if (hasLocalScope) code.emit(Opcode.LOCAL_FREE, frame.localSize());
+        if (hasLocalScope) tearDownLocalFrame(frame);
         code.emit(Opcode.RETURN);
         frames.pop();
+    }
+
+    public void setupLocalFrame(Frame frame) {
+        code.emit(Opcode.LOADLP);
+        code.emit(Opcode.LOADC, frame.localSize());
+        code.emit(Opcode.PUSHZ);
+        code.emit(Opcode.LOADSP);
+        code.emit(Opcode.DECR);
+        code.emit(Opcode.STORELP);
+    }
+    public void tearDownLocalFrame(Frame frame) {
+        code.emit(Opcode.POPN, frame.localSize());
+        code.emit(Opcode.STORELP);
     }
 
     @Override
@@ -380,13 +399,13 @@ public class CodeGenerationVisitor extends Visitor {
         var exitLabel = labels.getFirst();
         function.setExitLabel(exitLabel);
         code.emit(function.getFullPathName());
-        code.emit(Opcode.LOCAL_RESERVE, frame.localSize());
+        setupLocalFrame(frame);
         setupDefaultArrayValues(function);
         if (function.getStatements() != null) {
             dispatchAll(function);
         }
         code.emit(exitLabel);
-        code.emit(Opcode.LOCAL_FREE, frame.localSize());
+        tearDownLocalFrame(frame);
         code.emit(Opcode.RETURN);
         frames.pop();
     }

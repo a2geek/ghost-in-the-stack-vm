@@ -43,8 +43,8 @@ public record Frame(
             varOffset += 2;
             reservation += 2;
         }
-        // frame overhead: return address (2 bytes) + stack index (1 byte)
-        varOffset += 3;
+        // frame overhead: return address (2 bytes) + stack index (2 bytes)
+        varOffset += 4;
         // parameters are above the frame details
         for (var ref : subroutine.findAllLocalScope(in(SymbolType.PARAMETER))) {
             varOffsets.put(ref, varOffset);
