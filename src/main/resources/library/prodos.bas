@@ -16,8 +16,7 @@ module prodos
         call CODE
         rc = cpu.register.a ' preserve because PRINT(etc) use the registers as well
         if rc <> 0 then
-            print "Error: "; rc
-            end     ' FIXME - need to raise some error code for on err handling
+            raise error rc, "PRODOS ERROR"
         end if
     end sub
 

@@ -21,6 +21,7 @@ import static a2geek.ghost.model.Symbol.named;
  * A shared component to help building the BASIC model between language variants.
  */
 public class ModelBuilder {
+    public static final String ERR_LIBRARY = "err";
     public static final String LORES_LIBRARY = "lores";
     public static final String MEMORY_LIBRARY = "memory";
     public static final String MISC_LIBRARY = "misc";
@@ -48,6 +49,8 @@ public class ModelBuilder {
         this.caseStrategy = caseStrategy;
         useStackForHeap();  // default
         Program program = new Program(caseStrategy);
+        var onerr = OnErrorContext.createPrimary(program);     // always (assumed)
+        program.setOnErrorContext(onerr);
         this.scope.push(program);
         this.statementBlock.push(program);
     }
@@ -333,8 +336,15 @@ public class ModelBuilder {
     }
     public void subDeclEnd() {
         // TODO does this need to be validated?
-        popScope();
+        Scope sub = popScope();
         popStatementBlock();
+        setupOnErrorContext(sub);
+    }
+    public void setupOnErrorContext(Scope scope) {
+        if (scope.contains(OnErrorStatement.class)) {
+            var onerr = OnErrorContext.createCopy(scope);
+            scope.setOnErrorContext(onerr);
+        }
     }
 
     public a2geek.ghost.model.scope.Function funcDeclBegin(String name, DataType returnType, List<Symbol.Builder> params) {
@@ -351,8 +361,9 @@ public class ModelBuilder {
     }
     public void funcDeclEnd() {
         // TODO does this need to be validated?
-        popScope();
+        Scope func = popScope();
         popStatementBlock();
+        setupOnErrorContext(func);
     }
 
     public void endStmt() {
@@ -451,15 +462,22 @@ public class ModelBuilder {
             return;
         }
         // IF index > ubound(array) THEN
-        //    PRINT "Array index out of bounds ";symbol;" at line "; lineno
-        //    END
+        //    RAISE ERROR 107, "Array index out of bounds "+symbol+" at line "+linenum
         // END IF
         var errorBlock = pushStatementBlock(new StatementBlock());
-        callLibrarySubroutine("out_of_bounds",
-            new StringConstant(symbol.name()),
-            new IntegerConstant(linenum));
+        raiseError(new IntegerConstant(107),
+                new StringConstant(String.format("ARRAY INDEX OUT OF BOUNDS %s AT LINE %d", symbol.name(), linenum)));
         popStatementBlock();
         var arrayLength = new ArrayLengthFunction(this, symbol);
         ifStmt(new BinaryExpression(index, arrayLength, ">"), errorBlock, null);
+    }
+
+    public void raiseError(Expression number, Expression message) {
+        uses("err", defaultExport());
+        var errNumber = findSymbol("err.number").orElseThrow();
+        var errMessage = findSymbol("err.message").orElseThrow();
+        assignStmt(VariableReference.with(errNumber), number);
+        assignStmt(VariableReference.with(errMessage), message);
+        addStatement(new RaiseErrorStatement());
     }
 }

@@ -36,6 +36,22 @@ public class StatementBlock {
         }
         return false;
     }
+    public boolean contains(Class<? extends Statement> clazz) {
+        for (var stmt : statements) {
+            if (clazz.isAssignableFrom(stmt.getClass())) {
+                return true;
+            }
+            else if (stmt instanceof IfStatement ifStatement) {
+                if (ifStatement.hasTrueStatements() && ifStatement.getTrueStatements().contains(clazz)) {
+                    return true;
+                }
+                if (ifStatement.hasFalseStatements() && ifStatement.getFalseStatements().contains(clazz)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
     public void addInitializationStatement(Statement statement) {
         this.initializationStatements.add(statement);
     }

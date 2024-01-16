@@ -111,11 +111,6 @@ module runtime
         pokew INPTR,p
     end sub
 
-    sub out_of_bounds(name as string, linenum as integer)
-        print name;" INDEX OUT OF BOUNDS AT LINE ";linenum
-        end
-    end sub
-
     ' Find maximum value <= line number. We return index+1 for response to fit with
     ' ON...GOTO/GUSUB code.
     function line_index(lineno as integer, numbers() as integer) as integer
@@ -135,4 +130,11 @@ module runtime
 
         return -1
     end function
+
+    ' abusing a subroutine for the error handler; note the END terminates the application
+    sub defaultErrorHandler
+        print "ERROR #";err.number;" - ";err.message
+        end
+    end sub
+
 end module

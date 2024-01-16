@@ -158,6 +158,22 @@ label:
    return
 ```
 
+### Error handling
+
+To control error handling, the following statements are available. They allow the programmer to take control 
+when an error situation occurs and also allow generating error codes. Data is preserved in the `err` module,
+but only the current error details are available. There is a default `ON ERROR` handler in the runtime.
+
+```basic
+on error goto <label>
+on error disable
+on error resume next   ' not implemented yet
+raise error <number>, <message>
+```
+
+Note that `ON ERROR DISABLE` disables the users' error handling and sets it back to the system default error
+handler.
+
 ### Subroutines
 
 To call a subroutine, invoke it as follows:

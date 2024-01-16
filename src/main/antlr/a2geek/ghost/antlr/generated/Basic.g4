@@ -46,39 +46,41 @@ statements
     ;
 
 statement
-    : 'dim' idDecl (',' idDecl)*                                        # dimStmt
-    | id=expressionID '=' a=expr                                        # assignment
-    | id=ID ':' EOL                                                     # label
-    | 'if' a=expr 'then' t=statement                                    # ifShortStatement
+    : 'dim' idDecl (',' idDecl)*                                            # dimStmt
+    | id=expressionID '=' a=expr                                            # assignment
+    | id=ID ':' EOL                                                         # label
+    | 'if' a=expr 'then' t=statement                                        # ifShortStatement
     | 'if' ifFragment
       ('elseif' ifFragment)*
       ('else' EOL+
         f=statements)?
-      'end' 'if' EOL+                                                   # ifStatement
+      'end' 'if' EOL+                                                       # ifStatement
     | 'do' op=('while' | 'until') a=expr (EOL|':')+
         s=statements? (EOL|':')*  // EOL is included in statements itself
-      'loop'                                                            # doLoop1
+      'loop'                                                                # doLoop1
     | 'do' (EOL|':')+
         s=statements? (EOL|':')*  // EOL is included in statements itself
-      'loop' op=('while' | 'until') a=expr                              # doLoop2
+      'loop' op=('while' | 'until') a=expr                                  # doLoop2
     | 'for' id=ID '=' a=expr 'to' b=expr ('step' c=expr)? (EOL|':')+
         s=statements? (EOL|':')*  // EOL is included in statements itself
-      'next' id2=ID                                                     # forLoop
+      'next' id2=ID                                                         # forLoop
     | 'while' a=expr (EOL|':')+
         s=statements? (EOL|':')*  // EOL is included in statements itself
-      'end' 'while'                                                     # whileLoop
+      'end' 'while'                                                         # whileLoop
     | 'repeat' (EOL|':')+
         s=statements? (EOL|':')*  // EOL is included in statements itself
-      'until' a=expr                                                    # repeatLoop
-    | 'exit' n=('do' | 'for' | 'repeat' | 'while')                      # exitStmt
-    | 'end'                                                             # endStmt
-    | 'print' (expr | sexpr | ',' | ';')*                               # printStmt
-    | op=( 'poke' | 'pokew' ) a=expr ',' b=expr                         # pokeStmt
-    | 'call' a=expr                                                     # callStmt
-    | op=( 'goto' | 'gosub' ) l=ID                                      # gotoGosubStmt
-    | 'on' a=expr op=( 'goto' | 'gosub' ) ID (',' ID)*                  # onGotoGosubStmt
-    | 'return' e=expr?                                                  # returnStmt
-    | id=extendedID p=parameters?                                       # callSub
+      'until' a=expr                                                        # repeatLoop
+    | 'exit' n=('do' | 'for' | 'repeat' | 'while')                          # exitStmt
+    | 'end'                                                                 # endStmt
+    | 'print' (expr | sexpr | ',' | ';')*                                   # printStmt
+    | op=( 'poke' | 'pokew' ) a=expr ',' b=expr                             # pokeStmt
+    | 'call' a=expr                                                         # callStmt
+    | op=( 'goto' | 'gosub' ) l=ID                                          # gotoGosubStmt
+    | 'on' a=expr op=( 'goto' | 'gosub' ) ID (',' ID)*                      # onGotoGosubStmt
+    | 'on' 'error' ( op='goto' l=ID | op='disable' | op='resume' 'next'? )  # onErrorStmt
+    | 'raise' 'error' a=expr ',' m=sexpr                                    # raiseErrorStmt
+    | 'return' e=expr?                                                      # returnStmt
+    | id=extendedID p=parameters?                                           # callSub
     ;
 ifFragment
     : expr 'then' EOL+

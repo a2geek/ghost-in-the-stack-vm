@@ -12,6 +12,7 @@ import java.util.*;
 import static a2geek.ghost.model.Symbol.*;
 
 public class CodeGenerationVisitor extends Visitor {
+    public static final String DEFAULT_ERROR_HANDLER = "RUNTIME.DEFAULTERRORHANDLER";
     private Stack<Frame> frames = new Stack<>();
     private CodeBlock code = new CodeBlock();
     private int labelNumber;
@@ -32,6 +33,10 @@ public class CodeGenerationVisitor extends Visitor {
         return labels;
     }
 
+    private RuntimeException error(String fmt, Object... args) {
+        return new RuntimeException(String.format(fmt, args));
+    }
+
     @Override
     public void visit(Program program) {
         var frame = this.frames.push(Frame.create(program));
@@ -42,6 +47,8 @@ public class CodeGenerationVisitor extends Visitor {
         code.emit(Opcode.DUP);
         code.emit(Opcode.STOREGP);
         code.emit(Opcode.STORELP);
+        setupOnErrContext(program.findFirst(named(DEFAULT_ERROR_HANDLER))
+                .orElseThrow(() -> error("unknown label: '%s'", DEFAULT_ERROR_HANDLER)));
         setupDefaultArrayValues(program);
 
         program.streamAllLocalScope().filter(in(SymbolType.MODULE)).forEach(symbol -> {
@@ -57,6 +64,7 @@ public class CodeGenerationVisitor extends Visitor {
         boolean wroteCode;
         do {
             wroteCode = false;
+            scopesUsed.add(DEFAULT_ERROR_HANDLER);
             var detachedScopesUsed = new HashSet<>(scopesUsed);
             for (String scopeName : detachedScopesUsed) {
                 if (!scopesProcessed.contains(scopeName)) {
@@ -286,6 +294,40 @@ public class CodeGenerationVisitor extends Visitor {
     }
 
     @Override
+    public void visit(OnErrorStatement statement, StatementContext context) {
+        switch (statement.getOp()) {
+            case GOTO -> setupOnErrContext(statement.getLabel());
+            case DISABLE -> setupOnErrContext(this.frames.getFirst().scope().findFirst(named(DEFAULT_ERROR_HANDLER)).orElseThrow());
+            // TODO
+            case RESUME_NEXT -> {}  // do nothing
+        }
+    }
+
+    public void setupOnErrContext(Symbol label) {
+        var onerr = this.frames.getFirst().scope().getOnErrorContext();
+        code.emit(Opcode.LOADSP);
+        emitStore(onerr.stackPointer());
+        code.emit(Opcode.LOADLP);
+        emitStore(onerr.framePointer());
+        code.emit(Opcode.LOADA, label.name());
+        code.emit(Opcode.DECR);     // need to setup for a RETURN
+        emitStore(onerr.gotoAddress());
+
+    }
+
+    @Override
+    public void visit(RaiseErrorStatement statement, StatementContext context) {
+        var onerr = this.frames.getFirst().scope().getOnErrorContext();
+        emitLoad(onerr.stackPointer());
+        code.emit(Opcode.STORESP);
+        emitLoad(onerr.framePointer());
+        code.emit(Opcode.STORELP);
+        // push address and return to it
+        emitLoad(onerr.gotoAddress());
+        code.emit(Opcode.RETURN);
+    }
+
+    @Override
     public void visit(PopStatement statement, StatementContext context) {
         // This is an address; expect that 2 is always correct!
         code.emit(Opcode.POPN, 2);
@@ -360,6 +402,34 @@ public class CodeGenerationVisitor extends Visitor {
         throw new RuntimeException(String.format("calling a subroutine but '%s' is not a subroutine?", subFullName));
     }
 
+    public void saveOnErrContext(Scope scope) {
+        var local = scope.getOnErrorContext();
+        if (local == null) {
+            return;
+        }
+        var global = this.frames.getFirst().scope().getOnErrorContext();
+        emitLoad(global.stackPointer());
+        emitStore(local.stackPointer());
+        emitLoad(global.framePointer());
+        emitStore(local.framePointer());
+        emitLoad(global.gotoAddress());
+        emitStore(local.gotoAddress());
+    }
+
+    public void restoreOnErrContext(Scope scope) {
+        var local = scope.getOnErrorContext();
+        if (local == null) {
+            return;
+        }
+        var global = this.frames.getFirst().scope().getOnErrorContext();
+        emitLoad(local.stackPointer());
+        emitStore(global.stackPointer());
+        emitLoad(local.framePointer());
+        emitStore(global.framePointer());
+        emitLoad(local.gotoAddress());
+        emitStore(global.gotoAddress());
+    }
+
     @Override
     public void visit(Subroutine subroutine) {
         if (subroutine.is(Subroutine.Modifier.INLINE)) {
@@ -372,12 +442,14 @@ public class CodeGenerationVisitor extends Visitor {
         var frame = frames.push(Frame.create(subroutine));
         code.emit(subroutine.getFullPathName());
         if (hasLocalScope) setupLocalFrame(frame);
+        saveOnErrContext(subroutine);
         setupDefaultArrayValues(subroutine);
         if (subroutine.getStatements() != null) {
             dispatchAll(subroutine);
         }
         code.emit(exitLabel);
         if (hasLocalScope) tearDownLocalFrame(frame);
+        restoreOnErrContext(subroutine);
         code.emit(Opcode.RETURN);
         frames.pop();
     }
@@ -405,12 +477,14 @@ public class CodeGenerationVisitor extends Visitor {
         function.setExitLabel(exitLabel);
         code.emit(function.getFullPathName());
         setupLocalFrame(frame);
+        saveOnErrContext(function);
         setupDefaultArrayValues(function);
         if (function.getStatements() != null) {
             dispatchAll(function);
         }
         code.emit(exitLabel);
         tearDownLocalFrame(frame);
+        restoreOnErrContext(function);
         code.emit(Opcode.RETURN);
         frames.pop();
     }

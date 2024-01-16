@@ -8,6 +8,7 @@ import a2geek.ghost.model.expression.*;
 import a2geek.ghost.model.scope.Subroutine;
 import a2geek.ghost.model.statement.GotoGosubStatement;
 import a2geek.ghost.model.statement.IfStatement;
+import a2geek.ghost.model.statement.OnErrorStatement;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -118,6 +119,27 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         StatementBlock sb = model.popStatementBlock();
 
         model.ifStmt(expr, sb, falseStatements);
+        return null;
+    }
+
+    @Override
+    public Expression visitOnErrorStmt(BasicParser.OnErrorStmtContext ctx) {
+        var stmt = switch (ctx.op.getText().toLowerCase()) {
+            case "goto" -> new OnErrorStatement(findGotoGosubLabel(ctx.l));
+            case "disable" -> new OnErrorStatement(OnErrorStatement.Operation.DISABLE);
+            case "resume" -> new OnErrorStatement(OnErrorStatement.Operation.RESUME_NEXT);
+            default -> throw new RuntimeException("unexpected ON ERROR construct: " + ctx.getText());
+        };
+        model.addStatement(stmt);
+        return null;
+    }
+
+    @Override
+    public Expression visitRaiseErrorStmt(BasicParser.RaiseErrorStmtContext ctx) {
+        // TODO can we also capture the file name and line number?
+        var expr = visit(ctx.a);
+        var msg = visit(ctx.m);
+        model.raiseError(expr, msg);
         return null;
     }
 

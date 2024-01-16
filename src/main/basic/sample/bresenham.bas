@@ -5,7 +5,7 @@ uses "lores"
 sub plotLine(x0 as integer, y0 as integer, x1 as integer, y1 as integer)
     dim dx as integer, dy as integer
     dim sx as integer, sy as integer
-    dim error as integer
+    dim err as integer
 
     dx = abs(x1 - x0)
     if x0 < x1 then
@@ -19,26 +19,26 @@ sub plotLine(x0 as integer, y0 as integer, x1 as integer, y1 as integer)
     else
         sy = -1
     end if
-    error = dx + dy
+    err = dx + dy
 
     while true
         plot(x0, y0)
         if x0 = x1 and y0 = y1 then
             exit while
         end if
-        e2 = 2 * error
+        e2 = 2 * err
         if e2 >= dy then
             if x0 = x1 then
                 exit while
             end if
-            error = error + dy
+            err = err + dy
             x0 = x0 + sx
         end if
         if e2 <= dx then
             if y0 = y1 then
                 exit while
             end if
-            error = error + dx
+            err = err + dx
             y0 = y0 + sy
         end if
     end while

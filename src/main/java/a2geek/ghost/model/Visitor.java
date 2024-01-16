@@ -36,6 +36,8 @@ public abstract class Visitor {
             case CallSubroutine s -> visit(s, context);
             case PopStatement s -> visit(s, context);
             case DynamicGotoGosubStatement s -> visit(s, context);
+            case OnErrorStatement s -> visit(s, context);
+            case RaiseErrorStatement s -> visit(s, context);
             default -> throw new RuntimeException("statement type not supported: " +
                     statement.getClass().getName());
         }
@@ -153,6 +155,14 @@ public abstract class Visitor {
     }
 
     public void visit(PopStatement statement, StatementContext context) {
+
+    }
+
+    public void visit(OnErrorStatement statement, StatementContext context) {
+
+    }
+
+    public void visit(RaiseErrorStatement statement, StatementContext context) {
 
     }
 

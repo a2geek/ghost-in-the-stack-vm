@@ -15,6 +15,7 @@ public class Scope extends StatementBlock {
     private DeclarationType defaultDeclarationType;
     private List<Symbol> symbolTable = new ArrayList<>();
     private Set<Symbol> exports = new HashSet<>();
+    private OnErrorContext onErrorContext;
 
     public Scope(Function<String,String> caseStrategy, String name) {
         this.caseStrategy = caseStrategy;
@@ -60,6 +61,13 @@ public class Scope extends StatementBlock {
             return name;
         }
         return String.format("%s.%s", parentName, name);
+    }
+
+    public OnErrorContext getOnErrorContext() {
+        return onErrorContext;
+    }
+    public void setOnErrorContext(OnErrorContext onErrorContext) {
+        this.onErrorContext = onErrorContext;
     }
 
     public List<Symbol> getLocalSymbols() {
@@ -124,7 +132,8 @@ public class Scope extends StatementBlock {
                 var module = namespaced.scope();
                 var newPrefix = String.format("%s%s.", prefix, namespaced.name());
                 return Stream.concat(Stream.concat(module.exports.stream(), Stream.of(namespaced)),
-                    module.streamAllLocalScope(newPrefix).filter(in(SymbolType.FUNCTION, SymbolType.SUBROUTINE)));
+                    module.streamAllLocalScope(newPrefix).filter(in(SymbolType.FUNCTION, SymbolType.SUBROUTINE,
+                            SymbolType.VARIABLE, SymbolType.CONSTANT)));
             }
             else {
                 return Stream.of(namespaced);
