@@ -1,10 +1,6 @@
 package a2geek.ghost.model;
 
-import a2geek.ghost.model.scope.Subroutine;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -18,6 +14,7 @@ public class Scope extends StatementBlock {
     private Scope parent;
     private DeclarationType defaultDeclarationType;
     private List<Symbol> symbolTable = new ArrayList<>();
+    private Set<Symbol> exports = new HashSet<>();
 
     public Scope(Function<String,String> caseStrategy, String name) {
         this.caseStrategy = caseStrategy;
@@ -29,6 +26,14 @@ public class Scope extends StatementBlock {
         this.name = caseStrategy.apply(name);
         this.parent = parent;
         this.defaultDeclarationType = defaultDeclarationType;
+    }
+
+    public void addAllExports(Collection<String> exportNames) {
+        for (String exportName : exportNames) {
+            String moduleName = caseStrategy.apply(getName());
+            String targetName = caseStrategy.apply(String.format("%s.%s", moduleName, exportName));
+            exports.add(Symbol.variable(exportName, SymbolType.ALIAS).targetName(targetName).build());
+        }
     }
 
     @Override
@@ -116,22 +121,10 @@ public class Scope extends StatementBlock {
         return symbolTable.stream().flatMap(original -> {
             Symbol namespaced = Symbol.from(original).name(prefix + original.name()).build();
             if (namespaced.symbolType() == SymbolType.MODULE) {
+                var module = namespaced.scope();
                 var newPrefix = String.format("%s%s.", prefix, namespaced.name());
-                return Stream.concat(
-                        Stream.of(namespaced),
-                        namespaced.scope().streamAllLocalScope(newPrefix)
-                            .filter(in(SymbolType.FUNCTION, SymbolType.SUBROUTINE))
-                            .flatMap(symbol -> {
-                                if (symbol.scope() instanceof Subroutine sub) {
-                                    if (sub.isExport()) {
-                                        String origName = sub.getName();
-                                        String targetName = String.format("%s.%s", namespaced.name(), origName);
-                                        var alias = Symbol.variable(origName, SymbolType.ALIAS).targetName(targetName).build();
-                                        return Stream.of(alias, symbol);
-                                    }
-                                }
-                                return Stream.of(symbol);
-                            }));
+                return Stream.concat(Stream.concat(module.exports.stream(), Stream.of(namespaced)),
+                    module.streamAllLocalScope(newPrefix).filter(in(SymbolType.FUNCTION, SymbolType.SUBROUTINE)));
             }
             else {
                 return Stream.of(namespaced);

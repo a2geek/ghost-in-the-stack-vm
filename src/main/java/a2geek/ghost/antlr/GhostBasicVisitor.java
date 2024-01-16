@@ -15,6 +15,8 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static a2geek.ghost.model.ModelBuilder.*;
+
 public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     private ModelBuilder model;
     private Map<String,Symbol> gotoGosubLabels = new HashMap<>();
@@ -39,17 +41,25 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     }
 
     @Override
+    public Expression visitProgram(BasicParser.ProgramContext ctx) {
+        super.visitProgram(ctx);
+        model.uses(RUNTIME_LIBRARY, nothingExported()); // must be last to ensure exports are handled correctly!
+        return null;
+    }
+
+    @Override
     public Expression visitModule(BasicParser.ModuleContext ctx) {
         model.moduleDeclBegin(ctx.ID().getText());
         super.visitModule(ctx);
         model.moduleDeclEnd();
-        return null;    }
+        return null;
+    }
 
     @Override
     public Expression visitUseDirective(BasicParser.UseDirectiveContext ctx) {
         for (var str : ctx.STR()) {
             String libname = str.getText().replaceAll("^\"|\"$", "");
-            model.uses(libname, ModelBuilder.defaultExport());
+            model.uses(libname, defaultExport());
         }
         return null;
     }
@@ -601,8 +611,8 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         if (ctx != null) {
             ctx.forEach(modifier -> {
                 switch (modifier.getText().toLowerCase()) {
-                    case "inline" -> subOrFunc.setInline(true);
-                    case "export" -> subOrFunc.setExport(true);
+                    case "inline" -> subOrFunc.add(Subroutine.Modifier.INLINE);
+                    case "export" -> subOrFunc.add(Subroutine.Modifier.EXPORT);
                     default -> {
                         var msg = String.format("Unknown modifier '%s' encountered", modifier.getText());
                         throw new RuntimeException(msg);

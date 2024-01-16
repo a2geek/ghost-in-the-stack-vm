@@ -29,9 +29,9 @@ public class Program extends Scope {
     public String getDescriptiveName(Scope scope) {
         return switch (scope) {
             case a2geek.ghost.model.scope.Function func ->
-                    String.format("%s (FUNC%s)", func.getName(), func.isInline() ? ", INLINE" : "");
+                    String.format("%s (FUNC)", func.getName());
             case Subroutine sub ->
-                    String.format("%s (SUB%s)", sub.getName(), sub.isInline() ? ", INLINE" : "");
+                    String.format("%s (SUB)", sub.getName());
             case Program program ->
                     String.format("%s (PROGRAM)", program.getName());
             default ->

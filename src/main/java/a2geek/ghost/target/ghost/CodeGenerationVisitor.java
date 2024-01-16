@@ -44,6 +44,11 @@ public class CodeGenerationVisitor extends Visitor {
         code.emit(Opcode.STORELP);
         setupDefaultArrayValues(program);
 
+        program.streamAllLocalScope().filter(in(SymbolType.MODULE)).forEach(symbol -> {
+            // statements in a module are initialization for the program
+            dispatchToList(symbol.scope().getStatements());
+        });
+
         dispatchAll(program);
         // Note we don't have a GLOBAL_FREE; EXIT restores stack for us
         code.emit(Opcode.EXIT);
@@ -320,7 +325,7 @@ public class CodeGenerationVisitor extends Visitor {
         if (scope instanceof Subroutine sub) {
             Map<Symbol,Expression> map = new HashMap<>();
             inlineVariables.push(map);
-            if (sub.isInline()) {
+            if (sub.is(Subroutine.Modifier.INLINE)) {
                 var parameters = sub.findAllLocalScope(in(SymbolType.PARAMETER));
                 if (parameters.size() != statement.getParameters().size()) {
                     throw new RuntimeException(String.format("parameter size mismatch for call to '%s'", subFullName));
@@ -357,7 +362,7 @@ public class CodeGenerationVisitor extends Visitor {
 
     @Override
     public void visit(Subroutine subroutine) {
-        if (subroutine.isInline()) {
+        if (subroutine.is(Subroutine.Modifier.INLINE)) {
             // We are already inlining this, so do not generate code.
             return;
         }

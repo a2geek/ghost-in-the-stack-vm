@@ -11,8 +11,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import static a2geek.ghost.model.Symbol.in;
 import static a2geek.ghost.model.Symbol.named;
@@ -34,6 +34,7 @@ public class ModelBuilder {
     private Function<String,String> controlCharsFn = s -> s;
     private Stack<Scope> scope = new Stack<>();
     private Stack<StatementBlock> statementBlock = new Stack<>();
+    // TODO determine if this is required any more!
     private Set<String> librariesIncluded = new HashSet<>();
     private boolean trace = false;
     private boolean boundsCheck = true;
@@ -175,51 +176,42 @@ public class ModelBuilder {
         }
     }
 
-    public void uses(String libname, Consumer<Symbol> exportHandler) {
-        if (librariesIncluded.contains(libname)) {
-            return;
-        }
-        trace("loading library: %s", libname);
-        librariesIncluded.add(libname);
-        String name = String.format("/library/%s.bas", libname);
-        try (InputStream inputStream = getClass().getResourceAsStream(name)) {
-            if (inputStream == null) {
-                throw new RuntimeException("unknown library: " + libname);
+    public void uses(String libname, Predicate<Symbol> exportHandler) {
+        var program = getProgram();
+        if (!librariesIncluded.contains(libname)) {
+            librariesIncluded.add(libname);
+            trace("loading library: %s", libname);
+            String name = String.format("/library/%s.bas", libname);
+            try (InputStream inputStream = getClass().getResourceAsStream(name)) {
+                if (inputStream == null) {
+                    throw new RuntimeException("unknown library: " + libname);
+                }
+                // These gyrations are to ensure that anything included is at the PROGRAM level and not in some sub-scope
+                // (such as FUNCTION, SUB, or MODULE).
+                var oldScopeStack = this.scope;
+                this.scope = new Stack<>();
+                this.scope.push(program);
+                ParseUtil.basicToModel(CharStreams.fromStream(inputStream), this);
+                this.scope = oldScopeStack;
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
             }
-            // These gyrations are to ensure that anything included is at the PROGRAM level and not in some sub-scope
-            // (such as FUNCTION, SUB, or MODULE).
-            var program = getProgram();
-            var oldScopeStack = this.scope;
-            this.scope = new Stack<>();
-            this.scope.push(program);
-            ParseUtil.basicToModel(CharStreams.fromStream(inputStream), this);
-            this.scope = oldScopeStack;
-            // Apply the export strategy to all components of the module
-            var module = program.findFirst(named(fixCase(libname)).and(in(SymbolType.MODULE))).map(Symbol::scope)
-                    .orElseThrow(() -> new RuntimeException("not a module: " + libname));
-            module.streamAllLocalScope().forEach(exportHandler);
         }
-        catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
+        // Apply the export strategy to all components of the module (note we do this every time)
+        var module = program.findFirst(named(fixCase(libname)).and(in(SymbolType.MODULE))).map(Symbol::scope)
+                .orElseThrow(() -> new RuntimeException("not a module: " + libname));
+        var exports = module.streamAllLocalScope().filter(exportHandler).map(Symbol::name).toList();
+        module.addAllExports(exports);
     }
-    public static Consumer<Symbol> defaultExport() {
-        return symbol -> {};
+    public static Predicate<Symbol> defaultExport() {
+        return symbol -> symbol.scope() instanceof Subroutine sub && sub.is(Subroutine.Modifier.EXPORT);
     }
-    public static Consumer<Symbol> nothingExported() {
-        return symbol -> {
-            if (symbol.scope() instanceof Subroutine sub) {
-                sub.setExport(false);
-            }
-        };
+    public static Predicate<Symbol> nothingExported() {
+        return symbol -> false;
     }
-    public static Consumer<Symbol> exportSpecified(String... names) {
+    public static Predicate<Symbol> exportSpecified(String... names) {
         final var set = Set.of(names);
-        return symbol -> {
-            if (symbol.scope() instanceof Subroutine sub) {
-                sub.setExport(set.contains(sub.getName()));
-            }
-        };
+        return symbol -> symbol.scope() instanceof Subroutine sub && set.contains(sub.getName());
     }
 
     public void callLibrarySubroutine(String name, Expression... params) {

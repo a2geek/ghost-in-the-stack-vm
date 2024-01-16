@@ -25,13 +25,13 @@ public class Function extends Subroutine {
 
     @Override
     public String toString() {
-        return String.format("%s%sFUNCTION %s(%s) : %s : END FUNCTION",
-                isExport() ? "EXPORT " : "",
-                isInline() ? "INLINE " : "",
+        return String.format("%s FUNCTION %s(%s) %s : %s : END FUNCTION",
+                modifiers.toString(),
                 getName(),
                 findAllLocalScope(in(SymbolType.PARAMETER)).stream()
                         .map(Symbol::name)
                         .collect(Collectors.joining(", ")),
+                findFirstLocalScope(in(SymbolType.RETURN_VALUE)).map(Symbol::name),
                 statementsAsString());
     }
 }

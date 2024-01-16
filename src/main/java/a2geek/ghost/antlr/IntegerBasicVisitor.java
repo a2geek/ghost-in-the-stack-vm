@@ -33,6 +33,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         model.uses(MATH_LIBRARY, exportSpecified("ABS", "SGN", "RND"));
         model.uses(STRINGS_LIBRARY, exportSpecified("LEN"));
         model.uses(MISC_LIBRARY, exportSpecified("PDL"));
+        model.uses(RUNTIME_LIBRARY, nothingExported()); // must be last to ensure exports are handled!
     }
 
     public ModelBuilder getModel() {
