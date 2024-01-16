@@ -5,9 +5,7 @@ Secondary model should handle array pointer arithmetic? This could make code gen
 Validate memory footprint for variable allocation in some manner
 Looks like usage of Symbol may need to be checked? There is no constraint that a found variable is what is expected (aka a constant instead of a variable).
 Look at how bytecode is created - feels like Opcode and Directive can support Instruction more directly.
-Need to figure out how to handle processor status register in CPU interactions; ProDOS functions use C. Probably only want get. (Otherwise state probably will get carried between calls accidentally.)
 Review generated code and look for alternates with new opcodes.
-Revisit the single line IF -- see what appears to be more standard.
 Unit tests?  Integer BASIC(done)  BASIC(done)  optimizations(done)  code generation?
 Interpreter for use in tests.
 Structure assembly project; it's gonna get messier.
@@ -17,9 +15,7 @@ DEF FN == Function
 Optimization - extract common code
 Basic needs actual string handling.
 Bytes would be good to define buffers.
-ON ERR capability
 Need to determine if interpreter should keep signed and unsigned operations or can that just be replaced with wrapper code (removes DIVS/MULS/MODS)
 Enhance USES statement to allow custom imports (example: USES MIN,MAX FROM "MATH")
-With LOADFP and STOREFP can LOCAL_RESERVE/LOCAL_FREE be removed? (LOADFP/PUSHZ, STOREFP/POPN)
 Optimize/short circuit OR/AND with IFTRUE/IFFALSE
 Add SELECT CASE(?)
