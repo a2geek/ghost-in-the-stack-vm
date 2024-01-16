@@ -21,3 +21,5 @@ ON ERR capability
 Need to determine if interpreter should keep signed and unsigned operations or can that just be replaced with wrapper code (removes DIVS/MULS/MODS)
 Enhance USES statement to allow custom imports (example: USES MIN,MAX FROM "MATH")
 With LOADFP and STOREFP can LOCAL_RESERVE/LOCAL_FREE be removed? (LOADFP/PUSHZ, STOREFP/POPN)
+Optimize/short circuit OR/AND with IFTRUE/IFFALSE
+Add SELECT CASE(?)
