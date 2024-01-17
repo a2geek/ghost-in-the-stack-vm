@@ -195,7 +195,7 @@ public class BinaryExpression implements Expression {
 
     @Override
     public String toString() {
-        return String.format("%s %s %s", l, op, r);
+        return String.format("(%s %s %s)", l, op, r);
     }
 
     public record Descriptor(
