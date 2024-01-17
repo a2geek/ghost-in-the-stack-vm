@@ -107,6 +107,12 @@ public class ModelBuilder {
     public void addStatement(Statement statement) {
         this.statementBlock.peek().addStatement(statement);
     }
+    public void addStatements(StatementBlock statements) {
+        Objects.requireNonNull(statements);
+        final var sb = statementBlock.peek();
+        statements.getInitializationStatements().forEach(sb::addInitializationStatement);
+        statements.getStatements().forEach(sb::addStatement);
+    }
     public StatementBlock pushStatementBlock(StatementBlock statementBlock) {
         return this.statementBlock.push(statementBlock);
     }

@@ -223,6 +223,23 @@ if expr then true_statement : statement2 : statement3
 
 `statement2` and `statement3` always execute, regardless of the value of `expr`. 
 
+### Select ... Case
+
+The `select case` statement can be a more readable structure compared to a series of `if` statements.
+
+```basic
+select [ case ] <expr>
+case <expr2>
+  statements1
+case <expr3> to <expr4>
+  statements2
+case [ is ] ( <, <=, >, >=, =, <> ) expr5
+  statements3
+case else
+  statements4
+end select
+```
+
 ### Loops
 
 #### For loop

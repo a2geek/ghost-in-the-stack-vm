@@ -18,4 +18,3 @@ Bytes would be good to define buffers.
 Need to determine if interpreter should keep signed and unsigned operations or can that just be replaced with wrapper code (removes DIVS/MULS/MODS)
 Enhance USES statement to allow custom imports (example: USES MIN,MAX FROM "MATH")
 Optimize/short circuit OR/AND with IFTRUE/IFFALSE
-Add SELECT CASE(?)

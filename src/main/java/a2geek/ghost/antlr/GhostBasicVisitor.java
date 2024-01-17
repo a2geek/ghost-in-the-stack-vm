@@ -123,6 +123,58 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     }
 
     @Override
+    public Expression visitSelectStmt(BasicParser.SelectStmtContext ctx) {
+        StatementBlock currentStatementBlock = null;
+        if (ctx.selectElseFragment() != null) {
+            currentStatementBlock = model.pushStatementBlock(new StatementBlock());
+            visit(ctx.selectElseFragment().statements());
+            model.popStatementBlock();
+        }
+
+        var expr = visit(ctx.a);
+        for (var fragment : ctx.selectCaseFragment().reversed()) {
+            var trueStatements = model.pushStatementBlock(new StatementBlock());
+            visit(fragment.statements());
+            model.popStatementBlock();
+
+            Expression test = null;
+            for (var caseExpr : fragment.selectCaseExpr()) {
+                // Generate the specific CASE expression
+                BinaryExpression binex = null;
+                if (caseExpr.op != null) {
+                    // 'is'? op=( '<' | '<=' | '>' | '>=' | '=' | '<>' ) a=expr :: expr OP a
+                    binex = new BinaryExpression(expr, visit(caseExpr.a), caseExpr.op.getText());
+                }
+                else if (caseExpr.b != null) {
+                    // a=expr 'to' b=expr :: expr >= a AND expr <= b
+                    binex = new BinaryExpression(
+                            new BinaryExpression(expr, visit(caseExpr.a), ">="),
+                            new BinaryExpression(expr, visit(caseExpr.b), "<="),
+                            "and");
+                }
+                else {
+                    // a=expr :: expr = a
+                    binex = new BinaryExpression(expr, visit(caseExpr.a), "=");
+                }
+
+                // Concatenate CASE expressions together
+                if (test == null) {
+                    test = binex;
+                }
+                else {
+                    test = new BinaryExpression(test, binex, "or");
+                }
+            }
+
+            model.pushStatementBlock(new StatementBlock());
+            model.ifStmt(test, trueStatements, currentStatementBlock);
+            currentStatementBlock = model.popStatementBlock();
+        }
+        model.addStatements(currentStatementBlock);
+        return null;
+    }
+
+    @Override
     public Expression visitOnErrorStmt(BasicParser.OnErrorStmtContext ctx) {
         var stmt = switch (ctx.op.getText().toLowerCase()) {
             case "goto" -> new OnErrorStatement(findGotoGosubLabel(ctx.l));

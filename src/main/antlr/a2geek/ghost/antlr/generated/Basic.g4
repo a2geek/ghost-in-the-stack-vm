@@ -80,11 +80,28 @@ statement
     | 'on' 'error' ( op='goto' l=ID | op='disable' | op='resume' 'next'? )  # onErrorStmt
     | 'raise' 'error' a=expr ',' m=expr                                     # raiseErrorStmt
     | 'return' e=expr?                                                      # returnStmt
+    | 'select' 'case'? a=expr EOL+
+      ( selectCaseFragment )+
+      ( selectElseFragment )?
+      'end' 'select'                                                        # selectStmt
     | id=extendedID p=parameters?                                           # callSub
     ;
 ifFragment
     : expr 'then' EOL+
         statements
+    ;
+selectCaseFragment
+    : 'case' selectCaseExpr ( ',' selectCaseExpr )* EOL+
+        s=statements
+    ;
+selectElseFragment
+    : 'case' 'else' EOL+
+        s=statements
+    ;
+selectCaseExpr
+    : a=expr
+    | a=expr 'to' b=expr
+    | 'is'? op=( '<' | '<=' | '>' | '>=' | '=' | '<>' ) a=expr
     ;
 
 constantDecl
