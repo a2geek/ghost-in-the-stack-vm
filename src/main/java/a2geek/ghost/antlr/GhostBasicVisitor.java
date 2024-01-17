@@ -585,12 +585,12 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                 }
                 boolean isArray = !dimensions.isEmpty();
                 List<Expression> defaultValues = new ArrayList<>();
-                if (idDecl.idDeclDefault() != null && idDecl.idDeclDefault().anyExpr() != null) {
-                    for (var anyExpr : idDecl.idDeclDefault().anyExpr()) {
-                        var expr = visit(anyExpr);
+                if (idDecl.idDeclDefault() != null && idDecl.idDeclDefault().expr() != null) {
+                    for (var defaultExpr : idDecl.idDeclDefault().expr()) {
+                        var expr = visit(defaultExpr);
                         if (isArray && !expr.isConstant()) {
                             throw new RuntimeException("array default values currently must be constant: "
-                                + anyExpr.getText());
+                                + defaultExpr.getText());
                         }
                         defaultValues.add(expr);
                     }
@@ -665,7 +665,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     public Expression visitCallSub(BasicParser.CallSubContext ctx) {
         List<Expression> params = new ArrayList<>();
         if (ctx.p != null) {
-            ctx.parameters().anyExpr().stream().map(this::visit).forEach(params::add);
+            ctx.parameters().expr().stream().map(this::visit).forEach(params::add);
         }
         model.callSubroutine(ctx.id.getText(), params);
         return null;
@@ -741,8 +741,8 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     public Expression visitArrayOrFunctionRef(BasicParser.ArrayOrFunctionRefContext ctx) {
         var id = ctx.extendedID().getText();
         List<Expression> params = new ArrayList<>();
-        if (ctx.anyExpr() != null) {
-            ctx.anyExpr().stream().map(this::visit).forEach(params::add);
+        if (ctx.expr() != null) {
+            ctx.expr().stream().map(this::visit).forEach(params::add);
         }
 
         if ("ubound".equalsIgnoreCase(id)) {

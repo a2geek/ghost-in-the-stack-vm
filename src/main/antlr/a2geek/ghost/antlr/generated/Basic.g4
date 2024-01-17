@@ -72,13 +72,13 @@ statement
       'until' a=expr                                                        # repeatLoop
     | 'exit' n=('do' | 'for' | 'repeat' | 'while')                          # exitStmt
     | 'end'                                                                 # endStmt
-    | 'print' (expr | sexpr | ',' | ';')*                                   # printStmt
+    | 'print' (expr | ',' | ';')*                                           # printStmt
     | op=( 'poke' | 'pokew' ) a=expr ',' b=expr                             # pokeStmt
     | 'call' a=expr                                                         # callStmt
     | op=( 'goto' | 'gosub' ) l=ID                                          # gotoGosubStmt
     | 'on' a=expr op=( 'goto' | 'gosub' ) ID (',' ID)*                      # onGotoGosubStmt
     | 'on' 'error' ( op='goto' l=ID | op='disable' | op='resume' 'next'? )  # onErrorStmt
-    | 'raise' 'error' a=expr ',' m=sexpr                                    # raiseErrorStmt
+    | 'raise' 'error' a=expr ',' m=expr                                     # raiseErrorStmt
     | 'return' e=expr?                                                      # returnStmt
     | id=extendedID p=parameters?                                           # callSub
     ;
@@ -96,7 +96,7 @@ extendedID
     ;
 
 expressionID
-    : extendedID '(' ( anyExpr ( ',' anyExpr )* )? ')'                # arrayOrFunctionRef
+    : extendedID '(' ( expr ( ',' expr )* )? ')'                      # arrayOrFunctionRef
     | extendedID                                                      # variableOrFunctionRef
     ;
 
@@ -113,8 +113,8 @@ idModifier
     ;
 
 idDeclDefault
-    : anyExpr
-    | '{' anyExpr ( ',' anyExpr )* '}'
+    : expr
+    | '{' expr ( ',' expr )* '}'
     ;
 
 datatype
@@ -125,13 +125,7 @@ datatype
     ;
 
 parameters
-    : '(' ( anyExpr ( ',' anyExpr )* )? ')'
-    ;
-
-// Needed to make parameter parsing possible - the different subexpressions can cause problems
-anyExpr
-    : expr
-    | sexpr
+    : '(' ( expr ( ',' expr )* )? ')'
     ;
 
 expr
@@ -144,12 +138,9 @@ expr
     | op=('-' | 'not') a=expr                                           # unaryExpr
     | id=expressionID                                                   # expressionIDExpr
     | a=INT                                                             # intConstant
+    | s=STR                                                             # stringConstant
     | b=('true' | 'false')                                              # boolConstant
     | '(' a=expr ')'                                                    # parenExpr
-    ;
-
-sexpr
-    : s=STR                                                             # stringConstant
     ;
 
 ID : [a-z] ([_a-z0-9])* ;
