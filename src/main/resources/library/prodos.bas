@@ -31,6 +31,14 @@ module prodos
 
     ' end of internal junk
 
+    export inline function lastDevice() as integer
+        return peek(DEVNUM)
+    end function
+
+    export inline function isPrefixActive() as boolean
+        return peek(PFXPTR) <> 0
+    end function
+
     function mliErrorMessage(errnum as integer) as string
         select case errnum
             case 0x01
@@ -192,6 +200,24 @@ module prodos
         callMLI(0xc3)
     end sub
 
+    ' Based on https://retrocomputing.stackexchange.com/questions/17922/apple-ii-prodos-zero-length-prefix-and-mli-calls
+    ' Intentionally staying from BASIC.SYSTEM since (hopefully) making SYSTEM an output type will become a thing.
+    export sub ensurePrefixSet()
+        if isPrefixActive() then
+            return
+        end if
+        poke PARAMS, 0x02
+        poke PARAMS+1, lastDevice()
+        pokew PARAMS+2, 0x281
+        callMLI(0xc5)
+        ' TODO determine if we need to look for an error in the output or not...
+        poke 0x280, (peek(0x281) AND 0x0f) + 1
+        poke 0x281, asc("/")
+        poke PARAMS, 0x01
+        pokew PARAMS+1, 0x280
+        callMLI(0xc6)
+    end sub
+
     export sub setPrefix(newprefix as string)
         poke PARAMS, 0x01
         pokew PARAMS+1, pstring(newprefix)
@@ -253,14 +279,6 @@ module prodos
         callMLI(0xcd)
     end sub
 
-    export inline function lastDevice() as integer
-        return peek(DEVNUM)
-    end function
-
-    export inline function isPrefixActive() as boolean
-        return peek(PFXPTR) <> 0
-    end function
-
     export inline function isAppleII() as boolean
         return (peek(MACHID) AND 0b11001000) = 0
     end function
@@ -300,5 +318,8 @@ module prodos
     export inline function hasClock() as boolean
         return (peek(MACHID) AND 0b00000001) <> 0
     end function
+
+    ' initialization code
+    prodos.ensurePrefixSet()
 
 end module

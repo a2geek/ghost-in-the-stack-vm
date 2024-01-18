@@ -76,42 +76,43 @@ Miscellaneous module with subroutines and functions that don't seem to fit anywh
 > Current memory areas to stay away from: 0x280-0x2ff is used to fake string handling.
 > 0x300-~0x330 is used for the actual ProDOS MLI call area (assembly code as well as parameter blocks).
 
-Supports ProDOS related functions and subroutines. 
+Supports ProDOS related functions and subroutines. This module has an initialization sequence that ensures a prefix has been set: 
+if no prefix has been set, sets it to the last used device.
 
-| Name                                            |  Type   | Description                                                                                                 |
-|:------------------------------------------------|:-------:|:------------------------------------------------------------------------------------------------------------|
-| `mliErrorMesage(errnum)`                        | String  | Convert a MLI error number to a descriptive string.                                                         |
-| `callMLI(functionCode)`                         |    -    | (Internal)  Calls an MLI routine. Raises an error if the return code is non-zero.                           |
-| `quit()`                                        |    -    | Call QUIT ($65).                                                                                            |
-| `readBlock(unitNumber,blockNumber,dataBuffer)`  |    -    | Call READ_BLOCK ($80).                                                                                      |
-| `writeBlock(unitNumber,blockNumber,dataBuffer)` |    -    | Call WRITE_BLOCK ($81).                                                                                     |
-| `getDate()`                                     | Integer | Call GET_TIME ($82) and return the date portion.                                                            |
-| `getTime()`                                     | Integer | Call GET_TIME ($82) and return the time portion.                                                            |
-| `createFile(pathname,filetype,auxtype)`         |    -    | Call CREATE ($C0) to create a new file.<br>Note that this currently fails if the default prefix is not set. |
-| `destroy(pathname)`                             |    -    | Call DESTROY ($C1) to delete a file or empty subdirectory.                                                  |
-| `rename(oldpathname,newpathname)`               |    -    | Call RENAME ($C2) to rename a file or directory.                                                            |
-| `lock(pathname)`                                |    -    | Lock a file/directory. Uses GET_FILE_INFO ($C4) and SET_FILE_INFO ($C3) to set access bits to $C3.          |
-| `unlock(pathname)`                              |    -    | Unlock a file/directory. Uses GET_FILE_INFO ($C4) and SET_FILE_INFO ($C3) to set access bits to $01.        |
-| `setPrefix(newprefix)`                          |    -    | Call SET_PREFIX ($C6) to set the default prefix.                                                            |
-| `getPrefix()`                                   | String  | Call GET_PREFIX ($C7) to set the default prefix.                                                            |
-| `open(filename,buffer)`                         | Integer | Call OPEN ($C8) to open a file. Returns `refnum`.                                                           |
-| `newline(refnum,mask,char)`                     |    -    | Call NEWLINE ($C9).                                                                                         |
-| `read(refnum,buffer,length)`                    | Integer | Call READ ($CA) to read from an open file. Returns number of bytes actually read.                           |
-| `write(refnum,buffer,length)`                   | Integer | Call WRITE ($CB) to write to an open file. Returns number of bytes actually written.                        |
-| `close(refnum)`                                 |    -    | Call CLOSE ($CC) to close an open file.                                                                     |
-| `flush(refnum)`                                 |    -    | Call FLUSH ($CD) to flush pending data to an open file.                                                     |
-| `lastDevice()`                                  | Integer | Returns last used device stored in DEVNUM ($BF30).                                                          |
-| `isPrefixActive()`                              | Boolean | Indicates if there is an active prefix based on PFXPTR ($BF9A).                                             |
-| `isAppleII()`                                   | Boolean | Indicates if the Apple II MACHID ($BF98) bits are set (`00..0...`).                                         |
-| `isAppleIIplus()`                               | Boolean | Indicates if the Apple II+ MACHID ($BF98) bits are set (`01..0...`).                                        |
-| `isAppleIIe()`                                  | Boolean | Indicates if the Apple IIe MACHID ($BF98) bits are set (`10..0...`).                                        |
-| `isAppleIII()`                                  | Boolean | Indicates if the Apple III MACHID ($BF98) bits are set (`11..0...`).                                        |
-| `isAppleIIc()`                                  | Boolean | Indicates if the Apple IIc MACHID ($BF98) bits are set (`10..1...`).                                        |
-| `has48K()`                                      | Boolean | Indicates if MACHID ($BF98) indicates this machine has 48K (`..01....`).                                    |
-| `has64K()`                                      | Boolean | Indicates if MACHID ($BF98) indicates this machine has 64K (`..10....`).                                    |
-| `has128K()`                                     | Boolean | Indicates if MACHID ($BF98) indicates this machine has 128K (`..11....`).                                   |
-| `has80Cols()`                                   | Boolean | Indicates if MACHID ($BF98) indicates this machine has 80 columns (`......1.`).                             |
-| `hasClock()`                                    | Boolean | Indicates if MACHID ($BF98) indicates this machine has a clock (`.......1`).                                |
+| Name                                            |  Type   | Description                                                                                          |
+|:------------------------------------------------|:-------:|:-----------------------------------------------------------------------------------------------------|
+| `mliErrorMesage(errnum)`                        | String  | Convert a MLI error number to a descriptive string.                                                  |
+| `callMLI(functionCode)`                         |    -    | (Internal)  Calls an MLI routine. Raises an error if the return code is non-zero.                    |
+| `quit()`                                        |    -    | Call QUIT ($65).                                                                                     |
+| `readBlock(unitNumber,blockNumber,dataBuffer)`  |    -    | Call READ_BLOCK ($80).                                                                               |
+| `writeBlock(unitNumber,blockNumber,dataBuffer)` |    -    | Call WRITE_BLOCK ($81).                                                                              |
+| `getDate()`                                     | Integer | Call GET_TIME ($82) and return the date portion.                                                     |
+| `getTime()`                                     | Integer | Call GET_TIME ($82) and return the time portion.                                                     |
+| `createFile(pathname,filetype,auxtype)`         |    -    | Call CREATE ($C0) to create a new file.                                                              |
+| `destroy(pathname)`                             |    -    | Call DESTROY ($C1) to delete a file or empty subdirectory.                                           |
+| `rename(oldpathname,newpathname)`               |    -    | Call RENAME ($C2) to rename a file or directory.                                                     |
+| `lock(pathname)`                                |    -    | Lock a file/directory. Uses GET_FILE_INFO ($C4) and SET_FILE_INFO ($C3) to set access bits to $C3.   |
+| `unlock(pathname)`                              |    -    | Unlock a file/directory. Uses GET_FILE_INFO ($C4) and SET_FILE_INFO ($C3) to set access bits to $01. |
+| `setPrefix(newprefix)`                          |    -    | Call SET_PREFIX ($C6) to set the default prefix.                                                     |
+| `getPrefix()`                                   | String  | Call GET_PREFIX ($C7) to set the default prefix.                                                     |
+| `open(filename,buffer)`                         | Integer | Call OPEN ($C8) to open a file. Returns `refnum`.                                                    |
+| `newline(refnum,mask,char)`                     |    -    | Call NEWLINE ($C9).                                                                                  |
+| `read(refnum,buffer,length)`                    | Integer | Call READ ($CA) to read from an open file. Returns number of bytes actually read.                    |
+| `write(refnum,buffer,length)`                   | Integer | Call WRITE ($CB) to write to an open file. Returns number of bytes actually written.                 |
+| `close(refnum)`                                 |    -    | Call CLOSE ($CC) to close an open file.                                                              |
+| `flush(refnum)`                                 |    -    | Call FLUSH ($CD) to flush pending data to an open file.                                              |
+| `lastDevice()`                                  | Integer | Returns last used device stored in DEVNUM ($BF30).                                                   |
+| `isPrefixActive()`                              | Boolean | Indicates if there is an active prefix based on PFXPTR ($BF9A).                                      |
+| `isAppleII()`                                   | Boolean | Indicates if the Apple II MACHID ($BF98) bits are set (`00..0...`).                                  |
+| `isAppleIIplus()`                               | Boolean | Indicates if the Apple II+ MACHID ($BF98) bits are set (`01..0...`).                                 |
+| `isAppleIIe()`                                  | Boolean | Indicates if the Apple IIe MACHID ($BF98) bits are set (`10..0...`).                                 |
+| `isAppleIII()`                                  | Boolean | Indicates if the Apple III MACHID ($BF98) bits are set (`11..0...`).                                 |
+| `isAppleIIc()`                                  | Boolean | Indicates if the Apple IIc MACHID ($BF98) bits are set (`10..1...`).                                 |
+| `has48K()`                                      | Boolean | Indicates if MACHID ($BF98) indicates this machine has 48K (`..01....`).                             |
+| `has64K()`                                      | Boolean | Indicates if MACHID ($BF98) indicates this machine has 64K (`..10....`).                             |
+| `has128K()`                                     | Boolean | Indicates if MACHID ($BF98) indicates this machine has 128K (`..11....`).                            |
+| `has80Cols()`                                   | Boolean | Indicates if MACHID ($BF98) indicates this machine has 80 columns (`......1.`).                      |
+| `hasClock()`                                    | Boolean | Indicates if MACHID ($BF98) indicates this machine has a clock (`.......1`).                         |
 
 ## Runtime
 
