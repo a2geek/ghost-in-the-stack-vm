@@ -9,7 +9,6 @@ Review generated code and look for alternates with new opcodes.
 Unit tests?  Integer BASIC(done)  BASIC(done)  optimizations(done)  code generation?
 Interpreter for use in tests.
 Structure assembly project; it's gonna get messier.
-ProDOS commands (OPEN, READ, WRITE, CLOSE). Is this SUB and/or FUNCTION?
 Add Applesoft
 DEF FN == Function
 Optimization - extract common code

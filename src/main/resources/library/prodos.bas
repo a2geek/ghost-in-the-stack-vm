@@ -3,8 +3,33 @@ module prodos
     const PARAMS = 0x310
     const MLI = 0xbf00
     const DEVNUM = 0xbf30
+    const DATE = 0xbf90
+    const TIME = 0xbf92
     const MACHID = 0xbf98
     const PFXPTR = 0xbf9a
+
+    ' this should be kept internal to ProDOS since there's going to be a better way to do it!
+
+    function pstring(name as string) as address
+        dim buffer as address = 0x280
+        poke buffer, 0x3f   ' set max length
+        poke buffer+1, 0x00 ' fake an end of string
+        dim len as integer = strings.len(name)
+        strings.strcpy(buffer, 0, name, 0, len)
+        poke buffer, len
+        return buffer
+    end function
+    function pstring2(name as string) as address
+        dim buffer as address = 0x2c0
+        poke buffer, 0x3f   ' set max length
+        poke buffer+1, 0x00 ' fake an end of string
+        dim len as integer = strings.len(name)
+        strings.strcpy(buffer, 0, name, 0, len)
+        poke buffer, len
+        return buffer
+    end function
+
+    ' end of internal junk
 
     function mliErrorMessage(errnum as integer) as string
         select case errnum
@@ -85,6 +110,15 @@ module prodos
         end if
     end sub
 
+    export sub quit()
+        poke PARAMS, 0x04
+        poke PARAMS+1, 0
+        pokew PARAMS+2, 0
+        poke PARAMS+4, 0
+        pokew PARAMS+5, 0
+        callMLI(0x65)
+    end sub
+
     export sub readBlock(unitNumber as integer, blockNumber as integer, dataBuffer as address)
         poke PARAMS, 0x03
         poke PARAMS+1, unitNumber
@@ -101,6 +135,69 @@ module prodos
         callMLI(0x81)
     end sub
 
+    export function getDate() as integer
+        callMLI(0x82)
+        return peekw(DATE)
+    end function
+
+    export function getTime() as integer
+        callMLI(0x82)
+        return peekw(TIME)
+    end function
+
+    export sub createFile(pathname as string, filetype as integer, auxtype as integer)
+        poke PARAMS, 0x07
+        pokew PARAMS+1, pstring(pathname)
+        poke PARAMS+3, 0xc3
+        poke PARAMS+4, filetype
+        pokew PARAMS+5, auxtype
+        poke PARAMS+7, 0x01     ' standard file
+        pokew PARAMS+8, 0       ' date
+        pokew PARAMS+10, 0      ' time
+        callMLI(0xc0)
+    end sub
+
+    export sub destroy(pathname as string)
+        poke PARAMS, 0x01
+        pokew PARAMS+1, pstring(pathname)
+        callMLI(0xc1)
+    end sub
+
+    export sub rename(oldpathname as string, newpathname as string)
+        poke PARAMS, 0x02
+        pokew PARAMS+1, pstring(oldpathname)
+        pokew PARAMS+3, pstring2(newpathname)
+        callMLI(0xc2)
+    end sub
+
+    export sub lock(pathname as string)
+        ' populate with current info
+        poke PARAMS, 0x0a
+        pokew PARAMS+1, pstring(pathname)
+        callMLI(0xc4)
+        ' change access bits and save chane
+        poke PARAMS, 0x07
+        poke PARAMS+3, 0x01
+        callMLI(0xc3)
+    end sub
+
+    export sub unlock(pathname as string)
+        ' populate with current info
+        poke PARAMS, 0x0a
+        pokew PARAMS+1, pstring(pathname)
+        callMLI(0xc4)
+        ' change access bits and save chane
+        poke PARAMS, 0x07
+        poke PARAMS+3, 0xc3
+        callMLI(0xc3)
+    end sub
+
+    export sub setPrefix(newprefix as string)
+        poke PARAMS, 0x01
+        pokew PARAMS+1, pstring(newprefix)
+        callMLI(0xc6)
+    end sub
+
     export function getPrefix() as string
         dim buffer as address = 0x280
         poke PARAMS, 0x01
@@ -109,6 +206,52 @@ module prodos
         poke buffer+peek(buffer)+1,0
         return buffer
     end function
+
+    export function open(filename as string, buffer as address) as integer
+        poke PARAMS, 0x03
+        pokew PARAMS+1, filename
+        pokew PARAMS+3, buffer
+        callMLI(0xc8)
+        return peek(PARAMS+5)
+    end function
+
+    export sub newline(refnum as integer, mask as integer, char as integer)
+        poke PARAMS, 0x03
+        poke PARAMS+1, refnum
+        poke PARAMS+2, mask
+        poke PARAMS+3, char
+        callMLI(0xc9)
+    end sub
+
+    export function read(refnum as integer, buffer as address, length as integer) as integer
+        poke PARAMS, 0x04
+        poke PARAMS+1, refnum
+        pokew PARAMS+2, buffer
+        pokew PARAMS+4, length
+        callMLI(0xca)
+        return peekw(PARAMS+6)
+    end function
+
+    export function write(refnum as integer, buffer as address, length as integer) as integer
+        poke PARAMS, 0x04
+        poke PARAMS+1, refnum
+        pokew PARAMS+2, buffer
+        pokew PARAMS+4, length
+        callMLI(0xcb)
+        return peekw(PARAMS+6)
+    end function
+
+    export sub close(refnum as integer)
+        poke PARAMS, 0x01
+        pokew PARAMS+1, refnum
+        callMLI(0xcc)
+    end sub
+
+    export sub flush(refnum as integer)
+        poke PARAMS, 0x01
+        pokew PARAMS+1, refnum
+        callMLI(0xcd)
+    end sub
 
     export inline function lastDevice() as integer
         return peek(DEVNUM)

@@ -72,8 +72,8 @@ rewritten model which has some minor optimizations at this time.
 The compiler can be invoked with `--help` to see a list of options:
 ```shell
 $ java -jar build/libs/GhostBasic-1.0-SNAPSHOT.jar --help
-Usage: compile [-hV] [--case-sensitive] [--debug] [--fix-control-chars] [--heap] [--integer] [--quiet] [--trace] [-il=<intermediateCodeListing>] [--lomem=<heapStartAddress>] [-o=<outputFile>] [-tl=<targetCodeListing>] [[--[no-]optimizations] [--
-               [no-]bounds-checking] [--[no-]constant-reduction] [--[no-]strength-reduction] [--[no-]dead-code-elimination] [--[no-]peephole-optimizer] [--[no-]label-optimizer]] <sourceCode>
+Usage: compile [-hV] [--case-sensitive] [--debug] [--fix-control-chars] [--heap] [--integer] [--quiet] [--trace] [-il=<intermediateCodeListing>] [--lomem=<heapStartAddress>] [-o=<outputFile>] [--symbols=<symbolTableFile>] [-tl=<targetCodeListing>]
+               [[--[no-]optimizations] [--[no-]bounds-checking] [--[no-]constant-reduction] [--[no-]strength-reduction] [--[no-]dead-code-elimination] [--[no-]peephole-optimizer] [--[no-]label-optimizer]] <sourceCode>
 Compile Ghost BASIC program.
       <sourceCode>           program to compile
       --case-sensitive       allow identifiers to be case sensitive (A is different from a)
@@ -90,6 +90,8 @@ Compile Ghost BASIC program.
   -o, --output=<outputFile>  output file name
                                Default: a.out
       --quiet                reduce output
+      --symbols=<symbolTableFile>
+                             dump symbol table to file
       -tl, --target-code-listing=<targetCodeListing>
                              create listing file
       --trace                enable stack traces
@@ -125,7 +127,7 @@ Project is the usual Gradle structure. Things of note:
 
 ## More project information
 
-* [BASIC language](BASIC.md)
+* [BASIC language](BASIC.md) and its support [library](LIBRARY.md)
 * [Integer BASIC language](INTEGER.md)
 * [Compiler](COMPILER.md)
 * [Interpreter opcodes](OPCODES.md)
