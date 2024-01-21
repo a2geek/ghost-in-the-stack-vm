@@ -14,6 +14,35 @@ module strings
         return peek(str + 1)
     end function
 
+    ' Cheap/temporary replacement for MID$
+    export function ascn(str as string, n as integer) as integer
+        return peek(str + n + 1)
+    end function
+
+    ' FIXME: hard-coded to an address for the string
+    export function strn(n as integer, maxlen as integer) as string
+        dim buffer as address = 0x2ff
+        dim l as integer = 0
+        ' terminating byte
+        poke buffer, 0
+        buffer = buffer - 1
+        ' move backwards as long as we have a number
+        while n > 0
+            l = l + 1
+            poke buffer, n mod 10 + asc("0")
+            n = n / 10
+            buffer = buffer - 1
+        end while
+        ' zero pad the number
+        while l < maxlen
+            poke buffer, asc("0")
+            l = l + 1
+            buffer = buffer - 1
+        end while
+        poke buffer,l
+        return buffer
+    end function
+
     export function len(str as string) as integer
         dim s as address, n as integer
 

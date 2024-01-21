@@ -35,7 +35,7 @@ for dir in ${DIRS}
 do
   ${ACX} mkdir ${dir}
 
-  for source in $(find src/main/basic/${dir} -name "*.bas" -o -name "*.int" | sort)
+  for source in $(find src/main/basic/${dir} -name "*.bas" -o -name "*.int" -o -name "*.as" | sort)
   do
     echo "Building file ${source} in ${dir}..."
 
@@ -50,12 +50,17 @@ do
       *)        echo "Unknown OS"; exit 1;;
     esac
 
-    FLAGS="--fix-control-chars"
-    [ "${extension}" == "int" ] && FLAGS+=" --integer"
-    [ -f "${optname}" ] && FLAGS+=" @${optname}"
+    if [ "${extension}" == "as" ]
+    then
+      ${ACX} import --dir="${dir}" "${source}" --applesingle
+    else
+      FLAGS="--fix-control-chars"
+      [ "${extension}" == "int" ] && FLAGS+=" --integer"
+      [ -f "${optname}" ] && FLAGS+=" @${optname}"
 
-    ${GHOST} "$source" ${FLAGS} "$@" --output="${asfilename}" --quiet
-    ${ACX} import --dir="${dir}" --name="${filename}" "${asfilename}" --as -a 0x803 -f
-    rm "${asfilename}"
+      ${GHOST} "$source" ${FLAGS} "$@" --output="${asfilename}" --quiet
+      ${ACX} import --dir="${dir}" --name="${filename}" "${asfilename}" --applesingle
+      rm "${asfilename}"
+    fi
   done
 done

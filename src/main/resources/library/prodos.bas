@@ -279,6 +279,17 @@ module prodos
         callMLI(0xcd)
     end sub
 
+    ' WARNING: drops high byte, so max of 64K-1
+    export function getEOF(refnum as integer) as integer
+        poke PARAMS, 0x02
+        poke PARAMS+1, refnum
+        callMLI(0xd1)
+        if peek(PARAMS+4) <> 0 then
+            raise error 0x4d, "LENGTH GREATER THAN 64K"
+        end if
+        return peekw(PARAMS+2)
+    end function
+
     export inline function isAppleII() as boolean
         return (peek(MACHID) AND 0b11001000) = 0
     end function
@@ -318,6 +329,14 @@ module prodos
     export inline function hasClock() as boolean
         return (peek(MACHID) AND 0b00000001) <> 0
     end function
+
+    export sub bload(pathname as string, addr as address)
+        dim buffer as address = 0x9000   ' FIXME
+        dim refnum as integer, n as integer
+        refnum = open(pathname, buffer)
+        n = read(refnum, addr, getEOF(refnum))
+        close(refnum)
+    end sub
 
     ' initialization code
     prodos.ensurePrefixSet()
