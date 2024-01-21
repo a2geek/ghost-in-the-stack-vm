@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PeepholeOptimizer {
-    private static List<String> LABEL_RETURN = new ArrayList<>();
+    private static final List<String> LABEL_RETURN = new ArrayList<>();
 
     public static int optimize(List<Instruction> code) {
         var changed = 0;
@@ -101,7 +101,7 @@ public class PeepholeOptimizer {
             // Note: These appear to be side effects of how inlining is handled.
             // LOADC 1234  ==> LOADC 1233|1235
             // INCR|DECR   ==> remove
-            if (inst1.opcode() == Opcode.LOADC && (inst2.opcode() == Opcode.INCR || inst2.opcode() == Opcode.DECR)) {
+            if (inst1.opcode() == Opcode.LOADC && (is(inst2.opcode(), Opcode.INCR, Opcode.DECR))) {
                 list.set(0, switch (inst2.opcode()) {
                     case INCR -> new Instruction(null, Opcode.LOADC, null, inst1.arg()+1, null);
                     case DECR -> new Instruction(null, Opcode.LOADC, null, inst1.arg()-1, null);
@@ -144,6 +144,36 @@ public class PeepholeOptimizer {
                 list.set(0, new Instruction(inst2.label(), Opcode.IFZ, null, null, null));
                 list.remove(1);
                 return true;
+            }
+            // GLOBAL_LOAD 0000   ==>  GLOBAL_INCR|GLOBAL_DECR 0000
+            // INCR|DECR          ==>  removed
+            // GLOBAL_STORE 0000  ==>  removed
+            if (inst1.opcode() == Opcode.GLOBAL_LOAD && inst2.opcode() == Opcode.INCR && inst3.opcode() == Opcode.GLOBAL_STORE
+                    && inst1.arg().equals(inst3.arg())) {
+                list.remove(2);
+                list.remove(1);
+                list.set(0, new Instruction(null, Opcode.GLOBAL_INCR, null, inst1.arg(), null));
+            }
+            if (inst1.opcode() == Opcode.GLOBAL_LOAD && inst2.opcode() == Opcode.DECR && inst3.opcode() == Opcode.GLOBAL_STORE
+                    && inst1.arg().equals(inst3.arg())) {
+                list.remove(2);
+                list.remove(1);
+                list.set(0, new Instruction(null, Opcode.GLOBAL_DECR, null, inst1.arg(), null));
+            }
+            // LOCAL_LOAD 0000   ==>  LOCAL_INCR|LOCAL_DECR 0000
+            // INCR|DECR         ==>  removed
+            // LOCAL_STORE 0000  ==>  removed
+            if (inst1.opcode() == Opcode.LOCAL_LOAD && inst2.opcode() == Opcode.INCR && inst3.opcode() == Opcode.LOCAL_STORE
+                    && inst1.arg().equals(inst3.arg())) {
+                list.remove(2);
+                list.remove(1);
+                list.set(0, new Instruction(null, Opcode.LOCAL_INCR, null, inst1.arg(), null));
+            }
+            if (inst1.opcode() == Opcode.LOCAL_LOAD && inst2.opcode() == Opcode.DECR && inst3.opcode() == Opcode.LOCAL_STORE
+                    && inst1.arg().equals(inst3.arg())) {
+                list.remove(2);
+                list.remove(1);
+                list.set(0, new Instruction(null, Opcode.LOCAL_DECR, null, inst1.arg(), null));
             }
         };
         return false;

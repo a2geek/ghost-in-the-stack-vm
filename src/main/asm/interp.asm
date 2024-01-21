@@ -262,8 +262,12 @@ brtable:
     .addr _fixa-1
     .addr _local_load-1
     .addr _local_store-1
+    .addr _local_incr-1
+    .addr _local_decr-1
     .addr _global_load-1
     .addr _global_store-1
+    .addr _global_incr-1
+    .addr _global_decr-1
     .addr _popn-1
     .addr _goto-1
     .addr _gosub-1
@@ -724,6 +728,38 @@ store_common:
     pla
     sta stackA+1,y
     jmp loop
+
+; LOCAL_INCR <offset>: () => (); *(locals+offset)++
+_local_incr:
+    jsr fetch
+    clc
+    adc locals
+    tax
+    jmp _incr
+
+; LOCAL_DECR <offset>: () => (); *(locals+offset)--
+_local_decr:
+    jsr fetch
+    clc
+    adc locals
+    tax
+    jmp _decr
+
+; GLOBAL_INCR <offset>: () => (); *(globals+offset)++
+_global_incr:
+    jsr fetch
+    clc
+    adc globals
+    tax
+    jmp _incr
+
+; GLOBAL_DECR <offset>: () => (); *(globals+offset)--
+_global_decr:
+    jsr fetch
+    clc
+    adc globals
+    tax
+    jmp _decr
 
 ; GOSUB <addr>; () => (IP); IP=addr
 _gosub:

@@ -19,4 +19,3 @@ Enhance USES statement to allow custom imports (example: USES MIN,MAX FROM "MATH
 Optimize/short circuit OR/AND with IFNZ/IFZ
 Some expressions can be rearranged for better code, like 1 + n + 3 => 1 + 3 + n => 4 + n
 Revisit boolean versus bit logic. NOT/AND/OR don't always work as expected; maybe new operators needed?
-Combined form of LOAD/INCR|DECR/STORE (~17 in Destroyer)
