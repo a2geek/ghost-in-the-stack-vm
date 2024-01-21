@@ -90,6 +90,17 @@ public class PeepholeOptimizer {
                 list.remove(0);
                 return true;
             }
+            // Note: These appear to be side effects of how inlining is handled.
+            // LOADC 1234  ==> LOADC 1233|1235
+            // INCR|DECR   ==> remove
+            if (inst1.opcode() == Opcode.LOADC && (inst2.opcode() == Opcode.INCR || inst2.opcode() == Opcode.DECR)) {
+                list.set(0, switch (inst2.opcode()) {
+                    case INCR -> new Instruction(null, Opcode.LOADC, null, inst1.arg()+1, null);
+                    case DECR -> new Instruction(null, Opcode.LOADC, null, inst1.arg()-1, null);
+                    default -> throw new RuntimeException("unexpected opcode for instruction 2");
+                });
+                list.remove(1);
+            }
         };
         return false;
     }
@@ -101,7 +112,7 @@ public class PeepholeOptimizer {
             var inst1 = list.get(0);
             var inst2 = list.get(1);
             var inst3 = list.get(2);
-            //     IFFALSE label    ==>     IFTRUE other_label
+            //     IFZ label        ==>     IFNZ other_label
             //     GOTO other_label ==>         ; (deleted)
             // label:               ==> label:  ; no change
             if (inst1.opcode() == Opcode.IFZ && inst2.opcode() == Opcode.GOTO && inst3.isLabelOnly()
@@ -110,7 +121,7 @@ public class PeepholeOptimizer {
                 list.remove(1);
                 return true;
             }
-            //     IFTRUE label     ==>     IFFALSE other_label
+            //     IFNZ label       ==>     IFZ other_label
             //     GOTO other_label ==>         ; (deleted)
             // label:               ==> label:  ; no change
             if (inst1.opcode() == Opcode.IFNZ && inst2.opcode() == Opcode.GOTO && inst3.isLabelOnly()
