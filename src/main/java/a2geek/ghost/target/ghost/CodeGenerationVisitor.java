@@ -239,9 +239,31 @@ public class CodeGenerationVisitor extends Visitor {
         var elseLabel = labels.get(0);
         var exitLabel = labels.get(1);
 
-        dispatch(statement.getExpression());
+        // Handle short-circuit forms: IF A = 0  -or- IF A <> 0.  We don't need to test zero!
+        var trueOp = Opcode.IFZ;
+        var falseOp = Opcode.IFNZ;
+        var expr = statement.getExpression();
+        if (expr instanceof BinaryExpression bin) {
+            Expression keep = null;
+            if (IntegerConstant.ZERO.equals(bin.getL())) {
+                keep = bin.getR();
+            }
+            else if (IntegerConstant.ZERO.equals(bin.getR())) {
+                keep = bin.getL();
+            }
+            if (keep != null && "=".equals(bin.getOp())) {
+                expr = keep;
+                trueOp = Opcode.IFNZ;
+                falseOp = Opcode.IFZ;
+            }
+            else if (keep != null && "<>".equals(bin.getOp())) {
+                expr = keep;
+            }
+        }
+
+        dispatch(expr);
         if (statement.hasTrueStatements()) {
-            code.emit(Opcode.IFZ, statement.hasFalseStatements() ? elseLabel : exitLabel);
+            code.emit(trueOp, statement.hasFalseStatements() ? elseLabel : exitLabel);
             dispatchAll(statement.getTrueStatements());
             if (statement.hasFalseStatements()) {
                 code.emit(Opcode.GOTO, exitLabel);
@@ -250,7 +272,7 @@ public class CodeGenerationVisitor extends Visitor {
             }
         }
         else {
-            code.emit(Opcode.IFNZ, exitLabel);
+            code.emit(falseOp, exitLabel);
             dispatchAll(statement.getFalseStatements());
         }
         code.emit(exitLabel);
