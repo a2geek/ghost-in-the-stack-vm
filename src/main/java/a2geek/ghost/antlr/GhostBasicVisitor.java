@@ -761,6 +761,12 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         for (var decl : ctx.constantDecl()) {
             var e = visit(decl.e);
             if (e.isConstant()) {
+                // we need to collapse any expressions to a single value
+                switch (e.getType()) {
+                    case INTEGER -> e = new IntegerConstant(e.asInteger().orElseThrow());
+                    case BOOLEAN -> e = new BooleanConstant(e.asBoolean().orElseThrow());
+                    case STRING -> e = new StringConstant(e.asString().orElseThrow());
+                }
                 model.addConstant(decl.id.getText(), e);
             }
             else {
