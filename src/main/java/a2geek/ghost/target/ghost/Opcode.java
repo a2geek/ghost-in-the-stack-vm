@@ -49,8 +49,8 @@ public enum Opcode {
     POPN(1),
     GOTO(2),
     GOSUB(2),
-    IFTRUE(2),
-    IFFALSE(2),
+    IFNZ(2),
+    IFZ(2),
     LOADC(2),
     LOADA(2);
 

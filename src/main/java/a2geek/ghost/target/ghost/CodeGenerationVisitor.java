@@ -241,7 +241,7 @@ public class CodeGenerationVisitor extends Visitor {
 
         dispatch(statement.getExpression());
         if (statement.hasTrueStatements()) {
-            code.emit(Opcode.IFFALSE, statement.hasFalseStatements() ? elseLabel : exitLabel);
+            code.emit(Opcode.IFZ, statement.hasFalseStatements() ? elseLabel : exitLabel);
             dispatchAll(statement.getTrueStatements());
             if (statement.hasFalseStatements()) {
                 code.emit(Opcode.GOTO, exitLabel);
@@ -250,7 +250,7 @@ public class CodeGenerationVisitor extends Visitor {
             }
         }
         else {
-            code.emit(Opcode.IFTRUE, exitLabel);
+            code.emit(Opcode.IFNZ, exitLabel);
             dispatchAll(statement.getFalseStatements());
         }
         code.emit(exitLabel);

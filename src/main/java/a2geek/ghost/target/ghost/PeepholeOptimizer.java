@@ -104,18 +104,18 @@ public class PeepholeOptimizer {
             //     IFFALSE label    ==>     IFTRUE other_label
             //     GOTO other_label ==>         ; (deleted)
             // label:               ==> label:  ; no change
-            if (inst1.opcode() == Opcode.IFFALSE && inst2.opcode() == Opcode.GOTO && inst3.isLabelOnly()
+            if (inst1.opcode() == Opcode.IFZ && inst2.opcode() == Opcode.GOTO && inst3.isLabelOnly()
                     && inst1.label().equals(inst3.label())) {
-                list.set(0, new Instruction(inst2.label(), Opcode.IFTRUE, null, null, null));
+                list.set(0, new Instruction(inst2.label(), Opcode.IFNZ, null, null, null));
                 list.remove(1);
                 return true;
             }
             //     IFTRUE label     ==>     IFFALSE other_label
             //     GOTO other_label ==>         ; (deleted)
             // label:               ==> label:  ; no change
-            if (inst1.opcode() == Opcode.IFTRUE && inst2.opcode() == Opcode.GOTO && inst3.isLabelOnly()
+            if (inst1.opcode() == Opcode.IFNZ && inst2.opcode() == Opcode.GOTO && inst3.isLabelOnly()
                     && inst1.label().equals(inst3.label())) {
-                list.set(0, new Instruction(inst2.label(), Opcode.IFFALSE, null, null, null));
+                list.set(0, new Instruction(inst2.label(), Opcode.IFZ, null, null, null));
                 list.remove(1);
                 return true;
             }

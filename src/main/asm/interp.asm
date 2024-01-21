@@ -267,8 +267,8 @@ brtable:
     .addr _popn-1
     .addr _goto-1
     .addr _gosub-1
-    .addr _iftrue-1
-    .addr _iffalse-1
+    .addr _ifnz-1
+    .addr _ifz-1
     .addr _loadc-1
     .addr _loada-1
 brlen = *-brtable
@@ -763,8 +763,8 @@ _return:
     sta ip+1
     jmp loop
 
-; IFTRUE <addr>: (A) => (); A <> 0 => IP=addr
-_iftrue:
+; IFNZ <addr>: (A) => (); A <> 0 => IP=addr
+_ifnz:
     pla
     pla
     lda stackA,x
@@ -775,8 +775,8 @@ tossAddrAndLoop:
     jsr fetch
     jmp loop
 
-; IFFALSE <addr>: (A) => (); A == 0 => IP=addr
-_iffalse:
+; IFZ <addr>: (A) => (); A == 0 => IP=addr
+_ifz:
     pla
     pla
     lda stackA,x
