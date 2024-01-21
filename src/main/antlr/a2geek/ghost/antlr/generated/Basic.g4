@@ -9,7 +9,7 @@ package a2geek.ghost.antlr.generated;
 program
     : directives*
       ( module
-      | declarations*
+      | ( declarations | statements )*
         statements
       )
       EOF
@@ -27,7 +27,7 @@ module
     ;
 
 declarations
-    : 'const' constantDecl ( ',' constantDecl )*          # constant
+    : 'const' constantDecl ( ',' constantDecl )*                        # constant
     | modifiers* 'sub' id=ID p=paramDecl? EOL+
         (s=statements)?
       'end' 'sub'                                                       # subDecl
