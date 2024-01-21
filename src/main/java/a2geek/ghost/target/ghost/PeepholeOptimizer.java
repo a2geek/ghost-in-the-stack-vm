@@ -1,8 +1,11 @@
 package a2geek.ghost.target.ghost;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class PeepholeOptimizer {
+    private static List<String> LABEL_RETURN = new ArrayList<>();
+
     public static int optimize(List<Instruction> code) {
         var changed = 0;
         var ctx = new InstructionContext(code);
@@ -23,6 +26,11 @@ public class PeepholeOptimizer {
             // POPN 0  ==>  remove
             if (inst.opcode() == Opcode.POPN && Integer.valueOf(0).equals(inst.arg())) {
                 list.removeFirst();
+                return true;
+            }
+            // GOTO _SUBEXIT58  ==>  RETURN     (where label is just before a RETURN)
+            if (inst.opcode() == Opcode.GOTO && LABEL_RETURN.contains(inst.label())) {
+                list.set(0, new Instruction(null, Opcode.RETURN, null, null, null));
                 return true;
             }
         }
@@ -100,6 +108,13 @@ public class PeepholeOptimizer {
                     default -> throw new RuntimeException("unexpected opcode for instruction 2");
                 });
                 list.remove(1);
+                return true;
+            }
+            // _SUBEXIT58:
+            //     RETURN
+            if (inst1.isLabelOnly() && inst2.opcode() == Opcode.RETURN) {
+                LABEL_RETURN.add(inst1.label());
+                // Just tracking, so don't have to return true since nothing was modified
             }
         };
         return false;
