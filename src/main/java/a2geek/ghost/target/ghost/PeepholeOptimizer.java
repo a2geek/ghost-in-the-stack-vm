@@ -51,14 +51,14 @@ public class PeepholeOptimizer {
             }
             // GLOBAL_STORE offset ==>  DUP
             // GLOBAL_LOAD offset  ==>  GLOBAL_STORE offset
-            if (inst1.opcode() == Opcode.GLOBAL_STORE && inst2.opcode() == Opcode.GLOBAL_LOAD && inst1.arg().equals(inst2.arg())) {
+            if (seq(list, Opcode.GLOBAL_STORE, Opcode.GLOBAL_LOAD) && inst1.arg().equals(inst2.arg())) {
                 list.set(0, new Instruction(null, Opcode.DUP, null, null, null));
                 list.set(1, inst1);
                 return true;
             }
             // LOCAL_STORE offset ==>  DUP
             // LOCAL_LOAD offset  ==>  LOCAL_STORE offset
-            if (inst1.opcode() == Opcode.LOCAL_STORE && inst2.opcode() == Opcode.LOCAL_LOAD && inst1.arg().equals(inst2.arg())) {
+            if (seq(list, Opcode.LOCAL_STORE, Opcode.LOCAL_LOAD) && inst1.arg().equals(inst2.arg())) {
                 list.set(0, new Instruction(null, Opcode.DUP, null, null, null));
                 list.set(1, inst1);
                 return true;
@@ -73,14 +73,13 @@ public class PeepholeOptimizer {
             }
             // LOADA label  ==>  LOADA label
             // LOADA label  ==>  DUP
-            if (inst1.opcode() == Opcode.LOADA && inst2.opcode() == Opcode.LOADA && inst1.label().equals(inst2.label())) {
+            if (seq(list, Opcode.LOADA, Opcode.LOADA) && inst1.label().equals(inst2.label())) {
                 list.set(1, new Instruction(null, Opcode.DUP, null, null, null));
                 return true;
             }
             // DECR or INCR  ==> remove
             // INCR or DECR  ==> remove
-            if ((inst1.opcode() == Opcode.DECR && inst2.opcode() == Opcode.INCR)
-                    || (inst1.opcode() == Opcode.INCR && inst2.opcode() == Opcode.DECR)) {
+            if (seq(list, Opcode.DECR, Opcode.INCR) || seq(list, Opcode.INCR, Opcode.DECR)) {
                 list.remove(1);
                 list.remove(0);
                 return true;
@@ -93,7 +92,7 @@ public class PeepholeOptimizer {
             }
             // LOADC 0000  ==> remove
             // PUSHZ       ==> remove
-            if (inst1.opcode() == Opcode.LOADC && Integer.valueOf(0).equals(inst1.arg()) && inst2.opcode() == Opcode.PUSHZ) {
+            if (seq(list, Opcode.LOADC, Opcode.PUSHZ) && Integer.valueOf(0).equals(inst1.arg())) {
                 list.remove(1);
                 list.remove(0);
                 return true;
@@ -148,32 +147,32 @@ public class PeepholeOptimizer {
             // GLOBAL_LOAD 0000   ==>  GLOBAL_INCR|GLOBAL_DECR 0000
             // INCR|DECR          ==>  removed
             // GLOBAL_STORE 0000  ==>  removed
-            if (inst1.opcode() == Opcode.GLOBAL_LOAD && inst2.opcode() == Opcode.INCR && inst3.opcode() == Opcode.GLOBAL_STORE
-                    && inst1.arg().equals(inst3.arg())) {
+            if (seq(list, Opcode.GLOBAL_LOAD, Opcode.INCR, Opcode.GLOBAL_STORE) && inst1.arg().equals(inst3.arg())) {
                 list.remove(2);
                 list.remove(1);
                 list.set(0, new Instruction(null, Opcode.GLOBAL_INCR, null, inst1.arg(), null));
+                return true;
             }
-            if (inst1.opcode() == Opcode.GLOBAL_LOAD && inst2.opcode() == Opcode.DECR && inst3.opcode() == Opcode.GLOBAL_STORE
-                    && inst1.arg().equals(inst3.arg())) {
+            if (seq(list, Opcode.GLOBAL_LOAD, Opcode.DECR, Opcode.GLOBAL_STORE) && inst1.arg().equals(inst3.arg())) {
                 list.remove(2);
                 list.remove(1);
                 list.set(0, new Instruction(null, Opcode.GLOBAL_DECR, null, inst1.arg(), null));
+                return true;
             }
             // LOCAL_LOAD 0000   ==>  LOCAL_INCR|LOCAL_DECR 0000
             // INCR|DECR         ==>  removed
             // LOCAL_STORE 0000  ==>  removed
-            if (inst1.opcode() == Opcode.LOCAL_LOAD && inst2.opcode() == Opcode.INCR && inst3.opcode() == Opcode.LOCAL_STORE
-                    && inst1.arg().equals(inst3.arg())) {
+            if (seq(list, Opcode.LOCAL_LOAD, Opcode.INCR, Opcode.LOCAL_STORE) && inst1.arg().equals(inst3.arg())) {
                 list.remove(2);
                 list.remove(1);
                 list.set(0, new Instruction(null, Opcode.LOCAL_INCR, null, inst1.arg(), null));
+                return true;
             }
-            if (inst1.opcode() == Opcode.LOCAL_LOAD && inst2.opcode() == Opcode.DECR && inst3.opcode() == Opcode.LOCAL_STORE
-                    && inst1.arg().equals(inst3.arg())) {
+            if (seq(list, Opcode.LOCAL_LOAD, Opcode.DECR, Opcode.LOCAL_STORE) && inst1.arg().equals(inst3.arg())) {
                 list.remove(2);
                 list.remove(1);
                 list.set(0, new Instruction(null, Opcode.LOCAL_DECR, null, inst1.arg(), null));
+                return true;
             }
         };
         return false;
@@ -184,5 +183,16 @@ public class PeepholeOptimizer {
             if (primary == secondary) return true;
         }
         return false;
+    }
+    static boolean seq(List<Instruction> list, Opcode... opcodes) {
+        if (list.size() != opcodes.length) {
+            throw new RuntimeException("expecting number of instructions to match number of opcodes");
+        }
+        for (int i=0; i<opcodes.length; i++) {
+            if (list.get(i).opcode() != opcodes[i]) {
+                return false;
+            }
+        }
+        return true;
     }
 }
