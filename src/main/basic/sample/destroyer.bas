@@ -37,9 +37,10 @@ end sub
 
 ' Display string at X,Y location. Note the erase done with the rub character; assumption is color is black!
 sub drawTextXY(x as integer, y as integer, txt as string)
-    dim i as integer, ch as integer
+    dim i as integer, l as integer, ch as integer
 
-    for i = 0 to len(txt)-1
+    l = len(txt)-1      ' compute length only once
+    for i = 0 to l
         ch = CHARBASE + ascn(txt,i)-asc(" ")
         draw(RUBSHAPE,x,y)
         xdraw(ch,x,y)
@@ -198,8 +199,10 @@ end sub
 
 ' Submarine. Only one at a time. If it doesn't exist, pick a random number to see if one shows up!
 sub triggerSubmarine
+    dim r as integer
     if subx = 0 then
-        select case rnd(10)
+        r = rnd(10)     ' grab only one random value
+        select case r
         case 1
             subx = 10
             suby = WATERLINE+10+rnd(80)
