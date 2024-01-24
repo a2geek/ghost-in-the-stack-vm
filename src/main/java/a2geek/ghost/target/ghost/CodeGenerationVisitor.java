@@ -16,7 +16,6 @@ public class CodeGenerationVisitor extends DispatchVisitor {
     private Stack<Frame> frames = new Stack<>();
     private CodeBlock code = new CodeBlock();
     private int labelNumber;
-    private Stack<Map<Symbol,Expression>> inlineVariables = new Stack<>();
     private Set<String> scopesUsed = new HashSet<>();
     private Set<String> scopesProcessed = new HashSet<>();
 
@@ -387,38 +386,16 @@ public class CodeGenerationVisitor extends DispatchVisitor {
                 .map(Symbol::scope)
                 .orElseThrow(() -> new RuntimeException(subFullName + " not found"));
         if (scope instanceof Subroutine sub) {
-            Map<Symbol,Expression> map = new HashMap<>();
-            inlineVariables.push(map);
-            if (sub.is(Subroutine.Modifier.INLINE)) {
-                var parameters = sub.findAllLocalScope(in(SymbolType.PARAMETER));
-                if (parameters.size() != statement.getParameters().size()) {
-                    throw new RuntimeException(String.format("parameter size mismatch for call to '%s'", subFullName));
-                }
-                // Subroutine parameters are REVERSED (for stack placement), so taking that into account:
-                parameters = parameters.reversed();
-                for (int i=0; i<parameters.size(); i++) {
-                    var param = parameters.get(i);
-                    var value = statement.getParameters().get(i);
-                    if (param.numDimensions() > 0) {
-                        throw new RuntimeException("parameter inlining not available for arrays: " + param.name());
-                    }
-                    map.put(param, value);
-                }
-                dispatchAll(sub);
+            scopesUsed.add(sub.getFullPathName());
+            boolean hasParameters = statement.getParameters().size() != 0;
+            for (Expression expr : statement.getParameters()) {
+                dispatch(expr);
             }
-            else {
-                scopesUsed.add(sub.getFullPathName());
-                boolean hasParameters = statement.getParameters().size() != 0;
-                for (Expression expr : statement.getParameters()) {
-                    dispatch(expr);
-                }
-                code.emit(Opcode.GOSUB, sub.getFullPathName());
-                if (hasParameters) {
-                    // FIXME when we have more datatypes this will be incorrect
-                    code.emit(Opcode.POPN, statement.getParameters().size() * 2);
-                }
+            code.emit(Opcode.GOSUB, sub.getFullPathName());
+            if (hasParameters) {
+                // FIXME when we have more datatypes this will be incorrect
+                code.emit(Opcode.POPN, statement.getParameters().size() * 2);
             }
-            inlineVariables.pop();
             return;
         }
         throw new RuntimeException(String.format("calling a subroutine but '%s' is not a subroutine?", subFullName));
@@ -599,15 +576,7 @@ public class CodeGenerationVisitor extends DispatchVisitor {
     }
 
     public Expression visit(VariableReference expression) {
-        if (!inlineVariables.isEmpty() && inlineVariables.peek().containsKey(expression.getSymbol())) {
-            Expression expr = inlineVariables.peek().get(expression.getSymbol());
-            inlineVariables.push(Collections.emptyMap());   // We are outside the mapped context for this evaluation
-            dispatch(expr);
-            inlineVariables.pop();
-        }
-        else {
-            emitLoad(expression);
-        }
+        emitLoad(expression);
         return null;
     }
 
