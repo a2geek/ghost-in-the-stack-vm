@@ -21,26 +21,25 @@ module Math
         return r
     end function
 
-    export function abs(n as integer) as integer
+    export inline function abs(n as integer) as integer
         if n < 0 then
             return -n
         end if
         return n
     end function
 
-    export function sgn(n as integer) as integer
-        if n < 0 then
+    export inline function sgn(n as integer) as integer
+        select case n
+        case is < 0
             return -1
-        else
-            if n > 0 then
-                return 1
-            else
-                return 0
-            end if
-        end if
+        case is > 0
+            return 1
+        case else
+            return 0
+        end select
     end function
 
-    export function min(a as integer, b as integer) as integer
+    export inline function min(a as integer, b as integer) as integer
         if a < b then
             return a
         else
@@ -48,7 +47,7 @@ module Math
         end if
     end function
 
-    export function max(a as integer, b as integer) as integer
+    export inline function max(a as integer, b as integer) as integer
         if a > b then
             return a
         else

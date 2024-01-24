@@ -41,7 +41,7 @@ module lores
         call MON_VLINE
     end sub
 
-    export function scrn(x as integer, y as integer) as integer
+    export inline function scrn(x as integer, y as integer) as integer
         cpu.register.y = x
         cpu.register.a = y
         call MON_SCRN

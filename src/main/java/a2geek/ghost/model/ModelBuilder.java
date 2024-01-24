@@ -5,6 +5,7 @@ import a2geek.ghost.model.expression.*;
 import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.scope.Subroutine;
 import a2geek.ghost.model.statement.*;
+import a2geek.ghost.model.visitor.InliningVisitor;
 import org.antlr.v4.runtime.CharStreams;
 
 import java.io.IOException;
@@ -238,7 +239,12 @@ public class ModelBuilder {
         var subName = fixCase(name);
         var subScope = this.scope.peek().findFirst(named(subName).and(in(SymbolType.SUBROUTINE)))
                 .map(Symbol::scope).orElse(null);
-        if (subScope instanceof Subroutine sub) {
+        if (codeInlining && subScope instanceof Subroutine sub && sub.is(Subroutine.Modifier.INLINE)) {
+            checkCallParameters(sub, params);
+            InliningVisitor visitor = new InliningVisitor(this, sub, params);
+            visitor.inline();
+        }
+        else if (subScope instanceof Subroutine sub) {
             checkCallParameters(sub, params);
             CallSubroutine callSubroutine = new CallSubroutine(sub, params);
             addStatement(callSubroutine);
@@ -250,7 +256,7 @@ public class ModelBuilder {
     public void ensureModuleIncluded(String fullPathName) {
         var parts = fullPathName.split("\\.");
         if (parts.length == 2) {
-            uses(parts[0], nothingExported());
+            uses(parts[0].toLowerCase(), nothingExported());
         }
     }
 
@@ -288,7 +294,7 @@ public class ModelBuilder {
             || scope.peek().findFirst(named(id).and(in(SymbolType.FUNCTION))).isPresent();
     }
 
-    public FunctionExpression callFunction(String name, List<Expression> params) {
+    public Expression callFunction(String name, List<Expression> params) {
         ensureModuleIncluded(name);
         var id = fixCase(name);
         if (FunctionExpression.isLibraryFunction(id)) {
@@ -297,13 +303,18 @@ public class ModelBuilder {
             id = fixCase(descriptor.fullName());
         }
 
-        Optional<Scope> scope = this.scope.peek().findFirst(named(id).and(in(SymbolType.FUNCTION)))
-                .map(Symbol::scope);
-        if (scope.isPresent()) {
-            if (scope.get() instanceof a2geek.ghost.model.scope.Function fn) {
-                checkCallParameters(fn, params);
-                return new FunctionExpression(fn, params);
-            }
+        var func = this.scope.peek().findFirst(named(id).and(in(SymbolType.FUNCTION)))
+                .map(Symbol::scope).orElse(null);
+//        if (codeInlining && func instanceof a2geek.ghost.model.scope.Function fn && fn.is(Subroutine.Modifier.INLINE)) {
+//            checkCallParameters(fn, params);
+//            InliningVisitor visitor = new InliningVisitor(this, fn, params);
+//            visitor.inline();
+//            return VariableReference.with(visitor.getReturnValue());
+//        }
+//        else
+        if (func instanceof a2geek.ghost.model.scope.Function fn) {
+            checkCallParameters(fn, params);
+            return new FunctionExpression(fn, params);
         }
         else if (FunctionExpression.isIntrinsicFunction(id)) {
             return new FunctionExpression(id, params);
