@@ -315,12 +315,17 @@ public class CompileCommand implements Callable<Integer> {
                 description = "enable label optimizer (enabled: ${DEFAULT-VALUE})")
         private boolean labelOptimizer;
 
+        @Option(names = { "--code-inlining" }, negatable = true, defaultValue = "true",
+                fallbackValue = "true", showDefaultValue = Visibility.NEVER,
+                description = "enable code inlining (enabled: ${DEFAULT-VALUE})")
+        private boolean codeInlining;
+
         public void apply(ModelBuilder model) {
             if (noOptimizations) {
                 return;
             }
-            model.setBoundsCheck(boundsChecking);
             model.enableBoundsCheck(boundsChecking);
+            model.enableCodeInlining(codeInlining);
         }
 
         public void apply(Program program) {

@@ -39,6 +39,7 @@ public class ModelBuilder {
     private Set<String> librariesIncluded = new HashSet<>();
     private boolean trace = false;
     private boolean boundsCheck = true;
+    private boolean codeInlining = true;
     private String heapFunction;
     /** Track array dimensions */
     private Map<Symbol, Expression> arrayDims = new HashMap<>();
@@ -77,6 +78,9 @@ public class ModelBuilder {
     }
     public void enableBoundsCheck(boolean boundsCheck) {
         this.boundsCheck = boundsCheck;
+    }
+    public void enableCodeInlining(boolean codeInlining) {
+        this.codeInlining = codeInlining;
     }
     public void setArrayNameStrategy(Function<String,String> arrayNameStrategy) {
         this.arrayNameStrategy = arrayNameStrategy;
