@@ -75,7 +75,7 @@ public class ModelBuilder {
     public void setTrace(boolean trace) {
         this.trace = trace;
     }
-    public void setBoundsCheck(boolean boundsCheck) {
+    public void enableBoundsCheck(boolean boundsCheck) {
         this.boundsCheck = boundsCheck;
     }
     public void setArrayNameStrategy(Function<String,String> arrayNameStrategy) {

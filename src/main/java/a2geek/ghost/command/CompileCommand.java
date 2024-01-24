@@ -320,6 +320,7 @@ public class CompileCommand implements Callable<Integer> {
                 return;
             }
             model.setBoundsCheck(boundsChecking);
+            model.enableBoundsCheck(boundsChecking);
         }
 
         public void apply(Program program) {
