@@ -11,7 +11,7 @@ import java.util.*;
 
 import static a2geek.ghost.model.Symbol.*;
 
-public class CodeGenerationVisitor extends Visitor {
+public class CodeGenerationVisitor extends DispatchVisitor {
     public static final String DEFAULT_ERROR_HANDLER = "RUNTIME.DEFAULTERRORHANDLER";
     private Stack<Frame> frames = new Stack<>();
     private CodeBlock code = new CodeBlock();
