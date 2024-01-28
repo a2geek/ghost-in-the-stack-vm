@@ -5,7 +5,6 @@ import a2geek.ghost.model.expression.*;
 import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.scope.Subroutine;
 import a2geek.ghost.model.statement.*;
-import a2geek.ghost.model.visitor.InliningVisitor;
 import org.antlr.v4.runtime.CharStreams;
 
 import java.io.IOException;
@@ -40,12 +39,9 @@ public class ModelBuilder {
     private Set<String> librariesIncluded = new HashSet<>();
     private boolean trace = false;
     private boolean boundsCheck = true;
-    private boolean codeInlining = true;
     private String heapFunction;
     /** Track array dimensions */
     private Map<Symbol, Expression> arrayDims = new HashMap<>();
-    /** Tracking a distinct label number globally (regardless of scope) to prevent name collisions. */
-    private static int labelNumber;
 
     public ModelBuilder(Function<String,String> caseStrategy) {
         this.caseStrategy = caseStrategy;
@@ -79,9 +75,6 @@ public class ModelBuilder {
     }
     public void enableBoundsCheck(boolean boundsCheck) {
         this.boundsCheck = boundsCheck;
-    }
-    public void enableCodeInlining(boolean codeInlining) {
-        this.codeInlining = codeInlining;
     }
     public void setArrayNameStrategy(Function<String,String> arrayNameStrategy) {
         this.arrayNameStrategy = arrayNameStrategy;
@@ -165,22 +158,11 @@ public class ModelBuilder {
         return this.scope.peek().addLocalSymbol(Symbol.constant(name, value));
     }
     public Symbol addTempVariable(DataType dataType) {
-        labelNumber+= 1;    // just reusing the counter
-        var name = String.format("_temp%d", labelNumber);
-        return this.scope.peek().addLocalSymbol(
-                Symbol.variable(name, SymbolType.VARIABLE)
-                      .dataType(dataType));
+        return this.scope.peek().addTempVariable(dataType);
     }
     /** Generate labels for code. The multiple values is to allow grouping of labels (same label number) for complex structures. */
     public List<Symbol> addLabels(String... names) {
-        labelNumber+= 1;
-        List<Symbol> symbols = new ArrayList<>();
-        for (var name : names) {
-            var builder = Symbol.label(String.format("_%s%d", name, labelNumber));
-            var symbol = this.scope.peek().addLocalSymbol(builder);
-            symbols.add(symbol);
-        }
-        return symbols;
+        return this.scope.peek().addLabels(names);
     }
 
     public void trace(String fmt, Object... args) {
@@ -239,12 +221,7 @@ public class ModelBuilder {
         var subName = fixCase(name);
         var subScope = this.scope.peek().findFirst(named(subName).and(in(SymbolType.SUBROUTINE)))
                 .map(Symbol::scope).orElse(null);
-        if (codeInlining && subScope instanceof Subroutine sub && sub.is(Subroutine.Modifier.INLINE)) {
-            checkCallParameters(sub, params);
-            InliningVisitor visitor = new InliningVisitor(this, sub, params);
-            visitor.inline();
-        }
-        else if (subScope instanceof Subroutine sub) {
+        if (subScope instanceof Subroutine sub) {
             checkCallParameters(sub, params);
             CallSubroutine callSubroutine = new CallSubroutine(sub, params);
             addStatement(callSubroutine);
@@ -305,13 +282,6 @@ public class ModelBuilder {
 
         var func = this.scope.peek().findFirst(named(id).and(in(SymbolType.FUNCTION)))
                 .map(Symbol::scope).orElse(null);
-//        if (codeInlining && func instanceof a2geek.ghost.model.scope.Function fn && fn.is(Subroutine.Modifier.INLINE)) {
-//            checkCallParameters(fn, params);
-//            InliningVisitor visitor = new InliningVisitor(this, fn, params);
-//            visitor.inline();
-//            return VariableReference.with(visitor.getReturnValue());
-//        }
-//        else
         if (func instanceof a2geek.ghost.model.scope.Function fn) {
             checkCallParameters(fn, params);
             return new FunctionExpression(fn, params);

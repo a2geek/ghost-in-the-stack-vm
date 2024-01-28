@@ -11,33 +11,33 @@ import java.util.List;
  */
 public abstract class Visitor extends DispatchVisitor {
     @Override
-    public void visit(AssignmentStatement statement, StatementContext context) {
+    public void visit(AssignmentStatement statement, VisitorContext context) {
         var expr = dispatch(statement.getExpr());
         expr.ifPresent(statement::setExpr);
     }
 
     @Override
-    public void visit(EndStatement statement, StatementContext context) {
+    public void visit(EndStatement statement, VisitorContext context) {
     }
 
     @Override
-    public void visit(CallStatement statement, StatementContext context) {
+    public void visit(CallStatement statement, VisitorContext context) {
         var expr = dispatch(statement.getExpr());
         expr.ifPresent(statement::setExpr);
     }
 
     @Override
-    public void visit(IfStatement statement, StatementContext context) {
+    public void visit(IfStatement statement, VisitorContext context) {
         var expr = dispatch(statement.getExpression());
-        dispatchAll(statement.getTrueStatements());
+        dispatchAll(context, statement.getTrueStatements());
         if (statement.hasFalseStatements()) {
-            dispatchAll(statement.getFalseStatements());
+            dispatchAll(context, statement.getFalseStatements());
         }
         expr.ifPresent(statement::setExpression);
     }
 
     @Override
-    public void visit(PokeStatement statement, StatementContext context) {
+    public void visit(PokeStatement statement, VisitorContext context) {
         var a = dispatch(statement.getA());
         var b = dispatch(statement.getB());
         a.ifPresent(statement::setA);
@@ -45,29 +45,29 @@ public abstract class Visitor extends DispatchVisitor {
     }
 
     @Override
-    public void visit(GotoGosubStatement statement, StatementContext context) {
+    public void visit(GotoGosubStatement statement, VisitorContext context) {
 
     }
 
     @Override
-    public void visit(DynamicGotoGosubStatement statement, StatementContext context) {
+    public void visit(DynamicGotoGosubStatement statement, VisitorContext context) {
         var target = dispatch(statement.getTarget());
         target.ifPresent(statement::setTarget);
     }
 
     @Override
-    public void visit(LabelStatement statement, StatementContext context) {
+    public void visit(LabelStatement statement, VisitorContext context) {
 
     }
 
     @Override
-    public void visit(ReturnStatement statement, StatementContext context) {
+    public void visit(ReturnStatement statement, VisitorContext context) {
         var expr = dispatch(statement.getExpr());
         expr.ifPresent(statement::setExpr);
     }
 
     @Override
-    public void visit(CallSubroutine statement, StatementContext context) {
+    public void visit(CallSubroutine statement, VisitorContext context) {
         boolean changed = false;
         List<Expression> exprs = new ArrayList<>();
         for (Expression expr : statement.getParameters()) {
@@ -85,17 +85,17 @@ public abstract class Visitor extends DispatchVisitor {
     }
 
     @Override
-    public void visit(PopStatement statement, StatementContext context) {
+    public void visit(PopStatement statement, VisitorContext context) {
 
     }
 
     @Override
-    public void visit(OnErrorStatement statement, StatementContext context) {
+    public void visit(OnErrorStatement statement, VisitorContext context) {
 
     }
 
     @Override
-    public void visit(RaiseErrorStatement statement, StatementContext context) {
+    public void visit(RaiseErrorStatement statement, VisitorContext context) {
 
     }
 

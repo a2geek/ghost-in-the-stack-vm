@@ -1,12 +1,12 @@
 package a2geek.ghost.model.visitor;
 
-import a2geek.ghost.model.StatementContext;
 import a2geek.ghost.model.Visitor;
+import a2geek.ghost.model.VisitorContext;
 import a2geek.ghost.model.statement.IfStatement;
 
 public class DeadCodeEliminationVisitor extends Visitor {
     @Override
-    public void visit(IfStatement statement, StatementContext context) {
+    public void visit(IfStatement statement, VisitorContext context) {
         var expr = statement.getExpression();
         if (expr.isConstant()) {
             expr.asBoolean().ifPresent(b -> {

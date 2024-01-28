@@ -2,254 +2,311 @@ package a2geek.ghost.model.visitor;
 
 import a2geek.ghost.model.*;
 import a2geek.ghost.model.expression.*;
+import a2geek.ghost.model.scope.Function;
 import a2geek.ghost.model.scope.Subroutine;
 import a2geek.ghost.model.statement.*;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static a2geek.ghost.model.Symbol.in;
 
-/**
- * Provide inlining capability for a SUB or FUNCTION.
- * This handled by literally rewriting the method as if it were a macro.
- * Every type of statement must be handled to ensure it gets added into the model.
- * Note that the <code>Optional&lt;Expression&gt;</code> are assumed to be present;
- * partly to double-check that all expressions got rewritten as well.
- */
-public class InliningVisitor extends DispatchVisitor {
-    private final ModelBuilder model;
-    private final Subroutine sub;
-    private final Map<Symbol,Expression> replacements = new HashMap<>();
-    private final Symbol returnValue;
-    private final Symbol returnLabel;
+public class InliningVisitor extends Visitor {
+    private int counter = 0;
 
-    public InliningVisitor(ModelBuilder model, Subroutine sub, List<Expression> params) {
-        this.model = model;
-        this.sub = sub;
-        // Assign replacement values for incoming symbols
-        var parameters = sub.findAllLocalScope(in(SymbolType.PARAMETER));
-        if (parameters.size() != params.size()) {
-            throw new RuntimeException(String.format("parameter size mismatch for call to '%s'", sub.getFullPathName()));
+    public int getCounter() {
+        return counter;
+    }
+
+    @Override
+    public void visit(Subroutine subroutine) {
+        if (subroutine.is(Subroutine.Modifier.INLINE)) {
+            // skip inlining of the inlined subroutine
         }
-        // Subroutine parameters are REVERSED (for stack placement), so taking that into account:
-        parameters = parameters.reversed();
-        for (int i=0; i<parameters.size(); i++) {
-            var param = parameters.get(i);
-            var value = params.get(i);
-            if (param.numDimensions() > 0) {
-                throw new RuntimeException("parameter inlining not available for arrays: " + param.name());
+        else {
+            super.visit(subroutine);
+        }
+    }
+
+    @Override
+    public void visit(Function function) {
+        if (function.is(Subroutine.Modifier.INLINE)) {
+            // skip inlining of the inlined function
+        }
+        else {
+            super.visit(function);
+        }
+    }
+
+    @Override
+    public void visit(CallSubroutine statement, VisitorContext context) {
+        if (statement.getSubroutine().is(Subroutine.Modifier.INLINE)) {
+            counter += 1;
+            var visitor = new RewriteVisitor(statement);
+            visitor.apply(context);
+        }
+        else {
+            super.visit(statement, context);
+        }
+    }
+
+    @Override
+    public Expression visit(FunctionExpression expression) {
+//        if (expression.getFunction() != null && expression.getFunction().is(Subroutine.Modifier.INLINE)) {
+//            // TODO need a VisitorContext
+//        }
+//        else {
+            return super.visit(expression);
+//        }
+    }
+
+    public static class RewriteVisitor extends DispatchVisitor {
+        private Stack<StatementBlock> statementBlocks = new Stack<>();
+        private final Subroutine sub;
+        private final Map<Symbol,Expression> replacements = new HashMap<>();
+        private final Symbol returnValue;
+        private final Symbol returnLabel;
+
+        private RewriteVisitor(Subroutine method, List<Expression> methodParameters) {
+            this.sub = method;
+            // Assign replacement values for incoming symbols
+            var parameters = sub.findAllLocalScope(in(SymbolType.PARAMETER));
+            if (parameters.size() != methodParameters.size()) {
+                throw new RuntimeException(String.format("parameter size mismatch for call to '%s'", sub.getFullPathName()));
             }
-            replacements.put(param, value);
-        }
-        // Setup return value
-        DataType dt = sub.findFirstLocalScope(in(SymbolType.RETURN_VALUE)).map(Symbol::dataType).orElse(null);
-        returnValue = dt == null ? null : model.addTempVariable(dt);
-        // Target for return statements
-        returnLabel = model.addLabels(String.format("%sEXIT", sub.getName())).getFirst();
-    }
-
-    public Symbol getReturnValue() {
-        return returnValue;
-    }
-
-    public void inline() {
-        visit(sub);
-        model.labelStmt(returnLabel);
-    }
-
-    public List<Expression> dispatchAll(List<Expression> original) {
-        return original.stream().map(this::dispatch).map(Optional::orElseThrow).collect(Collectors.toList());
-    }
-
-    @Override
-    public void visit(IfStatement statement, StatementContext context) {
-        var expr = dispatch(statement.getExpression());
-        StatementBlock trueStatements = model.pushStatementBlock(new StatementBlock());
-        dispatchAll(statement.getTrueStatements());
-        model.popStatementBlock();
-        StatementBlock falseStatements = null;
-        if (statement.hasFalseStatements()) {
-            falseStatements = model.pushStatementBlock(new StatementBlock());
-            dispatchAll(statement.getFalseStatements());
-            model.popStatementBlock();
-        }
-        model.ifStmt(expr.orElseThrow(), trueStatements, falseStatements);
-    }
-
-    @Override
-    public void visit(EndStatement statement, StatementContext context) {
-        model.endStmt();
-    }
-
-    @Override
-    public void visit(PopStatement statement, StatementContext context) {
-        model.addStatement(new PopStatement());
-    }
-
-    @Override
-    public void visit(CallStatement statement, StatementContext context) {
-        var expr = dispatch(statement.getExpr());
-        model.callAddr(expr.orElseThrow());
-    }
-
-    @Override
-    public void visit(PokeStatement statement, StatementContext context) {
-        var a = dispatch(statement.getA());
-        var b = dispatch(statement.getB());
-        model.pokeStmt(statement.getOp(), a.orElseThrow(), b.orElseThrow());
-    }
-
-    @Override
-    public void visit(CallSubroutine statement, StatementContext context) {
-        var params = dispatchAll(statement.getParameters());
-        model.callSubroutine(statement.getSubroutine().getFullPathName(), params);
-    }
-
-    @Override
-    public void visit(LabelStatement statement, StatementContext context) {
-        model.labelStmt(statement.getLabel());
-    }
-
-    @Override
-    public void visit(ReturnStatement statement, StatementContext context) {
-        if (statement.getExpr() != null) {
-            if (returnValue == null) {
-                var msg = String.format("return value mismatch: '%s' is not in a function", statement);
-                throw new RuntimeException(msg);
+            // Subroutine parameters are REVERSED (for stack placement), so taking that into account:
+            parameters = parameters.reversed();
+            for (int i=0; i<parameters.size(); i++) {
+                var param = parameters.get(i);
+                var value = methodParameters.get(i);
+                if (param.numDimensions() > 0) {
+                    throw new RuntimeException("parameter inlining not available for arrays: " + param.name());
+                }
+                replacements.put(param, value);
             }
-            model.assignStmt(VariableReference.with(returnValue), dispatch(statement.getExpr()).orElseThrow());
+            // Setup return value
+            returnValue = sub.findFirstLocalScope(in(SymbolType.RETURN_VALUE))
+                    .map(Symbol::dataType)
+                    .map(sub::addTempVariable)
+                    .orElse(null);
+            // Target for return statements
+            returnLabel = sub.addLabels(String.format("%sEXIT", sub.getName())).getFirst();
         }
-        model.gotoGosubStmt("goto", returnLabel);
-    }
+        public RewriteVisitor(CallSubroutine statement) {
+            this(statement.getSubroutine(), statement.getParameters());
+        }
+        public RewriteVisitor(FunctionExpression expression) {
+            this(expression.getFunction(), expression.getParameters());
+        }
 
-    @Override
-    public void visit(OnErrorStatement statement, StatementContext context) {
-        // TODO do we need to do more here?
-        model.addStatement(statement);
-    }
+        public StatementBlock pushStatementBlock() {
+            return statementBlocks.push(new StatementBlock());
+        }
+        public StatementBlock popStatementBlock() {
+            return statementBlocks.pop();
+        }
+        public void addStatement(Statement statement) {
+            this.statementBlocks.peek().addStatement(statement);
+        }
 
-    @Override
-    public void visit(RaiseErrorStatement statement, StatementContext context) {
-        // TODO do we need to do more here?
-        model.addStatement(statement);
-    }
+        public Symbol apply(VisitorContext context) {
+            pushStatementBlock();
+            dispatch(sub);
+            // always add the exit label; assume we will remove it in a later code pass
+            addStatement(new LabelStatement(returnLabel));
+            context.insertAllBefore(statementBlocks.peek());
+            context.deleteStatement();
+            return returnValue;
+        }
 
-    @Override
-    public void visit(GotoGosubStatement statement, StatementContext context) {
-        model.gotoGosubStmt(statement.getOp(), statement.getLabel());
-    }
+        public List<Expression> dispatchAll(List<Expression> original) {
+            return original.stream().map(this::dispatch).map(Optional::orElseThrow).collect(Collectors.toList());
+        }
 
-    @Override
-    public void visit(AssignmentStatement statement, StatementContext context) {
-        // this has to be a VariableReference on the LHS, right?
-        var ref = dispatch(statement.getVar()).map(VariableReference.class::cast);
-        var expr = dispatch(statement.getExpr());
-        model.assignStmt(ref.orElseThrow(), expr.orElseThrow());
-    }
+        public void visit(IfStatement statement, VisitorContext context) {
+            var expr = dispatch(statement.getExpression()).orElseThrow();
+            StatementBlock trueStatements = pushStatementBlock();
+            dispatchAll(context, statement.getTrueStatements());
+            popStatementBlock();
+            StatementBlock falseStatements = null;
+            if (statement.hasFalseStatements()) {
+                falseStatements = pushStatementBlock();
+                dispatchAll(context, statement.getFalseStatements());
+                popStatementBlock();
+            }
+            addStatement(new IfStatement(expr, trueStatements, falseStatements));
+        }
 
-    @Override
-    public void visit(DynamicGotoGosubStatement statement, StatementContext context) {
-        var expr = dispatch(statement.getTarget());
-        model.dynamicGotoGosubStmt(statement.getOp(), expr.orElseThrow(), statement.needsAddressAdjustment());
-    }
+        @Override
+        public void visit(EndStatement statement, VisitorContext context) {
+            addStatement(new EndStatement());
+        }
 
-    @Override
-    public Expression visit(VariableReference expression) {
-        if (expression.isArray()) {
-            var symbol = expression.getSymbol();
-            List<Expression> indexes = dispatchAll(expression.getIndexes());
-            if (replacements.containsKey(symbol)) {
-                var replacement = replacements.get(symbol);
+        @Override
+        public void visit(PopStatement statement, VisitorContext context) {
+            addStatement(new PopStatement());
+        }
+
+        @Override
+        public void visit(CallStatement statement, VisitorContext context) {
+            var expr = dispatch(statement.getExpr()).orElseThrow();
+            addStatement(new CallStatement(expr));
+        }
+
+        @Override
+        public void visit(PokeStatement statement, VisitorContext context) {
+            var a = dispatch(statement.getA()).orElseThrow();
+            var b = dispatch(statement.getB()).orElseThrow();
+            addStatement(new PokeStatement(statement.getOp(), a, b));
+        }
+
+        @Override
+        public void visit(CallSubroutine statement, VisitorContext context) {
+            var params = dispatchAll(statement.getParameters());
+            addStatement(new CallSubroutine(statement.getSubroutine(), params));
+        }
+
+        @Override
+        public void visit(LabelStatement statement, VisitorContext context) {
+            addStatement(new LabelStatement(statement.getLabel()));
+        }
+
+        @Override
+        public void visit(ReturnStatement statement, VisitorContext context) {
+            if (statement.getExpr() != null) {
+                if (returnValue == null) {
+                    var msg = String.format("return value mismatch: '%s' is not in a function", statement);
+                    throw new RuntimeException(msg);
+                }
+                var expr = dispatch(statement.getExpr()).orElseThrow();
+                addStatement(new AssignmentStatement(VariableReference.with(returnValue), expr));
+            }
+            addStatement(new GotoGosubStatement("goto", returnLabel));
+        }
+
+        @Override
+        public void visit(OnErrorStatement statement, VisitorContext context) {
+            addStatement(new OnErrorStatement(statement.getLabel()));
+        }
+
+        @Override
+        public void visit(RaiseErrorStatement statement, VisitorContext context) {
+            addStatement(new RaiseErrorStatement());
+        }
+
+        @Override
+        public void visit(GotoGosubStatement statement, VisitorContext context) {
+            addStatement(new GotoGosubStatement(statement.getOp(), statement.getLabel()));
+        }
+
+        @Override
+        public void visit(AssignmentStatement statement, VisitorContext context) {
+            // this has to be a VariableReference on the LHS, right?
+            var ref = dispatch(statement.getVar()).map(VariableReference.class::cast).orElseThrow();
+            var expr = dispatch(statement.getExpr()).orElseThrow();
+            addStatement(new AssignmentStatement(ref, expr));
+        }
+
+        @Override
+        public void visit(DynamicGotoGosubStatement statement, VisitorContext context) {
+            var expr = dispatch(statement.getTarget()).orElseThrow();
+            addStatement(new DynamicGotoGosubStatement(statement.getOp(), expr, statement.needsAddressAdjustment()));
+        }
+
+        @Override
+        public Expression visit(VariableReference expression) {
+            if (expression.isArray()) {
+                var symbol = expression.getSymbol();
+                List<Expression> indexes = dispatchAll(expression.getIndexes());
+                if (replacements.containsKey(symbol)) {
+                    var replacement = replacements.get(symbol);
+                    if (replacement instanceof VariableReference ref) {
+                        symbol = ref.getSymbol();
+                        if (!ref.isArray() && symbol.numDimensions() > 0) {
+                            return new VariableReference(symbol, indexes);
+                        }
+                    }
+                    var msg = String.format("unable to combine '%s' and '%s'", expression, replacement);
+                    throw new RuntimeException(msg);
+                }
+                else {
+                    return new VariableReference(symbol, indexes);
+                }
+            }
+            else {
+                return replacements.getOrDefault(expression.getSymbol(), expression);
+            }
+        }
+
+        @Override
+        public Expression visit(BinaryExpression expression) {
+            var l = dispatch(expression.getL()).orElseThrow();
+            var r = dispatch(expression.getR()).orElseThrow();
+            return new BinaryExpression(l, r, expression.getOp());
+        }
+
+        @Override
+        public Expression visit(IntegerConstant expression) {
+            return expression;
+        }
+
+        @Override
+        public Expression visit(StringConstant expression) {
+            return expression;
+        }
+
+        @Override
+        public Expression visit(BooleanConstant expression) {
+            return expression;
+        }
+
+        @Override
+        public Expression visit(UnaryExpression expression) {
+            var expr = dispatch(expression.getExpr());
+            return new UnaryExpression(expression.getOp(), expr.orElseThrow());
+        }
+
+        @Override
+        public Expression visit(FunctionExpression expression) {
+            var params = dispatchAll(expression.getParameters());
+            if (expression.getFunction() != null) {
+                return new FunctionExpression(expression.getFunction(), params);
+            }
+            else {
+                return new FunctionExpression(expression.getName(), params);
+            }
+        }
+
+        @Override
+        public Expression visit(ArrayLengthFunction expression) {
+            if (replacements.containsKey(expression.getSymbol())) {
+                var replacement = replacements.get(expression.getSymbol());
                 if (replacement instanceof VariableReference ref) {
-                    symbol = ref.getSymbol();
+                    var symbol = ref.getSymbol();
                     if (!ref.isArray() && symbol.numDimensions() > 0) {
-                        return new VariableReference(symbol, indexes);
+                        return new ArrayLengthFunction(expression.getModel(), symbol);
                     }
                 }
                 var msg = String.format("unable to combine '%s' and '%s'", expression, replacement);
                 throw new RuntimeException(msg);
             }
-            else {
-                return new VariableReference(symbol, indexes);
-            }
+            return expression;
         }
-        else {
-            return replacements.getOrDefault(expression.getSymbol(), expression);
-        }
-    }
 
-    @Override
-    public Expression visit(BinaryExpression expression) {
-        var l = dispatch(expression.getL()).orElseThrow();
-        var r = dispatch(expression.getR()).orElseThrow();
-        return new BinaryExpression(l, r, expression.getOp());
-    }
-
-    @Override
-    public Expression visit(IntegerConstant expression) {
-        return expression;
-    }
-
-    @Override
-    public Expression visit(StringConstant expression) {
-        return expression;
-    }
-
-    @Override
-    public Expression visit(BooleanConstant expression) {
-        return expression;
-    }
-
-    @Override
-    public Expression visit(UnaryExpression expression) {
-        var expr = dispatch(expression.getExpr());
-        return new UnaryExpression(expression.getOp(), expr.orElseThrow());
-    }
-
-    @Override
-    public Expression visit(FunctionExpression expression) {
-        var params = dispatchAll(expression.getParameters());
-        if (expression.getFunction() != null) {
-            return model.callFunction(expression.getFunction().getFullPathName(), params);
-        }
-        else {
-            return model.callFunction(expression.getName(), params);
-        }
-    }
-
-    @Override
-    public Expression visit(ArrayLengthFunction expression) {
-        if (replacements.containsKey(expression.getSymbol())) {
-            var replacement = replacements.get(expression.getSymbol());
-            if (replacement instanceof VariableReference ref) {
-                var symbol = ref.getSymbol();
-                if (!ref.isArray() && symbol.numDimensions() > 0) {
-                    return new ArrayLengthFunction(model, symbol);
+        @Override
+        public Expression visit(AddressOfFunction expression) {
+            if (replacements.containsKey(expression.getSymbol())) {
+                var replacement = replacements.get(expression.getSymbol());
+                if (replacement instanceof VariableReference ref) {
+                    var symbol = ref.getSymbol();
+                    if (!ref.isArray() && symbol.numDimensions() > 0) {
+                        return new AddressOfFunction(symbol);
+                    }
                 }
+                var msg = String.format("unable to combine '%s' and '%s'", expression, replacement);
+                throw new RuntimeException(msg);
             }
-            var msg = String.format("unable to combine '%s' and '%s'", expression, replacement);
-            throw new RuntimeException(msg);
+            return expression;
         }
-        return expression;
-    }
-
-    @Override
-    public Expression visit(AddressOfFunction expression) {
-        if (replacements.containsKey(expression.getSymbol())) {
-            var replacement = replacements.get(expression.getSymbol());
-            if (replacement instanceof VariableReference ref) {
-                var symbol = ref.getSymbol();
-                if (!ref.isArray() && symbol.numDimensions() > 0) {
-                    return new AddressOfFunction(symbol);
-                }
-            }
-            var msg = String.format("unable to combine '%s' and '%s'", expression, replacement);
-            throw new RuntimeException(msg);
-        }
-        return expression;
     }
 }

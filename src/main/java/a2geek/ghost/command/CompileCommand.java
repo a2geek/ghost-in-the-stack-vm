@@ -10,6 +10,7 @@ import a2geek.ghost.model.SymbolType;
 import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.visitor.ConstantReductionVisitor;
 import a2geek.ghost.model.visitor.DeadCodeEliminationVisitor;
+import a2geek.ghost.model.visitor.InliningVisitor;
 import a2geek.ghost.model.visitor.StrengthReductionVisitor;
 import a2geek.ghost.target.ghost.CodeGenerationVisitor;
 import a2geek.ghost.target.ghost.Instruction;
@@ -325,7 +326,6 @@ public class CompileCommand implements Callable<Integer> {
                 return;
             }
             model.enableBoundsCheck(boundsChecking);
-            model.enableCodeInlining(codeInlining);
         }
 
         public void apply(Program program) {
@@ -336,6 +336,14 @@ public class CompileCommand implements Callable<Integer> {
             if (noOptimizations) {
                 // Constant reduction must be present at this time since ASC("A") doesn't exist in runtime.
                 return;
+            }
+            if (codeInlining) {
+                InliningVisitor inliningVisitor = new InliningVisitor();
+                int counter = 0;
+                do {
+                    counter = inliningVisitor.getCounter();
+                    inliningVisitor.visit(program);
+                } while (inliningVisitor.getCounter() != counter);
             }
             if (strengthReduction) {
                 StrengthReductionVisitor rewriteVisitor = new StrengthReductionVisitor();

@@ -25,7 +25,7 @@ public abstract class DispatchVisitor {
                     scope.getClass().getName());
         }
     }
-    public void dispatch(StatementContext context) {
+    public void dispatch(VisitorContext context) {
         var statement = context.currentStatement();
         switch (statement) {
             case AssignmentStatement s -> visit(s, context);
@@ -64,48 +64,51 @@ public abstract class DispatchVisitor {
         };
     }
 
-    public void dispatchAll(StatementBlock block) {
-        dispatchToList(block.getInitializationStatements());
-        dispatchToList(block.getStatements());
+    public void dispatchAll(VisitorContext context, StatementBlock block) {
+        dispatchAll(context.getScope(), block);
     }
-    public void dispatchToList(List<Statement> statements) {
+    public void dispatchAll(Scope scope, StatementBlock block) {
+        dispatchToList(scope, block.getInitializationStatements());
+        dispatchToList(scope, block.getStatements());
+    }
+    public void dispatchToList(Scope scope, List<Statement> statements) {
         for (int i=0; i<statements.size(); i++) {
-            StatementContext context = new StatementContext(statements, i);
+            VisitorContext context = new VisitorContext(scope, statements, i);
             dispatch(context);
             // If we insert or delete a row, we should reprocess it
             while (context.getIndex() != i && i < statements.size()) {
-                context = new StatementContext(statements, i);
+                context = new VisitorContext(scope, statements, i);
                 dispatch(context);
             }
         }
     }
 
     public void visit(Program program) {
-        dispatchAll(program);
+        dispatchAll(program, program);
         program.findAllLocalScope(in(SymbolType.FUNCTION,SymbolType.SUBROUTINE)).forEach(symbol -> {
             dispatch(symbol.scope());
         });
     }
     public void visit(Subroutine subroutine) {
-        dispatchAll(subroutine);
+        dispatchAll(subroutine, subroutine);
     }
     public void visit(Function function) {
-        dispatchAll(function);
+        dispatchAll(function, function);
     }
 
-    public abstract void visit(AssignmentStatement statement, StatementContext context);
-    public abstract void visit(EndStatement statement, StatementContext context);
-    public abstract void visit(CallStatement statement, StatementContext context);
-    public abstract void visit(IfStatement statement, StatementContext context);
-    public abstract void visit(PokeStatement statement, StatementContext context);
-    public abstract void visit(GotoGosubStatement statement, StatementContext context);
-    public abstract void visit(DynamicGotoGosubStatement statement, StatementContext context);
-    public abstract void visit(LabelStatement statement, StatementContext context);
-    public abstract void visit(ReturnStatement statement, StatementContext context);
-    public abstract void visit(CallSubroutine statement, StatementContext context);
-    public abstract void visit(PopStatement statement, StatementContext context);
-    public abstract void visit(OnErrorStatement statement, StatementContext context);
-    public abstract void visit(RaiseErrorStatement statement, StatementContext context);
+    public abstract void visit(AssignmentStatement statement, VisitorContext context);
+    public abstract void visit(EndStatement statement, VisitorContext context);
+    public abstract void visit(CallStatement statement, VisitorContext context);
+    public abstract void visit(IfStatement statement, VisitorContext context);
+    public abstract void visit(PokeStatement statement, VisitorContext context);
+    public abstract void visit(GotoGosubStatement statement, VisitorContext context);
+    public abstract void visit(DynamicGotoGosubStatement statement, VisitorContext context);
+    public abstract void visit(LabelStatement statement, VisitorContext context);
+    public abstract void visit(ReturnStatement statement, VisitorContext context);
+    public abstract void visit(CallSubroutine statement, VisitorContext context);
+    public abstract void visit(PopStatement statement, VisitorContext context);
+    public abstract void visit(OnErrorStatement statement, VisitorContext context);
+    public abstract void visit(RaiseErrorStatement statement, VisitorContext context);
 
     public abstract Expression visit(BinaryExpression expression);
     public abstract Expression visit(VariableReference expression);

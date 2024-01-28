@@ -17,7 +17,6 @@ public class GhostBasicVisitorTest {
 
     public static StatementTester.ScopeTester expect(String source) {
         model = new ModelBuilder(String::toUpperCase);
-        model.enableCodeInlining(false);
         Program program = ParseUtil.basicToModel(CharStreams.fromString(source), model);
         System.out.println(program);
         return new StatementTester.ScopeTester(program,

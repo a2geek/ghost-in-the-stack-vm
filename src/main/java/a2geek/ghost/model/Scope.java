@@ -16,6 +16,8 @@ public class Scope extends StatementBlock {
     private List<Symbol> symbolTable = new ArrayList<>();
     private Set<Symbol> exports = new HashSet<>();
     private OnErrorContext onErrorContext;
+    /** Tracking a distinct global label number to prevent name collisions. */
+    private static int symbolNumber = 1;
 
     public Scope(Function<String,String> caseStrategy, String name) {
         this.caseStrategy = caseStrategy;
@@ -92,6 +94,24 @@ public class Scope extends StatementBlock {
                 symbolTable.add(symbol);
                 return symbol;
             });
+    }
+
+    /** Generate a temporary variable within this scope. */
+    public Symbol addTempVariable(DataType dataType) {
+        symbolNumber+= 1;
+        var name = String.format("_temp%d", symbolNumber);
+        return addLocalSymbol(Symbol.variable(name, SymbolType.VARIABLE).dataType(dataType));
+    }
+
+    /** Generate labels for code. The multiple values is to allow grouping of labels (same label number) for complex structures. */
+    public List<Symbol> addLabels(String... names) {
+        symbolNumber+= 1;
+        List<Symbol> symbols = new ArrayList<>();
+        for (var name : names) {
+            var builder = Symbol.label(String.format("_%s%d", name, symbolNumber));
+            symbols.add(addLocalSymbol(builder));
+        }
+        return symbols;
     }
 
     public Optional<Symbol> findFirst(Predicate<Symbol> condition) {

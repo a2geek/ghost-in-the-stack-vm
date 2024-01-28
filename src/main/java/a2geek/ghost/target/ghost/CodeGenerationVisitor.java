@@ -52,10 +52,10 @@ public class CodeGenerationVisitor extends DispatchVisitor {
 
         program.streamAllLocalScope().filter(in(SymbolType.MODULE)).forEach(symbol -> {
             // statements in a module are initialization for the program
-            dispatchToList(symbol.scope().getStatements());
+            dispatchToList(program, symbol.scope().getStatements());
         });
 
-        dispatchAll(program);
+        dispatchAll(program, program);
         // Note we don't have a GLOBAL_FREE; EXIT restores stack for us
         code.emit(Opcode.EXIT);
 
@@ -213,22 +213,22 @@ public class CodeGenerationVisitor extends DispatchVisitor {
     }
 
     @Override
-    public void visit(AssignmentStatement statement, StatementContext context) {
+    public void visit(AssignmentStatement statement, VisitorContext context) {
         assignment(statement.getVar(), statement.getExpr());
     }
 
-    public void visit(EndStatement statement, StatementContext context) {
+    public void visit(EndStatement statement, VisitorContext context) {
         code.emit(Opcode.EXIT);
     }
 
     @Override
-    public void visit(CallStatement statement, StatementContext context) {
+    public void visit(CallStatement statement, VisitorContext context) {
         dispatch(statement.getExpr());
         code.emit(Opcode.CALL);
     }
 
     @Override
-    public void visit(IfStatement statement, StatementContext context) {
+    public void visit(IfStatement statement, VisitorContext context) {
         if (!statement.hasTrueStatements() && !statement.hasFalseStatements()) {
             // Do not generate code if this is somehow an empty IF statement
             return;
@@ -263,22 +263,22 @@ public class CodeGenerationVisitor extends DispatchVisitor {
         dispatch(expr);
         if (statement.hasTrueStatements()) {
             code.emit(trueOp, statement.hasFalseStatements() ? elseLabel : exitLabel);
-            dispatchAll(statement.getTrueStatements());
+            dispatchAll(context, statement.getTrueStatements());
             if (statement.hasFalseStatements()) {
                 code.emit(Opcode.GOTO, exitLabel);
                 code.emit(elseLabel);
-                dispatchAll(statement.getFalseStatements());
+                dispatchAll(context, statement.getFalseStatements());
             }
         }
         else {
             code.emit(falseOp, exitLabel);
-            dispatchAll(statement.getFalseStatements());
+            dispatchAll(context, statement.getFalseStatements());
         }
         code.emit(exitLabel);
     }
 
     @Override
-    public void visit(PokeStatement statement, StatementContext context) {
+    public void visit(PokeStatement statement, VisitorContext context) {
         dispatch(statement.getB());
         dispatch(statement.getA());
         switch (statement.getOp().toLowerCase()) {
@@ -288,17 +288,17 @@ public class CodeGenerationVisitor extends DispatchVisitor {
         }
     }
 
-    public void visit(LabelStatement statement, StatementContext context) {
+    public void visit(LabelStatement statement, VisitorContext context) {
         code.emit(statement.getLabel().name());
     }
 
     @Override
-    public void visit(GotoGosubStatement statement, StatementContext context) {
+    public void visit(GotoGosubStatement statement, VisitorContext context) {
         code.emit(Opcode.valueOf(statement.getOp().toUpperCase()), statement.getLabel().name());
     }
 
     @Override
-    public void visit(DynamicGotoGosubStatement statement, StatementContext context) {
+    public void visit(DynamicGotoGosubStatement statement, VisitorContext context) {
         var labels = label("RETURN");
         var returnLabel = labels.getFirst();
         if ("gosub".equalsIgnoreCase(statement.getOp())) {
@@ -315,7 +315,7 @@ public class CodeGenerationVisitor extends DispatchVisitor {
     }
 
     @Override
-    public void visit(OnErrorStatement statement, StatementContext context) {
+    public void visit(OnErrorStatement statement, VisitorContext context) {
         switch (statement.getOp()) {
             case GOTO -> setupOnErrContext(statement.getLabel());
             case DISABLE -> setupOnErrContext(this.frames.getFirst().scope().findFirst(named(DEFAULT_ERROR_HANDLER)).orElseThrow());
@@ -337,7 +337,7 @@ public class CodeGenerationVisitor extends DispatchVisitor {
     }
 
     @Override
-    public void visit(RaiseErrorStatement statement, StatementContext context) {
+    public void visit(RaiseErrorStatement statement, VisitorContext context) {
         var onerr = this.frames.getFirst().scope().getOnErrorContext();
         emitLoad(onerr.stackPointer());
         code.emit(Opcode.STORESP);
@@ -349,13 +349,13 @@ public class CodeGenerationVisitor extends DispatchVisitor {
     }
 
     @Override
-    public void visit(PopStatement statement, StatementContext context) {
+    public void visit(PopStatement statement, VisitorContext context) {
         // This is an address; expect that 2 is always correct!
         code.emit(Opcode.POPN, 2);
     }
 
     @Override
-    public void visit(ReturnStatement statement, StatementContext context) {
+    public void visit(ReturnStatement statement, VisitorContext context) {
         boolean hasReturnValue = statement.getExpr() != null;
         if (this.frames.peek().scope() instanceof Function f) {
             var refs = this.frames.peek().scope().findAllLocalScope(in(SymbolType.RETURN_VALUE));
@@ -378,7 +378,7 @@ public class CodeGenerationVisitor extends DispatchVisitor {
     }
 
     @Override
-    public void visit(CallSubroutine statement, StatementContext context) {
+    public void visit(CallSubroutine statement, VisitorContext context) {
         // Using the "program" frame
         var subFullName = statement.getSubroutine().getFullPathName();
         var scope = frames.getFirst().scope()
@@ -431,10 +431,6 @@ public class CodeGenerationVisitor extends DispatchVisitor {
 
     @Override
     public void visit(Subroutine subroutine) {
-        if (subroutine.is(Subroutine.Modifier.INLINE)) {
-            // We are already inlining this, so do not generate code.
-            return;
-        }
         var exitLabel = label("SUBEXIT").getFirst();
         subroutine.setExitLabel(exitLabel);
         var hasLocalScope = subroutine.findAllLocalScope(is(DeclarationType.LOCAL).and(in(SymbolType.VARIABLE, SymbolType.PARAMETER))).size() != 0;
@@ -444,7 +440,7 @@ public class CodeGenerationVisitor extends DispatchVisitor {
         saveOnErrContext(subroutine);
         setupDefaultArrayValues(subroutine);
         if (subroutine.getStatements() != null) {
-            dispatchAll(subroutine);
+            dispatchAll(subroutine, subroutine);
         }
         code.emit(exitLabel);
         if (hasLocalScope) tearDownLocalFrame(frame);
@@ -479,7 +475,7 @@ public class CodeGenerationVisitor extends DispatchVisitor {
         saveOnErrContext(function);
         setupDefaultArrayValues(function);
         if (function.getStatements() != null) {
-            dispatchAll(function);
+            dispatchAll(function, function);
         }
         code.emit(exitLabel);
         tearDownLocalFrame(frame);
