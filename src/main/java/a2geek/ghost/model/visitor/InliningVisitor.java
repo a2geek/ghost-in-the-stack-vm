@@ -13,9 +13,18 @@ import static a2geek.ghost.model.Symbol.in;
 
 public class InliningVisitor extends Visitor {
     private int counter = 0;
+    private VisitorContext statementContext = null;
 
     public int getCounter() {
         return counter;
+    }
+
+    @Override
+    public void dispatch(VisitorContext context) {
+        // preserving a statement context for the function processing
+        statementContext = context;
+        super.dispatch(context);
+        statementContext = null;
     }
 
     @Override
@@ -42,7 +51,7 @@ public class InliningVisitor extends Visitor {
     public void visit(CallSubroutine statement, VisitorContext context) {
         if (statement.getSubroutine().is(Subroutine.Modifier.INLINE)) {
             counter += 1;
-            var visitor = new RewriteVisitor(statement);
+            var visitor = new RewriteVisitor(statement, context);
             visitor.apply(context);
         }
         else {
@@ -52,27 +61,31 @@ public class InliningVisitor extends Visitor {
 
     @Override
     public Expression visit(FunctionExpression expression) {
-//        if (expression.getFunction() != null && expression.getFunction().is(Subroutine.Modifier.INLINE)) {
-//            // TODO need a VisitorContext
-//        }
-//        else {
+        if (expression.getFunction() != null && expression.getFunction().is(Subroutine.Modifier.INLINE)) {
+            counter += 1;
+            var visitor = new RewriteVisitor(expression, statementContext);
+            return visitor.apply(statementContext);
+        }
+        else {
             return super.visit(expression);
-//        }
+        }
     }
 
     public static class RewriteVisitor extends DispatchVisitor {
         private Stack<StatementBlock> statementBlocks = new Stack<>();
-        private final Subroutine sub;
+        private final Scope sourceScope;
+        private final Scope targetScope;
         private final Map<Symbol,Expression> replacements = new HashMap<>();
         private final Symbol returnValue;
         private final Symbol returnLabel;
 
-        private RewriteVisitor(Subroutine method, List<Expression> methodParameters) {
-            this.sub = method;
+        private RewriteVisitor(Scope sourceScope, Scope targetScope, List<Expression> methodParameters) {
+            this.sourceScope = sourceScope;
+            this.targetScope = targetScope;
             // Assign replacement values for incoming symbols
-            var parameters = sub.findAllLocalScope(in(SymbolType.PARAMETER));
+            var parameters = sourceScope.findAllLocalScope(in(SymbolType.PARAMETER));
             if (parameters.size() != methodParameters.size()) {
-                throw new RuntimeException(String.format("parameter size mismatch for call to '%s'", sub.getFullPathName()));
+                throw new RuntimeException(String.format("parameter size mismatch for call to '%s'", sourceScope.getFullPathName()));
             }
             // Subroutine parameters are REVERSED (for stack placement), so taking that into account:
             parameters = parameters.reversed();
@@ -85,18 +98,18 @@ public class InliningVisitor extends Visitor {
                 replacements.put(param, value);
             }
             // Setup return value
-            returnValue = sub.findFirstLocalScope(in(SymbolType.RETURN_VALUE))
+            returnValue = sourceScope.findFirstLocalScope(in(SymbolType.RETURN_VALUE))
                     .map(Symbol::dataType)
-                    .map(sub::addTempVariable)
+                    .map(targetScope::addTempVariable)
                     .orElse(null);
             // Target for return statements
-            returnLabel = sub.addLabels(String.format("%sEXIT", sub.getName())).getFirst();
+            returnLabel = targetScope.addLabels(String.format("%sEXIT", sourceScope.getName())).getFirst();
         }
-        public RewriteVisitor(CallSubroutine statement) {
-            this(statement.getSubroutine(), statement.getParameters());
+        public RewriteVisitor(CallSubroutine statement, VisitorContext context) {
+            this(statement.getSubroutine(), context.getScope(), statement.getParameters());
         }
-        public RewriteVisitor(FunctionExpression expression) {
-            this(expression.getFunction(), expression.getParameters());
+        public RewriteVisitor(FunctionExpression expression, VisitorContext context) {
+            this(expression.getFunction(), context.getScope(), expression.getParameters());
         }
 
         public StatementBlock pushStatementBlock() {
@@ -109,14 +122,21 @@ public class InliningVisitor extends Visitor {
             this.statementBlocks.peek().addStatement(statement);
         }
 
-        public Symbol apply(VisitorContext context) {
+        public Expression apply(VisitorContext context) {
             pushStatementBlock();
-            dispatch(sub);
+            dispatch(sourceScope);
             // always add the exit label; assume we will remove it in a later code pass
             addStatement(new LabelStatement(returnLabel));
             context.insertAllBefore(statementBlocks.peek());
-            context.deleteStatement();
-            return returnValue;
+            // for function, we are just replacing the function call with the temp variable
+            if (returnValue != null) {
+                return VariableReference.with(returnValue);
+            }
+            // for a sub we are removing the original call since the new code has been inserted
+            else {
+                context.deleteStatement();
+                return null;
+            }
         }
 
         public List<Expression> dispatchAll(List<Expression> original) {
