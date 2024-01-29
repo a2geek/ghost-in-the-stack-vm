@@ -24,6 +24,12 @@ public class VisitorContext {
     public Statement currentStatement() {
         return statements.get(index);
     }
+    public Statement nextStatement() {
+        if (index+1 < statements.size()) {
+            return statements.get(index+1);
+        }
+        return null;
+    }
 
     public void insertAllBefore(StatementBlock block) {
         insertAllBefore(block.getStatements());
