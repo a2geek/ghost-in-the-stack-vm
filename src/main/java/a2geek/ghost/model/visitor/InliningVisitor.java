@@ -11,10 +11,11 @@ import java.util.stream.Collectors;
 
 import static a2geek.ghost.model.Symbol.in;
 
-public class InliningVisitor extends Visitor {
+public class InliningVisitor extends Visitor implements RepeatingVisitor {
     private int counter = 0;
     private VisitorContext statementContext = null;
 
+    @Override
     public int getCounter() {
         return counter;
     }

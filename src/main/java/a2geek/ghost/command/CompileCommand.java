@@ -4,9 +4,7 @@ import a2geek.ghost.antlr.ParseUtil;
 import a2geek.ghost.command.util.ByteFormatter;
 import a2geek.ghost.command.util.IntegerTypeConverter;
 import a2geek.ghost.command.util.PrettyPrintVisitor;
-import a2geek.ghost.model.ModelBuilder;
-import a2geek.ghost.model.Scope;
-import a2geek.ghost.model.SymbolType;
+import a2geek.ghost.model.*;
 import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.visitor.ConstantReductionVisitor;
 import a2geek.ghost.model.visitor.DeadCodeEliminationVisitor;
@@ -330,28 +328,33 @@ public class CompileCommand implements Callable<Integer> {
 
         public void apply(Program program) {
             if (constantReduction) {
-                ConstantReductionVisitor constantReductionVisitor = new ConstantReductionVisitor();
-                constantReductionVisitor.visit(program);
+                execute(program, new ConstantReductionVisitor());
             }
             if (noOptimizations) {
                 // Constant reduction must be present at this time since ASC("A") doesn't exist in runtime.
                 return;
             }
             if (codeInlining) {
-                InliningVisitor inliningVisitor = new InliningVisitor();
-                int counter = 0;
-                do {
-                    counter = inliningVisitor.getCounter();
-                    inliningVisitor.visit(program);
-                } while (inliningVisitor.getCounter() != counter);
+                execute(program, new InliningVisitor());
             }
             if (strengthReduction) {
-                StrengthReductionVisitor rewriteVisitor = new StrengthReductionVisitor();
-                rewriteVisitor.visit(program);
+                execute(program, new StrengthReductionVisitor());
             }
             if (deadCodeElimination) {
-                DeadCodeEliminationVisitor deadCodeEliminationVisitor = new DeadCodeEliminationVisitor();
-                deadCodeEliminationVisitor.visit(program);
+                execute(program, new DeadCodeEliminationVisitor());
+            }
+        }
+
+        void execute(Program program, Visitor visitor) {
+            if (visitor instanceof RepeatingVisitor repeating) {
+                int counter = 0;
+                do {
+                    counter = repeating.getCounter();
+                    visitor.visit(program);
+                } while (repeating.getCounter() != counter);
+            }
+            else {
+                visitor.visit(program);
             }
         }
 
