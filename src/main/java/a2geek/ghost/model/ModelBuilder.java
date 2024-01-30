@@ -42,8 +42,6 @@ public class ModelBuilder {
     private String heapFunction;
     /** Track array dimensions */
     private Map<Symbol, Expression> arrayDims = new HashMap<>();
-    /** Tracking a distinct label number globally (regardless of scope) to prevent name collisions. */
-    private static int labelNumber;
 
     public ModelBuilder(Function<String,String> caseStrategy) {
         this.caseStrategy = caseStrategy;
@@ -75,7 +73,7 @@ public class ModelBuilder {
     public void setTrace(boolean trace) {
         this.trace = trace;
     }
-    public void setBoundsCheck(boolean boundsCheck) {
+    public void enableBoundsCheck(boolean boundsCheck) {
         this.boundsCheck = boundsCheck;
     }
     public void setArrayNameStrategy(Function<String,String> arrayNameStrategy) {
@@ -160,22 +158,11 @@ public class ModelBuilder {
         return this.scope.peek().addLocalSymbol(Symbol.constant(name, value));
     }
     public Symbol addTempVariable(DataType dataType) {
-        labelNumber+= 1;    // just reusing the counter
-        var name = String.format("_temp%d", labelNumber);
-        return this.scope.peek().addLocalSymbol(
-                Symbol.variable(name, SymbolType.VARIABLE)
-                      .dataType(dataType));
+        return this.scope.peek().addTempVariable(dataType);
     }
     /** Generate labels for code. The multiple values is to allow grouping of labels (same label number) for complex structures. */
     public List<Symbol> addLabels(String... names) {
-        labelNumber+= 1;
-        List<Symbol> symbols = new ArrayList<>();
-        for (var name : names) {
-            var builder = Symbol.label(String.format("_%s%d", name, labelNumber));
-            var symbol = this.scope.peek().addLocalSymbol(builder);
-            symbols.add(symbol);
-        }
-        return symbols;
+        return this.scope.peek().addLabels(names);
     }
 
     public void trace(String fmt, Object... args) {
@@ -246,7 +233,7 @@ public class ModelBuilder {
     public void ensureModuleIncluded(String fullPathName) {
         var parts = fullPathName.split("\\.");
         if (parts.length == 2) {
-            uses(parts[0], nothingExported());
+            uses(parts[0].toLowerCase(), nothingExported());
         }
     }
 
@@ -284,7 +271,7 @@ public class ModelBuilder {
             || scope.peek().findFirst(named(id).and(in(SymbolType.FUNCTION))).isPresent();
     }
 
-    public FunctionExpression callFunction(String name, List<Expression> params) {
+    public Expression callFunction(String name, List<Expression> params) {
         ensureModuleIncluded(name);
         var id = fixCase(name);
         if (FunctionExpression.isLibraryFunction(id)) {
@@ -293,13 +280,11 @@ public class ModelBuilder {
             id = fixCase(descriptor.fullName());
         }
 
-        Optional<Scope> scope = this.scope.peek().findFirst(named(id).and(in(SymbolType.FUNCTION)))
-                .map(Symbol::scope);
-        if (scope.isPresent()) {
-            if (scope.get() instanceof a2geek.ghost.model.scope.Function fn) {
-                checkCallParameters(fn, params);
-                return new FunctionExpression(fn, params);
-            }
+        var func = this.scope.peek().findFirst(named(id).and(in(SymbolType.FUNCTION)))
+                .map(Symbol::scope).orElse(null);
+        if (func instanceof a2geek.ghost.model.scope.Function fn) {
+            checkCallParameters(fn, params);
+            return new FunctionExpression(fn, params);
         }
         else if (FunctionExpression.isIntrinsicFunction(id)) {
             return new FunctionExpression(id, params);

@@ -19,5 +19,4 @@ Enhance USES statement to allow custom imports (example: USES MIN,MAX FROM "MATH
 Optimize/short circuit OR/AND with IFNZ/IFZ
 Some expressions can be rearranged for better code, like 1 + n + 3 => 1 + 3 + n => 4 + n
 Revisit boolean versus bit logic. NOT/AND/OR don't always work as expected; maybe new operators needed?
-Inline idea - setup a visitor that takes the inlined function and writes it directly into the code; done BEFORE codegen. "RETURN" => assign.
 Expression optimization where expression may be used more than once (like SELECT statement) and bounds check!

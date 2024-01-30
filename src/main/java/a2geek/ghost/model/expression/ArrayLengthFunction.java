@@ -19,6 +19,9 @@ public class ArrayLengthFunction implements Expression {
     public Symbol getSymbol() {
         return symbol;
     }
+    public ModelBuilder getModel() {
+        return model;
+    }
 
     @Override
     public Optional<Integer> asInteger() {

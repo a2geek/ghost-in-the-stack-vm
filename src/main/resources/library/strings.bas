@@ -5,17 +5,17 @@
 ' +01..nn = characters
 ' +(nn+1) = 00 zero terminated
 module strings
-    function strmax(s as string) as integer
+    inline function strmax(s as string) as integer
         return peek(s)
     end function
 
-    export function asc(str as string) as integer
+    export inline function asc(str as string) as integer
         ' skip the maxlen byte
         return peek(str + 1)
     end function
 
     ' Cheap/temporary replacement for MID$
-    export function ascn(str as string, n as integer) as integer
+    export inline function ascn(str as string, n as integer) as integer
         return peek(str + n + 1)
     end function
 
