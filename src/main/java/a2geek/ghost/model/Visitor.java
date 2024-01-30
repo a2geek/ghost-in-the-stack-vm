@@ -113,6 +113,11 @@ public abstract class Visitor extends DispatchVisitor {
 
     @Override
     public Expression visit(VariableReference expression) {
+        // These can't be changed, but it ensures any visitors see all expressions (see StatisticsVisitor)
+        if (expression.getSymbol().defaultValues() != null) {
+            expression.getSymbol().defaultValues().forEach(this::dispatch);
+        }
+
         boolean changed = false;
         var exprs = new ArrayList<Expression>();
         for (var expr : expression.getIndexes()) {
