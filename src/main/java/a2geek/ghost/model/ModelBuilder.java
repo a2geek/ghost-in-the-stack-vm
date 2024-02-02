@@ -409,9 +409,7 @@ public class ModelBuilder {
      */
     public void allocateIntegerArray(Symbol symbol, Expression size) {
         var varRef = VariableReference.with(symbol);
-        var bytes = new BinaryExpression(
-                new BinaryExpression(size, IntegerConstant.TWO, "+"),
-                IntegerConstant.TWO, "*");
+        var bytes = size.plus(IntegerConstant.TWO).times2();
         var allocFn = callFunction(heapFunction, Arrays.asList(bytes));
         assignStmt(varRef, allocFn);
         pokeStmt("pokew", varRef, size);
@@ -433,7 +431,7 @@ public class ModelBuilder {
      */
     public void allocateStringArray(Symbol symbol, Expression length) {
         var varRef = VariableReference.with(symbol);
-        var bytes = new BinaryExpression(length, IntegerConstant.TWO, "+");
+        var bytes = length.plus(IntegerConstant.TWO);
         var allocFn = callFunction(heapFunction, Arrays.asList(bytes));
         assignStmt(varRef, allocFn);
         pokeStmt("poke", varRef, length);
@@ -463,8 +461,8 @@ public class ModelBuilder {
         raiseError(new IntegerConstant(107),
                 new StringConstant(String.format("ARRAY INDEX OUT OF BOUNDS %s AT LINE %d", symbol.name(), linenum)));
         popStatementBlock();
-        var arrayLength = new ArrayLengthFunction(this, symbol);
-        ifStmt(new BinaryExpression(index, arrayLength, ">"), errorBlock, null);
+        ifStmt(index.gt(new ArrayLengthFunction(this, symbol)),
+               errorBlock, null);
     }
 
     public void raiseError(Expression number, Expression message) {

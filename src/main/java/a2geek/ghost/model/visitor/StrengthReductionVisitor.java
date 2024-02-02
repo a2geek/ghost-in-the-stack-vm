@@ -4,7 +4,6 @@ import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.Visitor;
 import a2geek.ghost.model.expression.BinaryExpression;
 import a2geek.ghost.model.expression.IntegerConstant;
-import a2geek.ghost.model.expression.UnaryExpression;
 
 import java.util.Arrays;
 import java.util.List;
@@ -33,8 +32,8 @@ public class StrengthReductionVisitor extends Visitor {
                 if (matches(lhs,1)) return rhs;
                 if (matches(rhs,1)) return lhs;
                 // negate  A*-1 or -1*A
-                if (matches(lhs,-1)) return negate(rhs);
-                if (matches(rhs,-1)) return negate(lhs);
+                if (matches(lhs,-1)) return rhs.negate();
+                if (matches(rhs,-1)) return lhs.negate();
                 // reduction to shifts   A*(2^n)
                 if (pow2(lhs) > 0) return lshift(rhs,pow2(lhs));
                 if (pow2(rhs) > 0) return lshift(lhs,pow2(rhs));
@@ -56,7 +55,7 @@ public class StrengthReductionVisitor extends Visitor {
                 // subtraction identity   A-0
                 if (matches(rhs,0)) return lhs;
                 // negate    0-A
-                if (matches(lhs,0)) return negate(rhs);
+                if (matches(lhs,0)) return rhs.negate();
             }
             case "mod" -> {
                 // bitwise AND    A mod 2^n ==> A & (2^n)-1
@@ -70,17 +69,14 @@ public class StrengthReductionVisitor extends Visitor {
     public boolean matches(Expression expression, int value) {
         return expression.asInteger().map(e -> e == value).orElse(false);
     }
-    public UnaryExpression negate(Expression expression) {
-        return new UnaryExpression("-", expression);
-    }
     public BinaryExpression lshift(Expression expression, int bits) {
-        return new BinaryExpression(expression, constant(bits), "<<");
+        return expression.lshift(constant(bits));
     }
     public BinaryExpression rshift(Expression expression, int bits) {
-        return new BinaryExpression(expression, constant(bits), ">>");
+        return expression.rshift(constant(bits));
     }
     public BinaryExpression bitand(Expression expression, int mask) {
-        return new BinaryExpression(expression, constant(mask), "AND");
+        return expression.and(constant(mask));
     }
     public IntegerConstant constant(int value) {
         return new IntegerConstant(value);

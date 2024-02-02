@@ -2,6 +2,7 @@ package a2geek.ghost.model;
 
 import a2geek.ghost.model.expression.BinaryExpression;
 import a2geek.ghost.model.expression.IntegerConstant;
+import a2geek.ghost.model.expression.UnaryExpression;
 
 import java.util.Optional;
 
@@ -68,6 +69,12 @@ public interface Expression {
     default BinaryExpression minus(Expression rhs) {
         return new BinaryExpression("-", this, rhs);
     }
+    default BinaryExpression lshift(Expression bits) {
+        return new BinaryExpression("<<", this, bits);
+    }
+    default BinaryExpression rshift(Expression bits) {
+        return new BinaryExpression(">>", this, bits);
+    }
     default BinaryExpression lt(Expression rhs) {
         return new BinaryExpression("<", this, rhs);
     }
@@ -88,5 +95,8 @@ public interface Expression {
     }
     default BinaryExpression or(Expression rhs) {
         return new BinaryExpression("or", this, rhs);
+    }
+    default UnaryExpression negate() {
+        return new UnaryExpression("-", this);
     }
 }
