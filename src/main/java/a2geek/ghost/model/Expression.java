@@ -60,6 +60,30 @@ public interface Expression {
         return new BinaryExpression("-", this, IntegerConstant.ONE);
     }
     default Expression times2() {
-        return new BinaryExpression("<<", this, IntegerConstant.ONE);
+        return new BinaryExpression("*", this, IntegerConstant.TWO);
+    }
+    default Expression plus(Expression rhs) {
+        return new BinaryExpression("+", this, rhs);
+    }
+    default Expression minus(Expression rhs) {
+        return new BinaryExpression("-", this, rhs);
+    }
+    default Expression lt(Expression rhs) {
+        return new BinaryExpression("<", this, rhs);
+    }
+    default Expression le(Expression rhs) {
+        return new BinaryExpression("<=", this, rhs);
+    }
+    default Expression eq(Expression rhs) {
+        return new BinaryExpression("=", this, rhs);
+    }
+    default Expression ge(Expression rhs) {
+        return new BinaryExpression(">=", this, rhs);
+    }
+    default Expression gt(Expression rhs) {
+        return new BinaryExpression(">", this, rhs);
+    }
+    default Expression and(Expression rhs) {
+        return new BinaryExpression("and", this, rhs);
     }
 }

@@ -266,18 +266,18 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         model.assignStmt(varRef, first);
         model.assignStmt(endRef, last);
         model.assignStmt(stepRef, step);
-        model.assignStmt(nextRef, new BinaryExpression(new AddressOfFunction(nextLabel), IntegerConstant.ONE, "-"));
+        model.assignStmt(nextRef, new AddressOfFunction(nextLabel).minus1());
         model.gotoGosubStmt("goto", loopLabel);
 
         // handle loop increment and test
         model.labelStmt(nextLabel);
-        model.assignStmt(varRef, new BinaryExpression(varRef, stepRef, "+"));
+        model.assignStmt(varRef, varRef.plus(stepRef));
         model.pushStatementBlock(new StatementBlock());
         model.gotoGosubStmt("goto", loopLabel);
         var sb = model.popStatementBlock();
-        var positive = new IfStatement(new BinaryExpression(varRef, endRef, "<="), sb, null);
-        var negative = new IfStatement(new BinaryExpression(varRef, endRef, ">="), sb, null);
-        model.ifStmt(new BinaryExpression(model.callFunction("SGN", Arrays.asList(step)), IntegerConstant.ZERO, ">="),
+        var positive = new IfStatement(varRef.le(endRef), sb, null);
+        var negative = new IfStatement(varRef.ge(endRef), sb, null);
+        model.ifStmt(model.callFunction("SGN", Arrays.asList(step)).ge(IntegerConstant.ZERO),
                 StatementBlock.with(positive), StatementBlock.with(negative));
         model.dynamicGotoGosubStmt("goto", VariableReference.with(frame.getExitRef()), false);
 
@@ -318,7 +318,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
             var labels = model.addLabels("FOR_EXIT");
             var exitLabel = labels.getFirst();
 
-            model.assignStmt(exitRef, new BinaryExpression(new AddressOfFunction(exitLabel), IntegerConstant.ONE, "-"));
+            model.assignStmt(exitRef, new AddressOfFunction(exitLabel).minus1());
             model.dynamicGotoGosubStmt("goto", VariableReference.with(frame.getNextRef()), false);
             model.labelStmt(exitLabel);
         }
@@ -335,7 +335,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
      * by one since the array has a zero index but ON ... GOTO/GOSUB starts at index 1.
      * <pre>
      * _TEMP = line_index(expr, line_numbers)
-     * IF _TEMP > 0 AND _TEMP <= UBOUND(line_numbers)+1 THEN
+     * IF _TEMP > 0 AND _TEMP <= UBOUND(line_numbers) THEN
      *     ( GOTO | GOSUB ) *line_labels[_TEMP - 1]
      * END IF
      * </pre>
@@ -358,8 +358,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
                 new ArrayList<>());
 
             var temp = VariableReference.with(model.addTempVariable(DataType.INTEGER));
-            var test = new BinaryExpression(new BinaryExpression(temp, IntegerConstant.ZERO, ">"),
-                new BinaryExpression(temp, new ArrayLengthFunction(model, lineNumbers), "<="), "and");
+            var test = temp.gt(IntegerConstant.ZERO).and(temp.le(new ArrayLengthFunction(model, lineNumbers)));
 
             model.pushStatementBlock(new StatementBlock());
             model.dynamicGotoGosubStmt(op, arrayReference(lineLabels, temp.minus1()), true);
@@ -471,7 +470,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         // strcpy arguments
         Expression targetVariable = null;
         Expression targetStart = IntegerConstant.ONE;
-        // TODO sourceStart and sourceEnd don't actually make it this far...
+        // TODO? sourceStart and sourceEnd don't actually make it this far for A$(n) = B$(p,q)
         Expression sourceStart = IntegerConstant.ONE;
         Expression sourceEnd = IntegerConstant.ZERO;
         if (srefExpr instanceof VariableReference sref) {
@@ -645,10 +644,10 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         else if ("or".equalsIgnoreCase(op) || "and".equalsIgnoreCase(op)) {
             // Ensure we have Boolean lhs and rhs expression.
             if (left.isType(DataType.INTEGER)) {
-                left = new BinaryExpression(left, IntegerConstant.ONE, "=");
+                left = left.eq(IntegerConstant.ONE);
             }
             if (right.isType(DataType.INTEGER)) {
-                right = new BinaryExpression(right, IntegerConstant.ONE, "=");
+                right = right.eq(IntegerConstant.ONE);
             }
         }
         return new BinaryExpression(left, right, op);
@@ -679,7 +678,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         if ("not".equalsIgnoreCase(op)) {
             // The backend treats NOT(integer) as an XOR to flip all bits (following VB as model)
             // So do an equality test instead.
-            return new BinaryExpression(e, IntegerConstant.ZERO, "=");
+            return e.eq(IntegerConstant.ZERO);
         }
         return new UnaryExpression(op, e);
     }
@@ -813,8 +812,8 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     public int distance(Expression start, Expression end) {
         if (start.isConstant() && end.isConstant()) {
-            return new BinaryExpression(new BinaryExpression(end, start, "-"),
-                    IntegerConstant.ONE, "+").asInteger().orElseThrow();
+            // (end-start)+1
+            return end.minus(start).plus(IntegerConstant.ONE).asInteger().orElseThrow();
         }
         if (start.equals(end)) {
             return 1;
