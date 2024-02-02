@@ -224,7 +224,7 @@ public class InliningVisitor extends Visitor implements RepeatingVisitor {
         public void visit(AssignmentStatement statement, VisitorContext context) {
             // this has to be a VariableReference on the LHS, right?
             var ref = dispatch(statement.getVar()).map(VariableReference.class::cast).orElseThrow();
-            var expr = dispatch(statement.getExpr()).orElseThrow();
+            var expr = dispatch(statement.getValue()).orElseThrow();
             addStatement(new AssignmentStatement(ref, expr));
         }
 
@@ -236,27 +236,7 @@ public class InliningVisitor extends Visitor implements RepeatingVisitor {
 
         @Override
         public Expression visit(VariableReference expression) {
-            if (expression.isArray()) {
-                var symbol = expression.getSymbol();
-                List<Expression> indexes = dispatchAll(expression.getIndexes());
-                if (replacements.containsKey(symbol)) {
-                    var replacement = replacements.get(symbol);
-                    if (replacement instanceof VariableReference ref) {
-                        symbol = ref.getSymbol();
-                        if (!ref.isArray() && symbol.numDimensions() > 0) {
-                            return new VariableReference(symbol, indexes);
-                        }
-                    }
-                    var msg = String.format("unable to combine '%s' and '%s'", expression, replacement);
-                    throw new RuntimeException(msg);
-                }
-                else {
-                    return new VariableReference(symbol, indexes);
-                }
-            }
-            else {
-                return replacements.getOrDefault(expression.getSymbol(), expression);
-            }
+            return replacements.getOrDefault(expression.getSymbol(), expression);
         }
 
         @Override
@@ -304,7 +284,7 @@ public class InliningVisitor extends Visitor implements RepeatingVisitor {
                 var replacement = replacements.get(expression.getSymbol());
                 if (replacement instanceof VariableReference ref) {
                     var symbol = ref.getSymbol();
-                    if (!ref.isArray() && symbol.numDimensions() > 0) {
+                    if (symbol.numDimensions() > 0) {
                         return new ArrayLengthFunction(expression.getModel(), symbol);
                     }
                 }
@@ -320,7 +300,7 @@ public class InliningVisitor extends Visitor implements RepeatingVisitor {
                 var replacement = replacements.get(expression.getSymbol());
                 if (replacement instanceof VariableReference ref) {
                     var symbol = ref.getSymbol();
-                    if (!ref.isArray() && symbol.numDimensions() > 0) {
+                    if (symbol.numDimensions() > 0) {
                         return new AddressOfFunction(symbol);
                     }
                 }

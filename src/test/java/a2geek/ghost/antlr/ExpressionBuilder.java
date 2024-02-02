@@ -27,14 +27,14 @@ public class ExpressionBuilder {
                     .build();
             return new VariableReference(symbol);
         }
-        public static VariableReference arrayReference(String name, DataType dataType, SymbolType symbolType,
+        public static Expression arrayReference(String name, DataType dataType, SymbolType symbolType,
                                                        DeclarationType declarationType, Expression expr) {
             var symbol = Symbol.variable(name + "()", symbolType)
                     .dataType(dataType)
                     .declarationType(declarationType)
                     .dimensions(1)
                     .build();
-            return new VariableReference(symbol, Arrays.asList(expr));
+            return CommonExpressions.arrayReference(symbol, expr);
         }
         public static BinaryExpression binary(String operator, Expression lhs, Expression rhs) {
             return new BinaryExpression(lhs, rhs, operator);

@@ -12,8 +12,8 @@ import java.util.List;
 public abstract class Visitor extends DispatchVisitor {
     @Override
     public void visit(AssignmentStatement statement, VisitorContext context) {
-        var expr = dispatch(statement.getExpr());
-        expr.ifPresent(statement::setExpr);
+        var expr = dispatch(statement.getValue());
+        expr.ifPresent(statement::setValue);
     }
 
     @Override
@@ -116,18 +116,6 @@ public abstract class Visitor extends DispatchVisitor {
         // These can't be changed, but it ensures any visitors see all expressions (see StatisticsVisitor)
         if (expression.getSymbol().defaultValues() != null) {
             expression.getSymbol().defaultValues().forEach(this::dispatch);
-        }
-
-        boolean changed = false;
-        var exprs = new ArrayList<Expression>();
-        for (var expr : expression.getIndexes()) {
-            var e = dispatch(expr);
-            changed |= e.isPresent();
-            exprs.add(e.orElse(expr));
-        }
-        if (changed) {
-            expression.setIndexes(exprs);
-            return expression;
         }
         return null;
     }

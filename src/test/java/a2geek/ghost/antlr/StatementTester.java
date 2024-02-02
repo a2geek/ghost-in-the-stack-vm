@@ -1,6 +1,8 @@
 package a2geek.ghost.antlr;
 
 import a2geek.ghost.model.*;
+import a2geek.ghost.model.expression.BinaryExpression;
+import a2geek.ghost.model.expression.UnaryExpression;
 import a2geek.ghost.model.expression.VariableReference;
 import a2geek.ghost.model.scope.Subroutine;
 import a2geek.ghost.model.statement.*;
@@ -15,7 +17,8 @@ import static a2geek.ghost.model.Symbol.in;
 import static a2geek.ghost.model.Symbol.named;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.matchesPattern;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public abstract class StatementTester {
     private Function<String,String> caseStrategy;
@@ -109,11 +112,15 @@ public abstract class StatementTester {
 
     public StatementTester assignment(String varName, Expression expr) {
         var stmt = nextStatement(AssignmentStatement.class);
-        assertFalse(stmt.getVar().isArray());
-        assertEquals(fixCase(varName), stmt.getVar().getSymbol().name());
+        if (stmt.getVar() instanceof VariableReference ref) {
+            assertEquals(fixCase(varName), ref.getSymbol().name());
+        }
+        else {
+            fail("unexpected left side of assignment: " + stmt);
+        }
         // disable expression test if it is null
         if (expr != null) {
-            assertEquals(expr, stmt.getExpr());
+            assertEquals(expr, stmt.getValue());
         }
         return this;
     }
@@ -121,7 +128,18 @@ public abstract class StatementTester {
     public StatementTester arrayAssignment(String varName, Expression index, Expression expr) {
         varName = fixCase(varName);
         var stmt = nextStatement(AssignmentStatement.class);
-        assertEquals(fixArrayName(varName), stmt.getVar().getSymbol().name());
+        if (stmt.getVar() instanceof VariableReference ref) {
+            assertEquals(1, ref.getSymbol().numDimensions());
+            assertEquals(fixCase(varName), ref.getSymbol().name());
+        }
+        // making assumptions of the expression structure...
+        else if (stmt.getVar() instanceof UnaryExpression unary && unary.getExpr() instanceof BinaryExpression bin && bin.getL() instanceof VariableReference ref) {
+            assertEquals(1, ref.getSymbol().numDimensions());
+            assertEquals(fixArrayName(varName), ref.getSymbol().name());
+        }
+        else {
+            fail("unexpected left side of assignment: " + stmt);
+        }
         return this;
     }
 

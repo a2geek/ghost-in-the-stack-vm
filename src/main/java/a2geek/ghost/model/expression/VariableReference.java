@@ -5,26 +5,18 @@ import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.Symbol;
 import a2geek.ghost.model.SymbolType;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Objects;
+import java.util.Optional;
 
 public class VariableReference implements Expression {
-    public static VariableReference with(Symbol symbol, Expression... indexes) {
-        if (indexes.length == 0) {
-            return new VariableReference(symbol);
-        }
-        return new VariableReference(symbol, Arrays.asList(indexes));
+    public static VariableReference with(Symbol symbol) {
+        return new VariableReference(symbol);
     }
 
     private Symbol symbol;
-    private List<Expression> indexes = new ArrayList<>();
 
     public VariableReference(Symbol symbol) {
         this.symbol = symbol;
-    }
-    public VariableReference(Symbol symbol, List<Expression> indexes) {
-        this.symbol = symbol;
-        this.indexes.addAll(indexes);
     }
 
     @Override
@@ -32,19 +24,8 @@ public class VariableReference implements Expression {
         return symbol.dataType();
     }
 
-    public boolean isArray() {
-        return indexes != null && indexes.size() > 0;
-    }
-
     public Symbol getSymbol() {
         return symbol;
-    }
-
-    public List<Expression> getIndexes() {
-        return indexes;
-    }
-    public void setIndexes(List<Expression> indexes) {
-        this.indexes = indexes;
     }
 
     @Override
@@ -54,19 +35,19 @@ public class VariableReference implements Expression {
 
     @Override
     public Optional<Integer> asInteger() {
-        if (symbol.hasDefaultValue(1)) return symbol.defaultValues().get(0).asInteger();
+        if (symbol.hasDefaultValue(1)) return symbol.defaultValues().getFirst().asInteger();
         return Optional.empty();
     }
 
     @Override
     public Optional<Boolean> asBoolean() {
-        if (symbol.hasDefaultValue(1)) return symbol.defaultValues().get(0).asBoolean();
+        if (symbol.hasDefaultValue(1)) return symbol.defaultValues().getFirst().asBoolean();
         return Optional.empty();
     }
 
     @Override
     public Optional<String> asString() {
-        if (symbol.hasDefaultValue(1)) return symbol.defaultValues().get(0).asString();
+        if (symbol.hasDefaultValue(1)) return symbol.defaultValues().getFirst().asString();
         return Optional.empty();
     }
 
@@ -75,20 +56,16 @@ public class VariableReference implements Expression {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         VariableReference that = (VariableReference) o;
-        return Objects.equals(symbol, that.symbol) && Objects.equals(indexes, that.indexes);
+        return Objects.equals(symbol, that.symbol);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(symbol, indexes);
+        return Objects.hash(symbol);
     }
 
     @Override
     public String toString() {
-        if (isArray()) {
-            return String.format("%s(%s)", symbol.name(),
-                    indexes.stream().map(Expression::toString).collect(Collectors.joining(",")));
-        }
         return symbol.name();
     }
 }

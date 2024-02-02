@@ -12,21 +12,28 @@ public class UnaryExpression implements Expression {
     private String op;
 
     public UnaryExpression(String op, Expression expr) {
-        this.expr = expr;
         this.op = op;
+        this.expr = switch (this.op) {
+            case "-", "not" -> expr.checkAndCoerce(DataType.INTEGER);
+            case "*" -> expr.checkAndCoerce(DataType.ADDRESS);
+            default -> throw new RuntimeException("unknown unary operation: " + this.op);
+        };
         this.type = expr.getType();
-        if (!expr.isType(DataType.INTEGER, DataType.BOOLEAN)) {
-            throw new RuntimeException("Unary operation must be of type Integer or Boolean");
-        }
     }
 
     @Override
     public boolean isConstant() {
+        if ("*".equals(this.op)) {
+            return false;
+        }
         return expr.isConstant();
     }
 
     @Override
     public Optional<Integer> asInteger() {
+        if ("*".equals(this.op)) {
+            return Optional.empty();
+        }
         return expr.asInteger().map(i -> switch (op) {
             case "-" -> -i;
             case "not" -> i==0 ? 1 : 0;
@@ -76,6 +83,9 @@ public class UnaryExpression implements Expression {
 
     @Override
     public String toString() {
+        if ("*".equals(op)) {
+            return String.format("%s(%s)", op, expr);
+        }
         return String.format("(%s %s)", op, expr);
     }
 }

@@ -1,7 +1,6 @@
 Capturing ideas
 ===============
 
-Secondary model should handle array pointer arithmetic? This could make code generation simpler.
 Validate memory footprint for variable allocation in some manner
 Looks like usage of Symbol may need to be checked? There is no constraint that a found variable is what is expected (aka a constant instead of a variable).
 Look at how bytecode is created - feels like Opcode and Directive can support Instruction more directly.

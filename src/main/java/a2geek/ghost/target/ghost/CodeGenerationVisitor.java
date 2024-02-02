@@ -125,30 +125,10 @@ public class CodeGenerationVisitor extends DispatchVisitor {
         throw new RuntimeException("symbol not in global frame: " + symbol);
     }
 
-    public void emitArrayAddressCalc(VariableReference var) {
-        // TODO assuming element size is 2 - hand optimized as well!
-        // TODO assuming array size is 1
-        // TODO this probably should be in the model to take advantage of optimizations!
-        //      A(0) => LOAD addr, LOADC 0, INCR, SHIFTL 1, ADD  .. should be LOAD addr, LOADC 2, ADD.
-        // FIXME not validating array size
-        // Base Array (symbol) + Expression * sizeof(element) + 2 (array size)
-        emitLoad(var.getSymbol());
-        dispatch(var.getIndexes().get(0));
-        code.emit(Opcode.INCR);
-        code.emit(Opcode.LOADC, 1);
-        code.emit(Opcode.SHIFTL);
-        code.emit(Opcode.ADD);
-    }
-
     public void emitLoad(Symbol symbol) {
         emitLoad(new VariableReference(symbol));
     }
     public void emitLoad(VariableReference var) {
-        if (var.isArray()) {
-            emitArrayAddressCalc(var);
-            code.emit(Opcode.ILOADW);
-            return;
-        }
         var symbol = var.getSymbol();
         switch (symbol.symbolType()) {
             case VARIABLE, PARAMETER, RETURN_VALUE -> {
@@ -176,15 +156,6 @@ public class CodeGenerationVisitor extends DispatchVisitor {
         }
     }
     public void emitStore(Symbol symbol) {
-        emitStore(new VariableReference(symbol));
-    }
-    public void emitStore(VariableReference var) {
-        if (var.isArray()) {
-            emitArrayAddressCalc(var);
-            code.emit(Opcode.ISTOREW);
-            return;
-        }
-        var symbol = var.getSymbol();
         switch (symbol.symbolType()) {
             case VARIABLE, PARAMETER, RETURN_VALUE -> {
                 switch (symbol.declarationType()) {
@@ -207,14 +178,21 @@ public class CodeGenerationVisitor extends DispatchVisitor {
         }
     }
 
-    public void assignment(VariableReference var, Expression expr) {
-        dispatch(expr);
-        emitStore(var);
-    }
-
     @Override
     public void visit(AssignmentStatement statement, VisitorContext context) {
-        assignment(statement.getVar(), statement.getExpr());
+        dispatch(statement.getValue());
+        if (statement.getVar() instanceof VariableReference ref) {
+            // A = <expr> (simple assignment)
+            emitStore(ref.getSymbol());
+        }
+        else if (statement.getVar() instanceof UnaryExpression unary && "*".equals(unary.getOp())) {
+            // *(<expr1>) = <expr2>   (dereferenced assignment)
+            dispatch(unary.getExpr());
+            code.emit(Opcode.ISTOREW);
+        }
+        else {
+            throw error("not valid assignment: %s", statement);
+        }
     }
 
     public void visit(EndStatement statement, VisitorContext context) {
@@ -360,8 +338,9 @@ public class CodeGenerationVisitor extends DispatchVisitor {
         if (this.frames.peek().scope() instanceof Function f) {
             var refs = this.frames.peek().scope().findAllLocalScope(in(SymbolType.RETURN_VALUE));
             if (refs.size() == 1 && hasReturnValue) {
-                assignment(new VariableReference(refs.getFirst()), statement.getExpr());
-            } else if (refs.size() != 0 || hasReturnValue) {
+                dispatch(statement.getExpr());
+                emitStore(refs.getFirst());
+            } else if (!refs.isEmpty() || hasReturnValue) {
                 throw new RuntimeException("function return mismatch");
             }
             code.emit(Opcode.GOTO, f.getExitLabel());
@@ -649,6 +628,11 @@ public class CodeGenerationVisitor extends DispatchVisitor {
                 default -> throw new RuntimeException("cannot only perform a NOT on a Boolean or Integer: " + expression);
             }
             code.emit(Opcode.XOR);
+        }
+        else if ("*".equals(expression.getOp())) {
+            // *(<expr>)   (dereferenced load)
+            dispatch(expression.getExpr());
+            code.emit(Opcode.ILOADW);       // FIXME
         }
         else {
             throw new RuntimeException("unknown unary operator: " + expression.getOp());

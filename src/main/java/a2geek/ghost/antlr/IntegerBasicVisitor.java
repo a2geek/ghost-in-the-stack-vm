@@ -5,6 +5,7 @@ import a2geek.ghost.antlr.generated.IntegerParser;
 import a2geek.ghost.model.*;
 import a2geek.ghost.model.expression.*;
 import a2geek.ghost.model.scope.ForFrame;
+import a2geek.ghost.model.scope.Function;
 import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.statement.EndStatement;
 import a2geek.ghost.model.statement.IfStatement;
@@ -13,9 +14,13 @@ import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.util.*;
 
+import static a2geek.ghost.model.CommonExpressions.arrayReference;
 import static a2geek.ghost.model.ModelBuilder.*;
 
 public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
+    /** This is a "fake" function that is only used within the visitor itself. */
+    public static final String LHS_STRING_NAME = "_LHS_STRING";
+    public final Function LHS_STRING;
     public static final String LINE_NUMBERS = "_line_numbers";
     public static final String LINE_LABELS = "_line_labels";
 
@@ -34,6 +39,11 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         model.uses(STRINGS_LIBRARY, exportSpecified("LEN"));
         model.uses(MISC_LIBRARY, exportSpecified("PDL"));
         model.uses(RUNTIME_LIBRARY, nothingExported()); // must be last to ensure exports are handled!
+        //
+        LHS_STRING = model.funcDeclBegin(LHS_STRING_NAME, DataType.STRING, List.of(
+                Symbol.variable("STRING", SymbolType.PARAMETER).dataType(DataType.STRING),
+                Symbol.variable("START", SymbolType.PARAMETER).dataType(DataType.INTEGER)));
+        model.funcDeclEnd();
     }
 
     public ModelBuilder getModel() {
@@ -352,7 +362,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
                 new BinaryExpression(temp, new ArrayLengthFunction(model, lineNumbers), "<="), "and");
 
             model.pushStatementBlock(new StatementBlock());
-            model.dynamicGotoGosubStmt(op, VariableReference.with(lineLabels, new BinaryExpression(temp, IntegerConstant.ONE, "-")), true);
+            model.dynamicGotoGosubStmt(op, arrayReference(lineLabels, temp.minus1()), true);
             var sb = model.popStatementBlock();
 
             model.assignStmt(temp, model.callFunction("runtime.line_index", Arrays.asList(expr, new VariableReference(lineNumbers))));
@@ -440,6 +450,9 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         if (ivar instanceof VariableReference ref) {
             model.assignStmt(ref, expr);
         }
+        else if (ivar instanceof UnaryExpression unary && "*".equals(unary.getOp())) {
+            model.assignStmt(unary, expr);
+        }
         else {
             throw new RuntimeException("unknown variable type: " + ivar);
         }
@@ -455,43 +468,27 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     public Expression visitStringAssignment(IntegerParser.StringAssignmentContext ctx) {
         var srefExpr = visit(ctx.sref());       // LHS
         var stringExpr = visit(ctx.sexpr());    // RHS
+        // strcpy arguments
+        Expression targetVariable = null;
+        Expression targetStart = IntegerConstant.ONE;
+        // TODO sourceStart and sourceEnd don't actually make it this far...
+        Expression sourceStart = IntegerConstant.ONE;
+        Expression sourceEnd = IntegerConstant.ZERO;
         if (srefExpr instanceof VariableReference sref) {
-            var targetVariable = sref.getSymbol();
-            var targetStart = switch (sref.getIndexes().size()) {
-                case 0 -> IntegerConstant.ONE;
-                case 1 -> sref.getIndexes().getFirst();
-                default -> throw new RuntimeException("string reference on left-hand side can only have 0 or 1 index");
-            };
-
-            if (stringExpr instanceof VariableReference expr) {
-                var sourceVariable = expr.getSymbol();
-                var sourceStart = switch (expr.getIndexes().size()) {
-                    case 0 -> IntegerConstant.ONE;
-                    case 1,2 -> expr.getIndexes().getFirst();
-                    default -> throw new RuntimeException("string reference on right-hand side can only have 0, 1, or 2 index");
-                };
-                var sourceEnd = switch (expr.getIndexes().size()) {
-                    case 0,1 -> IntegerConstant.ZERO;
-                    case 2 -> expr.getIndexes().get(1);
-                    default -> throw new RuntimeException("string reference on right-hand side can only have 0, 1, or 2 index");
-                };
-                model.callLibrarySubroutine("strcpy", VariableReference.with(targetVariable), targetStart,
-                        VariableReference.with(sourceVariable), sourceStart, sourceEnd);
-            }
-            else if (stringExpr instanceof StringConstant expr) {
-                var sourceEnd = expr.getValue().length();
-                model.callLibrarySubroutine("strcpy", VariableReference.with(targetVariable), targetStart,
-                        expr, IntegerConstant.ONE, new IntegerConstant(sourceEnd));
-            }
-            else {
-                model.callLibrarySubroutine("strcpy", VariableReference.with(targetVariable), targetStart,
-                        stringExpr, IntegerConstant.ONE, IntegerConstant.ZERO);
-            }
-            return null;
+            targetVariable = VariableReference.with(sref.getSymbol());
+        } else if (srefExpr instanceof FunctionExpression fref && LHS_STRING_NAME.equals(fref.getName())) {
+            var params = fref.getParameters();
+            targetVariable = params.get(0);
+            targetStart = params.get(1);
         }
         else {
-            throw new RuntimeException("unknown variable type: " + srefExpr);
+            throw new RuntimeException("unknown assignment variable type: " + srefExpr);
         }
+        if (stringExpr instanceof StringConstant str) {
+            sourceEnd = new IntegerConstant(str.getValue().length());
+        }
+        model.callLibrarySubroutine("strcpy", targetVariable, targetStart, stringExpr, sourceStart, sourceEnd);
+        return null;
     }
 
     @Override
@@ -734,7 +731,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         stringsDimmed.computeIfAbsent(ref, k -> null);
         if (ctx.start != null) {
             var start = visit(ctx.start);
-            return VariableReference.with(ref, start);
+            return new FunctionExpression(LHS_STRING, List.of(VariableReference.with(ref), start));
         }
         return VariableReference.with(ref);
     }
@@ -744,7 +741,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         var ref = model.addArrayVariable(ctx.n.getText(), DataType.INTEGER, 1);
         var expr = visit(ctx.e);
         model.checkArrayBounds(ref, expr, ctx.getStart().getLine());
-        return new VariableReference(ref, Arrays.asList(expr));
+        return arrayReference(ref, expr);
     }
 
     @Override
