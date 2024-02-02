@@ -297,6 +297,10 @@ public class ModelBuilder {
         AssignmentStatement assignmentStatement = new AssignmentStatement(ref, expr);
         addStatement(assignmentStatement);
     }
+    public void assignStmt(UnaryExpression unary, Expression expr) {
+        AssignmentStatement assignmentStatement = new AssignmentStatement(unary, expr);
+        addStatement(assignmentStatement);
+    }
     public void ifStmt(Expression expr, StatementBlock trueStatements, StatementBlock falseStatements) {
         IfStatement statement = new IfStatement(expr, trueStatements, falseStatements);
         addStatement(statement);

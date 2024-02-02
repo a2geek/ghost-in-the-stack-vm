@@ -5,7 +5,6 @@ import a2geek.ghost.model.Scope;
 import a2geek.ghost.model.Symbol;
 import a2geek.ghost.model.SymbolType;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -19,8 +18,7 @@ public class Subroutine extends Scope {
 
     public Subroutine(Scope parent, String name, List<Symbol.Builder> parameters) {
         super(parent, name, DeclarationType.LOCAL);
-        Collections.reverse(parameters);
-        parameters.forEach(this::addLocalSymbol);
+        parameters.reversed().forEach(this::addLocalSymbol);
     }
 
     public void add(Modifier modifier) {

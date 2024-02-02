@@ -140,6 +140,10 @@ public class BinaryExpression implements Expression {
         this.op = op.toLowerCase();
         this.descriptor = d;
     }
+    public BinaryExpression(String op, Expression l, Expression r) {
+        // this seems a better arrangement, at least sometimes?
+        this(l, r, op);
+    }
 
     @Override
     public Optional<Boolean> asBoolean() {

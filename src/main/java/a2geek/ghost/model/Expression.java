@@ -1,18 +1,21 @@
 package a2geek.ghost.model;
 
+import a2geek.ghost.model.expression.BinaryExpression;
+import a2geek.ghost.model.expression.IntegerConstant;
+
 import java.util.Optional;
 
 public interface Expression {
-    public DataType getType();
+    DataType getType();
 
-    public default boolean isType(DataType...types) {
+    default boolean isType(DataType... types) {
         for (var type : types) {
             if (type == getType()) return true;
         }
         return false;
     }
 
-    public default Expression checkAndCoerce(DataType target) {
+    default Expression checkAndCoerce(DataType target) {
         switch (target) {
             case ADDRESS -> {
                 if (isType(DataType.ADDRESS, DataType.STRING, DataType.INTEGER)) {
@@ -39,17 +42,24 @@ public interface Expression {
         throw new RuntimeException(message);
     }
 
-    public default boolean isConstant() {
+    default boolean isConstant() {
         return false;
     }
 
-    public default Optional<Integer> asInteger() {
+    default Optional<Integer> asInteger() {
         return Optional.empty();
     }
-    public default Optional<Boolean> asBoolean() {
+    default Optional<Boolean> asBoolean() {
         return Optional.empty();
     }
-    public default Optional<String> asString() {
+    default Optional<String> asString() {
         return Optional.empty();
+    }
+
+    default Expression minus1() {
+        return new BinaryExpression("-", this, IntegerConstant.ONE);
+    }
+    default Expression times2() {
+        return new BinaryExpression("<<", this, IntegerConstant.ONE);
     }
 }

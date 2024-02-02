@@ -16,6 +16,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static a2geek.ghost.model.CommonExpressions.arrayReference;
 import static a2geek.ghost.model.ModelBuilder.*;
 
 public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
@@ -67,9 +68,14 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
     @Override
     public Expression visitAssignment(BasicParser.AssignmentContext ctx) {
-        if (visit(ctx.id) instanceof VariableReference varRef) {
-            Expression expr = visit(ctx.a);
+        var ref = visit(ctx.id);
+        var expr = visit(ctx.a);
+        if (ref instanceof VariableReference varRef) {
             model.assignStmt(varRef, expr);
+            return null;
+        }
+        else if (ref instanceof UnaryExpression unaryRef) {
+            model.assignStmt(unaryRef, expr);
             return null;
         }
         else {
@@ -567,7 +573,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
      * sinc the array has a zero index but ON ... GOTO/GOSUB starts at index 1.
      * <pre>
      * IF N > 0 AND N <= UBOUND(ADDRS)+1 THEN
-     *     ( GOTO | GOSUB ) *ADDRS[N-1]
+     *     ( GOTO | GOSUB ) *(ADDRS+((N-1)*2))
      * END IF
      * </pre>
      */
@@ -588,7 +594,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         var test = new BinaryExpression(new BinaryExpression(expr, IntegerConstant.ZERO, ">"),
                 new BinaryExpression(expr, new ArrayLengthFunction(model, addrs), "<="), "and");
         model.pushStatementBlock(new StatementBlock());
-        model.dynamicGotoGosubStmt(op, VariableReference.with(addrs, new BinaryExpression(expr, IntegerConstant.ONE, "-")), true);
+        model.dynamicGotoGosubStmt(op, arrayReference(addrs, expr.minus1()), true);
         var sb = model.popStatementBlock();
         model.ifStmt(test, sb, null);
         return null;
@@ -832,8 +838,9 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         if (params.size() > 1) {
             throw new RuntimeException("only single dimension arrays supported at this time: " + ctx.getText());
         }
+        // TODO if the index is complex, it gets evaluated multiple times
         model.checkArrayBounds(existing.get(), params.getFirst(), ctx.getStart().getLine());
-        return new VariableReference(existing.get(), params);
+        return arrayReference(existing.get(), params.getFirst());
     }
 
     @Override
