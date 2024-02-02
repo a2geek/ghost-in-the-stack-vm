@@ -56,34 +56,37 @@ public interface Expression {
         return Optional.empty();
     }
 
-    default Expression minus1() {
+    default BinaryExpression minus1() {
         return new BinaryExpression("-", this, IntegerConstant.ONE);
     }
-    default Expression times2() {
+    default BinaryExpression times2() {
         return new BinaryExpression("*", this, IntegerConstant.TWO);
     }
-    default Expression plus(Expression rhs) {
+    default BinaryExpression plus(Expression rhs) {
         return new BinaryExpression("+", this, rhs);
     }
-    default Expression minus(Expression rhs) {
+    default BinaryExpression minus(Expression rhs) {
         return new BinaryExpression("-", this, rhs);
     }
-    default Expression lt(Expression rhs) {
+    default BinaryExpression lt(Expression rhs) {
         return new BinaryExpression("<", this, rhs);
     }
-    default Expression le(Expression rhs) {
+    default BinaryExpression le(Expression rhs) {
         return new BinaryExpression("<=", this, rhs);
     }
-    default Expression eq(Expression rhs) {
+    default BinaryExpression eq(Expression rhs) {
         return new BinaryExpression("=", this, rhs);
     }
-    default Expression ge(Expression rhs) {
+    default BinaryExpression ge(Expression rhs) {
         return new BinaryExpression(">=", this, rhs);
     }
-    default Expression gt(Expression rhs) {
+    default BinaryExpression gt(Expression rhs) {
         return new BinaryExpression(">", this, rhs);
     }
-    default Expression and(Expression rhs) {
+    default BinaryExpression and(Expression rhs) {
         return new BinaryExpression("and", this, rhs);
+    }
+    default BinaryExpression or(Expression rhs) {
+        return new BinaryExpression("or", this, rhs);
     }
 }

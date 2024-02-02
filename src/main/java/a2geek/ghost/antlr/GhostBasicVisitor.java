@@ -153,14 +153,11 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                 }
                 else if (caseExpr.b != null) {
                     // a=expr 'to' b=expr :: expr >= a AND expr <= b
-                    binex = new BinaryExpression(
-                            new BinaryExpression(expr, visit(caseExpr.a), ">="),
-                            new BinaryExpression(expr, visit(caseExpr.b), "<="),
-                            "and");
+                    binex = expr.ge(visit(caseExpr.a)).and(expr.le(visit(caseExpr.b)));
                 }
                 else {
                     // a=expr :: expr = a
-                    binex = new BinaryExpression(expr, visit(caseExpr.a), "=");
+                    binex = expr.eq(visit(caseExpr.a));
                 }
 
                 // Concatenate CASE expressions together
@@ -168,7 +165,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                     test = binex;
                 }
                 else {
-                    test = new BinaryExpression(test, binex, "or");
+                    test = test.or(binex);
                 }
             }
 
@@ -254,16 +251,17 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         forExitLabels.push(exitLabel);
         optVisit(ctx.s);
         forExitLabels.pop();
-        model.assignStmt(ref, new BinaryExpression(ref, step, "+"));
+        model.assignStmt(ref, ref.plus(step));
         model.gotoGosubStmt("goto", loopLabel);
         var sb = model.popStatementBlock();
-        var positive = new IfStatement(new BinaryExpression(ref, end, "<="), sb, null);
-        var negative = new IfStatement(new BinaryExpression(ref, end, ">="), sb, null);
+        var positive = new IfStatement(ref.le(end), sb, null);
+        var negative = new IfStatement(ref.ge(end), sb, null);
 
         // generating code
         model.assignStmt(ref, start);
         model.labelStmt(loopLabel);
-        model.ifStmt(new BinaryExpression(model.callFunction("SGN", Arrays.asList(step)), IntegerConstant.ZERO, ">="),
+        // IF (SGN(step) >= 0)
+        model.ifStmt(model.callFunction("SGN", Arrays.asList(step)).ge(IntegerConstant.ZERO),
                 StatementBlock.with(positive), StatementBlock.with(negative));
         model.labelStmt(exitLabel);
         return null;
@@ -572,7 +570,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
      * Pseudocode. NOTE: the upper range check needs to extend array length by one
      * sinc the array has a zero index but ON ... GOTO/GOSUB starts at index 1.
      * <pre>
-     * IF N > 0 AND N <= UBOUND(ADDRS)+1 THEN
+     * IF N > 0 AND N <= UBOUND(ADDRS) THEN
      *     ( GOTO | GOSUB ) *(ADDRS+((N-1)*2))
      * END IF
      * </pre>
@@ -591,8 +589,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         var name = String.format("ON_%s", op).toUpperCase();
         var addrs = model.addArrayDefaultVariable(name, DataType.ADDRESS, 1, addrof);
         // TODO optimize "expr" reference due to multiple references
-        var test = new BinaryExpression(new BinaryExpression(expr, IntegerConstant.ZERO, ">"),
-                new BinaryExpression(expr, new ArrayLengthFunction(model, addrs), "<="), "and");
+        var test = expr.gt(IntegerConstant.ZERO).and(expr.le(new ArrayLengthFunction(model, addrs)));
         model.pushStatementBlock(new StatementBlock());
         model.dynamicGotoGosubStmt(op, arrayReference(addrs, expr.minus1()), true);
         var sb = model.popStatementBlock();
@@ -768,11 +765,12 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             var e = visit(decl.e);
             if (e.isConstant()) {
                 // we need to collapse any expressions to a single value
-                switch (e.getType()) {
-                    case INTEGER -> e = new IntegerConstant(e.asInteger().orElseThrow());
-                    case BOOLEAN -> e = new BooleanConstant(e.asBoolean().orElseThrow());
-                    case STRING -> e = new StringConstant(e.asString().orElseThrow());
-                }
+                e = switch (e.getType()) {
+                    case INTEGER -> new IntegerConstant(e.asInteger().orElseThrow());
+                    case BOOLEAN -> new BooleanConstant(e.asBoolean().orElseThrow());
+                    case STRING -> new StringConstant(e.asString().orElseThrow());
+                    default -> e;
+                };
                 model.addConstant(decl.id.getText(), e);
             }
             else {
