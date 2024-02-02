@@ -6,7 +6,7 @@ import a2geek.ghost.model.Statement;
 public class DynamicGotoGosubStatement implements Statement {
     private String op;
     private Expression target;
-    private boolean needsAddressAdjustment;
+    private final boolean needsAddressAdjustment;
 
     public DynamicGotoGosubStatement(String op, Expression target, boolean needsAddressAdjustment) {
         this.op = op;

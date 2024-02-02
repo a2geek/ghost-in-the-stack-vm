@@ -59,9 +59,9 @@ public enum Opcode {
     LOADA(2);
 
 
-    int argc;
+    private final int argc;
 
-    private Opcode(int argc) {
+    Opcode(int argc) {
         this.argc = argc;
     }
 

@@ -7,8 +7,8 @@ import a2geek.ghost.model.StatementBlock;
 
 public class IfStatement implements Statement {
     private Expression expression;
-    private StatementBlock trueStatements;
-    private StatementBlock falseStatements;
+    private final StatementBlock trueStatements;
+    private final StatementBlock falseStatements;
 
     public IfStatement(Expression expression, StatementBlock trueStatements, StatementBlock falseStatement) {
         setExpression(expression);

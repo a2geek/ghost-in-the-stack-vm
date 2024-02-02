@@ -11,7 +11,7 @@ public record Instruction (String label, Opcode opcode, Directive directive, Int
     }
     public int size() {
         if (opcode != null) {
-            return opcode.argc + 1;
+            return opcode.getArgumentCount() + 1;
         }
         else if (directive == Directive.CONSTANT) {
             return constantValue.size();

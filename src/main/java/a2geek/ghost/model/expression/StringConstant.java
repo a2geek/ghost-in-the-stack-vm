@@ -7,7 +7,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 public class StringConstant implements Expression {
-    private String value;
+    private final String value;
 
     public StringConstant(String value) {
         this.value = value;

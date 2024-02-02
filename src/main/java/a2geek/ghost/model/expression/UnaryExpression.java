@@ -7,9 +7,9 @@ import java.util.Objects;
 import java.util.Optional;
 
 public class UnaryExpression implements Expression {
-    private DataType type;
+    private final DataType type;
     private Expression expr;
-    private String op;
+    private final String op;
 
     public UnaryExpression(String op, Expression expr) {
         this.op = op;

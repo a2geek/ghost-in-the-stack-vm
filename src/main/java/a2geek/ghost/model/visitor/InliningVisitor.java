@@ -73,7 +73,7 @@ public class InliningVisitor extends Visitor implements RepeatingVisitor {
     }
 
     public static class RewriteVisitor extends DispatchVisitor {
-        private Stack<StatementBlock> statementBlocks = new Stack<>();
+        private final Stack<StatementBlock> statementBlocks = new Stack<>();
         private final Scope sourceScope;
         private final Scope targetScope;
         private final Map<Symbol,Expression> replacements = new HashMap<>();

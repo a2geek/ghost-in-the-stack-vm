@@ -4,7 +4,7 @@ import a2geek.ghost.model.Statement;
 import a2geek.ghost.model.Symbol;
 
 public class GotoGosubStatement implements Statement {
-    private String op;
+    private final String op;
     private Symbol label;
 
     public GotoGosubStatement(String op, Symbol label) {

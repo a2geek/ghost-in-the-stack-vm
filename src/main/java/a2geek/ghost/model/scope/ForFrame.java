@@ -9,11 +9,11 @@ import java.util.function.BiFunction;
 
 public class ForFrame {
     private static int forNumber = 0;
-    private Symbol varRef;
-    private Symbol endRef;
-    private Symbol stepRef;
-    private Symbol nextRef;
-    private Symbol exitRef;
+    private final Symbol varRef;
+    private final Symbol endRef;
+    private final Symbol stepRef;
+    private final Symbol nextRef;
+    private final Symbol exitRef;
 
     public ForFrame(Symbol varRef, Scope scope) {
         this.varRef = varRef;

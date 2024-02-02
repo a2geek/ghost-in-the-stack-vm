@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
 
 import static a2geek.ghost.antlr.ExpressionBuilder.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -363,8 +364,8 @@ public class GhostBasicVisitorTest {
 
     @Test
     public void testSubArrayParameter() {
-        var expectedParameters = Arrays.asList(
-            Symbol.variable("a", SymbolType.PARAMETER).dataType(DataType.INTEGER).dimensions(1).build()
+        var expectedParameters = Collections.singletonList(
+                Symbol.variable("a", SymbolType.PARAMETER).dataType(DataType.INTEGER).dimensions(1).build()
         );
         var arraySymbol = new VariableReference(Symbol.variable("A", SymbolType.VARIABLE)
             .dataType(DataType.INTEGER)

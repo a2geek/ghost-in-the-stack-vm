@@ -90,10 +90,10 @@ public class BinaryExpression implements Expression {
         ));
     }
 
-    private Descriptor descriptor;
+    private final Descriptor descriptor;
     private Expression l;
     private Expression r;
-    private String op;
+    private final String op;
 
     public Expression getL() {
         return l;

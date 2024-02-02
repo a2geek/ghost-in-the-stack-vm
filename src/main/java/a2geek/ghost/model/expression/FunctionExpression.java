@@ -64,10 +64,10 @@ public class FunctionExpression implements Expression {
                 .orElse(false);
     }
 
-    private String name;
-    private Function function;
+    private final String name;
+    private final Function function;
     private List<Expression> parameters;
-    private DataType returnType;
+    private final DataType returnType;
 
     public FunctionExpression(String name, List<Expression> parameters) {
         this.name = name;
@@ -76,6 +76,7 @@ public class FunctionExpression implements Expression {
         if (descriptor.isEmpty()) {
             throw new RuntimeException("Unknown function: " + name);
         }
+        this.function = null;
         this.returnType = descriptor.get().returnType();
     }
     public FunctionExpression(Function function, List<Expression> expr) {

@@ -7,8 +7,8 @@ import java.util.List;
 import java.util.Objects;
 
 public class CodeBlock {
-    private List<Instruction> codeSegment = new ArrayList<>();
-    private List<Instruction> dataSegment = new ArrayList<>();
+    private final List<Instruction> codeSegment = new ArrayList<>();
+    private final List<Instruction> dataSegment = new ArrayList<>();
 
     public List<Instruction> getInstructions() {
         var instructions = new ArrayList<>(codeSegment);

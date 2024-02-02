@@ -6,8 +6,8 @@ import java.util.regex.Pattern;
 
 public class LabelOptimizer {
     private static final Pattern LINE_NUMBER = Pattern.compile("_L\\d+_\\d+", Pattern.CASE_INSENSITIVE);
-    private static Map<String,String> replaceLabels = new HashMap<>();
-    private static Set<String> usedLabels = new HashSet<>();
+    private static final Map<String,String> replaceLabels = new HashMap<>();
+    private static final Set<String> usedLabels = new HashSet<>();
 
     public static void optimize(List<Instruction> code) {
         replaceLabels.clear();

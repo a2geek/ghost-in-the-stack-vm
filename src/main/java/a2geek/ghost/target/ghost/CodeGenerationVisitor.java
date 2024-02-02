@@ -13,11 +13,11 @@ import static a2geek.ghost.model.Symbol.*;
 
 public class CodeGenerationVisitor extends DispatchVisitor {
     public static final String DEFAULT_ERROR_HANDLER = "RUNTIME.DEFAULTERRORHANDLER";
-    private Stack<Frame> frames = new Stack<>();
-    private CodeBlock code = new CodeBlock();
+    private final Stack<Frame> frames = new Stack<>();
+    private final CodeBlock code = new CodeBlock();
     private int labelNumber;
-    private Set<String> scopesUsed = new HashSet<>();
-    private Set<String> scopesProcessed = new HashSet<>();
+    private final Set<String> scopesUsed = new HashSet<>();
+    private final Set<String> scopesProcessed = new HashSet<>();
 
     public List<Instruction> getInstructions() {
         return code.getInstructions();
@@ -93,7 +93,7 @@ public class CodeGenerationVisitor extends DispatchVisitor {
                     .map(Optional::get)
                     .toList();
                 var label = label("INTARYCONST");
-                String actual = code.emitConstant(label.get(0), integerArray);
+                String actual = code.emitConstant(label.getFirst(), integerArray);
                 code.emit(Opcode.LOADA, actual);
                 emitStore(symbol);
             } else if (dataType == DataType.ADDRESS) {
@@ -103,7 +103,7 @@ public class CodeGenerationVisitor extends DispatchVisitor {
                     .map(AddressOfFunction::getSymbol)
                     .toList();
                 var label = label("ADDRARYCONST");
-                var actual = code.emitConstantLabels(label.get(0), labels);
+                var actual = code.emitConstantLabels(label.getFirst(), labels);
                 code.emit(Opcode.LOADA, actual);
                 emitStore(symbol);
             } else {
@@ -366,7 +366,7 @@ public class CodeGenerationVisitor extends DispatchVisitor {
                 .orElseThrow(() -> new RuntimeException(subFullName + " not found"));
         if (scope instanceof Subroutine sub) {
             scopesUsed.add(sub.getFullPathName());
-            boolean hasParameters = statement.getParameters().size() != 0;
+            boolean hasParameters = !statement.getParameters().isEmpty();
             for (Expression expr : statement.getParameters()) {
                 dispatch(expr);
             }
@@ -412,7 +412,7 @@ public class CodeGenerationVisitor extends DispatchVisitor {
     public void visit(Subroutine subroutine) {
         var exitLabel = label("SUBEXIT").getFirst();
         subroutine.setExitLabel(exitLabel);
-        var hasLocalScope = subroutine.findAllLocalScope(is(DeclarationType.LOCAL).and(in(SymbolType.VARIABLE, SymbolType.PARAMETER))).size() != 0;
+        var hasLocalScope = !subroutine.findAllLocalScope(is(DeclarationType.LOCAL).and(in(SymbolType.VARIABLE, SymbolType.PARAMETER))).isEmpty();
         var frame = frames.push(Frame.create(subroutine));
         code.emit(subroutine.getFullPathName());
         if (hasLocalScope) setupLocalFrame(frame);
@@ -605,7 +605,7 @@ public class CodeGenerationVisitor extends DispatchVisitor {
                 code.emit(Opcode.LOADC, 0);
                 emitParameters.run();
                 code.emit(Opcode.GOSUB, func.getFullPathName());
-                var hasParameters = function.getParameters().size() != 0;
+                var hasParameters = !function.getParameters().isEmpty();
                 if (hasParameters) {
                     // FIXME when we have more datatypes this will be incorrect
                     code.emit(Opcode.POPN, function.getParameters().size() * 2);

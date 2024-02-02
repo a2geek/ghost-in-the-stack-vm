@@ -16,8 +16,8 @@ public class StatementBlock {
         }
         return sb;
     }
-    private List<Statement> initializationStatements = new ArrayList<>();
-    private List<Statement> statements = new ArrayList<>();
+    private final List<Statement> initializationStatements = new ArrayList<>();
+    private final List<Statement> statements = new ArrayList<>();
 
     public List<Statement> getInitializationStatements() {
         return initializationStatements;

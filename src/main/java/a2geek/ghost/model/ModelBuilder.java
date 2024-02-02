@@ -30,18 +30,18 @@ public class ModelBuilder {
     public static final String STRINGS_LIBRARY = "strings";
     public static final String TEXT_LIBRARY = "text";
 
-    private Function<String,String> caseStrategy;
+    private final Function<String,String> caseStrategy;
     private Function<String,String> arrayNameStrategy = s -> s;
     private Function<String,String> controlCharsFn = s -> s;
     private Stack<Scope> scope = new Stack<>();
-    private Stack<StatementBlock> statementBlock = new Stack<>();
+    private final Stack<StatementBlock> statementBlock = new Stack<>();
     // TODO determine if this is required any more!
-    private Set<String> librariesIncluded = new HashSet<>();
+    private final Set<String> librariesIncluded = new HashSet<>();
     private boolean trace = false;
     private boolean boundsCheck = true;
     private String heapFunction;
     /** Track array dimensions */
-    private Map<Symbol, Expression> arrayDims = new HashMap<>();
+    private final Map<Symbol, Expression> arrayDims = new HashMap<>();
 
     public ModelBuilder(Function<String,String> caseStrategy) {
         this.caseStrategy = caseStrategy;
@@ -271,6 +271,9 @@ public class ModelBuilder {
             || scope.peek().findFirst(named(id).and(in(SymbolType.FUNCTION))).isPresent();
     }
 
+    public Expression callFunction(String name, Expression... params) {
+        return callFunction(name, Arrays.asList(params));
+    }
     public Expression callFunction(String name, List<Expression> params) {
         ensureModuleIncluded(name);
         var id = fixCase(name);
@@ -410,7 +413,7 @@ public class ModelBuilder {
     public void allocateIntegerArray(Symbol symbol, Expression size) {
         var varRef = VariableReference.with(symbol);
         var bytes = size.plus(IntegerConstant.TWO).times2();
-        var allocFn = callFunction(heapFunction, Arrays.asList(bytes));
+        var allocFn = callFunction(heapFunction, bytes);
         assignStmt(varRef, allocFn);
         pokeStmt("pokew", varRef, size);
     }
@@ -432,13 +435,13 @@ public class ModelBuilder {
     public void allocateStringArray(Symbol symbol, Expression length) {
         var varRef = VariableReference.with(symbol);
         var bytes = length.plus(IntegerConstant.TWO);
-        var allocFn = callFunction(heapFunction, Arrays.asList(bytes));
+        var allocFn = callFunction(heapFunction, bytes);
         assignStmt(varRef, allocFn);
         pokeStmt("poke", varRef, length);
     }
 
     public void registerDimArray(Symbol symbol, Expression size) {
-        arrayDims.merge(symbol, size, (oldSize, newSize) -> oldSize == null ? newSize : oldSize);
+        arrayDims.merge(symbol, size, (oldSize, newSize) -> oldSize);
     }
     public Expression getArrayDim(Symbol symbol) {
         if (symbol.symbolType() == SymbolType.PARAMETER) {

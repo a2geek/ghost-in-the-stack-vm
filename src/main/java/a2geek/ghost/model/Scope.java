@@ -9,12 +9,12 @@ import static a2geek.ghost.model.Symbol.in;
 import static a2geek.ghost.model.Symbol.named;
 
 public class Scope extends StatementBlock {
-    private Function<String,String> caseStrategy;
+    private final Function<String,String> caseStrategy;
     private String name;
     private Scope parent;
-    private DeclarationType defaultDeclarationType;
-    private List<Symbol> symbolTable = new ArrayList<>();
-    private Set<Symbol> exports = new HashSet<>();
+    private final DeclarationType defaultDeclarationType;
+    private final List<Symbol> symbolTable = new ArrayList<>();
+    private final Set<Symbol> exports = new HashSet<>();
     private OnErrorContext onErrorContext;
     /** Tracking a distinct global label number to prevent name collisions. */
     private static int symbolNumber = 1;

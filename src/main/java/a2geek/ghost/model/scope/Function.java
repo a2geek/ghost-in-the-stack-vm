@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 import static a2geek.ghost.model.Symbol.in;
 
 public class Function extends Subroutine {
-    private DataType dataType;
+    private final DataType dataType;
 
     public Function(Scope parent, Symbol.Builder func, List<Symbol.Builder> parameters) {
         super(parent, func.name(), parameters);

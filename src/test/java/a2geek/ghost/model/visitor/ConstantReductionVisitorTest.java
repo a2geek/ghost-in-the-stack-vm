@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import static a2geek.ghost.antlr.ExpressionBuilder.*;
 
 public class ConstantReductionVisitorTest {
-    private ConstantReductionVisitor visitor = new ConstantReductionVisitor();
+    private final ConstantReductionVisitor visitor = new ConstantReductionVisitor();
     private void assertEquals(Expression expected, Expression testCase) {
         var actual = visitor.dispatch(testCase);
         Assertions.assertEquals(expected, actual.orElseThrow());

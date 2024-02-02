@@ -12,7 +12,7 @@ public class IntegerConstant implements Expression {
     public static final IntegerConstant TWO = new IntegerConstant(2);
     public static final IntegerConstant NEGATIVE_ONE = new IntegerConstant(-1);
 
-    private int value;
+    private final int value;
 
     @Override
     public boolean isConstant() {

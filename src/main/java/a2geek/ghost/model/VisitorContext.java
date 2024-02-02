@@ -4,8 +4,8 @@ import java.util.List;
 
 public class VisitorContext {
     private int index;
-    private Scope scope;
-    private List<Statement> statements;
+    private final Scope scope;
+    private final List<Statement> statements;
 
     public VisitorContext(Scope scope, List<Statement> statements, int index) {
         this.scope = scope;

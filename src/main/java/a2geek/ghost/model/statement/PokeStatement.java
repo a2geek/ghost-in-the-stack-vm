@@ -5,7 +5,7 @@ import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.Statement;
 
 public class PokeStatement implements Statement {
-    private String op;
+    private final String op;
     private Expression a;
     private Expression b;
 

@@ -24,13 +24,13 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     public static final String LINE_NUMBERS = "_line_numbers";
     public static final String LINE_LABELS = "_line_labels";
 
-    private ModelBuilder model;
-    private SortedMap<Integer,Symbol> lineLabels = new TreeMap<>();
-    private Map<Symbol,ForFrame> forFrames = new HashMap<>();
-    private Map<Symbol,Expression> stringsDimmed = new HashMap<>();
-    private Map<Symbol,Integer> knownSizeTempStringVariables = new HashMap<>();
-    private Map<Symbol,Set<Symbol>> unknownSizetempStringVariables = new HashMap<>();
-    private Set<Symbol> tempStringVariablesInUse = new HashSet<>();
+    private final ModelBuilder model;
+    private final SortedMap<Integer,Symbol> lineLabels = new TreeMap<>();
+    private final Map<Symbol,ForFrame> forFrames = new HashMap<>();
+    private final Map<Symbol,Expression> stringsDimmed = new HashMap<>();
+    private final Map<Symbol,Integer> knownSizeTempStringVariables = new HashMap<>();
+    private final Map<Symbol,Set<Symbol>> unknownSizetempStringVariables = new HashMap<>();
+    private final Set<Symbol> tempStringVariablesInUse = new HashSet<>();
 
     public IntegerBasicVisitor(ModelBuilder model) {
         this.model = model;
@@ -277,7 +277,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         var sb = model.popStatementBlock();
         var positive = new IfStatement(varRef.le(endRef), sb, null);
         var negative = new IfStatement(varRef.ge(endRef), sb, null);
-        model.ifStmt(model.callFunction("SGN", Arrays.asList(step)).ge(IntegerConstant.ZERO),
+        model.ifStmt(model.callFunction("SGN", step).ge(IntegerConstant.ZERO),
                 StatementBlock.with(positive), StatementBlock.with(negative));
         model.dynamicGotoGosubStmt("goto", VariableReference.with(frame.getExitRef()), false);
 
@@ -468,7 +468,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         var srefExpr = visit(ctx.sref());       // LHS
         var stringExpr = visit(ctx.sexpr());    // RHS
         // strcpy arguments
-        Expression targetVariable = null;
+        Expression targetVariable;
         Expression targetStart = IntegerConstant.ONE;
         // TODO? sourceStart and sourceEnd don't actually make it this far for A$(n) = B$(p,q)
         Expression sourceStart = IntegerConstant.ONE;
@@ -706,14 +706,14 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     public Expression visitIntArgFunc(IntegerParser.IntArgFuncContext ctx) {
         var f = ctx.f.getText();
         var e = visit(ctx.e);
-        return model.callFunction(f, Arrays.asList(e));
+        return model.callFunction(f, e);
     }
 
     @Override
     public Expression visitStrArgFunc(IntegerParser.StrArgFuncContext ctx) {
         var f = ctx.f.getText();
         var s = visit(ctx.s);
-        return model.callFunction(f, Arrays.asList(s));
+        return model.callFunction(f, s);
     }
 
     @Override

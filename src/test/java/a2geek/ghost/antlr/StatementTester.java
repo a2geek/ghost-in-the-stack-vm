@@ -21,8 +21,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public abstract class StatementTester {
-    private Function<String,String> caseStrategy;
-    private Function<String,String> arrayNameStrategy;
+    private final Function<String,String> caseStrategy;
+    private final Function<String,String> arrayNameStrategy;
     private int statementNumber;
 
     public StatementTester(
@@ -294,7 +294,7 @@ public abstract class StatementTester {
 
     public static class ScopeTester extends StatementTester {
         private StatementTester parent;
-        private Scope scope;
+        private final Scope scope;
 
         public ScopeTester(StatementTester parent, Scope scope) {
             super(parent.caseStrategy, parent.arrayNameStrategy);
@@ -328,9 +328,9 @@ public abstract class StatementTester {
     }
 
     public static class IfStatementTester extends StatementTester {
-        private StatementTester parent;
-        private StatementBlock block;
-        private StatementBlock nextBlock;
+        private final StatementTester parent;
+        private final StatementBlock block;
+        private final StatementBlock nextBlock;
 
         public IfStatementTester(StatementTester parent, StatementBlock block, StatementBlock nextBlock) {
             super(parent.caseStrategy, parent.arrayNameStrategy);
@@ -367,8 +367,8 @@ public abstract class StatementTester {
     }
 
     public static class StatementBlockTester extends StatementTester {
-        private StatementTester parent;
-        private StatementBlock block;
+        private final StatementTester parent;
+        private final StatementBlock block;
 
         public StatementBlockTester(StatementTester parent, StatementBlock block) {
             super(parent.caseStrategy, parent.arrayNameStrategy);

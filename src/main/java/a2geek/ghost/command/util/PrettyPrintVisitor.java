@@ -20,7 +20,7 @@ public class PrettyPrintVisitor {
 
     private int indent = 0;
     private final int indentIncrement;
-    private StringBuilder sb = new StringBuilder();
+    private final StringBuilder sb = new StringBuilder();
 
     private PrettyPrintVisitor(int indentIncrement) {
         this.indentIncrement = indentIncrement;

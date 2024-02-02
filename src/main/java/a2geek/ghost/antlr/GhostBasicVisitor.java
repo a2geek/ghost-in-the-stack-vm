@@ -20,18 +20,16 @@ import static a2geek.ghost.model.CommonExpressions.arrayReference;
 import static a2geek.ghost.model.ModelBuilder.*;
 
 public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
-    private ModelBuilder model;
-    private Map<String,Symbol> gotoGosubLabels = new HashMap<>();
-    private Stack<Symbol> forExitLabels = new Stack<>();
-    private Stack<Symbol> doExitLabels = new Stack<>();
-    private Stack<Symbol> repeatExitLabels = new Stack<>();
-    private Stack<Symbol> whileExitLabels = new Stack<>();
+    private final ModelBuilder model;
+    private final Map<String,Symbol> gotoGosubLabels = new HashMap<>();
+    private final Stack<Symbol> forExitLabels = new Stack<>();
+    private final Stack<Symbol> doExitLabels = new Stack<>();
+    private final Stack<Symbol> repeatExitLabels = new Stack<>();
+    private final Stack<Symbol> whileExitLabels = new Stack<>();
 
     public GhostBasicVisitor(ModelBuilder model) {
         this.model = model;
-        Intrinsic.CPU_REGISTERS.forEach(name -> {
-            model.addVariable(name, SymbolType.INTRINSIC, DataType.INTEGER);
-        });
+        Intrinsic.CPU_REGISTERS.forEach(name -> model.addVariable(name, SymbolType.INTRINSIC, DataType.INTEGER));
     }
 
     public ModelBuilder getModel() {
@@ -146,7 +144,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             Expression test = null;
             for (var caseExpr : fragment.selectCaseExpr()) {
                 // Generate the specific CASE expression
-                BinaryExpression binex = null;
+                BinaryExpression binex;
                 if (caseExpr.op != null) {
                     // 'is'? op=( '<' | '<=' | '>' | '>=' | '=' | '<>' ) a=expr :: expr OP a
                     binex = new BinaryExpression(expr, visit(caseExpr.a), caseExpr.op.getText());
@@ -261,7 +259,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         model.assignStmt(ref, start);
         model.labelStmt(loopLabel);
         // IF (SGN(step) >= 0)
-        model.ifStmt(model.callFunction("SGN", Arrays.asList(step)).ge(IntegerConstant.ZERO),
+        model.ifStmt(model.callFunction("SGN", step).ge(IntegerConstant.ZERO),
                 StatementBlock.with(positive), StatementBlock.with(negative));
         model.labelStmt(exitLabel);
         return null;
@@ -315,7 +313,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             case "while" -> model.ifStmt(test, StatementBlock.EMPTY, gotoExitStatement);
             case "until" -> model.ifStmt(test, gotoExitStatement, null);
             default -> throw new RuntimeException("unexpected do loop type: " + ctx.op.getText());
-        };
+        }
         doExitLabels.push(exitLabel);
         optVisit(ctx.s);
         doExitLabels.pop();
@@ -375,7 +373,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             case "while" -> model.ifStmt(test, gotoStatement, null);
             case "until" -> model.ifStmt(test, StatementBlock.EMPTY, gotoStatement);
             default -> throw new RuntimeException("unexpected do loop type: " + ctx.op.getText());
-        };
+        }
         model.labelStmt(exitLabel);
 
         return null;
@@ -630,7 +628,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                 if (dimensions.size() > 1) {
                     throw new RuntimeException("only support 1 dimensional arrays at this time: " + id);
                 }
-                if (modifiers.contains(IdModifier.STATIC) && dimensions.size() > 0) {
+                if (modifiers.contains(IdModifier.STATIC) && !dimensions.isEmpty()) {
                     // FIXME?
                     System.out.println("WARNING: static array size set by assignment");
                 }
@@ -651,7 +649,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                     }
                 }
                 if (isArray && modifiers.contains(IdModifier.STATIC)) {
-                    dimensions.clear();;
+                    dimensions.clear();
                     dimensions.add(new IntegerConstant(defaultValues.size()));
                 }
                 names.add(id);
@@ -906,10 +904,10 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                     .dimensions(dimensions.size());
         }
         public boolean isArray() {
-            return dimensions != null && dimensions.size() > 0;
+            return dimensions != null && !dimensions.isEmpty();
         }
         public boolean hasDefaultValues() {
-            return defaultValues != null && defaultValues.size() > 0;
+            return defaultValues != null && !defaultValues.isEmpty();
         }
     }
 }

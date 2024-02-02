@@ -56,7 +56,7 @@ public class CallSubroutine implements Statement {
         return Optional.ofNullable(SUBS.get(name));
     }
 
-    private Subroutine subroutine;
+    private final Subroutine subroutine;
     private List<Expression> parameters;
 
     public CallSubroutine(Subroutine subroutine, List<Expression> parameters) {

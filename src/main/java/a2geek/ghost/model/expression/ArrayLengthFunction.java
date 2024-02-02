@@ -9,8 +9,8 @@ import java.util.Objects;
 import java.util.Optional;
 
 public class ArrayLengthFunction implements Expression {
-    private Symbol symbol;
-    private ModelBuilder model;
+    private final Symbol symbol;
+    private final ModelBuilder model;
     public ArrayLengthFunction(ModelBuilder model, Symbol symbol) {
         this.symbol = symbol;
         this.model = model;

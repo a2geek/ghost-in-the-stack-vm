@@ -7,7 +7,7 @@ import a2geek.ghost.model.Symbol;
 import java.util.Objects;
 
 public class AddressOfFunction implements Expression {
-    private Symbol symbol;
+    private final Symbol symbol;
     public AddressOfFunction(Symbol symbol) {
         this.symbol = symbol;
     }

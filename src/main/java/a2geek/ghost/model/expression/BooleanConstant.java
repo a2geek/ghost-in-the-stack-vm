@@ -7,7 +7,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 public class BooleanConstant implements Expression {
-    private boolean value;
+    private final boolean value;
 
     public BooleanConstant(boolean value) {
         this.value = value;

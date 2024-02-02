@@ -5,5 +5,5 @@ package a2geek.ghost.model;
  * Intended for visitors that work incrementally.
  */
 public interface RepeatingVisitor {
-    public int getCounter();
+    int getCounter();
 }

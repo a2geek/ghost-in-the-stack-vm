@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import static a2geek.ghost.antlr.ExpressionBuilder.*;
 
 public class StrengthReductionVisitorTest {
-    private StrengthReductionVisitor visitor = new StrengthReductionVisitor();
+    private final StrengthReductionVisitor visitor = new StrengthReductionVisitor();
     private void assertEquals(Expression expected, Expression testCase) {
         var actual = visitor.dispatch(testCase);
         Assertions.assertEquals(expected, actual.orElseThrow());

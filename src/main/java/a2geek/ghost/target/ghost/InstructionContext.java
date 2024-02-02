@@ -6,7 +6,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 
 public class InstructionContext implements Iterator<Instruction> {
-        private List<Instruction> code;
+        private final List<Instruction> code;
         private int pos;
         private int origSize;
 
