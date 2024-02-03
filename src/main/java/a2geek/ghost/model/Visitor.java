@@ -14,6 +14,8 @@ public abstract class Visitor extends DispatchVisitor {
     public void visit(AssignmentStatement statement, VisitorContext context) {
         var expr = dispatch(statement.getValue());
         expr.ifPresent(statement::setValue);
+        var var = dispatch(statement.getVar());
+        var.ifPresent(statement::setVar);
     }
 
     @Override

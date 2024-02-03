@@ -6,7 +6,7 @@ import a2geek.ghost.model.expression.UnaryExpression;
 import a2geek.ghost.model.expression.VariableReference;
 
 public class AssignmentStatement implements Statement {
-    private final Expression var;
+    private Expression var;
     private Expression value;
 
     public AssignmentStatement(VariableReference var, Expression value) {
@@ -24,11 +24,13 @@ public class AssignmentStatement implements Statement {
     public Expression getVar() {
         return var;
     }
-
     public Expression getValue() {
         return value;
     }
 
+    public void setVar(Expression var) {
+        this.var = var;
+    }
     public void setValue(Expression value) {
         this.value = value;
     }
