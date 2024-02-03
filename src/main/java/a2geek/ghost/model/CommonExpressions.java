@@ -1,5 +1,6 @@
 package a2geek.ghost.model;
 
+import a2geek.ghost.model.expression.IntegerConstant;
 import a2geek.ghost.model.expression.UnaryExpression;
 import a2geek.ghost.model.expression.VariableReference;
 
@@ -13,6 +14,6 @@ public class CommonExpressions {
 
     public static Expression arrayReference(Symbol array, Expression index) {
         // TODO need to take datatype into account for sizing
-        return new UnaryExpression("*", VariableReference.with(array).plus(index.times2()));
+        return new UnaryExpression("*", VariableReference.with(array).plus(index.plus(IntegerConstant.ONE).times2()));
     }
 }
