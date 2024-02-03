@@ -5,6 +5,8 @@ import a2geek.ghost.model.Symbol;
 import a2geek.ghost.model.Visitor;
 import a2geek.ghost.model.VisitorContext;
 import a2geek.ghost.model.expression.AddressOfFunction;
+import a2geek.ghost.model.expression.VariableReference;
+import a2geek.ghost.model.statement.AssignmentStatement;
 import a2geek.ghost.model.statement.GotoGosubStatement;
 import a2geek.ghost.model.statement.LabelStatement;
 import a2geek.ghost.model.statement.OnErrorStatement;
@@ -20,13 +22,20 @@ public class StatisticsVisitor extends Visitor {
 
     private final Set<Symbol> usedLabels = new HashSet<>();
     private final Map<Symbol, Symbol> replacementLabels = new HashMap<>();
+    private final Map<Symbol, Integer> symbolAssignments = new HashMap<>();
+    private final Map<Symbol, Integer> symbolReads = new HashMap<>();
 
     public Set<Symbol> getUsedLabels() {
         return usedLabels;
     }
-
     public Map<Symbol, Symbol> getReplacementLabels() {
         return replacementLabels;
+    }
+    public Map<Symbol, Integer> getSymbolAssignments() {
+        return symbolAssignments;
+    }
+    public Map<Symbol, Integer> getSymbolReads() {
+        return symbolReads;
     }
 
     @Override
@@ -48,18 +57,40 @@ public class StatisticsVisitor extends Visitor {
     }
 
     @Override
+    public void visit(AssignmentStatement statement, VisitorContext context) {
+        if (statement.getVar() instanceof VariableReference ref) {
+            symbolAssignments.merge(ref.getSymbol(), 1, Integer::sum);
+            // handled the variable but need to also do the expression
+            dispatch(statement.getValue());
+        }
+        else {
+            // Note that no instance of candidate UnaryExpressions (array references) have been seen yet
+            // so we pass that on
+            super.visit(statement, context);
+        }
+    }
+
+    @Override
     public void visit(OnErrorStatement statement, VisitorContext context) {
         usedLabels.add(statement.getLabel());
+        super.visit(statement, context);
     }
 
     @Override
     public void visit(GotoGosubStatement statement, VisitorContext context) {
         usedLabels.add(statement.getLabel());
+        super.visit(statement, context);
     }
 
     @Override
     public Expression visit(AddressOfFunction expression) {
         usedLabels.add(expression.getSymbol());
-        return null;
+        return super.visit(expression);
+    }
+
+    @Override
+    public Expression visit(VariableReference expression) {
+        symbolReads.merge(expression.getSymbol(), 1, Integer::sum);
+        return super.visit(expression);
     }
 }

@@ -6,10 +6,7 @@ import a2geek.ghost.command.util.IntegerTypeConverter;
 import a2geek.ghost.command.util.PrettyPrintVisitor;
 import a2geek.ghost.model.*;
 import a2geek.ghost.model.scope.Program;
-import a2geek.ghost.model.visitor.ConstantReductionVisitor;
-import a2geek.ghost.model.visitor.DeadCodeEliminationVisitor;
-import a2geek.ghost.model.visitor.InliningVisitor;
-import a2geek.ghost.model.visitor.StrengthReductionVisitor;
+import a2geek.ghost.model.visitor.*;
 import a2geek.ghost.target.ghost.CodeGenerationVisitor;
 import a2geek.ghost.target.ghost.Instruction;
 import a2geek.ghost.target.ghost.LabelOptimizer;
@@ -337,6 +334,7 @@ public class CompileCommand implements Callable<Integer> {
             }
             if (codeInlining) {
                 execute(program, new InliningVisitor());
+                execute(program, new InliningCleanupVisitor());
             }
             if (strengthReduction) {
                 execute(program, new StrengthReductionVisitor());
