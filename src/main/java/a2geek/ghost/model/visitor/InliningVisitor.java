@@ -72,7 +72,7 @@ public class InliningVisitor extends Visitor implements RepeatingVisitor {
         }
     }
 
-    public static class RewriteVisitor extends DispatchVisitor {
+    private static class RewriteVisitor extends DispatchVisitor {
         private final Stack<StatementBlock> statementBlocks = new Stack<>();
         private final Scope sourceScope;
         private final Scope targetScope;
