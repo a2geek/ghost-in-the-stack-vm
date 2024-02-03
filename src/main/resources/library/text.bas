@@ -5,6 +5,7 @@ module text
     ' See https://6502disassembly.com/a2-rom/Applesoft.html
     const MON_CH = 0x24
     const MON_INVFLAG = 0x32
+    const SPEEDZ = 0xf1
     const FLASH_BIT = 0xf3
     const MON_SETTXT = 0xfb39
     const MON_TABV = 0xfb5b
@@ -40,5 +41,9 @@ module text
     export sub flash
         poke MON_INVFLAG, 0x7f
         poke FLASH_BIT, 0x40
+    end sub
+
+    export inline sub speed(n as integer)
+        poke SPEEDZ, 0x100-n
     end sub
 end module
