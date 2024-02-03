@@ -1,6 +1,9 @@
 package a2geek.ghost.command.util;
 
-import a2geek.ghost.model.*;
+import a2geek.ghost.model.Scope;
+import a2geek.ghost.model.Statement;
+import a2geek.ghost.model.StatementBlock;
+import a2geek.ghost.model.SymbolType;
 import a2geek.ghost.model.scope.Function;
 import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.scope.Subroutine;
@@ -71,12 +74,8 @@ public class PrettyPrintVisitor {
         scope.getLocalSymbols().stream()
                 // Only variables
                 .filter(s -> s.symbolType() == SymbolType.VARIABLE)
-                // Strings should have their own DIM statement at this time
-                .filter(s -> s.dataType() != DataType.STRING)
-                // Arrays should have their own DIM statement
-                .filter(s -> s.numDimensions() == 0)
                 .forEach(s -> {
-                    var fmt = String.format("DIM %s AS %s", s.name(), s.dataType()).indent(indent);
+                    var fmt = String.format("DIM %s AS %s = %s", s.name(), s.dataType(), s.defaultValues()).indent(indent);
                     sb.append(fmt);
                 });
     }
