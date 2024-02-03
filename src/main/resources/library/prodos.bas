@@ -114,7 +114,7 @@ module prodos
         call CODE
         rc = cpu.register.a ' preserve because PRINT(etc) use the registers as well
         if rc <> 0 then
-            raise error rc, mliErrorMessage(rc)
+            raise error rc, "PRODOS ERROR"
         end if
     end sub
 
