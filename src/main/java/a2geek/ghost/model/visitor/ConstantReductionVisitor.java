@@ -1,6 +1,7 @@
 package a2geek.ghost.model.visitor;
 
 import a2geek.ghost.model.Expression;
+import a2geek.ghost.model.SymbolType;
 import a2geek.ghost.model.Visitor;
 import a2geek.ghost.model.expression.*;
 
@@ -33,6 +34,15 @@ public class ConstantReductionVisitor extends Visitor {
         }
 
         return constantReduction(expression).orElse(null);
+    }
+
+    @Override
+    public Expression visit(VariableReference expression) {
+        var symbol = expression.getSymbol();
+        if (symbol.symbolType() == SymbolType.CONSTANT && symbol.numDimensions() == 0 && symbol.defaultValues().size() == 1) {
+            return symbol.defaultValues().getFirst();
+        }
+        return super.visit(expression);
     }
 
     public Optional<Expression> constantReduction(Expression expression) {
