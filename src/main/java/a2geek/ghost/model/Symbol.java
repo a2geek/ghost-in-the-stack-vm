@@ -10,7 +10,7 @@ import java.util.function.Predicate;
 
 public record Symbol(String name, SymbolType symbolType, DeclarationType declarationType,
                      List<Expression> defaultValues, DataType dataType, int numDimensions,
-                     Scope scope, String targetName) {
+                     Scope scope, String targetName, boolean temporary) {
     public boolean hasDefaultValue(int size) {
         return defaultValues != null && defaultValues.size() == size;
     }
@@ -44,6 +44,7 @@ public record Symbol(String name, SymbolType symbolType, DeclarationType declara
         private List<Expression> defaultValues;
         private Scope scope;
         private String targetName;
+        private boolean temporary = false;  // explicitly the default
 
         Builder(String name, SymbolType symbolType) {
             Objects.requireNonNull(name);
@@ -60,6 +61,7 @@ public record Symbol(String name, SymbolType symbolType, DeclarationType declara
             this.numDimensions = original.numDimensions;
             this.scope = original.scope;
             this.targetName = original.targetName;
+            this.temporary = original.temporary;
         }
         public Builder name(String name) {
             Objects.requireNonNull(name);
@@ -115,6 +117,10 @@ public record Symbol(String name, SymbolType symbolType, DeclarationType declara
             this.targetName = targetName;
             return this;
         }
+        public Builder temporary(boolean temporary) {
+            this.temporary = temporary;
+            return this;
+        }
         public boolean equals(Symbol symbol) {
             if (symbol == null) return false;
             return Objects.equals(this.name, symbol.name)
@@ -123,14 +129,15 @@ public record Symbol(String name, SymbolType symbolType, DeclarationType declara
                 && Objects.equals(this.declarationType, symbol.declarationType)
                 && Objects.equals(this.defaultValues, symbol.defaultValues)
                 && Objects.equals(this.dataType, symbol.dataType)
-                && Objects.equals(this.numDimensions, symbol.numDimensions);
+                && Objects.equals(this.numDimensions, symbol.numDimensions)
+                && Objects.equals(this.temporary, symbol.temporary);
         }
         public Symbol build() {
             if (defaultValues != null && defaultValues.size() > 1 && numDimensions == 0) {
                 throw new RuntimeException("expecting array but no dimensions assigned " + name);
             }
             return new Symbol(name, symbolType, declarationType, defaultValues, dataType, numDimensions,
-                    scope, targetName);
+                    scope, targetName, temporary);
         }
     }
 

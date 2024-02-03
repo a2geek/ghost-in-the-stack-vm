@@ -100,7 +100,7 @@ public class Scope extends StatementBlock {
     public Symbol addTempVariable(DataType dataType) {
         symbolNumber+= 1;
         var name = String.format("_temp%d", symbolNumber);
-        return addLocalSymbol(Symbol.variable(name, SymbolType.VARIABLE).dataType(dataType));
+        return addLocalSymbol(Symbol.variable(name, SymbolType.VARIABLE).dataType(dataType).temporary(true));
     }
 
     /** Generate labels for code. The multiple values is to allow grouping of labels (same label number) for complex structures. */
