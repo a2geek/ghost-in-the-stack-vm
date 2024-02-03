@@ -8,6 +8,7 @@ module hires
 
     ' HGR/Shape routines - also trying to pick unique names
     const HGR_INIT = 0xf3e2
+    const HGR2_INIT = 0xf3d8
     const HGR_HPOSN = 0xf411
     const HGR_HPLOT = 0xf457
     const HGR_HLIN = 0xf53a
@@ -17,6 +18,10 @@ module hires
 
     export inline sub hgr()
         call HGR_INIT
+    end sub
+
+    export inline sub hgr2()
+        call HGR2_INIT
     end sub
 
     export sub hcolor(color as integer)
