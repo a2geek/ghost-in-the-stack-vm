@@ -19,12 +19,16 @@ DIRS=$(ls src/main/basic)
 if [ $# -ge 1 ]
 then
     case "$1" in
-      --sample)
-          DIRS="sample"
+      --samples)
+          DIRS="samples"
           shift
           ;;
       --integer)
           DIRS="integer"
+          shift
+          ;;
+      --tests)
+          DIRS="tests"
           shift
           ;;
     esac
