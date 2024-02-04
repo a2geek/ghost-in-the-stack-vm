@@ -60,8 +60,8 @@ public interface Expression {
     default BinaryExpression minus1() {
         return new BinaryExpression("-", this, IntegerConstant.ONE);
     }
-    default BinaryExpression times2() {
-        return new BinaryExpression("*", this, IntegerConstant.TWO);
+    default BinaryExpression times(Expression rhs) {
+        return new BinaryExpression("*", this, rhs);
     }
     default BinaryExpression plus(Expression rhs) {
         return new BinaryExpression("+", this, rhs);

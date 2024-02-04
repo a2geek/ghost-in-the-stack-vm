@@ -372,8 +372,12 @@ public class CodeGenerationVisitor extends DispatchVisitor {
             }
             code.emit(Opcode.GOSUB, sub.getFullPathName());
             if (hasParameters) {
-                // FIXME when we have more datatypes this will be incorrect
-                code.emit(Opcode.POPN, statement.getParameters().size() * 2);
+                var bytes = statement.getParameters().stream()
+                    .map(Expression::getType)
+                    .map(DataType::sizeof)
+                    .mapToInt(Integer::intValue)
+                    .sum();
+                code.emit(Opcode.POPN, bytes);
             }
             return;
         }
@@ -601,14 +605,18 @@ public class CodeGenerationVisitor extends DispatchVisitor {
                 }
                 var func = function.getFunction();
                 scopesUsed.add(func.getFullPathName());
-                // FIXME need to reserve by return type when types are in place!
-                code.emit(Opcode.LOADC, 0);
+                code.emit(Opcode.LOADC, func.getDataType().sizeof());
+                code.emit(Opcode.PUSHZ);
                 emitParameters.run();
                 code.emit(Opcode.GOSUB, func.getFullPathName());
                 var hasParameters = !function.getParameters().isEmpty();
                 if (hasParameters) {
-                    // FIXME when we have more datatypes this will be incorrect
-                    code.emit(Opcode.POPN, function.getParameters().size() * 2);
+                    var bytes = function.getParameters().stream()
+                        .map(Expression::getType)
+                        .map(DataType::sizeof)
+                        .mapToInt(Integer::intValue)
+                        .sum();
+                    code.emit(Opcode.POPN, bytes);
                 }
             }
         }

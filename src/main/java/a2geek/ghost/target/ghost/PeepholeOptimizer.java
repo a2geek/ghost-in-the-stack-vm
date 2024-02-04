@@ -115,6 +115,13 @@ public class PeepholeOptimizer {
                 LABEL_RETURN.add(inst1.label());
                 // Just tracking, so don't have to return true since nothing was modified
             }
+            // LOADC 0002  ==>  LOADC 0000
+            // PUSHZ       ==>  remove
+            if (seq(list, Opcode.LOADC, Opcode.PUSHZ) && Integer.valueOf(2).equals(inst1.arg())) {
+                list.set(0, new Instruction(null, Opcode.LOADC, null, 0, null));
+                list.remove(1);
+                return true;
+            }
         };
         return false;
     }

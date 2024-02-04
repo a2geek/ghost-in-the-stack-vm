@@ -13,7 +13,9 @@ public class CommonExpressions {
     }
 
     public static Expression arrayReference(Symbol array, Expression index) {
-        // TODO need to take datatype into account for sizing
-        return new UnaryExpression("*", VariableReference.with(array).plus(index.plus(IntegerConstant.ONE).times2()));
+        // *(array+((index+1)*sizeof(datatype))
+        return new UnaryExpression("*", VariableReference.with(array)
+            .plus(index.plus(IntegerConstant.ONE)
+                .times(new IntegerConstant(array.dataType().sizeof()))));
     }
 }

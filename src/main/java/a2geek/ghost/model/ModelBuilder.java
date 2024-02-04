@@ -400,7 +400,7 @@ public class ModelBuilder {
     /**
      * Allocate an integer array via the following code:
      * <pre>
-     * symbol = ALLOC( (expr+2) * 2 )
+     * symbol = ALLOC( (expr+2) * sizeof(datatype) )
      * POKEW symbol, expr
      * </pre>
      * Note that physical array size is the length + 1 (BASIC array is like that) + 1 (for length).
@@ -412,7 +412,7 @@ public class ModelBuilder {
      */
     public void allocateIntegerArray(Symbol symbol, Expression size) {
         var varRef = VariableReference.with(symbol);
-        var bytes = size.plus(IntegerConstant.TWO).times2();
+        var bytes = size.plus(IntegerConstant.TWO).times(new IntegerConstant(symbol.dataType().sizeof()));
         var allocFn = callFunction(heapFunction, bytes);
         assignStmt(varRef, allocFn);
         pokeStmt("pokew", varRef, size);
