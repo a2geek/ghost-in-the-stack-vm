@@ -69,7 +69,6 @@ public class InliningCleanupVisitor extends Visitor {
             // nothing to do!
             return;
         }
-        System.out.printf("In '%s', candidates are: %s\n", scope.getFullPathName(), candidates);
         var symbols = candidates.stream().map(Map.Entry::getKey).toList();
         var rewrite = new RewriteVisitor(symbols);
         rewrite.dispatch(scope);

@@ -59,6 +59,7 @@ public abstract class DispatchVisitor {
             case FunctionExpression e -> Optional.ofNullable(visit(e));
             case ArrayLengthFunction e -> Optional.ofNullable(visit(e));
             case AddressOfFunction e -> Optional.ofNullable(visit(e));
+            case PlaceholderExpression e -> Optional.ofNullable(visit(e));
             default -> throw new RuntimeException("expression type not supported: " +
                             expression.getClass().getName());
         };
@@ -119,4 +120,5 @@ public abstract class DispatchVisitor {
     public abstract Expression visit(FunctionExpression expression);
     public abstract Expression visit(ArrayLengthFunction expression);
     public abstract Expression visit(AddressOfFunction expression);
+    public abstract Expression visit(PlaceholderExpression expression);
 }

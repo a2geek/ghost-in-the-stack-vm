@@ -1,11 +1,14 @@
 package a2geek.ghost.antlr;
 
 import a2geek.ghost.model.*;
+import a2geek.ghost.model.expression.IntegerConstant;
 import a2geek.ghost.model.expression.VariableReference;
 import a2geek.ghost.model.scope.Program;
 import org.antlr.v4.runtime.CharStreams;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 import static a2geek.ghost.antlr.ExpressionBuilder.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -56,12 +59,12 @@ public class IntegerBasicVisitorTest {
         var b = Symbol.variable("B()", SymbolType.VARIABLE)
                 .dataType(DataType.INTEGER)
                 .declarationType(DeclarationType.GLOBAL)
-                .dimensions(1)
+                .dimensions(List.of(new IntegerConstant(5)))
                 .build();
         expect("10 DIM B(5)")
             .lineNumber(10)
             .assignment("B()", null)
-            .poke("pokew", VariableReference.with(b), constant(5))
+            .poke("pokew", VariableReference.with(b).plus(IntegerConstant.ZERO), constant(5))
             .atEnd();
     }
 
@@ -212,21 +215,21 @@ public class IntegerBasicVisitorTest {
 
     @Test
     public void testArrayReferences() {
-        // Normal
+        // LHS
         expect("10 A(2) = 1")
                 .hasArrayReference("A", DataType.INTEGER, SymbolType.VARIABLE, DeclarationType.GLOBAL, 1)
                 .lineNumber(10)
                 .skipIfStmt()
                 .arrayAssignment("A", constant(2), constant(1))
                 .atEnd();
-        // LET keyword
+        // RHS
         expect("10 A = A(1)")
                 .hasSymbol("A", DataType.INTEGER, SymbolType.VARIABLE, DeclarationType.GLOBAL)
                 .hasArrayReference("A", DataType.INTEGER, SymbolType.VARIABLE, DeclarationType.GLOBAL, 1)
                 .lineNumber(10)
                 .skipIfStmt()
-                .assignment("A", arrayReference("A", DataType.INTEGER, SymbolType.VARIABLE,
-                        DeclarationType.GLOBAL, constant(1)))
+                .assignment("A", arrayReference("A()", DataType.INTEGER, SymbolType.VARIABLE,
+                        DeclarationType.GLOBAL, constant(1), -1))
                 .atEnd();
     }
 

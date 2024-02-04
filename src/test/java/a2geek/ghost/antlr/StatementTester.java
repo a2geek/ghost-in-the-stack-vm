@@ -1,7 +1,7 @@
 package a2geek.ghost.antlr;
 
 import a2geek.ghost.model.*;
-import a2geek.ghost.model.expression.BinaryExpression;
+import a2geek.ghost.model.expression.IntegerConstant;
 import a2geek.ghost.model.expression.UnaryExpression;
 import a2geek.ghost.model.expression.VariableReference;
 import a2geek.ghost.model.scope.Subroutine;
@@ -126,16 +126,19 @@ public abstract class StatementTester {
     }
 
     public StatementTester arrayAssignment(String varName, Expression index, Expression expr) {
-        varName = fixCase(varName);
+        var symbol = findSymbol(fixArrayName(varName)).orElseGet(() -> findSymbol(fixCase(varName)).orElseThrow());
+        assertTrue(symbol.numDimensions() > 0);
         var stmt = nextStatement(AssignmentStatement.class);
+        assertEquals(expr, stmt.getValue());
         if (stmt.getVar() instanceof VariableReference ref) {
             assertEquals(1, ref.getSymbol().numDimensions());
             assertEquals(fixCase(varName), ref.getSymbol().name());
         }
-        // making assumptions of the expression structure...
-        else if (stmt.getVar() instanceof UnaryExpression unary && unary.getExpr() instanceof BinaryExpression bin && bin.getL() instanceof VariableReference ref) {
-            assertEquals(1, ref.getSymbol().numDimensions());
-            assertEquals(fixArrayName(varName), ref.getSymbol().name());
+        // making assumptions of the expression structure... *(((array() + 2) + (index * 2))) :: all INTEGER types
+        else if (stmt.getVar() instanceof UnaryExpression unary) {
+            var expected = VariableReference.with(symbol).plus(IntegerConstant.TWO).plus(index.times(IntegerConstant.TWO));
+            assertEquals("*", unary.getOp());
+            assertEquals(expected, unary.getExpr());
         }
         else {
             fail("unexpected left side of assignment: " + stmt);

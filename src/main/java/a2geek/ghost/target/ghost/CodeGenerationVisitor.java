@@ -660,4 +660,9 @@ public class CodeGenerationVisitor extends DispatchVisitor {
         code.emit(Opcode.LOADA, expression.getSymbol().name());
         return null;
     }
+
+    @Override
+    public Expression visit(PlaceholderExpression expression) {
+        return null;
+    }
 }

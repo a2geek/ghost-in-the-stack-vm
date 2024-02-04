@@ -118,7 +118,10 @@ expressionID
     ;
 
 paramDecl
-    : '(' ( idDecl ( ',' idDecl )* )? ')'
+    : '(' ( paramIdDecl ( ',' paramIdDecl )* )? ')'
+    ;
+paramIdDecl
+    : ID ( '(' ( ',' )* ')' )? ( 'as' datatype )?
     ;
 
 idDecl

@@ -139,18 +139,18 @@ public class ModelBuilder {
     public Symbol addVariable(String name, SymbolType type, DataType dataType) {
         return this.scope.peek().addLocalSymbol(Symbol.variable(name, type).dataType(dataType));
     }
-    public Symbol addArrayVariable(String name, DataType dataType, int numDimensions) {
+    public Symbol addArrayVariable(String name, DataType dataType, List<Expression> dimensions) {
         return this.scope.peek().addLocalSymbol(
                 Symbol.variable(fixArrayName(name), SymbolType.VARIABLE)
                       .dataType(dataType)
-                      .dimensions(numDimensions));
+                      .dimensions(dimensions));
     }
-    public Symbol addArrayDefaultVariable(String name, DataType dataType, int numDimensions,
+    public Symbol addArrayDefaultVariable(String name, DataType dataType, List<Expression> dimensions,
                                           List<Expression> defaultValues) {
         return this.scope.peek().addLocalSymbol(
             Symbol.variable(fixArrayName(name), SymbolType.VARIABLE)
                 .dataType(dataType)
-                .dimensions(numDimensions)
+                .dimensions(dimensions)
                 .defaultValues(defaultValues));
     }
 
@@ -398,7 +398,14 @@ public class ModelBuilder {
     }
 
     /**
-     * Allocate an integer array via the following code:
+     * Allocate an array of 1 or more dimensions.
+     * General layout is:
+     * <pre>
+     * +------------+------------+-----+--------------+------------------+
+     * | dim 1 size | dim 2 size | ... | element(0,0) | element(0,1) ... |
+     * +------------+------------+-----+--------------+------------------+
+     * </pre>
+     * A single dimension should be similar to this:
      * <pre>
      * symbol = ALLOC( (expr+2) * sizeof(datatype) )
      * POKEW symbol, expr
@@ -410,12 +417,17 @@ public class ModelBuilder {
      * +------+-------+-------+-----+-------+
      * </pre>
      */
-    public void allocateIntegerArray(Symbol symbol, Expression size) {
+    public void allocateIntegerArray(Symbol symbol, List<Expression> sizes) {
         var varRef = VariableReference.with(symbol);
-        var bytes = size.plus(IntegerConstant.TWO).times(new IntegerConstant(symbol.dataType().sizeof()));
+        var overheadBytes = new IntegerConstant(sizes.size() * DataType.INTEGER.sizeof());
+        // The element count is the sum of each dimension +1 multiplied out
+        var elementCount = sizes.stream().map(e -> e.plus(IntegerConstant.ONE)).reduce(Expression::times).orElseThrow();
+        var bytes = overheadBytes.plus(elementCount.times(new IntegerConstant(symbol.dataType().sizeof())));
         var allocFn = callFunction(heapFunction, bytes);
         assignStmt(varRef, allocFn);
-        pokeStmt("pokew", varRef, size);
+        for (int i=0; i<sizes.size(); i++) {
+            pokeStmt("pokew", varRef.plus(new IntegerConstant(i * DataType.INTEGER.sizeof())), sizes.get(i));
+        }
     }
     /**
      * Allocate a string array via the following code:
@@ -453,19 +465,27 @@ public class ModelBuilder {
         return arrayDims.get(symbol);
     }
 
-    public void checkArrayBounds(Symbol symbol, Expression index, int linenum) {
+    public void checkArrayBounds(Symbol symbol, List<Expression> indexes, int linenum) {
         if (!boundsCheck) {
             return;
         }
-        // IF index > ubound(array) THEN
+        if (symbol.numDimensions() != indexes.size()) {
+            var msg = String.format("[compiler bug] array bounds check; symbol='%s', indexes=%s", symbol, indexes);
+            throw new RuntimeException(msg);
+        }
+        // IF index1 > ubound(array,1) [ OR index2 > ubound(array,2) ... ] THEN
         //    RAISE ERROR 107, "Array index out of bounds "+symbol+" at line "+linenum
         // END IF
         var errorBlock = pushStatementBlock(new StatementBlock());
         raiseError(new IntegerConstant(107),
                 new StringConstant(String.format("ARRAY INDEX OUT OF BOUNDS %s AT LINE %d", symbol.name(), linenum)));
         popStatementBlock();
-        ifStmt(index.gt(new ArrayLengthFunction(this, symbol)),
-               errorBlock, null);
+        var test = indexes.getFirst().gt(new ArrayLengthFunction(symbol, 1));
+        for (int i=1; i<symbol.numDimensions(); i++) {
+            // java indexes are 0..n while ubound indexes are 1..n+1.
+            test = test.or(indexes.get(i).gt(new ArrayLengthFunction(symbol, i+1)));
+        }
+        ifStmt(test, errorBlock, null);
     }
 
     public void raiseError(Expression number, Expression message) {

@@ -3,16 +3,20 @@ package a2geek.ghost.model;
 import a2geek.ghost.model.scope.Function;
 import a2geek.ghost.model.scope.Subroutine;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
 
 public record Symbol(String name, SymbolType symbolType, DeclarationType declarationType,
-                     List<Expression> defaultValues, DataType dataType, int numDimensions,
+                     List<Expression> defaultValues, DataType dataType, List<Expression> dimensions,
                      Scope scope, String targetName, boolean temporary) {
     public boolean hasDefaultValue(int size) {
         return defaultValues != null && defaultValues.size() == size;
+    }
+    public int numDimensions() {
+        return dimensions.size();
     }
 
     public static Builder from(Symbol original) {
@@ -40,7 +44,7 @@ public record Symbol(String name, SymbolType symbolType, DeclarationType declara
         private SymbolType symbolType;
         private DeclarationType declarationType;
         private DataType dataType;
-        private int numDimensions = 0;  // not an array!
+        private List<Expression> dimensions = new ArrayList<>();    // if empty, not an array
         private List<Expression> defaultValues;
         private Scope scope;
         private String targetName;
@@ -58,7 +62,7 @@ public record Symbol(String name, SymbolType symbolType, DeclarationType declara
             this.declarationType = original.declarationType;
             this.defaultValues = original.defaultValues;
             this.dataType = original.dataType;
-            this.numDimensions = original.numDimensions;
+            this.dimensions = original.dimensions;
             this.scope = original.scope;
             this.targetName = original.targetName;
             this.temporary = original.temporary;
@@ -105,8 +109,9 @@ public record Symbol(String name, SymbolType symbolType, DeclarationType declara
         public DataType dataType() {
             return dataType;
         }
-        public Builder dimensions(int numDimensions) {
-            this.numDimensions = numDimensions;
+        public Builder dimensions(List<Expression> dimensions) {
+            Objects.requireNonNull(dimensions);
+            this.dimensions = dimensions;
             return this;
         }
         public Builder scope(Scope scope) {
@@ -129,14 +134,14 @@ public record Symbol(String name, SymbolType symbolType, DeclarationType declara
                 && Objects.equals(this.declarationType, symbol.declarationType)
                 && Objects.equals(this.defaultValues, symbol.defaultValues)
                 && Objects.equals(this.dataType, symbol.dataType)
-                && Objects.equals(this.numDimensions, symbol.numDimensions)
+                && Objects.equals(this.dimensions, symbol.dimensions)
                 && Objects.equals(this.temporary, symbol.temporary);
         }
         public Symbol build() {
-            if (defaultValues != null && defaultValues.size() > 1 && numDimensions == 0) {
+            if (defaultValues != null && defaultValues.size() > 1 && dimensions.isEmpty()) {
                 throw new RuntimeException("expecting array but no dimensions assigned " + name);
             }
-            return new Symbol(name, symbolType, declarationType, defaultValues, dataType, numDimensions,
+            return new Symbol(name, symbolType, declarationType, defaultValues, dataType, dimensions,
                     scope, targetName, temporary);
         }
     }

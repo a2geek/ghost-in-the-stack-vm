@@ -1,6 +1,8 @@
 package a2geek.ghost.antlr;
 
 import a2geek.ghost.model.*;
+import a2geek.ghost.model.expression.IntegerConstant;
+import a2geek.ghost.model.expression.PlaceholderExpression;
 import a2geek.ghost.model.expression.VariableReference;
 import a2geek.ghost.model.scope.Program;
 import org.antlr.v4.runtime.CharStreams;
@@ -9,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import static a2geek.ghost.antlr.ExpressionBuilder.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -39,15 +42,15 @@ public class GhostBasicVisitorTest {
         var arrayRef = Symbol.variable(model.fixCase("a"), SymbolType.VARIABLE)
                 .dataType(DataType.INTEGER)
                 .declarationType(DeclarationType.GLOBAL)
-                .dimensions(1)
+                .dimensions(List.of(new IntegerConstant(10)))
                 .build();
         // Note: DIM generates (potentially) dynamic code, so not testing generated DIM code.
-        expect("dim a(10) as integer, b as integer : b = ubound(a)")
+        expect("dim a(10) as integer, b as integer : b = ubound(a,1)")
                 .hasSymbol("a", DataType.INTEGER, SymbolType.VARIABLE, DeclarationType.GLOBAL)
                 .hasSymbol("b", DataType.INTEGER, SymbolType.VARIABLE, DeclarationType.GLOBAL)
                 .assignment("a", null)
-                .poke("pokew", VariableReference.with(arrayRef), constant(10))
-                .assignment("b", ubound(model, arrayRef))
+                .poke("pokew", VariableReference.with(arrayRef).plus(IntegerConstant.ZERO), constant(10))
+                .assignment("b", ubound(arrayRef,1))
                 .atEnd();
     }
 
@@ -56,17 +59,17 @@ public class GhostBasicVisitorTest {
         var arrayRef = Symbol.variable(model.fixCase("a"), SymbolType.VARIABLE)
                 .dataType(DataType.INTEGER)
                 .declarationType(DeclarationType.GLOBAL)
-                .dimensions(1)
+                .dimensions(List.of(new IntegerConstant(10)))
                 .build();
         // Note: DIM generates (potentially) dynamic code, so not testing generated DIM code.
         expect("dim a(10) as integer : a(5) = a(4) + 3")
             .hasArrayReference("a", DataType.INTEGER, SymbolType.VARIABLE, DeclarationType.GLOBAL, 1)
             .assignment("a", null)
-            .poke("pokew", VariableReference.with(arrayRef), constant(10))
+            .poke("pokew", VariableReference.with(arrayRef).plus(IntegerConstant.ZERO), constant(10))
             .skipIfStmt()
             .skipIfStmt()   // because we don't really optimize them A(5) should be sufficient but we check A(4) as well
             .arrayAssignment("a", constant(5),
-                    binary("+", arrayReference("a", DataType.INTEGER, SymbolType.VARIABLE, DeclarationType.GLOBAL, constant(4)),
+                    binary("+", arrayReference("A", DataType.INTEGER, SymbolType.VARIABLE, DeclarationType.GLOBAL, constant(4), 10),
                             constant(3)))
             .atEnd();
     }
@@ -365,12 +368,13 @@ public class GhostBasicVisitorTest {
     @Test
     public void testSubArrayParameter() {
         var expectedParameters = Collections.singletonList(
-                Symbol.variable("a", SymbolType.PARAMETER).dataType(DataType.INTEGER).dimensions(1).build()
+                Symbol.variable("a", SymbolType.PARAMETER).dataType(DataType.INTEGER)
+                      .dimensions(List.of(PlaceholderExpression.of(DataType.INTEGER))).build()
         );
         var arraySymbol = new VariableReference(Symbol.variable("A", SymbolType.VARIABLE)
             .dataType(DataType.INTEGER)
             .declarationType(DeclarationType.GLOBAL)
-            .dimensions(1)
+            .dimensions(List.of(new IntegerConstant(10)))
             .build());
         // Note: DIM generates (potentially) dynamic code, so not testing generated DIM code.
         expect("""
@@ -388,7 +392,7 @@ public class GhostBasicVisitorTest {
             .endScope()
             .hasArrayReference("a", DataType.INTEGER, SymbolType.VARIABLE, DeclarationType.GLOBAL, 1)
             .assignment("a", null)
-            .poke("pokew", arraySymbol, constant(10))
+            .poke("pokew", arraySymbol.plus(IntegerConstant.ZERO), constant(10))
             .callSub("addArray", arraySymbol)
             .atEnd();
     }

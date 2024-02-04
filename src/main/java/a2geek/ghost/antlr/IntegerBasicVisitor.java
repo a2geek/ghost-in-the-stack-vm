@@ -173,10 +173,14 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     @Override
     public Expression visitIntDimVar(IntegerParser.IntDimVarContext ctx) {
-        var symbol = model.addArrayVariable(ctx.n.getText(), DataType.INTEGER, 1);
         var expr = visit(ctx.e);
+        var symbol = model.findSymbol(model.fixArrayName(ctx.n.getText())).orElseGet(() -> {
+            // due to the nature of Integer BASIC, this DIM may occur after a usage of the variable
+            // we accept the existing variable, and if we're first, create it with the actual dimension expression
+            return model.addArrayVariable(ctx.n.getText(), DataType.INTEGER, Collections.singletonList(expr));
+        });
 
-        model.allocateIntegerArray(symbol, expr);
+        model.allocateIntegerArray(symbol, List.of(expr));
         model.registerDimArray(symbol, expr);
         return null;
     }
@@ -352,16 +356,16 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
             model.gotoGosubStmt(op, line);
         }
         else {
-            var lineNumbers = model.addArrayDefaultVariable(LINE_NUMBERS, DataType.INTEGER, 1,
-                new ArrayList<>());
-            var lineLabels = model.addArrayDefaultVariable(LINE_LABELS, DataType.ADDRESS, 1,
-                new ArrayList<>());
+            var lineNumbers = model.addArrayDefaultVariable(LINE_NUMBERS, DataType.INTEGER,
+                List.of(PlaceholderExpression.of(DataType.INTEGER)), new ArrayList<>());
+            var lineLabels = model.addArrayDefaultVariable(LINE_LABELS, DataType.ADDRESS,
+                List.of(PlaceholderExpression.of(DataType.INTEGER)), new ArrayList<>());
 
             var temp = VariableReference.with(model.addTempVariable(DataType.INTEGER));
-            var test = temp.gt(IntegerConstant.ZERO).and(temp.le(new ArrayLengthFunction(model, lineNumbers)));
+            var test = temp.gt(IntegerConstant.ZERO).and(temp.le(new ArrayLengthFunction(lineNumbers, 1)));
 
             model.pushStatementBlock(new StatementBlock());
-            model.dynamicGotoGosubStmt(op, arrayReference(lineLabels, temp.minus1()), true);
+            model.dynamicGotoGosubStmt(op, arrayReference(lineLabels, List.of(temp.minus1())), true);
             var sb = model.popStatementBlock();
 
             model.assignStmt(temp, model.callFunction("runtime.line_index", Arrays.asList(expr, new VariableReference(lineNumbers))));
@@ -737,10 +741,15 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     @Override
     public Expression visitIntAryVar(IntegerParser.IntAryVarContext ctx) {
-        var ref = model.addArrayVariable(ctx.n.getText(), DataType.INTEGER, 1);
+        var ref = model.findSymbol(model.fixArrayName(ctx.n.getText())).orElseGet(() -> {
+            // due to the nature of Integer BASIC, the actual DIM may be sometime after its use in the code.
+            // so we create the variable and have a placeholder dimension expression instead
+            return model.addArrayVariable(ctx.n.getText(), DataType.INTEGER,
+                    Collections.singletonList(PlaceholderExpression.of(DataType.INTEGER)));
+        });
         var expr = visit(ctx.e);
-        model.checkArrayBounds(ref, expr, ctx.getStart().getLine());
-        return arrayReference(ref, expr);
+        model.checkArrayBounds(ref, List.of(expr), ctx.getStart().getLine());
+        return arrayReference(ref, List.of(expr));
     }
 
     @Override

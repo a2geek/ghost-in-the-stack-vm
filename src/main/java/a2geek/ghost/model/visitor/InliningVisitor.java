@@ -285,7 +285,7 @@ public class InliningVisitor extends Visitor implements RepeatingVisitor {
                 if (replacement instanceof VariableReference ref) {
                     var symbol = ref.getSymbol();
                     if (symbol.numDimensions() > 0) {
-                        return new ArrayLengthFunction(expression.getModel(), symbol);
+                        return new ArrayLengthFunction(symbol, expression.getDimensionNumber());
                     }
                 }
                 var msg = String.format("unable to combine '%s' and '%s'", expression, replacement);
@@ -308,6 +308,11 @@ public class InliningVisitor extends Visitor implements RepeatingVisitor {
                 throw new RuntimeException(msg);
             }
             return expression;
+        }
+
+        @Override
+        public Expression visit(PlaceholderExpression expression) {
+            return null;
         }
     }
 }

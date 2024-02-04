@@ -2,7 +2,6 @@ package a2geek.ghost.model.expression;
 
 import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.Expression;
-import a2geek.ghost.model.ModelBuilder;
 import a2geek.ghost.model.Symbol;
 
 import java.util.Objects;
@@ -10,22 +9,26 @@ import java.util.Optional;
 
 public class ArrayLengthFunction implements Expression {
     private final Symbol symbol;
-    private final ModelBuilder model;
-    public ArrayLengthFunction(ModelBuilder model, Symbol symbol) {
+    private final int dimensionNumber;
+    public ArrayLengthFunction(Symbol symbol, int dimensionNumber) {
         this.symbol = symbol;
-        this.model = model;
+        this.dimensionNumber = dimensionNumber;
+        if (dimensionNumber < 1 || dimensionNumber > symbol.dimensions().size()) {
+            throw new RuntimeException("invalid reference to non-existant dimension: " + toString());
+        }
     }
 
     public Symbol getSymbol() {
         return symbol;
     }
-    public ModelBuilder getModel() {
-        return model;
+
+    public int getDimensionNumber() {
+        return dimensionNumber;
     }
 
     @Override
     public Optional<Integer> asInteger() {
-        return model.getArrayDim(symbol).asInteger();
+        return symbol.dimensions().get(dimensionNumber-1).asInteger();
     }
 
     @Override
@@ -35,12 +38,12 @@ public class ArrayLengthFunction implements Expression {
 
     @Override
     public boolean isConstant() {
-        return model.getArrayDim(symbol).isConstant();
+        return symbol.dimensions().get(dimensionNumber-1).isConstant();
     }
 
     @Override
     public String toString() {
-        return String.format("ubound(%s)", symbol.name());
+        return String.format("ubound(%s,%d)", symbol.name(), dimensionNumber);
     }
 
     @Override

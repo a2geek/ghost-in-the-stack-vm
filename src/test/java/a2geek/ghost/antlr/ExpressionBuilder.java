@@ -4,6 +4,7 @@ import a2geek.ghost.model.*;
 import a2geek.ghost.model.expression.*;
 
 import java.util.Arrays;
+import java.util.List;
 
 public class ExpressionBuilder {
         public static IntegerConstant constant(int value) {
@@ -28,13 +29,13 @@ public class ExpressionBuilder {
             return new VariableReference(symbol);
         }
         public static Expression arrayReference(String name, DataType dataType, SymbolType symbolType,
-                                                       DeclarationType declarationType, Expression expr) {
-            var symbol = Symbol.variable(name + "()", symbolType)
+                                                DeclarationType declarationType, Expression expr, int dimensionSize) {
+            var symbol = Symbol.variable(name, symbolType)
                     .dataType(dataType)
                     .declarationType(declarationType)
-                    .dimensions(1)
+                    .dimensions(List.of(dimensionSize < 1 ? PlaceholderExpression.of(DataType.INTEGER) : new IntegerConstant(dimensionSize)))
                     .build();
-            return CommonExpressions.arrayReference(symbol, expr);
+            return CommonExpressions.arrayReference(symbol, List.of(expr));
         }
         public static BinaryExpression binary(String operator, Expression lhs, Expression rhs) {
             return new BinaryExpression(lhs, rhs, operator);
@@ -45,7 +46,7 @@ public class ExpressionBuilder {
         public static FunctionExpression function(String name, Expression... parameters) {
             return new FunctionExpression(name, Arrays.asList(parameters));
         }
-        public static ArrayLengthFunction ubound(ModelBuilder model, Symbol arrayRef) {
-            return new ArrayLengthFunction(model, arrayRef);
+        public static ArrayLengthFunction ubound(Symbol arrayRef, int dimensionNumber) {
+            return new ArrayLengthFunction(arrayRef, dimensionNumber);
         }
     }

@@ -568,7 +568,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
      * Pseudocode. NOTE: the upper range check needs to extend array length by one
      * sinc the array has a zero index but ON ... GOTO/GOSUB starts at index 1.
      * <pre>
-     * IF N > 0 AND N <= UBOUND(ADDRS) THEN
+     * IF N > 0 AND N <= UBOUND(ADDRS,1) THEN
      *     ( GOTO | GOSUB ) *(ADDRS+((N-1)*2))
      * END IF
      * </pre>
@@ -585,11 +585,11 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                 .toList();
 
         var name = String.format("ON_%s", op).toUpperCase();
-        var addrs = model.addArrayDefaultVariable(name, DataType.ADDRESS, 1, addrof);
+        var addrs = model.addArrayDefaultVariable(name, DataType.ADDRESS, List.of(new IntegerConstant(addrof.size())), addrof);
         // TODO optimize "expr" reference due to multiple references
-        var test = expr.gt(IntegerConstant.ZERO).and(expr.le(new ArrayLengthFunction(model, addrs)));
+        var test = expr.gt(IntegerConstant.ZERO).and(expr.le(new ArrayLengthFunction(addrs, 1)));
         model.pushStatementBlock(new StatementBlock());
-        model.dynamicGotoGosubStmt(op, arrayReference(addrs, expr.minus1()), true);
+        model.dynamicGotoGosubStmt(op, arrayReference(addrs, List.of(expr.minus1())), true);
         var sb = model.popStatementBlock();
         model.ifStmt(test, sb, null);
         return null;
@@ -618,15 +618,12 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                 }
                 String id = model.fixCase(idDecl.ID().getText());
                 if (names.contains(id)) {
-                    throw new RuntimeException("parameter already defined: " + id);
+                    throw new RuntimeException("variable already defined: " + id);
                 }
                 DataType dt = buildDataType(idDecl.datatype());
                 List<Expression> dimensions = new ArrayList<>();
                 for (var expr : idDecl.expr()) {
                     dimensions.add(visit(expr));
-                }
-                if (dimensions.size() > 1) {
-                    throw new RuntimeException("only support 1 dimensional arrays at this time: " + id);
                 }
                 if (modifiers.contains(IdModifier.STATIC) && !dimensions.isEmpty()) {
                     // FIXME?
@@ -666,11 +663,38 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         return dt;
     }
 
+    List<IdDeclaration> buildIdDeclarationList(List<BasicParser.ParamIdDeclContext> params) {
+        var decls = new ArrayList<IdDeclaration>();
+        var names = new HashSet<>();
+        if (params != null) {
+            params.forEach(idDecl -> {
+                String id = model.fixCase(idDecl.ID().getText());
+                if (names.contains(id)) {
+                    throw new RuntimeException("parameter already defined: " + id);
+                }
+                DataType dt = buildDataType(idDecl.datatype());
+                int numDimensions = 0;
+                if (idDecl.getText().contains("(")) {
+                    // count the number of commas to figure out dimensions.  "SUB NAME(ARRAY(,,) AS INTEGER)" => 3 dimensions
+                    numDimensions = idDecl.getText().length() - idDecl.getText().replace(",", "").length() + 1;
+                }
+                List<Expression> dimensions = new ArrayList<>();
+                for (int i=0; i<numDimensions; i++) {
+                    // not actual dimension size; but Symbol holds on to the defining dimension expressions
+                    dimensions.add(PlaceholderExpression.of(DataType.INTEGER));
+                }
+                names.add(id);
+                decls.add(new IdDeclaration(Set.of(), id, dt, dimensions, List.of()));
+            });
+        }
+        return decls;
+    }
+
     @Override
     public Expression visitSubDecl(BasicParser.SubDeclContext ctx) {
         List<Symbol.Builder> params = Collections.emptyList();
         if (ctx.paramDecl() != null) {
-            params = buildDeclarationList(ctx.paramDecl().idDecl()).stream()
+            params = buildIdDeclarationList(ctx.paramDecl().paramIdDecl()).stream()
                 .map(IdDeclaration::toParameter)
                 .collect(Collectors.toList());
         }
@@ -701,7 +725,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     public Expression visitFuncDecl(BasicParser.FuncDeclContext ctx) {
         List<Symbol.Builder> params = Collections.emptyList();
         if (ctx.paramDecl() != null) {
-            params = buildDeclarationList(ctx.paramDecl().idDecl()).stream()
+            params = buildIdDeclarationList(ctx.paramDecl().paramIdDecl()).stream()
                 .map(IdDeclaration::toParameter)
                 .collect(Collectors.toList());
         }
@@ -728,19 +752,20 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     public Expression visitDimStmt(BasicParser.DimStmtContext ctx) {
         buildDeclarationList(ctx.idDecl()).forEach(decl -> {
             if (decl.isArray()) {
-                // FIXME assuming 1 dimension
-                if (decl.hasDefaultValues()) {
+                // FIXME defaults only apply to 1 dimension
+                if (decl.hasDefaultValues() && decl.dimensions.size() == 1) {
                     decl.defaultValues().forEach(expr -> {
                         if (!expr.isConstant()) {
                             throw new RuntimeException("default array values must be constant");
                         }
                     });
                     model.addArrayDefaultVariable(decl.name(), decl.dataType(),
-                        decl.dimensions().size(), decl.defaultValues());
+                        decl.dimensions(), decl.defaultValues());
                 }
                 else {
-                    var symbol = model.addArrayVariable(decl.name(), decl.dataType(), decl.dimensions().size());
-                    model.allocateIntegerArray(symbol, decl.dimensions().getFirst());
+                    var symbol = model.addArrayVariable(decl.name(), decl.dataType(), decl.dimensions());
+                    model.allocateIntegerArray(symbol, decl.dimensions());
+                    // FIXME is this needed?
                     model.registerDimArray(symbol, decl.dimensions().getFirst());
                 }
             }
@@ -807,9 +832,12 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
         if ("ubound".equalsIgnoreCase(id)) {
             if (params.size() == 1 && params.getFirst() instanceof VariableReference varRef) {
-                return new ArrayLengthFunction(model, varRef.getSymbol());
+                return new ArrayLengthFunction(varRef.getSymbol(), 1);
             }
-            throw new RuntimeException("ubound expects a variable name as its argument: " + ctx.getText());
+            else if (params.size() == 2 && params.getFirst() instanceof VariableReference varRef && params.getLast().isConstant()) {
+                return new ArrayLengthFunction(varRef.getSymbol(), params.getLast().asInteger().orElseThrow());
+            }
+            throw new RuntimeException("ubound expects a variable name (and optionally an index number) as its argument: " + ctx.getText());
         }
 
         if (model.isFunction(id)) {
@@ -830,13 +858,9 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             }
         }
 
-        // FIXME
-        if (params.size() > 1) {
-            throw new RuntimeException("only single dimension arrays supported at this time: " + ctx.getText());
-        }
         // TODO if the index is complex, it gets evaluated multiple times
-        model.checkArrayBounds(existing.get(), params.getFirst(), ctx.getStart().getLine());
-        return arrayReference(existing.get(), params.getFirst());
+        model.checkArrayBounds(existing.get(), params, ctx.getStart().getLine());
+        return arrayReference(existing.get(), params);
     }
 
     @Override
@@ -901,7 +925,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             }
             return Symbol.variable(name, SymbolType.PARAMETER)
                     .dataType(dataType)
-                    .dimensions(dimensions.size());
+                    .dimensions(dimensions);
         }
         public boolean isArray() {
             return dimensions != null && !dimensions.isEmpty();
