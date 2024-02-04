@@ -8,13 +8,13 @@ Review generated code and look for alternates with new opcodes.
 Unit tests?  Integer BASIC(done)  BASIC(done)  optimizations(done)  code generation?
 Interpreter for use in tests.
 Structure assembly project; it's gonna get messier.
-Add Applesoft
-DEF FN == Function
+Add Applesoft. DEF FN == Function
 Optimization - extract common code
 Basic needs actual string handling.
 Bytes would be good to define buffers.
 Need to determine if interpreter should keep signed and unsigned operations or can that just be replaced with wrapper code (removes DIVS/MULS/MODS)
 Enhance USES statement to allow custom imports (example: USES MIN,MAX FROM "MATH")
+Add "option" statement to control compiler via source (heap settings, strict variable declaration, etc) instead of command-line.
 Optimize/short circuit OR/AND with IFNZ/IFZ
 Some expressions can be rearranged for better code, like 1 + n + 3 => 1 + 3 + n => 4 + n
 Revisit boolean versus bit logic. NOT/AND/OR don't always work as expected; maybe new operators needed?
