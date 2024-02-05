@@ -377,19 +377,19 @@ Note that a number can be defined in decimal (`1234`), hexadecimal (`0x12ed`), o
 
 Any built-in functions are referenced here.
 
-| Function            | Library   | Notes                                                                           |
-|:--------------------|:----------|:--------------------------------------------------------------------------------|
-| `abs(iexpr)`        | Math      | Returns the absolute value of `iexpr`.                                          |
-| `asc(string)`       | Intrinsic | Returns the ASCII value of the first character of the string with high bit set. |
-| `pdl(iexpr)`        | Misc      | Reads paddle specified by `iexpr`.                                              |
-| `peek(addr)`        | Intrinsic | Read byte from memory location `addr`.                                          |
-| `peekw(addr)`       | Intrinsic | Read word from memory location `addr`.                                          |
-| `random()`          | Math      | Returns a random integer between `0` and `-32768`                               |
-| `rnd(iexpr)`        | Math      | Returns a random number in the range `0` to `iexpr-1`.                          |
-| `scrn(xexpr,yexpr)` | Lores     | Read color of lores graphics point at `xexpr`, `yexpr` coordinate.              |
-| `sgn(iexpr)`        | Math      | Returns 1,0,-1 if `iexpr < 0`, or `iexpr = 0`, or `iexpr > 0`.                  |
-| `ubound(arrayVar)`  | Intrinsic | Returns length of array.                                                        |
-| `addrof(var)`       | Intrinsic | Calculate address of a variable.                                                |
+| Function                 | Library   | Notes                                                                           |
+|:-------------------------|:----------|:--------------------------------------------------------------------------------|
+| `abs(iexpr)`             | Math      | Returns the absolute value of `iexpr`.                                          |
+| `asc(string)`            | Intrinsic | Returns the ASCII value of the first character of the string with high bit set. |
+| `pdl(iexpr)`             | Misc      | Reads paddle specified by `iexpr`.                                              |
+| `peek(addr)`             | Intrinsic | Read byte from memory location `addr`.                                          |
+| `peekw(addr)`            | Intrinsic | Read word from memory location `addr`.                                          |
+| `random()`               | Math      | Returns a random integer between `0` and `-32768`                               |
+| `rnd(iexpr)`             | Math      | Returns a random number in the range `0` to `iexpr-1`.                          |
+| `scrn(xexpr,yexpr)`      | Lores     | Read color of lores graphics point at `xexpr`, `yexpr` coordinate.              |
+| `sgn(iexpr)`             | Math      | Returns 1,0,-1 if `iexpr < 0`, or `iexpr = 0`, or `iexpr > 0`.                  |
+| `ubound(arrayVar[,dim])` | Intrinsic | Returns length of an array dimension (default is 1).                            |
+| `addrof(var)`            | Intrinsic | Calculate address of a variable.                                                |
 
 Note that the library specified is lowercase in the `uses` phrase. 
 All library functions are currently prefixed by the library name.
