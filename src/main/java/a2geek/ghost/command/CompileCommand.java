@@ -317,6 +317,11 @@ public class CompileCommand implements Callable<Integer> {
                 description = "enable code inlining (enabled: ${DEFAULT-VALUE})")
         private boolean codeInlining;
 
+        @Option(names = { "--expression-rewrite" }, negatable = true, defaultValue = "true",
+                fallbackValue = "true", showDefaultValue = Visibility.NEVER,
+                description = "enable expression rewriting (enabled: ${DEFAULT-VALUE})")
+        private boolean expressionRewriting;
+
         public void apply(ModelBuilder model) {
             if (noOptimizations) {
                 return;
@@ -341,6 +346,9 @@ public class CompileCommand implements Callable<Integer> {
             }
             if (deadCodeElimination) {
                 execute(program, new DeadCodeEliminationVisitor());
+            }
+            if (expressionRewriting) {
+                execute(program, new ExpressionRewriteVisitor());
             }
         }
 
