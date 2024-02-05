@@ -19,10 +19,14 @@ public class ExpressionRewriteVisitor extends Visitor {
             visitor.visit(expression);
             // only rewrite if we actually gathered more than 1 constant
             if (visitor.getConstantCounter() > 1 && !visitor.getNonConstants().isEmpty()) {
-                return visitor.getNonConstants().stream()
+                var nonConstants = visitor.getNonConstants().stream()
                         .reduce((a,b) -> new BinaryExpression(expression.getOp(), a, b))
-                        .orElseThrow()
-                        .plus(new IntegerConstant(visitor.getConstantSum()));
+                        .orElseThrow();
+                return switch(expression.getOp()) {
+                    case "+" -> nonConstants.plus(new IntegerConstant(visitor.getConstantTotal()));
+                    case "*" -> nonConstants.times(new IntegerConstant(visitor.getConstantTotal()));
+                    default -> throw new RuntimeException("unexpected op: " + expression.getOp());
+                };
             }
         }
 
@@ -32,20 +36,26 @@ public class ExpressionRewriteVisitor extends Visitor {
     private static class BinaryExpressionVisitor extends Visitor {
         private DataType dataType;
         private String operation;
-        private int constantSum;
+        private int constantTotal;
         private int constantCounter;
         private List<Expression> nonConstants = new ArrayList<>();
 
         public BinaryExpressionVisitor(DataType dataType, String operation) {
             this.dataType = dataType;
             this.operation = operation;
+            // need to choose the correct identity value for operation
+            this.constantTotal = switch (operation) {
+                case "+" -> 0;
+                case "*" -> 1;
+                default -> throw new RuntimeException("unexpected operator: " + operation);
+            };
         }
 
         public int getConstantCounter() {
             return constantCounter;
         }
-        public int getConstantSum() {
-            return constantSum;
+        public int getConstantTotal() {
+            return constantTotal;
         }
         public List<Expression> getNonConstants() {
             return nonConstants;
@@ -62,8 +72,12 @@ public class ExpressionRewriteVisitor extends Visitor {
 
         public void handle(Expression expression) {
             if (expression.isConstant()) {
-                constantSum += expression.asInteger().orElseThrow();
                 constantCounter += 1;
+                switch (operation) {
+                    case "+" -> constantTotal += expression.asInteger().orElseThrow();
+                    case "*" -> constantTotal *= expression.asInteger().orElseThrow();
+                    default -> throw new RuntimeException("unexpected operator: " + operation);
+                }
             }
             else {
                 if (expression instanceof BinaryExpression bin) {
@@ -73,7 +87,6 @@ public class ExpressionRewriteVisitor extends Visitor {
                     nonConstants.add(expression);
                 }
             }
-
         }
     }
 }
