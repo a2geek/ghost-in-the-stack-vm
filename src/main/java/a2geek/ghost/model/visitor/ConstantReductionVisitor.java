@@ -18,6 +18,11 @@ public class ConstantReductionVisitor extends Visitor {
     }
 
     @Override
+    public Expression visit(ArrayLengthFunction expression) {
+        return constantReduction(expression).orElse(null);
+    }
+
+    @Override
     public Expression visit(UnaryExpression expression) {
         dispatch(expression.getExpr()).ifPresent(expression::setExpr);
 
