@@ -4,6 +4,7 @@ import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.Expression;
 
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * This is not really an expression, sometimes we need an expression to hold a place.
@@ -13,20 +14,45 @@ import java.util.Objects;
  * normal computations. And because it's a class, we can detect it if the need arises.
  */
 public class PlaceholderExpression implements Expression {
-    // TODO this should be something we can override if we do "figure out" the expression later on
     public static PlaceholderExpression of(DataType dataType) {
         return new PlaceholderExpression(dataType);
     }
 
     private final DataType dataType;
+    private Expression expression;
 
     private PlaceholderExpression(DataType dataType) {
         this.dataType = dataType;
     }
 
+    public void setExpression(Expression expression) {
+        Objects.requireNonNull(expression);
+        this.expression = expression;
+    }
+
     @Override
     public DataType getType() {
-        return dataType;
+        return expression == null ? dataType : expression.getType();
+    }
+
+    @Override
+    public boolean isConstant() {
+        return expression != null && expression.isConstant();
+    }
+
+    @Override
+    public Optional<Boolean> asBoolean() {
+        return expression == null ? Optional.empty() : expression.asBoolean();
+    }
+
+    @Override
+    public Optional<Integer> asInteger() {
+        return expression == null ? Optional.empty() : expression.asInteger();
+    }
+
+    @Override
+    public Optional<String> asString() {
+        return expression == null ? Optional.empty() : expression.asString();
     }
 
     @Override
@@ -44,6 +70,6 @@ public class PlaceholderExpression implements Expression {
 
     @Override
     public String toString() {
-        return "-PH-";
+        return expression == null ? "-PH-" : expression.toString();
     }
 }

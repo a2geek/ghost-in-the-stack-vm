@@ -67,12 +67,20 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         }
         // If we need the line number references for dynamic goto/gosub, create them...
         model.findSymbol(model.fixArrayName(LINE_NUMBERS)).ifPresent(symbol -> {
+            if (symbol.dimensions().getFirst() instanceof PlaceholderExpression placeholder) {
+                // We can fake the dimension expression
+                placeholder.setExpression(new IntegerConstant(lineLabels.size()));
+            }
             lineLabels.keySet().stream()
                     .map(IntegerConstant::new)
                     .map(Expression.class::cast)
                     .forEach(expr -> symbol.defaultValues().add(expr));
         });
         model.findSymbol(model.fixArrayName(LINE_LABELS)).ifPresent(symbol -> {
+            if (symbol.dimensions().getFirst() instanceof PlaceholderExpression placeholder) {
+                // We can fake the dimension expression
+                placeholder.setExpression(new IntegerConstant(lineLabels.size()));
+            }
             lineLabels.values().stream()
                     .map(AddressOfFunction::new)
                     .forEach(expr -> symbol.defaultValues().add(expr));
@@ -179,6 +187,11 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
             // we accept the existing variable, and if we're first, create it with the actual dimension expression
             return model.addArrayVariable(ctx.n.getText(), DataType.INTEGER, Collections.singletonList(expr));
         });
+
+        // Note that we know this is an array and Integer BASIC only supports 1 dimension...
+        if (symbol.dimensions().getFirst() instanceof PlaceholderExpression placeholder) {
+            placeholder.setExpression(expr);
+        }
 
         model.allocateIntegerArray(symbol, List.of(expr));
         model.registerDimArray(symbol, expr);
