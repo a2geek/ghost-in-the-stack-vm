@@ -41,4 +41,9 @@ public class PlaceholderExpression implements Expression {
     public int hashCode() {
         return Objects.hash(dataType);
     }
+
+    @Override
+    public String toString() {
+        return "-PH-";
+    }
 }

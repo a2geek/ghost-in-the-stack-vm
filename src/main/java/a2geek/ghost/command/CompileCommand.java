@@ -244,18 +244,19 @@ public class CompileCommand implements Callable<Integer> {
 
 
     public void saveSymbolTable(Program program, String filename) {
-        var fmt = "| %-20.20s | %-5.5s | %-10.10s | %-10.10s | %-10.10s | %-20.20s | %4s | %-20.20s | %-20.20s |\n";
+        var fmt = "| %-20.20s | %-5.5s | %-10.10s | %-10.10s | %-10.10s | %-20.20s | %-15.15s | %-20.20s | %-20.20s |\n";
         var scopes = new ArrayList<Scope>();
         scopes.addLast(program);
         try (PrintWriter pw = new PrintWriter(filename)) {
-            pw.printf(fmt, "Name", "Temp?", "SymType", "DeclType", "DataType", "Scope", "DIMs", "Default", "TargetName");
+            pw.printf(fmt, "Name", "Temp?", "SymType", "DeclType", "DataType", "Scope", "Dimensions", "Default", "TargetName");
             while (!scopes.isEmpty()) {
                 var scope = scopes.removeFirst();
                 scope.getLocalSymbols().forEach(symbol -> {
                     pw.printf(fmt, symbol.name(), symbol.temporary() ? "Temp" : "-",
                             symbol.symbolType(), symbol.declarationType(),
                             ifNull(symbol.dataType(), "-n/a-"), scope.getName(),
-                            symbol.numDimensions(), ifNull(symbol.defaultValues(),"-none-"),
+                            symbol.dimensions().isEmpty() ? "N/A" : symbol.dimensions(),
+                            ifNull(symbol.defaultValues(),"-none-"),
                             ifNull(symbol.targetName(), "-"));
                     if (symbol.scope() != null) {
                         scopes.addLast(symbol.scope());
