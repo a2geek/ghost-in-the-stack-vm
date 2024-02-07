@@ -33,6 +33,12 @@ public class DeadCodeEliminationVisitor extends Visitor implements RepeatingVisi
     @Override
     public void dispatchToList(Scope scope, List<Statement> statements) {
         ExpressionTracker tracker = new ExpressionTracker();
+        cleanBoundsCheck(tracker, statements);
+
+        super.dispatchToList(scope, statements);
+    }
+
+    public void cleanBoundsCheck(ExpressionTracker tracker, List<Statement> statements) {
         for (int i=0; i<statements.size(); i++) {
             switch (statements.get(i)) {
                 case IfStatement ifStmt -> {
@@ -40,6 +46,16 @@ public class DeadCodeEliminationVisitor extends Visitor implements RepeatingVisi
                         statements.remove(i);
                         i -= 1;  // since we removed the statement, we want to look again
                         counter += 1;
+                    }
+                    else {
+                        if (ifStmt.hasTrueStatements()) {
+                            cleanBoundsCheck(new ExpressionTracker(tracker), ifStmt.getTrueStatements().getInitializationStatements());
+                            cleanBoundsCheck(new ExpressionTracker(tracker), ifStmt.getTrueStatements().getStatements());
+                        }
+                        if (ifStmt.hasFalseStatements()) {
+                            cleanBoundsCheck(new ExpressionTracker(tracker), ifStmt.getFalseStatements().getInitializationStatements());
+                            cleanBoundsCheck(new ExpressionTracker(tracker), ifStmt.getFalseStatements().getStatements());
+                        }
                     }
                 }
                 case AssignmentStatement assgnStmt -> {
@@ -56,7 +72,6 @@ public class DeadCodeEliminationVisitor extends Visitor implements RepeatingVisi
                 default -> { /* do nothing */ }
             }
         }
-        super.dispatchToList(scope, statements);
     }
 
     @Override

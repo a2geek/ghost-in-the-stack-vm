@@ -9,6 +9,12 @@ import java.util.Set;
 public class ExpressionTracker {
     private final Set<Expression> exprs = new HashSet<>();
 
+    public ExpressionTracker() {
+    }
+    public ExpressionTracker(ExpressionTracker tracker) {
+        exprs.addAll(tracker.exprs);
+    }
+
     public boolean isCovered(Expression expression) {
         if (exprs.contains(expression)) {
             return true;
