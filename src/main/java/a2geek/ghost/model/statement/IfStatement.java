@@ -1,19 +1,26 @@
 package a2geek.ghost.model.statement;
 
-import a2geek.ghost.model.DataType;
-import a2geek.ghost.model.Expression;
-import a2geek.ghost.model.Statement;
-import a2geek.ghost.model.StatementBlock;
+import a2geek.ghost.model.*;
 
 public class IfStatement implements Statement {
     private Expression expression;
     private final StatementBlock trueStatements;
     private final StatementBlock falseStatements;
+    private final SourceType sourceType;
 
     public IfStatement(Expression expression, StatementBlock trueStatements, StatementBlock falseStatement) {
+        this(expression, trueStatements, falseStatement, SourceType.CODE);
+    }
+    public IfStatement(Expression expression, StatementBlock trueStatements, StatementBlock falseStatement, SourceType sourceType) {
         setExpression(expression);
         this.trueStatements = trueStatements;
         this.falseStatements = falseStatement;
+        this.sourceType = sourceType;
+    }
+
+    @Override
+    public SourceType getSource() {
+        return sourceType;
     }
 
     public Expression getExpression() {

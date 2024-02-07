@@ -305,7 +305,7 @@ public class ModelBuilder {
         addStatement(assignmentStatement);
     }
     public void ifStmt(Expression expr, StatementBlock trueStatements, StatementBlock falseStatements) {
-        IfStatement statement = new IfStatement(expr, trueStatements, falseStatements);
+        IfStatement statement = new IfStatement(expr, trueStatements, falseStatements, SourceType.CODE);
         addStatement(statement);
     }
 
@@ -485,7 +485,8 @@ public class ModelBuilder {
             // java indexes are 0..n while ubound indexes are 1..n+1.
             test = test.or(indexes.get(i).gt(new ArrayLengthFunction(symbol, i+1)));
         }
-        ifStmt(test, errorBlock, null);
+        IfStatement statement = new IfStatement(test, errorBlock, null, SourceType.BOUNDS_CHECK);
+        addStatement(statement);
     }
 
     public void raiseError(Expression number, Expression message) {
