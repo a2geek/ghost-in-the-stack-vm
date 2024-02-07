@@ -3,16 +3,32 @@ package a2geek.ghost.model;
 import a2geek.ghost.model.expression.*;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
 public class ExpressionTracker {
+    private static final Map<String,String> REVERSE_OPS = Map.of(
+            "=", "<>",
+            "<>", "=",
+            "<", ">=",
+            ">=", "<",
+            "<=", ">",
+            ">", "<=");
+
     private final Set<Expression> exprs = new HashSet<>();
 
-    public ExpressionTracker() {
-    }
-    public ExpressionTracker(ExpressionTracker tracker) {
-        exprs.addAll(tracker.exprs);
+    public ExpressionTracker with(Expression constraint) {
+        var tracker = new ExpressionTracker();
+        tracker.exprs.addAll(this.exprs);
+
+        // only setting up the ones we need!
+        if (constraint instanceof BinaryExpression bin && REVERSE_OPS.containsKey(bin.getOp())) {
+            var newbin = new BinaryExpression(bin.getL(), bin.getR(), REVERSE_OPS.get(bin.getOp()));
+            tracker.exprs.add(newbin);
+        }
+
+        return tracker;
     }
 
     public boolean isCovered(Expression expression) {

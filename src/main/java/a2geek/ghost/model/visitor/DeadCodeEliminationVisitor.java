@@ -49,12 +49,12 @@ public class DeadCodeEliminationVisitor extends Visitor implements RepeatingVisi
                     }
                     else {
                         if (ifStmt.hasTrueStatements()) {
-                            cleanBoundsCheck(new ExpressionTracker(tracker), ifStmt.getTrueStatements().getInitializationStatements());
-                            cleanBoundsCheck(new ExpressionTracker(tracker), ifStmt.getTrueStatements().getStatements());
+                            cleanBoundsCheck(tracker.with(ifStmt.getExpression()), ifStmt.getTrueStatements().getInitializationStatements());
+                            cleanBoundsCheck(tracker.with(ifStmt.getExpression()), ifStmt.getTrueStatements().getStatements());
                         }
                         if (ifStmt.hasFalseStatements()) {
-                            cleanBoundsCheck(new ExpressionTracker(tracker), ifStmt.getFalseStatements().getInitializationStatements());
-                            cleanBoundsCheck(new ExpressionTracker(tracker), ifStmt.getFalseStatements().getStatements());
+                            cleanBoundsCheck(tracker.with(ifStmt.getExpression()), ifStmt.getFalseStatements().getInitializationStatements());
+                            cleanBoundsCheck(tracker.with(ifStmt.getExpression()), ifStmt.getFalseStatements().getStatements());
                         }
                     }
                 }
