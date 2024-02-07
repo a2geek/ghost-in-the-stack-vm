@@ -1,13 +1,13 @@
 package a2geek.ghost.model.visitor;
 
 import a2geek.ghost.model.*;
+import a2geek.ghost.model.expression.VariableReference;
 import a2geek.ghost.model.scope.Function;
 import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.scope.Subroutine;
-import a2geek.ghost.model.statement.GotoGosubStatement;
-import a2geek.ghost.model.statement.IfStatement;
-import a2geek.ghost.model.statement.LabelStatement;
+import a2geek.ghost.model.statement.*;
 
+import java.util.List;
 import java.util.Objects;
 
 import static a2geek.ghost.model.Symbol.in;
@@ -28,6 +28,35 @@ public class DeadCodeEliminationVisitor extends Visitor implements RepeatingVisi
 
     public void clearStatistics() {
         statistics = null;
+    }
+
+    @Override
+    public void dispatchToList(Scope scope, List<Statement> statements) {
+        ExpressionTracker tracker = new ExpressionTracker();
+        for (int i=0; i<statements.size(); i++) {
+            switch (statements.get(i)) {
+                case IfStatement ifStmt -> {
+                    if (ifStmt.getSource() == SourceType.BOUNDS_CHECK && tracker.isCovered(ifStmt.getExpression())) {
+                        statements.remove(i);
+                        i -= 1;  // since we removed the statement, we want to look again
+                        counter += 1;
+                    }
+                }
+                case AssignmentStatement assgnStmt -> {
+                    if (assgnStmt.getVar() instanceof VariableReference ref) {
+                        tracker.changed(ref.getSymbol());
+                    }
+                }
+                case LabelStatement ignored -> tracker.reset();
+                case GotoGosubStatement ignored -> tracker.reset();
+                case DynamicGotoGosubStatement ignored -> tracker.reset();
+                case EndStatement ignored -> tracker.reset();
+                case RaiseErrorStatement ignored -> tracker.reset();
+                case ReturnStatement ignored -> tracker.reset();
+                default -> { /* do nothing */ }
+            }
+        }
+        super.dispatchToList(scope, statements);
     }
 
     @Override
