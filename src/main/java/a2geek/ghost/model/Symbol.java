@@ -109,6 +109,11 @@ public record Symbol(String name, SymbolType symbolType, DeclarationType declara
         public DataType dataType() {
             return dataType;
         }
+        public Builder dimensions(Expression... dimensions) {
+            Objects.requireNonNull(dimensions);
+            this.dimensions = Arrays.asList(dimensions);
+            return this;
+        }
         public Builder dimensions(List<Expression> dimensions) {
             Objects.requireNonNull(dimensions);
             this.dimensions = dimensions;
