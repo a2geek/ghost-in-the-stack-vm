@@ -3,20 +3,34 @@
 ' ROB GREENE
 ' 06/21/83
 ' ==========
+' note: needs heap
 
 uses "text"
 uses "hires"
 uses "prodos"
+uses "strings"
+uses "math"
 
 const MOUSE_SHAPES = 0x6000
 const TITLE_SHAPES = 0x7000
 const CHAR_SHAPES = 0x8000
 
+const SHAPE_W = 1
+const SHAPE_MOUSE = 2
+const SHAPE_ROBOT = 3
+const SHAPE_EXIT = 5
+const SHAPE_DEAD_MOUSE = 6
+const SHAPE_DEAD_ROBOT = 7
+const SHAPE_BOMB = 8
+const SHAPE_MINE = 11
+
 dim X as integer
-dim M as integer, N as integer
+dim L as integer, M as integer, N as integer
+DIM map(15,12) as integer, RB(12) as integer, RT(12) as integer
 
 gosub initialize
 gosub drawScreen
+gosub demo
 end
 
 initialize:
@@ -68,4 +82,82 @@ drawScreen:
     DRAW(7,M,N)
 
     shapetable(CHARS_SHAPES)
+    return
+
+' Was GOSUB 2260 with A$ and O.
+' Also handing lower case instead of using embedded control characters
+sub drawText(x as integer, text as string)
+    dim ch as integer
+    shapetable(CHAR_SHAPES)
+    FOR Z = 0 TO LEN(text)
+        ch = ascn(text,z) AND 0x7f
+        ' Character range adjustment:
+        '  $00..$1F => uppercase letters (ASCII $40-$5F)
+        '  $20..$3F => numbers/symbols
+        '  $40..$5F => lowercase letters (ASCII $60-$7F)
+        if ch >= 0x60 then
+            ch = ch - 0x20
+        elseif ch >= 0x40 then
+            ch = ch - 0x40
+        end if
+        IF ch >= 0 THEN
+            HCOLOR(3)
+            DRAW(ch,x,180)
+        END IF
+        x = x + 7
+    NEXT Z
+    shapetable(MOUSE_SHAPES)
+end sub
+
+setLevel:
+    FOR A = 0 TO 15: FOR B = 0 TO 12:map(A,B) = 0: NEXT B: NEXT A
+    FOR A = 0 TO 15:map(A,0) = SHAPE_W:map(A,12) = SHAPE_W: NEXT A
+    FOR B = 0 TO 12:map(0,B) = SHAPE_W:map(15,B) = SHAPE_W: NEXT B
+    map(1,6) = SHAPE_MOUSE:map(14,8) = SHAPE_ROBOT
+    map(14,7) = SHAPE_ROBOT:map(14,5) = SHAPE_ROBOT
+    map(14,4) = SHAPE_ROBOT
+    map(14,6) = SHAPE_EXIT
+    FOR A = 1 TO ((LV +1) *3)
+        do
+            F = rnd(14)+1:G = rnd(11)+1
+        loop until map(F,G) = 0
+        map(F,G) = SHAPE_BOMB
+    NEXT A
+    X = 1:Y = 6:LV = 1
+    FOR K = 1 TO 4:RB(K) = 14: NEXT K
+    RT(1) = 4:RT(2) = 5:RT(3) = 7:RT(4) = 8
+    FOR U = 1 TO ML: HCOLOR(3): DRAW(2, 256, U*16): NEXT U
+    RETURN
+
+drawMap:
+    FOR A = 1 TO 14
+        FOR B = 1 TO 11
+            ' FIXME
+            'IF  PEEK( -16384) =  ASC("G") +128  THEN  PRINT  CHR$(4);"RUN MOUSEMAZE"
+            'IF  PEEK( -16384) =  ASC("H") +128  THEN  PRINT  CHR$(4);"RUN MOUSE HELP"
+            HCOLOR(3): DRAW(4, (17 *A)-16, (16*B))
+            HCOLOR(0): DRAW(4, (17 *A)-16, (16*B))
+            HCOLOR(3)
+            IF map(A,B) = SHAPE_DEAD_MOUSE  THEN  DRAW(6, (17*A)-16, 16*B)
+            IF map(A,B) = SHAPE_MOUSE  THEN  DRAW(2, (17*A)-16, (16*B)-1)
+            IF map(A,B) = SHAPE_DEAD_ROBOT  THEN  DRAW(7, (17*A)-16, 16*B)
+            IF map(A,B) = SHAPE_ROBOT  THEN  DRAW(3, (17*A)-16, 16*B)
+            IF map(A,B) = SHAPE_BOMB  THEN  DRAW(8, (17*A)-16, 16*B)
+            IF map(A,B) = SHAPE_EXIT  THEN  DRAW(5, (17*A)-16, 16*B)
+            IF map(A,B) = SHAPE_MINE  THEN  DRAW(11, (17*A)-16, 16*B)
+        NEXT B
+    NEXT A
+    RETURN
+
+eraseText:
+    HCOLOR(0): FOR L = 177 TO 190: HPLOT(1,L,238,L): NEXT L : RETURN
+
+demo:
+    gosub eraseText
+    POKE  -16304,0: POKE  -16297,0: POKE  -16302,0: POKE  -16299,0
+    X = 1:Y = 6:LV = 0:ML = 3
+    drawText(7, "Press 'G' for game, 'H' for help.")
+    gosub setLevel
+    gosub drawMap
+
     return
