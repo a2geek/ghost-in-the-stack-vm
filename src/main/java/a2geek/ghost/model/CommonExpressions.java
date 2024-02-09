@@ -24,12 +24,12 @@ public class CommonExpressions {
         var overheadBytes =  new IntegerConstant(array.numDimensions() * DataType.INTEGER.sizeof());
         // compute element placement
         Expression elementNumber = indexes.getLast();
-        for (int i=array.numDimensions()-1; i > 0; i--) {
-            Expression dimsize = ubound(array,i);
-            if (array.dimensions().get(i-1).isConstant()) {
-                dimsize = array.dimensions().get(i-1).plus(IntegerConstant.ONE);
+        for (int i=0; i<array.numDimensions()-1; i++) {
+            Expression dimsize = ubound(array,i+1);
+            if (array.dimensions().get(i+1).isConstant()) {
+                dimsize = array.dimensions().get(i+1).plus(IntegerConstant.ONE);
             }
-            elementNumber = indexes.get(i-1).times(dimsize).plus(elementNumber);
+            elementNumber = indexes.get(i).times(dimsize).plus(elementNumber);
         }
         // this is the index for the last dimension
         var sizeof = new IntegerConstant(array.dataType().sizeof());
