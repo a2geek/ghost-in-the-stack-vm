@@ -645,7 +645,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                         defaultValues.add(expr);
                     }
                 }
-                if (isArray && modifiers.contains(IdModifier.STATIC)) {
+                if (isArray && !defaultValues.isEmpty()) {
                     dimensions.clear();
                     dimensions.add(new IntegerConstant(defaultValues.size()));
                 }

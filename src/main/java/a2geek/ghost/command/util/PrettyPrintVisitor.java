@@ -1,9 +1,6 @@
 package a2geek.ghost.command.util;
 
-import a2geek.ghost.model.Scope;
-import a2geek.ghost.model.Statement;
-import a2geek.ghost.model.StatementBlock;
-import a2geek.ghost.model.SymbolType;
+import a2geek.ghost.model.*;
 import a2geek.ghost.model.scope.Function;
 import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.scope.Subroutine;
@@ -90,7 +87,11 @@ public class PrettyPrintVisitor {
                 sb.append(String.format("%s:", label.getLabel().name()).indent(0));
             }
             case IfStatement ifStatement -> {
-                sb.append(String.format("IF %s THEN", ifStatement.getExpression()).indent(indent));
+                var postfix = "";
+                if (ifStatement.getSource() != SourceType.CODE) {
+                    postfix = " **";
+                }
+                sb.append(String.format("IF %s THEN%s", ifStatement.getExpression(), postfix).indent(indent));
                 indent += indentIncrement;
                 formatStatementBlock(ifStatement.getTrueStatements());
                 if (ifStatement.hasFalseStatements()) {
