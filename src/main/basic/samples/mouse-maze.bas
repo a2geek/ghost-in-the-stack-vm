@@ -15,13 +15,21 @@ const MOUSE_SHAPES = 0x6000
 const TITLE_SHAPES = 0x7000
 const CHAR_SHAPES = 0x8000
 
+' "W"
 const SHAPE_W = 1
+' "M"
 const SHAPE_MOUSE = 2
+' "E"
 const SHAPE_ROBOT = 3
+' "D"
 const SHAPE_EXIT = 5
+' "Z"
 const SHAPE_DEAD_MOUSE = 6
+' "R"
 const SHAPE_DEAD_ROBOT = 7
+' "B"
 const SHAPE_BOMB = 8
+' "N"
 const SHAPE_MINE = 11
 
 dim X as integer
@@ -152,6 +160,40 @@ drawMap:
 eraseText:
     HCOLOR(0): FOR L = 177 TO 190: HPLOT(1,L,238,L): NEXT L : RETURN
 
+moveUp:
+    IF Y <1  THEN  RETURN
+    IF map(X,Y-1) = 0  THEN
+        HCOLOR(0)
+        DRAW(4, (X*17)-16, Y*16)
+        HCOLOR(3)
+        DRAW(2, (X*17)-16, (Y*16)-17)
+        map(X,Y) = 0
+        map(X,Y-1) = SHAPE_MOUSE
+        Y = Y-1
+    ELSEIF map(X,Y-1) = SHAPE_EXIT  THEN
+        'M$ = "L"
+    ELSEIF map(X,Y -1) = SHAPE_MINE  THEN
+        HCOLOR(0)
+        DRAW(4, (X*17)-16, Y*16)
+        map(X,Y) = 0
+        Y = Y-1
+        FOR T = 1 TO 5
+            FOR S = 9 TO 10
+                HCOLOR(3)
+                DRAW(S, (X*17)-16, Y*16)
+                SOUND =  PEEK( -16336)
+                HCOLOR(0)
+                DRAW(S, (X*17)-16, Y*16)
+            NEXT S
+        NEXT T
+        HCOLOR(3)
+        DRAW(6, (X*17)-16, Y*16)
+        'M$ = "D"
+    ELSE
+        CALL  -1052
+    END IF
+    RETURN
+
 demo:
     gosub eraseText
     POKE  -16304,0: POKE  -16297,0: POKE  -16302,0: POKE  -16299,0
@@ -159,5 +201,45 @@ demo:
     drawText(7, "Press 'G' for game, 'H' for help.")
     gosub setLevel
     gosub drawMap
-
-    return
+    while true
+        FOR PL = 1 TO 50
+            ' line 70
+            K = rnd(77)+1:K = K + 140
+            IF K = 141  THEN
+                GOSUB moveUp
+            ELSEIF K = 175  THEN
+                'GOSUB 490
+            ELSEIF K = 136  THEN
+                'GOSUB 570
+            ELSEIF K = 149  THEN
+                'GOSUB 650
+            ELSEIF K = 196  THEN
+                'GOSUB 730
+            ELSEIF K = 197  THEN
+                'GOSUB 810
+            ELSEIF K = 193  THEN
+                'GOSUB 900
+            ELSEIF K = 195  THEN
+                'GOSUB 980
+            ELSEIF K = 209  THEN
+                'GOSUB 1070
+            ELSEIF K = 218  THEN
+                'GOSUB 1160
+            ELSEIF K = 215  THEN
+                'GOSUB 1250
+            ELSEIF K = 216  THEN
+                'GOSUB 1330
+            ELSEIF  PEEK( -16384) =  ASC("G") +128  THEN
+                'PRINT  CHR$(4);"RUN MOUSEMAZE"
+            ELSEIF  PEEK( -16384) =  ASC("H") +128  THEN
+                'PRINT  CHR$(4);"RUN MOUSE HELP"
+            ELSE
+                'GOSUB 1940
+                'IF M$ = "D"  THEN  GOTO 270
+                'IF M$ = "L"  THEN M$ = " ": GOTO 40
+            END IF
+        NEXT PL
+        'GOSUB 1410
+        ' line 270
+        'IF M$ = "D"  THEN  GOSUB 1790
+    end while
