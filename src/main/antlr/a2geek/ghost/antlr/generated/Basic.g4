@@ -63,7 +63,7 @@ statement
       'loop' op=('while' | 'until') a=expr                                  # doLoop2
     | 'for' id=ID '=' a=expr 'to' b=expr ('step' c=expr)? (EOL|':')+
         s=statements? (EOL|':')*  // EOL is included in statements itself
-      'next' id2=ID                                                         # forLoop
+      'next' ID?                                                            # forLoop
     | 'while' a=expr (EOL|':')+
         s=statements? (EOL|':')*  // EOL is included in statements itself
       'end' 'while'                                                         # whileLoop
