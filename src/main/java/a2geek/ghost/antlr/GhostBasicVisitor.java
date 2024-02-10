@@ -917,10 +917,24 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         Expression r = visit(ctx.b);
         String op = ctx.op.getText();
 
-        if ("^".equals(op)) {
-            return model.callFunction("math.ipow", Arrays.asList(l,r));
+        // FIXME need to handle differing data types better
+        if (l.isType(DataType.STRING) && r.isType(DataType.STRING)) {
+            if ("=".equals(op) || "<>".equals(op)) {
+                return new BinaryExpression(
+                    model.callFunction("strings.strcmp", Arrays.asList(l,r)),
+                    IntegerConstant.ZERO,
+                    op);
+            }
+            else {
+                throw new RuntimeException("strings only support in/equality: " + ctx.getText());
+            }
         }
-        return new BinaryExpression(l, r, op);
+        else {
+            if ("^".equals(op)) {
+                return model.callFunction("math.ipow", Arrays.asList(l,r));
+            }
+            return new BinaryExpression(l, r, op);
+        }
     }
 
     @Override
