@@ -36,7 +36,7 @@ public class CommonExpressions {
         var offset = VariableReference.with(array).plus(overheadBytes).plus(elementNumber.times(sizeof));
         // *(array+((index+1)*sizeof(datatype))
         // *(array+(ubound(array,1)*sizeof(datatype)+(index+dims)*sizeof(datatype))
-        return new UnaryExpression("*", offset);
+        return new UnaryExpression("*", offset, array.dataType());
     }
     public static ArrayLengthFunction ubound(Symbol symbol, int dimensionNumber) {
         return new ArrayLengthFunction(symbol, dimensionNumber);
