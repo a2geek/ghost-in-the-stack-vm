@@ -12,13 +12,16 @@ public class UnaryExpression implements Expression {
     private final String op;
 
     public UnaryExpression(String op, Expression expr) {
+        this(op, expr, null);
+    }
+    public UnaryExpression(String op, Expression expr, DataType dataType) {
         this.op = op;
         this.expr = switch (this.op) {
             case "-", "not" -> expr.checkAndCoerce(DataType.INTEGER);
             case "*" -> expr.checkAndCoerce(DataType.ADDRESS);
             default -> throw new RuntimeException("unknown unary operation: " + this.op);
         };
-        this.type = expr.getType();
+        this.type = dataType == null ? expr.getType() : dataType;
     }
 
     @Override

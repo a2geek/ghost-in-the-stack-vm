@@ -620,7 +620,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                 if (names.contains(id)) {
                     throw new RuntimeException("variable already defined: " + id);
                 }
-                DataType dt = buildDataType(idDecl.datatype());
+                DataType dt = buildDataType(id, idDecl.datatype());
                 List<Expression> dimensions = new ArrayList<>();
                 for (var expr : idDecl.expr()) {
                     dimensions.add(visit(expr));
@@ -655,12 +655,26 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         }
         return decls;
     }
-    DataType buildDataType(BasicParser.DatatypeContext ctx) {
-        DataType dt = DataType.INTEGER;
+    DataType buildDataType(String id, BasicParser.DatatypeContext ctx) {
+        DataType nameType = determineDataType(id, null);
+        DataType dt = null;
         if (ctx != null) {
             dt = DataType.valueOf(ctx.getText().toUpperCase());
         }
-        return dt;
+        if (nameType == null && dt == null) {
+            return DataType.INTEGER;
+        }
+        else if (nameType == null) {
+            return dt;
+        }
+        else if (dt == null) {
+            return nameType;
+        }
+        else if (nameType == dt) {
+            return dt;
+        }
+        var msg = String.format("'%s' can't be type %s", id, dt);
+        throw new RuntimeException(msg);
     }
 
     List<IdDeclaration> buildIdDeclarationList(List<BasicParser.ParamIdDeclContext> params) {
@@ -672,7 +686,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                 if (names.contains(id)) {
                     throw new RuntimeException("parameter already defined: " + id);
                 }
-                DataType dt = buildDataType(idDecl.datatype());
+                DataType dt = buildDataType(id, idDecl.datatype());
                 int numDimensions = 0;
                 if (idDecl.getText().contains("(")) {
                     // count the number of commas to figure out dimensions.  "SUB NAME(ARRAY(,,) AS INTEGER)" => 3 dimensions
@@ -729,9 +743,10 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                 .map(IdDeclaration::toParameter)
                 .collect(Collectors.toList());
         }
-        DataType dt = buildDataType(ctx.datatype());
+        var id = ctx.id.getText();
+        DataType dt = buildDataType(id, ctx.datatype());
 
-        var func = model.funcDeclBegin(ctx.id.getText(), dt, params);
+        var func = model.funcDeclBegin(id, dt, params);
         applyModifiers(ctx.modifiers(), func);
         visit(ctx.s);
         model.funcDeclEnd();
@@ -817,9 +832,24 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             if (id.contains(".")) {
                 throw new RuntimeException("invalid identifier: " + id);
             }
-            return model.addVariable(id, DataType.INTEGER);
+            return model.addVariable(id, determineDataType(id, DataType.INTEGER));
         });
         return new VariableReference(symbol);
+    }
+
+    /**
+     * Determine the data type if we only have the ID.
+     * '$' = STRING, '%' = INTEGER, no decoration is indeterminate
+     * and can be configured.
+     */
+    public DataType determineDataType(String id, DataType defaultDataType) {
+        if (id.endsWith("$")) {
+            return DataType.STRING;
+        }
+        else if (id.endsWith("%")) {
+            return DataType.INTEGER;
+        }
+        return defaultDataType;
     }
 
     @Override
