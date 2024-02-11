@@ -27,7 +27,6 @@ dim chargeindex as integer, remainingcharges as integer
 dim chargex(CHARGEMAX),chargey(CHARGEMAX),chargeshape(CHARGEMAX)
 dim priorchargex(CHARGEMAX),priorchargey(CHARGEMAX),priorchargeshape(CHARGEMAX)
 
-
 sub initialize()
     bload("DESTROYER.BIN", 0x6000)
     shapeTable(0x6000)
@@ -75,6 +74,7 @@ sub title()
     hcolor(0)
     drawTextVH(1,1,"Destroyer!")
     drawTextVH(22,4,"| Left, } Right, Spacebar to fire")
+    drawTextVH(23,15,"Q to quit")
     drawTextVH(1,28,"Hiscore:")
     drawTextVH(2,28,"Score:")
     drawTextVH(3,28,"Charges:")
@@ -192,6 +192,8 @@ sub handleKeyboad
         shipdirection = shipdirection+1
     elseif keypress=160 and remainingcharges > 0 then
         releaseDepthCharge()
+    elseif keypress=asc("Q") or keypress=asc("q") then
+        remainingcharges = 0
     end if
     if shipdirection > 3 then shipdirection=3
     if shipdirection < -3 then shipdirection=-3
