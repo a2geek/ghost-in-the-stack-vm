@@ -79,11 +79,11 @@ public class SubexpressionEliminationVisitor implements ProgramVisitor {
                         case UnaryExpression unaryExpression -> {
                             unaryExpression.setExpr(replace(unaryExpression.getExpr(), candidate, replacement));
                             // this is an assignment to an array reference, time to exit
-                            if (ExpressionTracker.has(candidate, unaryExpression)) return;
+                            if (SimpleVisitors.hasSubexpression(candidate, unaryExpression)) return;
                         }
                         case VariableReference variableReference -> {
                             // once the value changes, we stop processing
-                            if (ExpressionTracker.has(candidate, variableReference.getSymbol())) return;
+                            if (SimpleVisitors.hasSymbol(candidate, variableReference.getSymbol())) return;
                         }
                         default -> throw new RuntimeException("[compiler bug] unexpected LHS of assignment statement: " + assignmentStatement);
                     }
@@ -164,7 +164,7 @@ public class SubexpressionEliminationVisitor implements ProgramVisitor {
      * Recursively search for an expression we've already found. If no duplicate found, return null.
      */
     public Expression capture(ExpressionTracker tracker, Expression expression, int n) {
-        if (!hasVolatileFunction(expression) && weight(expression) > 1 && tracker.capture(expression, n)) {
+        if (!SimpleVisitors.hasVolatileFunction(expression) && SimpleVisitors.weight(expression) > 1 && tracker.capture(expression, n)) {
             return expression;
         }
         return switch (expression) {
@@ -178,54 +178,6 @@ public class SubexpressionEliminationVisitor implements ProgramVisitor {
             case StringConstant ignored -> null;
             case UnaryExpression unaryExpression -> capture(tracker, unaryExpression.getExpr(), n);
             case VariableReference ignored -> null;
-            default -> throw new RuntimeException("[compiler bug] unexpected expression: " + expression);
-        };
-    }
-
-    /**
-     * Recursively look for a volatile function. We don't want to optimize functions like
-     * RND, ALLOC, etc. This is either marked in the function definition or in the intrinsic
-     * definition.
-     */
-    public boolean hasVolatileFunction(Expression expression) {
-        return switch (expression) {
-            case AddressOfFunction ignored -> false;
-            case ArrayLengthFunction ignored -> false;
-            case BinaryExpression binaryExpression -> hasVolatileFunction(binaryExpression.getL()) || hasVolatileFunction(binaryExpression.getR());
-            case BooleanConstant ignored -> false;
-            case FunctionExpression functionExpression -> {
-                if (functionExpression.isVolatile()) {
-                    yield true;
-                }
-                yield functionExpression.getParameters().stream().map(this::hasVolatileFunction).reduce(Boolean::logicalOr).orElse(false);
-            }
-            case IntegerConstant ignored -> false;
-            case PlaceholderExpression ignored -> false;
-            case StringConstant ignored -> false;
-            case UnaryExpression unaryExpression -> hasVolatileFunction(unaryExpression.getExpr());
-            case VariableReference ignored -> false;
-            default -> throw new RuntimeException("[compiler bug] unexpected expression: " + expression);
-        };
-    }
-
-    /**
-     * Calculate the "weight" of an expression. Used to determine if this expression should be
-     * considered for optimizations. Note that simple constants and variable references are a 1;
-     * everything else will be larger. Hypothetically, this could be used to prioritize which
-     * expressions are optimized first, should that become useful.
-     */
-    public int weight(Expression expression) {
-        return switch (expression) {
-            case AddressOfFunction ignored -> 1;
-            case ArrayLengthFunction ignored -> 2;
-            case BinaryExpression binaryExpression -> weight(binaryExpression.getL()) + weight(binaryExpression.getR());
-            case BooleanConstant ignored -> 1;
-            case FunctionExpression functionExpression -> 2 + functionExpression.getParameters().stream().mapToInt(this::weight).sum();
-            case IntegerConstant ignored -> 1;
-            case PlaceholderExpression ignored -> 1;
-            case StringConstant ignored -> 1;
-            case UnaryExpression unaryExpression -> 1 + weight(unaryExpression.getExpr());
-            case VariableReference ignored -> 1;
             default -> throw new RuntimeException("[compiler bug] unexpected expression: " + expression);
         };
     }

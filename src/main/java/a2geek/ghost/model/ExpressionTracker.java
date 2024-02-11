@@ -1,10 +1,10 @@
 package a2geek.ghost.model;
 
-import a2geek.ghost.model.expression.*;
+import a2geek.ghost.model.expression.BinaryExpression;
+import a2geek.ghost.model.visitor.SimpleVisitors;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 public class ExpressionTracker {
     private static final Map<String,String> REVERSE_OPS = Map.of(
@@ -45,47 +45,13 @@ public class ExpressionTracker {
     }
 
     public void changed(Symbol symbol) {
-        exprs.entrySet().removeIf(entry -> has(entry.getKey(), symbol));
+        exprs.entrySet().removeIf(entry -> SimpleVisitors.hasSymbol(entry.getKey(), symbol));
     }
     public void changed(Expression expression) {
-        exprs.entrySet().removeIf(entry -> has(entry.getKey(), expression));
+        exprs.entrySet().removeIf(entry -> SimpleVisitors.hasSubexpression(entry.getKey(), expression));
     }
 
     public void reset() {
         exprs.clear();
-    }
-
-    public static boolean has(Expression expr, Symbol symbol) {
-        return switch (expr) {
-            case AddressOfFunction addrOf -> Objects.equals(addrOf.getSymbol(), symbol);
-            case ArrayLengthFunction arrayLen -> Objects.equals(arrayLen.getSymbol(), symbol);
-            case BinaryExpression bin -> has(bin.getL(), symbol) || has(bin.getR(), symbol);
-            case BooleanConstant ignored -> false;
-            case FunctionExpression func -> func.getParameters().stream().map(param -> has(param, symbol)).reduce(Boolean::logicalOr).orElse(false);
-            case IntegerConstant ignored -> false;
-            case PlaceholderExpression ignored -> false;
-            case StringConstant ignored -> false;
-            case UnaryExpression unary -> has(unary.getExpr(), symbol);
-            case VariableReference ref -> Objects.equals(ref.getSymbol(), symbol);
-            default -> throw new RuntimeException("unsupported expression type: " + expr);
-        };
-    }
-    public static boolean has(Expression expression, Expression target) {
-        if (Objects.equals(expression, target)) {
-            return true;
-        }
-        return switch (expression) {
-            case AddressOfFunction ignored -> false;
-            case ArrayLengthFunction ignored -> false;
-            case BinaryExpression bin -> has(bin.getL(), target) || has(bin.getR(), target);
-            case BooleanConstant ignored -> false;
-            case FunctionExpression func -> func.getParameters().stream().map(param -> has(param, target)).reduce(Boolean::logicalOr).orElse(false);
-            case IntegerConstant ignored -> false;
-            case PlaceholderExpression ignored -> false;
-            case StringConstant ignored -> false;
-            case UnaryExpression unary -> has(unary.getExpr(), target);
-            case VariableReference ignored -> false;
-            default -> throw new RuntimeException("unsupported expression type: " + expression);
-        };
     }
 }
