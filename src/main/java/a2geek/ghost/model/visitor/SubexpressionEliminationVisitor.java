@@ -103,7 +103,9 @@ public class SubexpressionEliminationVisitor implements ProgramVisitor {
                         replace(replacement, ifStatement.getFalseStatements().getStatements(), candidate);
                     }
                 }
-                case LabelStatement ignored -> {}
+                case LabelStatement ignored -> {
+                    return;
+                }
                 case OnErrorStatement ignored -> {}
                 case PokeStatement pokeStatement -> {
                     pokeStatement.setA(replace(pokeStatement.getA(), candidate, replacement));
