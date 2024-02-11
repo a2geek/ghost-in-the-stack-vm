@@ -353,7 +353,7 @@ public class CompileCommand implements Callable<Integer> {
             }
         }
 
-        void execute(Program program, Visitor visitor) {
+        void execute(Program program, ProgramVisitor visitor) {
             if (visitor instanceof RepeatingVisitor repeating) {
                 int counter = 0;
                 do {
