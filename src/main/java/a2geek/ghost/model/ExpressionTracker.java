@@ -47,6 +47,9 @@ public class ExpressionTracker {
     public void changed(Symbol symbol) {
         exprs.entrySet().removeIf(entry -> has(entry.getKey(), symbol));
     }
+    public void changed(Expression expression) {
+        exprs.entrySet().removeIf(entry -> has(entry.getKey(), expression));
+    }
 
     public void reset() {
         exprs.clear();
@@ -58,18 +61,31 @@ public class ExpressionTracker {
             case ArrayLengthFunction arrayLen -> Objects.equals(arrayLen.getSymbol(), symbol);
             case BinaryExpression bin -> has(bin.getL(), symbol) || has(bin.getR(), symbol);
             case BooleanConstant ignored -> false;
-            case FunctionExpression func -> {
-                for (var param : func.getParameters()) {
-                    if (has(param, symbol)) yield true;
-                }
-                yield false;
-            }
+            case FunctionExpression func -> func.getParameters().stream().map(param -> has(param, symbol)).reduce(Boolean::logicalOr).orElse(false);
             case IntegerConstant ignored -> false;
             case PlaceholderExpression ignored -> false;
             case StringConstant ignored -> false;
             case UnaryExpression unary -> has(unary.getExpr(), symbol);
             case VariableReference ref -> Objects.equals(ref.getSymbol(), symbol);
             default -> throw new RuntimeException("unsupported expression type: " + expr);
+        };
+    }
+    public static boolean has(Expression expression, Expression target) {
+        if (Objects.equals(expression, target)) {
+            return true;
+        }
+        return switch (expression) {
+            case AddressOfFunction ignored -> false;
+            case ArrayLengthFunction ignored -> false;
+            case BinaryExpression bin -> has(bin.getL(), target) || has(bin.getR(), target);
+            case BooleanConstant ignored -> false;
+            case FunctionExpression func -> func.getParameters().stream().map(param -> has(param, target)).reduce(Boolean::logicalOr).orElse(false);
+            case IntegerConstant ignored -> false;
+            case PlaceholderExpression ignored -> false;
+            case StringConstant ignored -> false;
+            case UnaryExpression unary -> has(unary.getExpr(), target);
+            case VariableReference ignored -> false;
+            default -> throw new RuntimeException("unsupported expression type: " + expression);
         };
     }
 }

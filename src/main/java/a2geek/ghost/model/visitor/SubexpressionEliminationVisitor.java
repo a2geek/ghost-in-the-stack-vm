@@ -28,6 +28,7 @@ public class SubexpressionEliminationVisitor implements ProgramVisitor {
                         case UnaryExpression unaryExpression -> {
                             var expr2 = capture(tracker, unaryExpression.getExpr(), i);
                             if (expr == null) expr = expr2;
+                            tracker.changed(unaryExpression);   // mark the assignment itself as changed
                         }
                         case VariableReference variableReference -> {
                             tracker.changed(variableReference.getSymbol());
@@ -75,7 +76,11 @@ public class SubexpressionEliminationVisitor implements ProgramVisitor {
                 case AssignmentStatement assignmentStatement -> {
                     assignmentStatement.setValue(replace(assignmentStatement.getValue(), candidate, replacement));
                     switch (assignmentStatement.getVar()) {
-                        case UnaryExpression unaryExpression -> unaryExpression.setExpr(replace(unaryExpression.getExpr(), candidate, replacement));
+                        case UnaryExpression unaryExpression -> {
+                            unaryExpression.setExpr(replace(unaryExpression.getExpr(), candidate, replacement));
+                            // this is an assignment to an array reference, time to exit
+                            if (ExpressionTracker.has(candidate, unaryExpression)) return;
+                        }
                         case VariableReference variableReference -> {
                             // once the value changes, we stop processing
                             if (ExpressionTracker.has(candidate, variableReference.getSymbol())) return;
