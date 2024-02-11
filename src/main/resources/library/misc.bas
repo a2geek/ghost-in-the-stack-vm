@@ -6,7 +6,7 @@ module misc
     const MON_INPORT = 0xfe8b
     const MON_OUTPORT = 0xfe95
 
-    export inline function pdl(n as integer) as integer
+    export volatile inline function pdl(n as integer) as integer
         cpu.register.x = n and 3
         call MON_PREAD
         return cpu.register.y

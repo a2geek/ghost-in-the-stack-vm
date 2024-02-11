@@ -13,7 +13,7 @@ module Memory
         end while
     end sub
 
-    export function heapalloc(bytes as integer) as address
+    export volatile function heapalloc(bytes as integer) as address
         dim ptr as address
         ptr = peekw(LOMEM)
         pokew LOMEM, ptr + bytes

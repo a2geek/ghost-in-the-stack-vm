@@ -47,7 +47,8 @@ public class Subroutine extends Scope {
     }
 
     public enum Modifier {
+        EXPORT,
         INLINE,
-        EXPORT
+        VOLATILE
     }
 }
