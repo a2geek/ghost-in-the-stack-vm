@@ -726,6 +726,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                 switch (modifier.getText().toLowerCase()) {
                     case "inline" -> subOrFunc.add(Subroutine.Modifier.INLINE);
                     case "export" -> subOrFunc.add(Subroutine.Modifier.EXPORT);
+                    case "volatile" -> subOrFunc.add(Subroutine.Modifier.VOLATILE);
                     default -> {
                         var msg = String.format("Unknown modifier '%s' encountered", modifier.getText());
                         throw new RuntimeException(msg);

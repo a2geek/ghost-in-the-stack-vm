@@ -15,7 +15,7 @@ import static a2geek.ghost.model.Symbol.in;
  * A visitor pattern with only the dispatch methods implemented.
  * @see Visitor a class with default visit methods
  */
-public abstract class DispatchVisitor {
+public abstract class DispatchVisitor implements ProgramVisitor {
     public void dispatch(Scope scope) {
         switch (scope) {
             case Program s -> visit(s);
@@ -84,6 +84,7 @@ public abstract class DispatchVisitor {
         }
     }
 
+    @Override
     public void visit(Program program) {
         dispatchAll(program, program);
         program.findAllLocalScope(in(SymbolType.FUNCTION,SymbolType.SUBROUTINE)).forEach(symbol -> {

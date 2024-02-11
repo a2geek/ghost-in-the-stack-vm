@@ -39,6 +39,7 @@ declarations
 modifiers
     : 'export'
     | 'inline'
+    | 'volatile'
     ;
 
 statements

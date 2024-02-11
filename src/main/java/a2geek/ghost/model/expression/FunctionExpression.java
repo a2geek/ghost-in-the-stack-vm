@@ -3,6 +3,7 @@ package a2geek.ghost.model.expression;
 import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.scope.Function;
+import a2geek.ghost.model.scope.Subroutine;
 
 import java.util.List;
 import java.util.Objects;
@@ -13,11 +14,11 @@ public class FunctionExpression implements Expression {
     private static final String MATH_LIBRARY = "math";
     private static final String STRINGS_LIBRARY = "strings";
     public static final List<Descriptor> DESCRIPTORS = List.of(
-        new Descriptor("peek", null, DataType.INTEGER, DataType.ADDRESS),
-        new Descriptor("peekw", null, DataType.INTEGER, DataType.ADDRESS),
-        new Descriptor("alloc", null, DataType.ADDRESS, DataType.INTEGER),
-        new Descriptor("asc", STRINGS_LIBRARY, DataType.INTEGER, DataType.STRING),
-        new Descriptor("sgn", MATH_LIBRARY, DataType.INTEGER, DataType.INTEGER)
+        new Descriptor("peek", null, true, DataType.INTEGER, DataType.ADDRESS),
+        new Descriptor("peekw", null, true, DataType.INTEGER, DataType.ADDRESS),
+        new Descriptor("alloc",  null, true, DataType.ADDRESS, DataType.INTEGER),
+        new Descriptor("asc", STRINGS_LIBRARY, false, DataType.INTEGER, DataType.STRING),
+        new Descriptor("sgn", MATH_LIBRARY, false, DataType.INTEGER, DataType.INTEGER)
     );
     public static Optional<Descriptor> findDescriptor(String name, List<Expression> parameters) {
         String message = null;
@@ -68,6 +69,7 @@ public class FunctionExpression implements Expression {
     private final Function function;
     private List<Expression> parameters;
     private final DataType returnType;
+    private final boolean isVolatile;
 
     public FunctionExpression(String name, List<Expression> parameters) {
         this.name = name;
@@ -78,12 +80,14 @@ public class FunctionExpression implements Expression {
         }
         this.function = null;
         this.returnType = descriptor.get().returnType();
+        this.isVolatile = descriptor.get().isVolatile();
     }
     public FunctionExpression(Function function, List<Expression> expr) {
         this.name = function.getFullPathName();
         this.function = function;
         this.parameters = expr;
         this.returnType = function.getDataType();
+        this.isVolatile = function.is(Subroutine.Modifier.VOLATILE);
     }
 
     @Override
@@ -105,6 +109,10 @@ public class FunctionExpression implements Expression {
 
     public void setParameters(List<Expression> parameters) {
         this.parameters = parameters;
+    }
+
+    public boolean isVolatile() {
+        return isVolatile;
     }
 
     @Override
@@ -162,6 +170,7 @@ public class FunctionExpression implements Expression {
     public record Descriptor(
         String name,
         String library,
+        boolean isVolatile,
         DataType returnType,
         DataType... parameterTypes
     ) {
