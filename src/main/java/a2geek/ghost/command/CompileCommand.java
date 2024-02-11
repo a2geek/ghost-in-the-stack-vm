@@ -323,6 +323,11 @@ public class CompileCommand implements Callable<Integer> {
                 description = "enable expression rewriting (enabled: ${DEFAULT-VALUE})")
         private boolean expressionRewriting;
 
+        @Option(names = { "--subexpression-elimination" }, negatable = true, defaultValue = "true",
+                fallbackValue = "true", showDefaultValue = Visibility.NEVER,
+                description = "enable expression reduction (enabled: ${DEFAULT-VALUE})")
+        private boolean subexpressionElimination;
+
         public void apply(ModelBuilder model) {
             if (noOptimizations) {
                 return;
@@ -350,6 +355,9 @@ public class CompileCommand implements Callable<Integer> {
             }
             if (expressionRewriting) {
                 execute(program, new ExpressionRewriteVisitor());
+            }
+            if (subexpressionElimination) {
+                execute(program, new SubexpressionEliminationVisitor());
             }
         }
 

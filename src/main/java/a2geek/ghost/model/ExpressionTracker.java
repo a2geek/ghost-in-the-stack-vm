@@ -2,10 +2,9 @@ package a2geek.ghost.model;
 
 import a2geek.ghost.model.expression.*;
 
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 public class ExpressionTracker {
     private static final Map<String,String> REVERSE_OPS = Map.of(
@@ -16,38 +15,41 @@ public class ExpressionTracker {
             "<=", ">",
             ">", "<=");
 
-    private final Set<Expression> exprs = new HashSet<>();
+    private final Map<Expression,Integer> exprs = new HashMap<>();
 
     public ExpressionTracker with(Expression constraint) {
         var tracker = new ExpressionTracker();
-        tracker.exprs.addAll(this.exprs);
+        tracker.exprs.putAll(this.exprs);
 
         // only setting up the ones we need!
         if (constraint instanceof BinaryExpression bin && REVERSE_OPS.containsKey(bin.getOp())) {
             var newbin = new BinaryExpression(bin.getL(), bin.getR(), REVERSE_OPS.get(bin.getOp()));
-            tracker.exprs.add(newbin);
+            tracker.exprs.put(newbin, 0);
         }
 
         return tracker;
     }
 
     public boolean isCovered(Expression expression) {
-        if (exprs.contains(expression)) {
-            return true;
-        }
-        exprs.add(expression);
-        return false;
+        return exprs.put(expression, 0) != null;
+    }
+
+    public boolean capture(Expression expression, int n) {
+        return exprs.putIfAbsent(expression, n) != null;
+    }
+    public int remove(Expression expression) {
+        return exprs.remove(expression);
     }
 
     public void changed(Symbol symbol) {
-        exprs.removeIf(expr -> has(expr, symbol));
+        exprs.entrySet().removeIf(entry -> has(entry.getKey(), symbol));
     }
 
     public void reset() {
         exprs.clear();
     }
 
-    public boolean has(Expression expr, Symbol symbol) {
+    public static boolean has(Expression expr, Symbol symbol) {
         return switch (expr) {
             case AddressOfFunction addrOf -> Objects.equals(addrOf.getSymbol(), symbol);
             case ArrayLengthFunction arrayLen -> Objects.equals(arrayLen.getSymbol(), symbol);
