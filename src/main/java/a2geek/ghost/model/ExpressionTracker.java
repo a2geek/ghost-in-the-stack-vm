@@ -40,6 +40,9 @@ public class ExpressionTracker {
     public int remove(Expression expression) {
         return exprs.remove(expression);
     }
+    public boolean exists(Expression expression) {
+        return exprs.containsKey(expression);
+    }
 
     public void changed(Symbol symbol) {
         exprs.entrySet().removeIf(entry -> has(entry.getKey(), symbol));
