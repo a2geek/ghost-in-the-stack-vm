@@ -68,8 +68,11 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     public Expression visitOptionDirective(BasicParser.OptionDirectiveContext ctx) {
         switch (ctx.optionTypes().op.getText()) {
             case "heap" -> {
-                Integer lomem = parseInteger(ctx.optionTypes().lomem.getText());
-                model.useMemoryForHeap(lomem != null ? lomem : 0x8000);
+                int lomem = 0x8000;
+                if (ctx.optionTypes().lomem != null) {
+                    lomem = parseInteger(ctx.optionTypes().lomem.getText());
+                }
+                model.useMemoryForHeap(lomem);
             }
             case "strict" -> {
                 this.variableTest = this::ensureVariableExists;
