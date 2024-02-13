@@ -46,6 +46,15 @@ hithere()             ' exported function aliased into primary namespace
 mymodule.heythere()   ' unexportedfunction not available
 ```
 
+## Option
+
+The `option` keyword allows some compiler settings to be embedded in the application itself.
+
+| Option                         | Description                                                                                      |
+|:-------------------------------|:-------------------------------------------------------------------------------------------------|
+| `option strict`                | Requires all variables to be declared instead of being implicitly created on first use.          |
+| `option heap` ( `lomem=ADDR` ) | Enable heap (instead of stack) for array allocation. `lomem` defaults to $8000 if not specified. |
+
 ## Data types
 
 All variables are assumed to be 16 bit integers. Other data types exist in expressions.

@@ -1,3 +1,5 @@
+option strict
+
 uses "prodos"
 uses "hires"
 uses "strings"
@@ -179,6 +181,7 @@ end sub
 
 ' Handle keyboard
 sub handleKeyboad
+    dim keypress as integer
     keypress = peek(-16384)
     if keypress < 128 then
         return

@@ -36,6 +36,14 @@ public class GhostBasicVisitorTest {
             .hasArrayReference("c", DataType.INTEGER, SymbolType.VARIABLE, DeclarationType.GLOBAL, 1);
     }
 
+    @Test
+    public void testOptionStrictMode() {
+        assertThrows(RuntimeException.class, () ->
+            expect("""
+                    option strict
+                    a = a + 1
+                    """));
+    }
 
     @Test
     public void testUbound() {
