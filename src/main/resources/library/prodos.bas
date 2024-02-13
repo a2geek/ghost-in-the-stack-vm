@@ -143,12 +143,12 @@ module prodos
         callMLI(0x81)
     end sub
 
-    export function getDate() as integer
+    export volatile function getDate() as integer
         callMLI(0x82)
         return peekw(DATE)
     end function
 
-    export function getTime() as integer
+    export volatile function getTime() as integer
         callMLI(0x82)
         return peekw(TIME)
     end function

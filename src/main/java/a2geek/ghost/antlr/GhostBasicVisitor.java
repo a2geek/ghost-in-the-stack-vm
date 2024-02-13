@@ -9,11 +9,10 @@ import a2geek.ghost.model.scope.Subroutine;
 import a2geek.ghost.model.statement.GotoGosubStatement;
 import a2geek.ghost.model.statement.IfStatement;
 import a2geek.ghost.model.statement.OnErrorStatement;
-import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
-import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static a2geek.ghost.model.CommonExpressions.arrayReference;
@@ -26,6 +25,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     private final Stack<Symbol> doExitLabels = new Stack<>();
     private final Stack<Symbol> repeatExitLabels = new Stack<>();
     private final Stack<Symbol> whileExitLabels = new Stack<>();
+    private Predicate<String> variableTest = (s) -> true;
 
     public GhostBasicVisitor(ModelBuilder model) {
         this.model = model;
@@ -49,7 +49,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
     @Override
     public Expression visitModule(BasicParser.ModuleContext ctx) {
-        model.moduleDeclBegin(ctx.ID().getText());
+        model.moduleDeclBegin(ctx.identifier().getText());
         super.visitModule(ctx);
         model.moduleDeclEnd();
         return null;
@@ -62,6 +62,29 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             model.uses(libname, defaultExport());
         }
         return null;
+    }
+
+    @Override
+    public Expression visitOptionDirective(BasicParser.OptionDirectiveContext ctx) {
+        switch (ctx.optionTypes().op.getText()) {
+            case "heap" -> {
+                Integer lomem = parseInteger(ctx.optionTypes().lomem.getText());
+                model.useMemoryForHeap(lomem != null ? lomem : 0x8000);
+            }
+            case "strict" -> {
+                this.variableTest = this::ensureVariableExists;
+            }
+            default -> throw new RuntimeException("unknown option type: " + ctx.getText());
+        }
+        return null;
+    }
+
+    public boolean ensureVariableExists(String varName) {
+        if (model.findSymbol(varName).isEmpty()) {
+            var msg = String.format("variable '%s' does not exist; in option strict mode, it must be DIMmed", varName);
+            throw new RuntimeException(msg);
+        }
+        return true;
     }
 
     @Override
@@ -234,6 +257,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
      */
     @Override
     public Expression visitForLoop(BasicParser.ForLoopContext ctx) {
+        variableTest.test(ctx.id.getText());
         Symbol symbol = model.addVariable(ctx.id.getText(), DataType.INTEGER);
         Expression start = visit(ctx.a);
         Expression end = visit(ctx.b);
@@ -543,9 +567,9 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         return null;
     }
 
-    public Symbol findGotoGosubLabel(Token id) {
+    public Symbol findGotoGosubLabel(BasicParser.IdentifierContext ctx) {
         return gotoGosubLabels.computeIfAbsent(
-                model.fixCase(id.getText()),
+                model.fixCase(ctx.getText()),
                 x -> model.addLabels(x).getFirst());
     }
 
@@ -577,8 +601,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     public Expression visitOnGotoGosubStmt(BasicParser.OnGotoGosubStmtContext ctx) {
         var op = ctx.op.getText();
         var expr = visit(ctx.a);
-        var addrof = ctx.ID().stream()
-                .map(TerminalNode::getSymbol)
+        var addrof = ctx.identifier().stream()
                 .map(this::findGotoGosubLabel)
                 .map(AddressOfFunction::new)
                 .map(Expression.class::cast)
@@ -616,7 +639,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                 if (idDecl.idModifier() != null) {
                     modifiers.add(IdModifier.valueOf(idDecl.idModifier().getText().toUpperCase()));
                 }
-                String id = model.fixCase(idDecl.ID().getText());
+                String id = model.fixCase(idDecl.identifier().getText());
                 if (names.contains(id)) {
                     throw new RuntimeException("variable already defined: " + id);
                 }
@@ -682,7 +705,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         var names = new HashSet<>();
         if (params != null) {
             params.forEach(idDecl -> {
-                String id = model.fixCase(idDecl.ID().getText());
+                String id = model.fixCase(idDecl.identifier().getText());
                 if (names.contains(id)) {
                     throw new RuntimeException("parameter already defined: " + id);
                 }
@@ -726,6 +749,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                 switch (modifier.getText().toLowerCase()) {
                     case "inline" -> subOrFunc.add(Subroutine.Modifier.INLINE);
                     case "export" -> subOrFunc.add(Subroutine.Modifier.EXPORT);
+                    case "volatile" -> subOrFunc.add(Subroutine.Modifier.VOLATILE);
                     default -> {
                         var msg = String.format("Unknown modifier '%s' encountered", modifier.getText());
                         throw new RuntimeException(msg);
@@ -832,6 +856,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             if (id.contains(".")) {
                 throw new RuntimeException("invalid identifier: " + id);
             }
+            variableTest.test(id);
             return model.addVariable(id, determineDataType(id, DataType.INTEGER));
         });
         return new VariableReference(symbol);
@@ -895,14 +920,19 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
     @Override
     public Expression visitIntConstant(BasicParser.IntConstantContext ctx) {
-        var a = ctx.a.getText();
-        if (a.startsWith("0x")) {
-            return new IntegerConstant(Integer.parseInt(a.substring(2), 16));
+        return new IntegerConstant(parseInteger(ctx.a.getText()));
+    }
+    public Integer parseInteger(String value) {
+        if (value == null) {
+            return null;
         }
-        else if (a.startsWith("0b")) {
-            return new IntegerConstant(Integer.parseInt(a.substring(2), 2));
+        if (value.startsWith("0x")) {
+            return Integer.parseInt(value.substring(2), 16);
         }
-        return new IntegerConstant(Integer.parseInt(ctx.a.getText()));
+        else if (value.startsWith("0b")) {
+            return Integer.parseInt(value.substring(2), 2);
+        }
+        return Integer.parseInt(value);
     }
 
     @Override

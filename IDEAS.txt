@@ -9,12 +9,11 @@ Unit tests?  Integer BASIC(done)  BASIC(done)  optimizations(done)  code generat
 Interpreter for use in tests.
 Structure assembly project; it's gonna get messier.
 Add Applesoft. DEF FN == Function
-Optimization - extract common code
-Basic needs actual string handling.
+Decide on assembler syntax; extensible would be nice (embeddable even better - homebrew would be sufficient)
+Basic needs actual string handling (likely tied to more typical calloc/free type memory allocation due to a lot of temp strings).
 Bytes would be good to define buffers.
 Need to determine if interpreter should keep signed and unsigned operations or can that just be replaced with wrapper code (removes DIVS/MULS/MODS)
 Enhance USES statement to allow custom imports (example: USES MIN,MAX FROM "MATH")
-Add "option" statement to control compiler via source (heap settings, strict variable declaration, etc) instead of command-line.
 Optimize/short circuit OR/AND with IFNZ/IFZ
 Some expressions can be rearranged for better code, like 1 + n + 3 => 1 + 3 + n => 4 + n
 Revisit boolean versus bit logic. NOT/AND/OR don't always work as expected; maybe new operators needed?

@@ -17,21 +17,26 @@ program
 
 directives
     : ('use' | 'uses') STR ( ',' STR )* EOL+                            # useDirective
+    | 'option' optionTypes EOL+                                         # optionDirective
     | EOL                                                               # emptyDirective
+    ;
+optionTypes // "options" is an ANTLR grammar keyword
+    : op='heap' ( LOMEM '=' lomem=INT )?
+    | op='strict'
     ;
 
 module
-    : 'module' ID EOL+
+    : 'module' identifier EOL+
       ( declarations | statements )*
       'end' 'module' EOL+
     ;
 
 declarations
     : 'const' constantDecl ( ',' constantDecl )*                        # constant
-    | modifiers* 'sub' id=ID p=paramDecl? EOL+
+    | modifiers* 'sub' id=identifier p=paramDecl? EOL+
         (s=statements)?
       'end' 'sub'                                                       # subDecl
-    | modifiers* 'function' id=ID p=paramDecl? ('as' datatype)? EOL+
+    | modifiers* 'function' id=identifier p=paramDecl? ('as' datatype)? EOL+
         (s=statements)?
       'end' 'function'                                                  # funcDecl
     | EOL                                                               # emptyDecl
@@ -39,6 +44,7 @@ declarations
 modifiers
     : 'export'
     | 'inline'
+    | 'volatile'
     ;
 
 statements
@@ -48,7 +54,7 @@ statements
 statement
     : 'dim' idDecl (',' idDecl)*                                            # dimStmt
     | id=expressionID '=' a=expr                                            # assignment
-    | id=ID ':' EOL                                                         # label
+    | id=identifier ':' EOL                                                 # label
     | 'if' a=expr 'then' t=statement                                        # ifShortStatement
     | 'if' ifFragment
       ('elseif' ifFragment)*
@@ -61,9 +67,9 @@ statement
     | 'do' (EOL|':')+
         s=statements? (EOL|':')*  // EOL is included in statements itself
       'loop' op=('while' | 'until') a=expr                                  # doLoop2
-    | 'for' id=ID '=' a=expr 'to' b=expr ('step' c=expr)? (EOL|':')+
+    | 'for' id=identifier '=' a=expr 'to' b=expr ('step' c=expr)? (EOL|':')+
         s=statements? (EOL|':')*  // EOL is included in statements itself
-      'next' ID?                                                            # forLoop
+      'next' identifier?                                                    # forLoop
     | 'while' a=expr (EOL|':')+
         s=statements? (EOL|':')*  // EOL is included in statements itself
       'end' 'while'                                                         # whileLoop
@@ -75,9 +81,11 @@ statement
     | 'print' (expr | ',' | ';')*                                           # printStmt
     | op=( 'poke' | 'pokew' ) a=expr ',' b=expr                             # pokeStmt
     | 'call' a=expr                                                         # callStmt
-    | op=( 'goto' | 'gosub' ) l=ID                                          # gotoGosubStmt
-    | 'on' a=expr op=( 'goto' | 'gosub' ) ID (',' ID)*                      # onGotoGosubStmt
-    | 'on' 'error' ( op='goto' l=ID | op='disable' | op='resume' 'next'? )  # onErrorStmt
+    | op=( 'goto' | 'gosub' ) l=identifier                                  # gotoGosubStmt
+    | 'on' a=expr op=( 'goto' | 'gosub' ) identifier (',' identifier)*      # onGotoGosubStmt
+    | 'on' 'error' ( op='goto' l=identifier
+                   | op='disable'
+                   | op='resume' 'next'? )                                  # onErrorStmt
     | 'raise' 'error' a=expr ',' m=expr                                     # raiseErrorStmt
     | 'return' e=expr?                                                      # returnStmt
     | 'select' 'case'? a=expr EOL+
@@ -105,11 +113,11 @@ selectCaseExpr
     ;
 
 constantDecl
-    : id=ID '=' e=expr
+    : id=identifier '=' e=expr
     ;
 
 extendedID
-    : ID ('.' ID)*
+    : identifier ('.' identifier)*
     ;
 
 expressionID
@@ -121,11 +129,11 @@ paramDecl
     : '(' ( paramIdDecl ( ',' paramIdDecl )* )? ')'
     ;
 paramIdDecl
-    : ID ( '(' ( ',' )* ')' )? ( 'as' datatype )?
+    : identifier ( '(' ( ',' )* ')' )? ( 'as' datatype )?
     ;
 
 idDecl
-    : idModifier? ID ( '(' ( expr ( ',' expr )* )? ')' )? ( 'as' datatype )? ( '=' idDeclDefault )?
+    : idModifier? identifier ( '(' ( expr ( ',' expr )* )? ')' )? ( 'as' datatype )? ( '=' idDeclDefault )?
     ;
 
 idModifier
@@ -162,6 +170,14 @@ expr
     | b=('true' | 'false')                                              # boolConstant
     | '(' a=expr ')'                                                    # parenExpr
     ;
+
+identifier
+    : ID
+    | LOMEM
+    ;
+
+// These keywords can also be used as an identifier
+LOMEM : 'lomem' ;
 
 ID : [a-z] [_a-z0-9]* [$%]? ;
 INT : [0-9]+ | '0x' [0-9a-f]+ | '0b' [01]+ ;

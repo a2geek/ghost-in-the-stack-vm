@@ -3,7 +3,7 @@ module Math
 
     ' See https://en.wikipedia.org/wiki/Linear-feedback_shift_register
     ' See http://www.retroprogramming.com/2017/07/xorshift-pseudorandom-numbers-in-z80.html
-    function random() as integer
+    volatile function random() as integer
         r = peekw(RNDL)
         r = r xor (r << 7)
         r = r xor (r >> 9)
@@ -13,7 +13,7 @@ module Math
     end function
 
     ' Note: Simulated Integer BASIC random generator
-    export function rnd(n as integer) as integer
+    export volatile function rnd(n as integer) as integer
         r = random() mod n
         if r < 0 then
             return -r
