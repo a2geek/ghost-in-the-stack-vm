@@ -48,14 +48,17 @@ modifiers
     ;
 
 statements
-    : ( statement ( ':' statement )* EOL* | EOL )+
+    : (multipleStatements EOL* | EOL )+
+    ;
+multipleStatements
+    : statement ( ':' statement )*
     ;
 
 statement
     : 'dim' idDecl (',' idDecl)*                                            # dimStmt
     | id=expressionID '=' a=expr                                            # assignment
     | id=identifier ':' EOL                                                 # label
-    | 'if' a=expr 'then' t=statement                                        # ifShortStatement
+    | 'if' a=expr 'then' t=multipleStatements EOL                           # ifShortStatement
     | 'if' ifFragment
       ('elseif' ifFragment)*
       ('else' EOL+
