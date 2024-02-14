@@ -28,6 +28,6 @@ gradle-app.setting
 /src/main/asm/*.o
 /src/main/asm/interp.po
 /src/main/resources/interp-*.as
-a.out
+*.out
 *.po
 /*.lst
