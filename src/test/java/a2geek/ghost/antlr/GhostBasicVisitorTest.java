@@ -101,7 +101,8 @@ public class GhostBasicVisitorTest {
 
     @Test
     public void testIfShort() {
-        expect("if true then a=10")
+        // Note that the if "short" statement requires an explicit newline to terminate the statement
+        expect("if true then a=10\n")
             .ifStmt(constant(true))
                 .assignment("a", constant(10))
             .endIf()
