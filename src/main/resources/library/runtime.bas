@@ -133,7 +133,7 @@ module runtime
 
     ' abusing a subroutine for the error handler; note the END terminates the application
     sub defaultErrorHandler
-        print "ERROR #";err.number;" - ";err.message
+        print "ERROR #";err.number;" - ";err.message;" AT LINE ";err.linenum;" IN ";err.source
         end
     end sub
 

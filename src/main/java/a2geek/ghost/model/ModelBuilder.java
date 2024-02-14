@@ -10,6 +10,7 @@ import org.antlr.v4.runtime.CharStreams;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -465,7 +466,7 @@ public class ModelBuilder {
         return arrayDims.get(symbol);
     }
 
-    public void checkArrayBounds(Symbol symbol, List<Expression> indexes, int linenum) {
+    public void checkArrayBounds(Symbol symbol, List<Expression> indexes, int linenum, String source) {
         if (!boundsCheck) {
             return;
         }
@@ -478,7 +479,9 @@ public class ModelBuilder {
         // END IF
         var errorBlock = pushStatementBlock(new StatementBlock());
         raiseError(new IntegerConstant(107),
-                new StringConstant(String.format("ARRAY INDEX OUT OF BOUNDS %s AT LINE %d", symbol.name(), linenum)));
+                new StringConstant(String.format("ARRAY INDEX OUT OF BOUNDS %s", symbol.name())),
+                new IntegerConstant(linenum),
+                new StringConstant(source));
         popStatementBlock();
         var test = indexes.getFirst().gt(new ArrayLengthFunction(symbol, 1));
         for (int i=1; i<symbol.numDimensions(); i++) {
@@ -489,12 +492,26 @@ public class ModelBuilder {
         addStatement(statement);
     }
 
-    public void raiseError(Expression number, Expression message) {
+    public void raiseError(Expression number, Expression message, Expression linenum, Expression source) {
         uses("err", defaultExport());
         var errNumber = findSymbol("err.number").orElseThrow();
         var errMessage = findSymbol("err.message").orElseThrow();
+        var errLinenum = findSymbol("err.linenum").orElseThrow();
+        var errSource = findSymbol("err.source").orElseThrow();
         assignStmt(VariableReference.with(errNumber), number);
         assignStmt(VariableReference.with(errMessage), message);
+        assignStmt(VariableReference.with(errLinenum), linenum);
+        // If we have a method name, use that instead.
+        var sourceName = scope.peek().getFullPathName();
+        if (sourceName != null) {
+            source = new StringConstant(sourceName);
+        }
+        else {
+            // Two things: Chop off paths and make text upper case.
+            var filename = source.asString().orElseThrow();
+            source = new StringConstant(Path.of(filename).getFileName().toString().toUpperCase());
+        }
+        assignStmt(VariableReference.with(errSource), source);
         addStatement(new RaiseErrorStatement());
     }
 }
