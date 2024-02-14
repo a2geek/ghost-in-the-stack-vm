@@ -4,6 +4,7 @@
 module Memory
 
     const LOMEM = 0x69
+    const MEMSIZE = 0x73    ' HIMEM
 
     sub memclr(p as address, bytes as integer)
         while bytes > 0
@@ -16,6 +17,9 @@ module Memory
     export volatile function heapalloc(bytes as integer) as address
         dim ptr as address
         ptr = peekw(LOMEM)
+        if ptr+bytes > peekw(MEMSIZE) then
+            raise error 77, "OUT OF MEMORY"
+        end if
         pokew LOMEM, ptr + bytes
         memclr(ptr, bytes)
         return ptr
