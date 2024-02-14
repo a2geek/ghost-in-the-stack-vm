@@ -21,10 +21,10 @@ import static a2geek.ghost.model.ModelBuilder.*;
 public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     private final ModelBuilder model;
     private final Map<String,Symbol> gotoGosubLabels = new HashMap<>();
-    private final Stack<Symbol> forExitLabels = new Stack<>();
-    private final Stack<Symbol> doExitLabels = new Stack<>();
-    private final Stack<Symbol> repeatExitLabels = new Stack<>();
-    private final Stack<Symbol> whileExitLabels = new Stack<>();
+    private final Stack<LoopFrame> forFrames = new Stack<>();
+    private final Stack<LoopFrame> doFrames = new Stack<>();
+    private final Stack<LoopFrame> repeatFrames = new Stack<>();
+    private final Stack<LoopFrame> whileFrames = new Stack<>();
     private Predicate<String> variableTest = (s) -> true;
 
     public GhostBasicVisitor(ModelBuilder model) {
@@ -267,15 +267,17 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         Expression step = optVisit(ctx.c).orElse(new IntegerConstant(1));
 
         var ref = new VariableReference(symbol);
-        var labels = model.addLabels("FOR_LOOP", "FOR_EXIT");
+        var labels = model.addLabels("FOR_LOOP", "FOR_EXIT", "FOR_CONTINUE");
         var loopLabel = labels.get(0);
         var exitLabel = labels.get(1);
+        var continueLabel = labels.get(2);
 
         // building contents of "IF" statement
         model.pushStatementBlock(new StatementBlock());
-        forExitLabels.push(exitLabel);
+        forFrames.push(new LoopFrame(continueLabel, exitLabel));
         optVisit(ctx.s);
-        forExitLabels.pop();
+        forFrames.pop();
+        model.labelStmt(continueLabel);
         model.assignStmt(ref, ref.plus(step));
         model.gotoGosubStmt("goto", loopLabel);
         var sb = model.popStatementBlock();
@@ -341,9 +343,9 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             case "until" -> model.ifStmt(test, gotoExitStatement, null);
             default -> throw new RuntimeException("unexpected do loop type: " + ctx.op.getText());
         }
-        doExitLabels.push(exitLabel);
+        doFrames.push(new LoopFrame(loopLabel, exitLabel));
         optVisit(ctx.s);
-        doExitLabels.pop();
+        doFrames.pop();
         model.gotoGosubStmt("goto", loopLabel);
         model.labelStmt(exitLabel);
 
@@ -393,9 +395,9 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         var gotoStatement = StatementBlock.with(new GotoGosubStatement("goto", loopLabel));
 
         model.labelStmt(loopLabel);
-        doExitLabels.push(exitLabel);
+        doFrames.push(new LoopFrame(loopLabel, exitLabel));
         optVisit(ctx.s);
-        doExitLabels.pop();
+        doFrames.pop();
         switch (ctx.op.getText()) {
             case "while" -> model.ifStmt(test, gotoStatement, null);
             case "until" -> model.ifStmt(test, StatementBlock.EMPTY, gotoStatement);
@@ -439,9 +441,9 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         var exitLabel = labels.get(1);
 
         model.pushStatementBlock(new StatementBlock());
-        whileExitLabels.push(exitLabel);
+        whileFrames.push(new LoopFrame(loopLabel, exitLabel));
         optVisit(ctx.s);
-        whileExitLabels.pop();
+        whileFrames.pop();
         model.gotoGosubStmt("goto", loopLabel);
         var loopStatements = model.popStatementBlock();
 
@@ -482,14 +484,15 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     public Expression visitRepeatLoop(BasicParser.RepeatLoopContext ctx) {
         Expression test = visit(ctx.a);
 
-        var labels = model.addLabels("REPEAT_LOOP", "REPEAT_EXIT");
+        var labels = model.addLabels("REPEAT_LOOP", "REPEAT_EXIT", "REPEAT_CONTINUE");
         var loopLabel = labels.get(0);
         var exitLabel = labels.get(1);
+        var continueLabel = labels.get(2);
 
         model.labelStmt(loopLabel);
-        repeatExitLabels.push(exitLabel);
+        repeatFrames.push(new LoopFrame(continueLabel, exitLabel));
         optVisit(ctx.s);
-        repeatExitLabels.pop();
+        repeatFrames.pop();
         model.ifStmt(test, StatementBlock.EMPTY, StatementBlock.with(new GotoGosubStatement("goto", loopLabel)));
         model.labelStmt(exitLabel);
 
@@ -497,22 +500,28 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     }
 
     @Override
-    public Expression visitExitStmt(BasicParser.ExitStmtContext ctx) {
-        var op = ctx.n.getText().toLowerCase();
-        var labels = switch (op) {
-            case "for" -> forExitLabels;
-            case "while" -> whileExitLabels;
-            case "repeat" -> repeatExitLabels;
-            case "do" -> doExitLabels;
-            default -> throw new RuntimeException(String.format("unknown exit type: " + op));
+    public Expression visitContinueExitStmt(BasicParser.ContinueExitStmtContext ctx) {
+        var op = ctx.op.getText().toLowerCase();
+        var stmtType = ctx.n.getText().toLowerCase();
+        var frames = switch (stmtType) {
+            case "for" -> forFrames;
+            case "while" -> whileFrames;
+            case "repeat" -> repeatFrames;
+            case "do" -> doFrames;
+            default -> throw new RuntimeException("unknown exit type: " + ctx.getText());
         };
 
-        if (labels.isEmpty()) {
-            var msg = String.format("'exit %s' must be in a %s statement", op, op);
+        if (frames.isEmpty()) {
+            var msg = String.format("'%s %s' must be in a %s statement", op, stmtType, stmtType);
             throw new RuntimeException(msg);
         }
 
-        model.gotoGosubStmt("goto", labels.peek());
+        var label = switch (op) {
+            case "continue" -> frames.peek().continueLabel;
+            case "exit" -> frames.peek().exitLabel;
+            default -> throw new RuntimeException("unknown exit type: " + ctx.getText());
+        };
+        model.gotoGosubStmt("goto", label);
         return null;
     }
 
@@ -1011,4 +1020,5 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             return defaultValues != null && !defaultValues.isEmpty();
         }
     }
+    record LoopFrame(Symbol continueLabel, Symbol exitLabel) {}
 }

@@ -79,7 +79,7 @@ statement
     | 'repeat' (EOL|':')+
         s=statements? (EOL|':')*  // EOL is included in statements itself
       'until' a=expr                                                        # repeatLoop
-    | 'exit' n=('do' | 'for' | 'repeat' | 'while')                          # exitStmt
+    | op=( 'continue' | 'exit' ) n=('do' | 'for' | 'repeat' | 'while')      # continueExitStmt
     | 'end'                                                                 # endStmt
     | 'print' (expr | ',' | ';')*                                           # printStmt
     | op=( 'poke' | 'pokew' ) a=expr ',' b=expr                             # pokeStmt
