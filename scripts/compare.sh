@@ -32,5 +32,5 @@ FLAGS="--fix-control-chars --trace"
 [ "${extension}" == "int" ] && FLAGS+=" --integer"
 [ -f "${optname}" ] && FLAGS+=" @${optname}"
 
-${CURRGHOST} "${FILE}" ${FLAGS} -il="il-${filename}-curr.lst" -tl="tl-${filename}-curr.lst" --symbols="symbols-${filename}-curr.lst"
-${PREVGHOST} "${FILE}" ${FLAGS} -il="il-${filename}-prev.lst" -tl="tl-${filename}-prev.lst" --symbols="symbols-${filename}-prev.lst"
+${CURRGHOST} "${FILE}" ${FLAGS} -il="il-${filename}-curr.lst" -tl="tl-${filename}-curr.lst" --symbols="symbols-${filename}-curr.lst" -o curr.out
+${PREVGHOST} "${FILE}" ${FLAGS} -il="il-${filename}-prev.lst" -tl="tl-${filename}-prev.lst" --symbols="symbols-${filename}-prev.lst" -o prev.out
