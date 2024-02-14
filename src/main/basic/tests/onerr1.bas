@@ -7,5 +7,8 @@ print "NEVER GETS HERE"
 end
 
 handleError:
-    print "OOPS - ERROR CODE ";err.number
-    print "       ERROR MSG  ";err.message
+    print "OOPS!"
+    print "  ERROR CODE   ";err.number
+    print "  ERROR MSG    ";err.message
+    print "  ERROR LINE#  ";err.linenum
+    print "  ERROR SOURCE ";err.source

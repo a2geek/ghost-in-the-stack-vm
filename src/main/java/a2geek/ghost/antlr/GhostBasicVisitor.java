@@ -215,10 +215,11 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
     @Override
     public Expression visitRaiseErrorStmt(BasicParser.RaiseErrorStmtContext ctx) {
-        // TODO can we also capture the file name and line number?
         var expr = visit(ctx.a);
         var msg = visit(ctx.m);
-        model.raiseError(expr, msg);
+        var linenum = new IntegerConstant(ctx.getStart().getLine());
+        var source = new StringConstant(ctx.getStart().getTokenSource().getSourceName());
+        model.raiseError(expr, msg, linenum, source);
         return null;
     }
 
@@ -926,7 +927,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         }
 
         // TODO if the index is complex, it gets evaluated multiple times
-        model.checkArrayBounds(existing.get(), params, ctx.getStart().getLine());
+        model.checkArrayBounds(existing.get(), params, ctx.getStart().getLine(), ctx.getStart().getTokenSource().getSourceName());
         return arrayReference(existing.get(), params);
     }
 

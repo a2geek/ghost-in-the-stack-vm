@@ -761,7 +761,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
                     Collections.singletonList(PlaceholderExpression.of(DataType.INTEGER)));
         });
         var expr = visit(ctx.e);
-        model.checkArrayBounds(ref, List.of(expr), ctx.getStart().getLine());
+        model.checkArrayBounds(ref, List.of(expr), ctx.getStart().getLine(), ctx.getStart().getTokenSource().getSourceName());
         return arrayReference(ref, List.of(expr));
     }
 
