@@ -282,6 +282,7 @@ brtable:
     .addr _load0-1
     .addr _load1-1
     .addr _load2-1
+    .addr poploop-1     ; POP2
 brlen = *-brtable
 
 ; ADD:  (B) (A) => (B+A)

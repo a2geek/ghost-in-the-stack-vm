@@ -59,7 +59,8 @@ public enum Opcode {
     LOADA(2),
     LOAD0(0),
     LOAD1(0),
-    LOAD2(0);
+    LOAD2(0),
+    POP2(0);
 
 
     private final int argc;

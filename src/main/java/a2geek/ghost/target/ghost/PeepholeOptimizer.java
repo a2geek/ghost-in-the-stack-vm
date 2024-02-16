@@ -51,6 +51,11 @@ public class PeepholeOptimizer {
                 list.set(0, new Instruction(null, Opcode.LOAD2, null, null, null));
                 return true;
             }
+            // POPN 0002  ==> POP2
+            if (inst.opcode() == Opcode.POPN && TWO.equals(inst.arg())) {
+                list.set(0, new Instruction(null, Opcode.POP2, null, null, null));
+                return true;
+            }
         }
         return false;
     }
