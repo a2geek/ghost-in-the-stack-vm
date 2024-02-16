@@ -79,11 +79,11 @@ public class SubexpressionEliminationVisitor implements ProgramVisitor {
                         case UnaryExpression unaryExpression -> {
                             unaryExpression.setExpr(replace(unaryExpression.getExpr(), candidate, replacement));
                             // this is an assignment to an array reference, time to exit
-                            if (SimpleVisitors.hasSubexpression(candidate, unaryExpression)) return;
+                            if (ExpressionVisitors.hasSubexpression(candidate, unaryExpression)) return;
                         }
                         case VariableReference variableReference -> {
                             // once the value changes, we stop processing
-                            if (SimpleVisitors.hasSymbol(candidate, variableReference.getSymbol())) return;
+                            if (ExpressionVisitors.hasSymbol(candidate, variableReference.getSymbol())) return;
                         }
                         default -> throw new RuntimeException("[compiler bug] unexpected LHS of assignment statement: " + assignmentStatement);
                     }
@@ -164,7 +164,7 @@ public class SubexpressionEliminationVisitor implements ProgramVisitor {
      * Recursively search for an expression we've already found. If no duplicate found, return null.
      */
     public Expression capture(ExpressionTracker tracker, Expression expression, int n) {
-        if (!SimpleVisitors.hasVolatileFunction(expression) && SimpleVisitors.weight(expression) > 1 && tracker.capture(expression, n)) {
+        if (!ExpressionVisitors.hasVolatileFunction(expression) && ExpressionVisitors.weight(expression) > 1 && tracker.capture(expression, n)) {
             return expression;
         }
         return switch (expression) {

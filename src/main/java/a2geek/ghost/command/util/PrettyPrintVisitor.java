@@ -7,6 +7,7 @@ import a2geek.ghost.model.scope.Subroutine;
 import a2geek.ghost.model.statement.IfStatement;
 import a2geek.ghost.model.statement.LabelStatement;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static a2geek.ghost.model.Symbol.in;
@@ -78,8 +79,14 @@ public class PrettyPrintVisitor {
     }
 
     public void formatStatementBlock(StatementBlock block) {
-        block.getInitializationStatements().forEach(this::formatStatement);
-        block.getStatements().forEach(this::formatStatement);
+        formatStatementList(block.getInitializationStatements());
+        formatStatementList(block.getStatements());
+    }
+    public void formatStatementList(List<Statement> statements) {
+        for (int i=0; i<statements.size(); i++) {
+            sb.append(String.format("%4d: ", i));
+            formatStatement(statements.get(i));
+        }
     }
     public void formatStatement(Statement statement) {
         switch (statement) {
