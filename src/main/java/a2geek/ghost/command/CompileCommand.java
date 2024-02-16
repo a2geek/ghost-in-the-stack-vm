@@ -328,6 +328,11 @@ public class CompileCommand implements Callable<Integer> {
                 description = "enable expression reduction (enabled: ${DEFAULT-VALUE})")
         private boolean subexpressionElimination;
 
+        @Option(names = { "--temp-variable-consolidation" }, negatable = true, defaultValue = "true",
+                fallbackValue = "true", showDefaultValue = Visibility.NEVER,
+                description = "consolidate/reduce temporary variables (enabled: ${DEFAULT-VALUE})")
+        private boolean tempVariableConsolidation;
+
         public void apply(ModelBuilder model) {
             if (noOptimizations) {
                 return;
@@ -358,6 +363,9 @@ public class CompileCommand implements Callable<Integer> {
             }
             if (subexpressionElimination) {
                 execute(program, new SubexpressionEliminationVisitor());
+            }
+            if (tempVariableConsolidation) {
+                execute(program, new TempVariableConsolidationVisitor());
             }
         }
 
