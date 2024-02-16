@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PeepholeOptimizer {
+    private static final Integer ZERO = 0;
+    private static final Integer ONE = 1;
+    private static final Integer TWO = 2;
     private static final List<String> LABEL_RETURN = new ArrayList<>();
 
     public static int optimize(List<Instruction> code) {
@@ -24,13 +27,28 @@ public class PeepholeOptimizer {
             var list = oneInstruction.get();
             var inst = list.getFirst();
             // POPN 0  ==>  remove
-            if (inst.opcode() == Opcode.POPN && Integer.valueOf(0).equals(inst.arg())) {
+            if (inst.opcode() == Opcode.POPN && ZERO.equals(inst.arg())) {
                 list.removeFirst();
                 return true;
             }
             // GOTO _SUBEXIT58  ==>  RETURN     (where label is just before a RETURN)
             if (inst.opcode() == Opcode.GOTO && LABEL_RETURN.contains(inst.label())) {
                 list.set(0, new Instruction(null, Opcode.RETURN, null, null, null));
+                return true;
+            }
+            // LOADC 0000  ==> LOAD0
+            if (inst.opcode() == Opcode.LOADC && ZERO.equals(inst.arg())) {
+                list.set(0, new Instruction(null, Opcode.LOAD0, null, null, null));
+                return true;
+            }
+            // LOADC 0001  ==> LOAD1
+            if (inst.opcode() == Opcode.LOADC && ONE.equals(inst.arg())) {
+                list.set(0, new Instruction(null, Opcode.LOAD1, null, null, null));
+                return true;
+            }
+            // LOADC 0002  ==> LOAD2
+            if (inst.opcode() == Opcode.LOADC && TWO.equals(inst.arg())) {
+                list.set(0, new Instruction(null, Opcode.LOAD2, null, null, null));
                 return true;
             }
         }
@@ -92,7 +110,14 @@ public class PeepholeOptimizer {
             }
             // LOADC 0000  ==> remove
             // PUSHZ       ==> remove
-            if (seq(list, Opcode.LOADC, Opcode.PUSHZ) && Integer.valueOf(0).equals(inst1.arg())) {
+            if (seq(list, Opcode.LOADC, Opcode.PUSHZ) && ZERO.equals(inst1.arg())) {
+                list.remove(1);
+                list.remove(0);
+                return true;
+            }
+            // LOAD0  ==> remove
+            // PUSHZ  ==> remove
+            if (seq(list, Opcode.LOAD0, Opcode.PUSHZ)) {
                 list.remove(1);
                 list.remove(0);
                 return true;
@@ -115,10 +140,17 @@ public class PeepholeOptimizer {
                 LABEL_RETURN.add(inst1.label());
                 // Just tracking, so don't have to return true since nothing was modified
             }
-            // LOADC 0002  ==>  LOADC 0000
+            // LOADC 0002  ==>  LOAD0
             // PUSHZ       ==>  remove
-            if (seq(list, Opcode.LOADC, Opcode.PUSHZ) && Integer.valueOf(2).equals(inst1.arg())) {
-                list.set(0, new Instruction(null, Opcode.LOADC, null, 0, null));
+            if (seq(list, Opcode.LOADC, Opcode.PUSHZ) && TWO.equals(inst1.arg())) {
+                list.set(0, new Instruction(null, Opcode.LOAD0, null, null, null));
+                list.remove(1);
+                return true;
+            }
+            // LOAD2  ==>  LOAD0
+            // PUSHZ  ==>  remove
+            if (seq(list, Opcode.LOAD2, Opcode.PUSHZ)) {
+                list.set(0, new Instruction(null, Opcode.LOAD0, null, null, null));
                 list.remove(1);
                 return true;
             }

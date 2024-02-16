@@ -218,6 +218,10 @@ loop:
     lda brtable,y
     pha
     rts
+
+_break:
+    brk     ; TODO
+
 brtable:
     .addr _exit-1
     .addr _add-1
@@ -275,10 +279,10 @@ brtable:
     .addr _ifz-1
     .addr _loadc-1
     .addr _loada-1
+    .addr _load0-1
+    .addr _load1-1
+    .addr _load2-1
 brlen = *-brtable
-
-_break:
-    brk     ; TODO
 
 ; ADD:  (B) (A) => (B+A)
 _add:
@@ -604,6 +608,23 @@ setaxloop:  ; A,X => (X) (A) a=high
     txa
     pha
     jmp loop
+
+; LOAD0: () => 0
+_load0:
+    ldx #0
+setaxbyteloop:
+    lda #0
+    beq setaxloop
+
+; LOAD1: () => 1
+_load1:
+    ldx #1
+    bne setaxbyteloop
+
+; LOAD2: () => 2
+_load2:
+    ldx #2
+    bne setaxbyteloop
 
 ; LOADSP: () => (SP)
 _loadsp:    ; X already has SP

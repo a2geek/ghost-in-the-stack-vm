@@ -56,7 +56,10 @@ public enum Opcode {
     IFNZ(2),
     IFZ(2),
     LOADC(2),
-    LOADA(2);
+    LOADA(2),
+    LOAD0(0),
+    LOAD1(0),
+    LOAD2(0);
 
 
     private final int argc;
