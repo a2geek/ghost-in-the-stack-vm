@@ -18,7 +18,7 @@ public class TempVariableConsolidationVisitor implements ProgramVisitor {
     }
 
     public void dispatch(Scope scope) {
-        var tracker = new SymbolRangeTracker();
+        var tracker = new SymbolRangeTracker(scope);
         // Identify ranges of all variables
         dispatchToExpression(scope.getInitializationStatements(), tracker, this::captureActiveRanges);
         dispatchToExpression(scope.getStatements(), tracker, this::captureActiveRanges);
@@ -93,12 +93,18 @@ public class TempVariableConsolidationVisitor implements ProgramVisitor {
         private final Map<Symbol,Symbol> replacements = new HashMap<>();
         private final Set<Symbol> available = new HashSet<>();
 
+        public SymbolRangeTracker(Scope scope) {
+            scope.getLocalSymbols().forEach(symbol -> {
+                if (symbol.temporary() && symbol.dataType() == DataType.INTEGER) {
+                    ranges.put(symbol, null);
+                }
+            });
+        }
+
         @Override
         public SymbolRangeTracker create(VisitorContext ctx) {
-            // Tracking into sub blocks is problematic; for now just tracking at the scope level
-            // FIXME left all the parts to support sub blocks; need to resolve at some point
-            // Primary issue tracking is the line number conundrum. It starts fresh within an IF
-            // statement since it is simply the index into the List<Statement>.
+            // We don't actually want to create a new tracker.
+            // Note that the constructor already captures all temp variables within the scope.
             return this;
         }
 
@@ -123,28 +129,36 @@ public class TempVariableConsolidationVisitor implements ProgramVisitor {
 
         public Symbol replacement(Symbol symbol, VisitorContext ctx) {
             if (symbol.temporary() && symbol.dataType() == DataType.INTEGER) {
-                // Clean up symbols that are out of scope; need to use iterator to modify source Map
-                var iterator = replacements.entrySet().iterator();
-                while (iterator.hasNext()) {
-                    var entry = iterator.next();
-                    if (ctx.getIndex() > ranges.get(entry.getKey()).max()) {
-                        available.add(entry.getValue());
-                        iterator.remove();
+                if (ranges.containsKey(symbol)) {
+                    // Clean up symbols that are out of scope; need to use iterator to modify source Map
+                    var iterator = replacements.entrySet().iterator();
+                    while (iterator.hasNext()) {
+                        var entry = iterator.next();
+                        if (ctx.getIndex() > ranges.get(entry.getKey()).max()) {
+                            available.add(entry.getValue());
+                            iterator.remove();
+                        }
                     }
+                    // Have we seen the symbol already?
+                    if (replacements.containsKey(symbol)) {
+                        return replacements.get(symbol);
+                    }
+                    // No. Do we have any unused variables?
+                    if (!available.isEmpty()) {
+                        var replacement = available.stream().findAny().orElseThrow();
+                        available.remove(replacement);
+                        replacements.put(symbol, replacement);
+                        return replacement;
+                    }
+                    // We should be able to just pick this symbol as one to preserve
+                    replacements.put(symbol, symbol);
                 }
-                // Have we seen the symbol already?
-                if (replacements.containsKey(symbol)) {
-                    return replacements.get(symbol);
+                else if (parent != null) {
+                    return parent.replacement(symbol, ctx);
                 }
-                // No. Do we have any unused variables?
-                if (!available.isEmpty()) {
-                    var replacement = available.stream().findAny().orElseThrow();
-                    available.remove(replacement);
-                    replacements.put(symbol, replacement);
-                    return replacement;
+                else {
+                    throw new RuntimeException("[compiler bug] temp variable not found in list: " + symbol);
                 }
-                // We should be able to just pick this symbol as one to preserve
-                replacements.put(symbol, symbol);
             }
             return symbol;
         }
