@@ -87,8 +87,6 @@ public class TempVariableConsolidationVisitor implements ProgramVisitor {
     }
 
     public static class SymbolRangeTracker implements ExpressionTracker<SymbolRangeTracker> {
-        private SymbolRangeTracker parent;
-        private VisitorContext parentContext;
         private final Map<Symbol,Range> ranges = new HashMap<>();
         private final Map<Symbol,Symbol> replacements = new HashMap<>();
         private final Set<Symbol> available = new HashSet<>();
@@ -109,14 +107,8 @@ public class TempVariableConsolidationVisitor implements ProgramVisitor {
         }
 
         public void merge(Symbol symbol, VisitorContext ctx) {
-            if (parent != null) {
-                // Note that this _intentionally_ locks in any parent line number (such as IF statement)
-                parent.merge(symbol, parentContext);
-            }
-            else {
-                if (symbol.temporary() && symbol.dataType() == DataType.INTEGER) {
-                    ranges.merge(symbol, Range.of(ctx.getIndex()), Range::merge);
-                }
+            if (ranges.containsKey(symbol)) {
+                ranges.merge(symbol, Range.of(ctx.getIndex()), Range::merge);
             }
         }
 
@@ -128,37 +120,29 @@ public class TempVariableConsolidationVisitor implements ProgramVisitor {
         }
 
         public Symbol replacement(Symbol symbol, VisitorContext ctx) {
-            if (symbol.temporary() && symbol.dataType() == DataType.INTEGER) {
-                if (ranges.containsKey(symbol)) {
-                    // Clean up symbols that are out of scope; need to use iterator to modify source Map
-                    var iterator = replacements.entrySet().iterator();
-                    while (iterator.hasNext()) {
-                        var entry = iterator.next();
-                        if (ctx.getIndex() > ranges.get(entry.getKey()).max()) {
-                            available.add(entry.getValue());
-                            iterator.remove();
-                        }
+            if (ranges.containsKey(symbol)) {
+                // Clean up symbols that are out of scope; need to use iterator to modify source Map
+                var iterator = replacements.entrySet().iterator();
+                while (iterator.hasNext()) {
+                    var entry = iterator.next();
+                    if (ctx.getIndex() > ranges.get(entry.getKey()).max()) {
+                        available.add(entry.getValue());
+                        iterator.remove();
                     }
-                    // Have we seen the symbol already?
-                    if (replacements.containsKey(symbol)) {
-                        return replacements.get(symbol);
-                    }
-                    // No. Do we have any unused variables?
-                    if (!available.isEmpty()) {
-                        var replacement = available.stream().findAny().orElseThrow();
-                        available.remove(replacement);
-                        replacements.put(symbol, replacement);
-                        return replacement;
-                    }
-                    // We should be able to just pick this symbol as one to preserve
-                    replacements.put(symbol, symbol);
                 }
-                else if (parent != null) {
-                    return parent.replacement(symbol, ctx);
+                // Have we seen the symbol already?
+                if (replacements.containsKey(symbol)) {
+                    return replacements.get(symbol);
                 }
-                else {
-                    throw new RuntimeException("[compiler bug] temp variable not found in list: " + symbol);
+                // No. Do we have any unused variables?
+                if (!available.isEmpty()) {
+                    var replacement = available.stream().findAny().orElseThrow();
+                    available.remove(replacement);
+                    replacements.put(symbol, replacement);
+                    return replacement;
                 }
+                // We should be able to just pick this symbol as one to preserve
+                replacements.put(symbol, symbol);
             }
             return symbol;
         }
