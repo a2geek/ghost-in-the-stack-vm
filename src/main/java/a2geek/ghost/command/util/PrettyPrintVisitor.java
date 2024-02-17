@@ -102,11 +102,11 @@ public class PrettyPrintVisitor {
                 indent += indentIncrement;
                 formatStatementBlock(ifStatement.getTrueStatements());
                 if (ifStatement.hasFalseStatements()) {
-                    sb.append("ELSE".indent(indent - indentIncrement));
+                    sb.append("ELSE".indent(indent - indentIncrement + 6));
                     formatStatementBlock(ifStatement.getFalseStatements());
                 }
                 indent -= indentIncrement;
-                sb.append("END IF".indent(indent));
+                sb.append("END IF".indent(indent + 6));
             }
             default -> {
                 sb.append(statement.toString().indent(indent));
