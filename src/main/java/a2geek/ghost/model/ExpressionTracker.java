@@ -1,7 +1,7 @@
 package a2geek.ghost.model;
 
 import a2geek.ghost.model.expression.BinaryExpression;
-import a2geek.ghost.model.visitor.SimpleVisitors;
+import a2geek.ghost.model.visitor.ExpressionVisitors;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -45,10 +45,10 @@ public class ExpressionTracker {
     }
 
     public void changed(Symbol symbol) {
-        exprs.entrySet().removeIf(entry -> SimpleVisitors.hasSymbol(entry.getKey(), symbol));
+        exprs.entrySet().removeIf(entry -> ExpressionVisitors.hasSymbol(entry.getKey(), symbol));
     }
     public void changed(Expression expression) {
-        exprs.entrySet().removeIf(entry -> SimpleVisitors.hasSubexpression(entry.getKey(), expression));
+        exprs.entrySet().removeIf(entry -> ExpressionVisitors.hasSubexpression(entry.getKey(), expression));
     }
 
     public void reset() {

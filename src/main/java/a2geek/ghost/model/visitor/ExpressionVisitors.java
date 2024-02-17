@@ -9,8 +9,8 @@ import java.util.Objects;
 /**
  * This class contains simple visitors that are implemented in a single recursive method.
  */
-public class SimpleVisitors {
-    private SimpleVisitors() {
+public class ExpressionVisitors {
+    private ExpressionVisitors() {
         // prevent construction
     }
 
@@ -70,7 +70,7 @@ public class SimpleVisitors {
                 if (functionExpression.isVolatile()) {
                     yield true;
                 }
-                yield functionExpression.getParameters().stream().map(SimpleVisitors::hasVolatileFunction).reduce(Boolean::logicalOr).orElse(false);
+                yield functionExpression.getParameters().stream().map(ExpressionVisitors::hasVolatileFunction).reduce(Boolean::logicalOr).orElse(false);
             }
             case IntegerConstant ignored -> false;
             case PlaceholderExpression ignored -> false;
@@ -93,7 +93,7 @@ public class SimpleVisitors {
             case ArrayLengthFunction ignored -> 2;
             case BinaryExpression binaryExpression -> weight(binaryExpression.getL()) + weight(binaryExpression.getR());
             case BooleanConstant ignored -> 1;
-            case FunctionExpression functionExpression -> 2 + functionExpression.getParameters().stream().mapToInt(SimpleVisitors::weight).sum();
+            case FunctionExpression functionExpression -> 2 + functionExpression.getParameters().stream().mapToInt(ExpressionVisitors::weight).sum();
             case IntegerConstant ignored -> 1;
             case PlaceholderExpression ignored -> 1;
             case StringConstant ignored -> 1;
