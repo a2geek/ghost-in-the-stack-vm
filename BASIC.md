@@ -180,8 +180,12 @@ but only the current error details are available. There is a default `ON ERROR` 
 on error goto <label>
 on error disable
 on error resume next   ' not implemented yet
-raise error <number>, <message>
+raise error <number> [, <message> [, <context>]]
 ```
+
+`raise error` allows up to 3 arguments, two that are optional. A runtime example of using all three is the array
+boundary check code. That code effectively does a `raise error 107, "ARRAY INDEX OUT OF BOUNDS", "?"` where the `?` 
+is replaced with the "offending" variable name.
 
 Note that `ON ERROR DISABLE` disables the users' error handling and sets it back to the system default error
 handler.

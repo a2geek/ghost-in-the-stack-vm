@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 public class StringConstant implements Expression {
+    public static final StringConstant EMPTY = new StringConstant("");
     private final String value;
 
     public StringConstant(String value) {

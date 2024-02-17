@@ -89,7 +89,7 @@ statement
     | 'on' 'error' ( op='goto' l=identifier
                    | op='disable'
                    | op='resume' 'next'? )                                  # onErrorStmt
-    | 'raise' 'error' a=expr ',' m=expr                                     # raiseErrorStmt
+    | 'raise' 'error' a=expr ( ',' m=expr ( ',' c=expr )? )?                # raiseErrorStmt
     | 'return' e=expr?                                                      # returnStmt
     | 'select' 'case'? a=expr EOL+
       ( selectCaseFragment )+

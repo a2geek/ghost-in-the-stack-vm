@@ -479,9 +479,10 @@ public class ModelBuilder {
         // END IF
         var errorBlock = pushStatementBlock(new StatementBlock());
         raiseError(new IntegerConstant(107),
-                new StringConstant(String.format("ARRAY INDEX OUT OF BOUNDS %s", symbol.name())),
+                new StringConstant("ARRAY INDEX OUT OF BOUNDS"),
                 new IntegerConstant(linenum),
-                new StringConstant(source));
+                new StringConstant(source),
+                new StringConstant(symbol.name()));
         popStatementBlock();
         var test = indexes.getFirst().gt(new ArrayLengthFunction(symbol, 1));
         for (int i=1; i<symbol.numDimensions(); i++) {
@@ -492,15 +493,17 @@ public class ModelBuilder {
         addStatement(statement);
     }
 
-    public void raiseError(Expression number, Expression message, Expression linenum, Expression source) {
+    public void raiseError(Expression number, Expression message, Expression linenum, Expression source, Expression context) {
         uses("err", defaultExport());
         var errNumber = findSymbol("err.number").orElseThrow();
         var errMessage = findSymbol("err.message").orElseThrow();
         var errLinenum = findSymbol("err.linenum").orElseThrow();
         var errSource = findSymbol("err.source").orElseThrow();
+        var errContext = findSymbol("err.context").orElseThrow();
         assignStmt(VariableReference.with(errNumber), number);
         assignStmt(VariableReference.with(errMessage), message);
         assignStmt(VariableReference.with(errLinenum), linenum);
+        assignStmt(VariableReference.with(errContext), context);
         // If we have a method name, use that instead.
         var sourceName = scope.peek().getFullPathName();
         if (sourceName != null) {

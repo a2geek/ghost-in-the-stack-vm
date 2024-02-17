@@ -215,11 +215,18 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
     @Override
     public Expression visitRaiseErrorStmt(BasicParser.RaiseErrorStmtContext ctx) {
-        var expr = visit(ctx.a);
-        var msg = visit(ctx.m);
+        Expression expr = visit(ctx.a);
+        Expression msg = StringConstant.EMPTY;
+        if (ctx.m != null) {
+            msg = visit(ctx.m);
+        }
+        Expression context = StringConstant.EMPTY;
+        if (ctx.c != null) {
+            context = visit(ctx.c);
+        }
         var linenum = new IntegerConstant(ctx.getStart().getLine());
         var source = new StringConstant(ctx.getStart().getTokenSource().getSourceName());
-        model.raiseError(expr, msg, linenum, source);
+        model.raiseError(expr, msg, linenum, source, context);
         return null;
     }
 
