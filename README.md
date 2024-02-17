@@ -73,7 +73,8 @@ The compiler can be invoked with `--help` to see a list of options:
 ```shell
 $ java -jar build/libs/GhostBasic-1.0-SNAPSHOT.jar --help
 Usage: compile [-hV] [--case-sensitive] [--debug] [--fix-control-chars] [--heap] [--integer] [--quiet] [--trace] [-il=<intermediateCodeListing>] [--lomem=<heapStartAddress>] [-o=<outputFile>] [--symbols=<symbolTableFile>] [-tl=<targetCodeListing>]
-               [[--[no-]optimizations] [--[no-]bounds-checking] [--[no-]constant-reduction] [--[no-]strength-reduction] [--[no-]dead-code-elimination] [--[no-]peephole-optimizer] [--[no-]label-optimizer]] <sourceCode>
+               [[--[no-]optimizations] [--[no-]bounds-checking] [--[no-]constant-reduction] [--[no-]strength-reduction] [--[no-]dead-code-elimination] [--[no-]peephole-optimizer] [--[no-]label-optimizer] [--[no-]code-inlining] [--[no-]
+               expression-rewrite] [--[no-]subexpression-elimination] [--[no-]temp-variable-consolidation]] <sourceCode>
 Compile Ghost BASIC program.
       <sourceCode>           program to compile
       --case-sensitive       allow identifiers to be case sensitive (A is different from a)
@@ -98,16 +99,23 @@ Compile Ghost BASIC program.
   -V, --version              Print version information and exit.
 Optimizations:
       --[no-]bounds-checking perform bounds checking on arrays (enabled: true)
+      --[no-]code-inlining   enable code inlining (enabled: true)
       --[no-]constant-reduction
                              constant reduction (enabled: true)
       --[no-]dead-code-elimination
                              enable dead code elimination (enabled: true)
+      --[no-]expression-rewrite
+                             enable expression rewriting (enabled: true)
       --[no-]label-optimizer enable label optimizer (enabled: true)
       --[no-]optimizations   disable all optimizations (enabled: false)
       --[no-]peephole-optimizer
                              enable peephole optimizer (enabled: true)
       --[no-]strength-reduction
                              enable strength reduction (enabled: true)
+      --[no-]subexpression-elimination
+                             enable expression reduction (enabled: true)
+      --[no-]temp-variable-consolidation
+                             consolidate/reduce temporary variables (enabled: true)
 ```
 
 Note that bounds checking is enabled, so to optimize there, `--no-bounds-checking` should be used.
