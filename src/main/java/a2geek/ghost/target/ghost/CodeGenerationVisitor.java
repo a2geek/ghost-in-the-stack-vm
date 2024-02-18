@@ -57,7 +57,9 @@ public class CodeGenerationVisitor extends DispatchVisitor {
 
         dispatchAll(program, program);
         // Note we don't have a GLOBAL_FREE; EXIT restores stack for us
-        code.emit(Opcode.EXIT);
+        if (!program.isLastStatement(EndStatement.class)) {
+            code.emit(Opcode.EXIT);
+        }
 
         // Only write library methods that are actually used
         boolean wroteCode;
