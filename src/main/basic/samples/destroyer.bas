@@ -204,10 +204,8 @@ end sub
 
 ' Submarine. Only one at a time. If it doesn't exist, pick a random number to see if one shows up!
 sub triggerSubmarine
-    dim r as integer
     if subx = 0 then
-        r = rnd(10)     ' grab only one random value
-        select case r
+        select case rnd(10)
         case 1
             subx = 10
             suby = WATERLINE+10+rnd(80)

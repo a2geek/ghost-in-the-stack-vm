@@ -161,7 +161,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             model.popStatementBlock();
         }
 
-        var expr = visit(ctx.a);
+        var expr = model.simplify(visit(ctx.a));
         for (var fragment : ctx.selectCaseFragment().reversed()) {
             var trueStatements = model.pushStatementBlock(new StatementBlock());
             visit(fragment.statements());
@@ -620,7 +620,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     @Override
     public Expression visitOnGotoGosubStmt(BasicParser.OnGotoGosubStmtContext ctx) {
         var op = ctx.op.getText();
-        var expr = visit(ctx.a);
+        var expr = model.simplify(visit(ctx.a));
         var addrof = ctx.identifier().stream()
                 .map(this::findGotoGosubLabel)
                 .map(AddressOfFunction::new)
@@ -629,7 +629,6 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
         var name = String.format("ON_%s", op).toUpperCase();
         var addrs = model.addArrayDefaultVariable(name, DataType.ADDRESS, List.of(new IntegerConstant(addrof.size())), addrof);
-        // TODO optimize "expr" reference due to multiple references
         var test = expr.gt(IntegerConstant.ZERO).and(expr.le(new ArrayLengthFunction(addrs, 1)));
         model.pushStatementBlock(new StatementBlock());
         model.dynamicGotoGosubStmt(op, arrayReference(addrs, List.of(expr.minus1())), true);
@@ -933,7 +932,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             }
         }
 
-        // TODO if the index is complex, it gets evaluated multiple times
+        params.replaceAll(model::simplify);     // If the parameters are complex, they are evaluated in array check and reference!
         model.checkArrayBounds(existing.get(), params, ctx.getStart().getLine(), ctx.getStart().getTokenSource().getSourceName());
         return arrayReference(existing.get(), params);
     }

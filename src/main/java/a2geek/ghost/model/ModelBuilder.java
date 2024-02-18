@@ -17,6 +17,7 @@ import java.util.function.Predicate;
 
 import static a2geek.ghost.model.Symbol.in;
 import static a2geek.ghost.model.Symbol.named;
+import static a2geek.ghost.model.visitor.ExpressionVisitors.weight;
 
 /**
  * A shared component to help building the BASIC model between language variants.
@@ -516,5 +517,14 @@ public class ModelBuilder {
         }
         assignStmt(VariableReference.with(errSource), source);
         addStatement(new RaiseErrorStatement());
+    }
+
+    public Expression simplify(Expression expr) {
+        if (weight(expr) > 1) {
+            var temp = VariableReference.with(addTempVariable(expr.getType()));
+            assignStmt(temp, expr);
+            return temp;
+        }
+        return expr;
     }
 }
