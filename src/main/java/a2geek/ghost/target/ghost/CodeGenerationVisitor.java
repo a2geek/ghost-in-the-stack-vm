@@ -50,11 +50,6 @@ public class CodeGenerationVisitor extends DispatchVisitor {
                 .orElseThrow(() -> error("unknown label: '%s'", DEFAULT_ERROR_HANDLER)));
         setupDefaultArrayValues(program);
 
-        program.streamAllLocalScope().filter(in(SymbolType.MODULE)).forEach(symbol -> {
-            // statements in a module are initialization for the program
-            dispatchToList(program, symbol.scope().getStatements());
-        });
-
         dispatchAll(program, program);
         // Note we don't have a GLOBAL_FREE; EXIT restores stack for us
         if (!program.isLastStatement(EndStatement.class)) {
