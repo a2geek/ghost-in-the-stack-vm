@@ -23,11 +23,6 @@ module Memory
         end while
     end sub
 
-    ' initialization
-    memory.freeptr = peekw(LOMEM)
-    pokew memory.freeptr,0
-    pokew memory.freeptr+2,peekw(MEMSIZE)-peekw(LOMEM)-HEADER_SIZE
-
     volatile function memfree() as integer
         dim ptr as address, n as integer
         ptr = memory.freeptr
@@ -37,6 +32,12 @@ module Memory
         end while
         return n
     end function
+
+    sub heapinit()
+        memory.freeptr = peekw(LOMEM)
+        pokew memory.freeptr,0
+        pokew memory.freeptr+2,peekw(MEMSIZE)-peekw(LOMEM)-HEADER_SIZE
+    end sub
 
     volatile function heapalloc(bytes as integer) as address
         dim ptr as address, priorptr as address, dataptr as address, size as integer, needed as integer
@@ -118,4 +119,8 @@ module Memory
             consolidate(dataptr)
         end if
     end sub
+
+    ' initialization
+    memory.heapinit()
+
 end module
