@@ -10,9 +10,11 @@ dim addr(10) as address, size(10) as integer
 dim n as integer = 10000   ' iterations for "stress" test
 dim i as integer           ' array index
 dim total as integer
+dim startmem as integer
 
 print "Running for ";n;" iterations. Set to max speed for this one!"
 
+startmem = memory.memfree()
 while n <> 0
     if addr(i) <> 0 then
         print "FREEING ";size(i);" BYTES AT ";addr(i)
@@ -30,4 +32,15 @@ while n <> 0
     n = n - 1
 end while
 
-print "** GOOD **"
+for i = 0 to ubound(addr)
+    memory.heapfree(addr(i))
+next i
+
+if startmem <> memory.memfree() then
+    print "** ERROR **"
+    print "EXPECTING ";startmem;" BYTES FREE BUT HAVE ";memory.memfree()
+else
+    print "** GOOD **"
+    print "STARTING AND ENDING MEMORY SIZES MATCH AT ";startmem;" BYTES."
+end if
+
