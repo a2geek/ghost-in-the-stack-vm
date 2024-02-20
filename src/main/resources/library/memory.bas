@@ -63,7 +63,7 @@ module Memory
                     if priorptr <> 0 then
                         pokew priorptr,peekw(ptr)
                     else
-                        memory.freeptr = 0
+                        memory.freeptr = peekw(ptr)
                     end if
                     pokew ptr,0
                 end if
