@@ -1,6 +1,11 @@
 option strict
 option heap
 
+' this way we don't have to fiddle with text width
+if prodos.has80Cols() then
+    misc.prnum(3)
+end if
+
 dim addr(10) as address, size(10) as integer
 dim n as integer    ' iteration
 dim i as integer    ' array index
