@@ -39,9 +39,16 @@ public class SubexpressionEliminationVisitor implements ProgramVisitor {
                 }
                 case CallStatement callStatement -> capture(tracker, callStatement.getExpr(), i);
                 case CallSubroutine callSubroutine -> captureParams(tracker, callSubroutine.getParameters(), i);
-                case DynamicGotoGosubStatement dynamicGotoGosubStatement -> capture(tracker, dynamicGotoGosubStatement.getTarget(), i);
+                case DynamicGotoGosubStatement dynamicGotoGosubStatement -> {
+                    var expr = capture(tracker, dynamicGotoGosubStatement.getTarget(), i);
+                    if ("gosub".equals(dynamicGotoGosubStatement.getOp())) tracker.reset();
+                    yield expr;
+                }
                 case EndStatement ignored -> null;
-                case GotoGosubStatement ignored -> null;
+                case GotoGosubStatement gotoGosubStatement -> {
+                    if ("gosub".equals(gotoGosubStatement.getOp())) tracker.reset();
+                    yield null;
+                }
                 case IfStatement ifStatement -> {
                     if (ifStatement.hasTrueStatements()) scan(makeTempVariable, new ExpressionTracker(), ifStatement.getTrueStatements().getStatements());
                     if (ifStatement.hasFalseStatements()) scan(makeTempVariable, new ExpressionTracker(), ifStatement.getFalseStatements().getStatements());
@@ -96,9 +103,12 @@ public class SubexpressionEliminationVisitor implements ProgramVisitor {
                 }
                 case DynamicGotoGosubStatement dynamicGotoGosubStatement -> {
                     dynamicGotoGosubStatement.setTarget(replace(dynamicGotoGosubStatement.getTarget(), candidate, replacement));
+                    if ("gosub".equals(dynamicGotoGosubStatement.getOp())) return;
                 }
                 case EndStatement ignored -> {}
-                case GotoGosubStatement ignored -> {}
+                case GotoGosubStatement gotoGosubStatement -> {
+                    if ("gosub".equals(gotoGosubStatement.getOp())) return;
+                }
                 case IfStatement ifStatement -> {
                     ifStatement.setExpression(replace(ifStatement.getExpression(), candidate, replacement));
                     if (ifStatement.hasTrueStatements()) {
