@@ -58,5 +58,4 @@
 440 PRINT "   W                 I"
 450 PRINT "A     D           J     L"
 460 PRINT "   X                 M"
-469 REM *** FIXME - should be A$ not A!
-470 VTAB 24:INPUT "   HIT RETURN TO CONTINUE",A:RETURN
+470 VTAB 24:INPUT "   HIT RETURN TO CONTINUE",A$:RETURN
