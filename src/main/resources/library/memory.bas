@@ -44,6 +44,21 @@ module Memory
         pokew memory.freeptr+2,peekw(MEMSIZE)-peekw(LOMEM)-HEADER_SIZE
     end sub
 
+    ' NOTE: should be private once that is an option
+    sub setpriorptr(priorptr as address, newptr as address)
+        if priorptr <> 0 then
+            pokew priorptr, newptr
+        else
+            memory.freeptr = newptr
+        end if
+    end sub
+
+    ' NOTE: should be private once that is an option
+    sub setheader(ptr as address, nextptr as address, size as integer)
+        pokew ptr, nextptr
+        pokew ptr+2, size
+    end sub
+
     volatile function heapalloc(bytes as integer) as address
         dim ptr as address, priorptr as address, dataptr as address, size as integer, needed as integer
         ptr = memory.freeptr
@@ -55,27 +70,18 @@ module Memory
                 dataptr = ptr+HEADER_SIZE
                 ' if the chunk was too large, setup a free chunk
                 if size-needed > HEADER_SIZE then
-                    pokew ptr+needed,peekw(ptr)
-                    pokew ptr+needed+2,size-needed
-                    pokew ptr,0
-                    pokew ptr+2,needed
-                    if priorptr <> 0 then
-                        pokew priorptr,ptr+needed
-                    else
-                        memory.freeptr = ptr+needed
-                    end if
+                    setheader(ptr+needed, peekw(ptr), size-needed)
+                    setheader(ptr, 0, needed)
+                    setpriorptr(priorptr, ptr+needed)
                 else
-                    if priorptr <> 0 then
-                        pokew priorptr,peekw(ptr)
-                    else
-                        memory.freeptr = peekw(ptr)
-                    end if
+                    setpriorptr(priorptr, peekw(ptr))
                     pokew ptr,0
                 end if
                 ' clean up memory and return the pointer
                 memclr(dataptr, bytes)
                 return dataptr
             else
+                ' keep looking until we run out!
                 priorptr = ptr
                 ptr = peekw(ptr)
             end if
@@ -88,8 +94,7 @@ module Memory
         dim ptrnext as address = peekw(ptr)
         dim ptrsize as integer = peekw(ptr+2)
         if ptr <> 0 AND ptr+ptrsize = ptrnext then
-            pokew ptr+2, ptrsize+peekw(ptrnext+2)
-            pokew ptr, peekw(ptrnext)
+            setheader(ptr, peekw(ptrnext), ptrsize+peekw(ptrnext+2))
         end if
     end sub
 
