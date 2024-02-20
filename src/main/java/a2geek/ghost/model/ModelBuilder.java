@@ -100,7 +100,7 @@ public class ModelBuilder {
     }
 
     public void addInitializationStatements(StatementBlock statements) {
-        var sb = this.statementBlock.peek();
+        var sb = this.statementBlock.getFirst();
         statements.getInitializationStatements().forEach(sb::addInitializationStatement);
         statements.getStatements().forEach(sb::addInitializationStatement);
     }
@@ -191,6 +191,10 @@ public class ModelBuilder {
                 this.scope.push(program);
                 ParseUtil.basicToModel(CharStreams.fromStream(inputStream), this);
                 this.scope = oldScopeStack;
+                // any statements in the module body are for initialization
+                var module = program.findFirst(named(fixCase(libname)).and(in(SymbolType.MODULE))).map(Symbol::scope)
+                        .orElseThrow(() -> new RuntimeException("not a module: " + libname));
+                addInitializationStatements(module);
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }

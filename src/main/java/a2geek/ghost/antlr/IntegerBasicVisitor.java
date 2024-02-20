@@ -744,7 +744,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     public Expression visitStrRef(IntegerParser.StrRefContext ctx) {
         // Note (LHS): A$(start)
         var ref = model.addVariable(ctx.n.getText(), DataType.STRING);
-        stringsDimmed.computeIfAbsent(ref, k -> null);
+        stringsDimmed.putIfAbsent(ref, null);
         if (ctx.start != null) {
             var start = visit(ctx.start);
             return new FunctionExpression(LHS_STRING, List.of(VariableReference.with(ref), start));
@@ -775,7 +775,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     public Expression visitStrVar(IntegerParser.StrVarContext ctx) {
         // Note (RHS): A$ [ (start [,end] ) ]
         var ref = model.addVariable(ctx.n.getText(), DataType.STRING);
-        stringsDimmed.computeIfAbsent(ref, k -> null);
+        stringsDimmed.putIfAbsent(ref, null);
         if (ctx.start != null) {
             var start = visit(ctx.start);
             if (ctx.end != null) {

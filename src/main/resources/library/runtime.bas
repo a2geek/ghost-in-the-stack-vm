@@ -59,7 +59,7 @@ module runtime
         pokew INPTR,BUFFER
     end sub
 
-    function input_scaninteger as integer
+    volatile function input_scaninteger as integer
         dim n as integer, i as integer, ch as integer
         dim p as address
         dim good as boolean
@@ -133,7 +133,7 @@ module runtime
 
     ' abusing a subroutine for the error handler; note the END terminates the application
     sub defaultErrorHandler
-        print "ERROR #";err.number;" - ";err.message;" AT LINE ";err.linenum;" IN ";err.source
+        print "ERROR #";err.number;" - ";err.message;" AT LINE ";err.linenum;" IN ";err.source;" FOR '";err.context;"'"
         end
     end sub
 
