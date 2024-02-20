@@ -16,11 +16,16 @@ module Memory
     const MEMSIZE = 0x73    ' HIMEM
 
     sub memclr(p as address, bytes as integer)
-        while bytes > 0
-            poke p,0
-            p = p + 1
+        dim odd as boolean = bytes AND 1
+        bytes = bytes >> 1
+        while bytes <> 0
+            pokew p,0
+            p = p + 2
             bytes = bytes - 1
         end while
+        if odd then
+            poke p,0
+        end if
     end sub
 
     volatile function memfree() as integer
