@@ -845,8 +845,6 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                 else {
                     var symbol = model.addArrayVariable(decl.name(), decl.dataType(), decl.dimensions());
                     model.allocateIntegerArray(symbol, decl.dimensions());
-                    // FIXME is this needed?
-                    model.registerDimArray(symbol, decl.dimensions().getFirst());
                 }
             }
             else {

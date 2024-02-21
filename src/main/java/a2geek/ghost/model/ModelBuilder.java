@@ -42,8 +42,6 @@ public class ModelBuilder {
     private boolean trace = false;
     private boolean boundsCheck = true;
     private String heapFunction;
-    /** Track array dimensions */
-    private final Map<Symbol, Expression> arrayDims = new HashMap<>();
 
     public ModelBuilder(Function<String,String> caseStrategy) {
         this.caseStrategy = caseStrategy;
@@ -462,19 +460,6 @@ public class ModelBuilder {
         var allocFn = callFunction(heapFunction, bytes);
         assignStmt(varRef, allocFn);
         pokeStmt("poke", varRef, length);
-    }
-
-    public void registerDimArray(Symbol symbol, Expression size) {
-        arrayDims.merge(symbol, size, (oldSize, newSize) -> oldSize);
-    }
-    public Expression getArrayDim(Symbol symbol) {
-        if (symbol.symbolType() == SymbolType.PARAMETER) {
-            // Expression has only one required method to implement at this time; may need to adjust in future!
-            return symbol::dataType;
-        } else if (!arrayDims.containsKey(symbol)) {
-            throw new RuntimeException("Array was not DIMmed: " + symbol.name());
-        }
-        return arrayDims.get(symbol);
     }
 
     public void checkArrayBounds(Symbol symbol, List<Expression> indexes, int linenum, String source) {

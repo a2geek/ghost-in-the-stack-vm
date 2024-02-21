@@ -194,7 +194,6 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         }
 
         model.allocateIntegerArray(symbol, List.of(expr));
-        model.registerDimArray(symbol, expr);
         return null;
     }
 
@@ -204,7 +203,6 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         var expr = visit(ctx.e);
 
         model.allocateStringArray(symbol, expr);
-        model.registerDimArray(symbol, expr);
         return null;
     }
 
