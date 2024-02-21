@@ -39,6 +39,12 @@ public class Scope extends StatementBlock {
         }
     }
 
+    public boolean sameParent(Scope scope) {
+        // they should actually be the same Scope object, right?
+        return this.parent == scope.parent;
+    }
+
+
     @Override
     public boolean isEmpty() {
         // no code and no symbols

@@ -405,4 +405,28 @@ public class GhostBasicVisitorTest {
             .callSub("addArray", arraySymbol)
             .atEnd();
     }
+
+    @Test
+    public void testPrivateVisibility() {
+        assertThrows(
+                RuntimeException.class,
+                () -> {
+                    expect("memory.setpriorptr(0x300, 0x310, 2)");
+                }
+        );
+    }
+
+    @Test
+    public void testExportPrivateShouldFail() {
+        assertThrows(
+                RuntimeException.class,
+                () -> {
+                    expect("""
+                            private export sub invalid()
+                                return
+                            end sub
+                            """);
+                }
+        );
+    }
 }

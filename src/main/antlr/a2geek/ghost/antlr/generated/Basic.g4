@@ -33,10 +33,10 @@ module
 
 declarations
     : 'const' constantDecl ( ',' constantDecl )*                        # constant
-    | modifiers* 'sub' id=identifier p=paramDecl? EOL+
+    | visibility? modifiers* 'sub' id=identifier p=paramDecl? EOL+
         (s=statements)?
       'end' 'sub'                                                       # subDecl
-    | modifiers* 'function' id=identifier p=paramDecl? ('as' datatype)? EOL+
+    | visibility? modifiers* 'function' id=identifier p=paramDecl? ('as' datatype)? EOL+
         (s=statements)?
       'end' 'function'                                                  # funcDecl
     | EOL                                                               # emptyDecl
@@ -45,6 +45,10 @@ modifiers
     : 'export'
     | 'inline'
     | 'volatile'
+    ;
+visibility
+    : 'public'
+    | 'private'
     ;
 
 statements

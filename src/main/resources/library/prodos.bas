@@ -10,7 +10,7 @@ module prodos
 
     ' this should be kept internal to ProDOS since there's going to be a better way to do it!
 
-    function pstring(name as string) as address
+    private function pstring(name as string) as address
         dim buffer as address = 0x280
         poke buffer, 0x3f   ' set max length
         poke buffer+1, 0x00 ' fake an end of string
@@ -19,7 +19,7 @@ module prodos
         poke buffer, len
         return buffer
     end function
-    function pstring2(name as string) as address
+    private function pstring2(name as string) as address
         dim buffer as address = 0x2c0
         poke buffer, 0x3f   ' set max length
         poke buffer+1, 0x00 ' fake an end of string

@@ -44,8 +44,7 @@ module Memory
         pokew memory.freeptr+2,peekw(MEMSIZE)-peekw(LOMEM)-HEADER_SIZE
     end sub
 
-    ' NOTE: should be private once that is an option
-    sub setpriorptr(priorptr as address, newptr as address)
+    private sub setpriorptr(priorptr as address, newptr as address)
         if priorptr <> 0 then
             pokew priorptr, newptr
         else
@@ -53,8 +52,7 @@ module Memory
         end if
     end sub
 
-    ' NOTE: should be private once that is an option
-    sub setheader(ptr as address, nextptr as address, size as integer)
+    private sub setheader(ptr as address, nextptr as address, size as integer)
         pokew ptr, nextptr
         pokew ptr+2, size
     end sub
@@ -89,8 +87,7 @@ module Memory
         raise error 77, "OUT OF MEMORY"
     end function
 
-    ' NOTE: should be PRIVATE once that is an option
-    sub consolidate(ptr as address)
+    private sub consolidate(ptr as address)
         dim ptrnext as address = peekw(ptr)
         dim ptrsize as integer = peekw(ptr+2)
         if ptr <> 0 AND ptr+ptrsize = ptrnext then

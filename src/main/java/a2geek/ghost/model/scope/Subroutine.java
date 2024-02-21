@@ -1,9 +1,6 @@
 package a2geek.ghost.model.scope;
 
-import a2geek.ghost.model.DeclarationType;
-import a2geek.ghost.model.Scope;
-import a2geek.ghost.model.Symbol;
-import a2geek.ghost.model.SymbolType;
+import a2geek.ghost.model.*;
 
 import java.util.HashSet;
 import java.util.List;
@@ -13,12 +10,20 @@ import java.util.stream.Collectors;
 import static a2geek.ghost.model.Symbol.in;
 
 public class Subroutine extends Scope {
+    protected Visibility visibility = Visibility.PUBLIC;
     protected Set<Modifier> modifiers = new HashSet<>();
     private String exitLabel;
 
     public Subroutine(Scope parent, String name, List<Symbol.Builder> parameters) {
         super(parent, name, DeclarationType.LOCAL);
         parameters.reversed().forEach(this::addLocalSymbol);
+    }
+
+    public void set(Visibility visibility) {
+        this.visibility = visibility;
+    }
+    public boolean is(Visibility visibility) {
+        return this.visibility == visibility;
     }
 
     public void add(Modifier modifier) {
@@ -37,7 +42,8 @@ public class Subroutine extends Scope {
 
     @Override
     public String toString() {
-        return String.format("%s SUB %s(%s) : %s : END SUB",
+        return String.format("%s %s SUB %s(%s) : %s : END SUB",
+                visibility,
                 modifiers.toString(),
                 getName(),
                 findAllLocalScope(in(SymbolType.PARAMETER)).stream()

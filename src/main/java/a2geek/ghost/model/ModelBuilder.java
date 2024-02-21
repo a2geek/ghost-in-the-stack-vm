@@ -228,6 +228,9 @@ public class ModelBuilder {
         var subScope = this.scope.peek().findFirst(named(subName).and(in(SymbolType.SUBROUTINE)))
                 .map(Symbol::scope).orElse(null);
         if (subScope instanceof Subroutine sub) {
+            if (sub.is(Visibility.PRIVATE) && !sub.sameParent(this.scope.peek())) {
+                throw new RuntimeException("subroutine is not available in this scope: " + subName);
+            }
             checkCallParameters(sub, params);
             CallSubroutine callSubroutine = new CallSubroutine(sub, params);
             addStatement(callSubroutine);
@@ -292,6 +295,9 @@ public class ModelBuilder {
         var func = this.scope.peek().findFirst(named(id).and(in(SymbolType.FUNCTION)))
                 .map(Symbol::scope).orElse(null);
         if (func instanceof a2geek.ghost.model.scope.Function fn) {
+            if (fn.is(Visibility.PRIVATE) && !fn.sameParent(this.scope.peek())) {
+                throw new RuntimeException("function is not available in this scope: " + id);
+            }
             checkCallParameters(fn, params);
             return new FunctionExpression(fn, params);
         }

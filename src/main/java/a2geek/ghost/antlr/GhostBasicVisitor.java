@@ -757,6 +757,8 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
         var sub = model.subDeclBegin(ctx.id.getText(), params);
         applyModifiers(ctx.modifiers(), sub);
+        applyVisibility(ctx.visibility(), sub);
+        ensureValidConstruct(sub);
         visit(ctx.s);
         model.subDeclEnd();
         return null;
@@ -777,6 +779,24 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             });
         }
     }
+    void applyVisibility(BasicParser.VisibilityContext ctx, Subroutine subOrFunc) {
+        if (ctx != null) {
+            switch (ctx.getText().toLowerCase()) {
+                case "public" -> subOrFunc.set(Visibility.PUBLIC);
+                case "private" -> subOrFunc.set(Visibility.PRIVATE);
+                default -> {
+                    var msg = String.format("Unknown visibility '%s' encountered", ctx.getText());
+                    throw new RuntimeException(msg);
+                }
+            }
+        }
+    }
+
+    void ensureValidConstruct(Subroutine subOrFunc) {
+        if (subOrFunc.is(Visibility.PRIVATE) && subOrFunc.is(Subroutine.Modifier.EXPORT)) {
+            throw new RuntimeException("cannot export a private routine: " + subOrFunc.getFullPathName());
+        }
+    }
 
     @Override
     public Expression visitFuncDecl(BasicParser.FuncDeclContext ctx) {
@@ -791,6 +811,8 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
         var func = model.funcDeclBegin(id, dt, params);
         applyModifiers(ctx.modifiers(), func);
+        applyVisibility(ctx.visibility(), func);
+        ensureValidConstruct(func);
         visit(ctx.s);
         model.funcDeclEnd();
         return null;

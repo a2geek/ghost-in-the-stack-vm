@@ -71,12 +71,19 @@ All variables are assumed to be 16 bit integers. Other data types exist in expre
 Subroutines may be declared at the top of the program. They have their own variable scope and share access to global variables.
 
 ```basic
-[export] [inline] [volatile] sub name(a,b,c)
+[visibility] [modifiers] sub name(a,b,c)
     ...
 end sub
 ```
 
-Flags:
+Visibility flags:
+
+| Name      | Optional? | Description                                                        |
+|:----------|:---------:|:-------------------------------------------------------------------|
+| `public`  |  Default  | Marks routine as publicly available anywhere. This is the default. |
+| `private` | Optional  | Marks routine as private to the scope (application or module).     |
+
+Modifier flags:
 
 | Name       | Optional? | Description                                                                                                                                         |
 |:-----------|:---------:|:----------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -92,7 +99,7 @@ sub name(a as integer, b as boolean)
 end sub
 ```
 
-Function definitions are similar. At this time, as with everything else, the return value is assumed to be integer.
+Function definitions are similar. At this time, as with everything else, the return value is assumed to be integer. Note that with `option strict` enabled, this is not allowed.
 
 ```basic
 function name(a,b)

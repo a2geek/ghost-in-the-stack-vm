@@ -25,7 +25,8 @@ public class Function extends Subroutine {
 
     @Override
     public String toString() {
-        return String.format("%s FUNCTION %s(%s) %s : %s : END FUNCTION",
+        return String.format("%s %s FUNCTION %s(%s) %s : %s : END FUNCTION",
+                visibility,
                 modifiers.toString(),
                 getName(),
                 findAllLocalScope(in(SymbolType.PARAMETER)).stream()
