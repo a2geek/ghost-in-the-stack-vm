@@ -38,7 +38,16 @@ public class CommonExpressions {
         // *(array+(ubound(array,1)*sizeof(datatype)+(index+dims)*sizeof(datatype))
         return new UnaryExpression("*", offset, array.dataType());
     }
+
     public static ArrayLengthFunction ubound(Symbol symbol, int dimensionNumber) {
         return new ArrayLengthFunction(symbol, dimensionNumber);
+    }
+
+    public static UnaryExpression derefByte(Expression address) {
+        return new UnaryExpression("*", address, DataType.BYTE);
+    }
+
+    public static UnaryExpression derefWord(Expression address) {
+        return new UnaryExpression("*", address, DataType.INTEGER);
     }
 }

@@ -276,7 +276,7 @@ public class GhostBasicVisitorTest {
     @Test
     public void testPoke() {
         expect("poke 1234,5 : pokew 2345,6")
-            .poke("poke", constant(1234), constant(5))
+            .poke("poke", constant(1234), byteConstant(5))
             .poke("pokew", constant(2345), constant(6))
             .atEnd();
     }

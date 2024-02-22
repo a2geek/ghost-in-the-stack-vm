@@ -8,7 +8,8 @@ public enum DataType {
     STRING(2),
     BOOLEAN(2),
     /** ADDRESS is used by the ON GOTO/GOSUB constructs for an array of code addresses. */
-    ADDRESS(2);
+    ADDRESS(2),
+    BYTE(1);
 
     private final int sizeof;
 

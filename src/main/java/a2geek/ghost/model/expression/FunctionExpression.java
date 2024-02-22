@@ -14,8 +14,6 @@ public class FunctionExpression implements Expression {
     private static final String MATH_LIBRARY = "math";
     private static final String STRINGS_LIBRARY = "strings";
     public static final List<Descriptor> DESCRIPTORS = List.of(
-        new Descriptor("peek", null, true, DataType.INTEGER, DataType.ADDRESS),
-        new Descriptor("peekw", null, true, DataType.INTEGER, DataType.ADDRESS),
         new Descriptor("alloc",  null, true, DataType.ADDRESS, DataType.INTEGER),
         new Descriptor("asc", STRINGS_LIBRARY, false, DataType.INTEGER, DataType.STRING),
         new Descriptor("sgn", MATH_LIBRARY, false, DataType.INTEGER, DataType.INTEGER)

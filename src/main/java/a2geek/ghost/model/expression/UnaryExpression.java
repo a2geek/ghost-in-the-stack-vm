@@ -5,6 +5,7 @@ import a2geek.ghost.model.Expression;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 public class UnaryExpression implements Expression {
     private final DataType type;
@@ -17,8 +18,9 @@ public class UnaryExpression implements Expression {
     public UnaryExpression(String op, Expression expr, DataType dataType) {
         this.op = op;
         this.expr = switch (this.op) {
-            case "-", "not" -> expr.checkAndCoerce(DataType.INTEGER);
+            case "-", "not", "w2b" -> expr.checkAndCoerce(DataType.INTEGER);
             case "*" -> expr.checkAndCoerce(DataType.ADDRESS);
+            case "b2w" -> expr.checkAndCoerce(DataType.BYTE);
             default -> throw new RuntimeException("unknown unary operation: " + this.op);
         };
         this.type = dataType == null ? expr.getType() : dataType;
@@ -40,6 +42,7 @@ public class UnaryExpression implements Expression {
         return expr.asInteger().map(i -> switch (op) {
             case "-" -> -i;
             case "not" -> i==0 ? 1 : 0;
+            case "b2w", "w2b" -> i;
             default -> throw new RuntimeException("unknown unary operation: " + op);
         });
     }
@@ -86,7 +89,7 @@ public class UnaryExpression implements Expression {
 
     @Override
     public String toString() {
-        if ("*".equals(op)) {
+        if (Set.of("*", "b2w", "w2b").contains(op)) {
             return String.format("%s(%s)", op, expr);
         }
         return String.format("(%s %s)", op, expr);

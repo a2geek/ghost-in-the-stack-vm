@@ -7,6 +7,9 @@ import java.util.Arrays;
 import java.util.List;
 
 public class ExpressionBuilder {
+        public static ByteConstant byteConstant(int value) {
+            return new ByteConstant(value);
+        }
         public static IntegerConstant constant(int value) {
             return new IntegerConstant(value);
         }

@@ -269,7 +269,7 @@ public class IntegerBasicVisitorTest {
     public void testPoke() {
         expect("10 POKE 0x300,1")
             .lineNumber(10)
-            .poke("poke", constant(0x300),constant(1))
+            .poke("poke", constant(0x300), byteConstant(1))
             .atEnd();
     }
 

@@ -39,14 +39,6 @@ public abstract class Visitor extends DispatchVisitor {
     }
 
     @Override
-    public void visit(PokeStatement statement, VisitorContext context) {
-        var a = dispatch(statement.getA());
-        var b = dispatch(statement.getB());
-        a.ifPresent(statement::setA);
-        b.ifPresent(statement::setB);
-    }
-
-    @Override
     public void visit(GotoGosubStatement statement, VisitorContext context) {
 
     }
@@ -124,6 +116,11 @@ public abstract class Visitor extends DispatchVisitor {
 
     @Override
     public Expression visit(IntegerConstant expression) {
+        return null;
+    }
+
+    @Override
+    public Expression visit(ByteConstant expression) {
         return null;
     }
 

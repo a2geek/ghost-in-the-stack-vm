@@ -26,8 +26,8 @@ public class CodeGenerationVisitor extends DispatchVisitor {
     List<String> label(final String... names) {
         List<String> labels = new ArrayList<>();
         labelNumber++;
-        for (int i=0; i<names.length; i++) {
-            labels.add(String.format("_%s%d", names[i], labelNumber));
+        for (String name : names) {
+            labels.add(String.format("_%s%d", name, labelNumber));
         }
         return labels;
     }
@@ -185,13 +185,18 @@ public class CodeGenerationVisitor extends DispatchVisitor {
         else if (statement.getVar() instanceof UnaryExpression unary && "*".equals(unary.getOp())) {
             // *(<expr1>) = <expr2>   (dereferenced assignment)
             dispatch(unary.getExpr());
-            code.emit(Opcode.ISTOREW);
+            switch (statement.getValue().getType()) {
+                case BYTE -> code.emit(Opcode.ISTOREB);
+                case INTEGER, ADDRESS, STRING, BOOLEAN -> code.emit(Opcode.ISTOREW);
+                default -> throw new RuntimeException("unexpected type for dereferenced assignment: " + unary.getType());
+            }
         }
         else {
             throw error("not valid assignment: %s", statement);
         }
     }
 
+    @Override
     public void visit(EndStatement statement, VisitorContext context) {
         code.emit(Opcode.EXIT);
     }
@@ -253,16 +258,6 @@ public class CodeGenerationVisitor extends DispatchVisitor {
     }
 
     @Override
-    public void visit(PokeStatement statement, VisitorContext context) {
-        dispatch(statement.getB());
-        dispatch(statement.getA());
-        switch (statement.getOp().toLowerCase()) {
-            case "poke" -> code.emit(Opcode.ISTOREB);
-            case "pokew" -> code.emit(Opcode.ISTOREW);
-            default -> throw new RuntimeException("unknown poke op: " + statement.getOp());
-        }
-    }
-
     public void visit(LabelStatement statement, VisitorContext context) {
         code.emit(statement.getLabel().name());
     }
@@ -508,6 +503,7 @@ public class CodeGenerationVisitor extends DispatchVisitor {
         return false;
     }
 
+    @Override
     public Expression visit(BinaryExpression expression) {
         boolean optimized = switch (expression.getOp()) {
             case "+" -> emitBinaryAddOptimizations(expression.getL(), expression.getR());
@@ -551,12 +547,21 @@ public class CodeGenerationVisitor extends DispatchVisitor {
         return null;
     }
 
+    @Override
     public Expression visit(VariableReference expression) {
         emitLoad(expression);
         return null;
     }
 
+    @Override
     public Expression visit(IntegerConstant expression) {
+        code.emit(Opcode.LOADC, expression.getValue());
+        return null;
+    }
+
+    @Override
+    public Expression visit(ByteConstant expression) {
+        // TODO ... we just treat a BYTE as a WORD value
         code.emit(Opcode.LOADC, expression.getValue());
         return null;
     }
@@ -583,14 +588,6 @@ public class CodeGenerationVisitor extends DispatchVisitor {
             }
         };
         switch (function.getName().toLowerCase()) {
-            case "peek" -> {
-                emitParameters.run();
-                code.emit(Opcode.ILOADB);
-            }
-            case "peekw" -> {
-                emitParameters.run();
-                code.emit(Opcode.ILOADW);
-            }
             case "alloc" -> {
                 emitParameters.run();
                 code.emit(Opcode.PUSHZ);
@@ -637,7 +634,19 @@ public class CodeGenerationVisitor extends DispatchVisitor {
         else if ("*".equals(expression.getOp())) {
             // *(<expr>)   (dereferenced load)
             dispatch(expression.getExpr());
-            code.emit(Opcode.ILOADW);       // FIXME
+            switch (expression.getType()) {
+                case BYTE -> code.emit(Opcode.ILOADB);
+                case INTEGER, ADDRESS, STRING, BOOLEAN -> code.emit(Opcode.ILOADW);
+                default -> throw new RuntimeException("unexpected type for dereferenced load: " + expression.getType());
+            }
+        }
+        else if ("w2b".equals(expression.getOp())) {
+            // TODO just a placeholder for now
+            dispatch(expression.getExpr());
+        }
+        else if ("b2w".equals(expression.getOp())) {
+            // TODO just a placeholder for now
+            dispatch(expression.getExpr());
         }
         else {
             throw new RuntimeException("unknown unary operator: " + expression.getOp());

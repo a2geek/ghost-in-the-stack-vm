@@ -33,10 +33,6 @@ public class StatementVisitors {
                         dispatchToExpression(ifStatement.getFalseStatements().getStatements(), tracker.create(ctx), dispatcher);
                     }
                 }
-                case PokeStatement pokeStatement -> {
-                    dispatcher.dispatch(pokeStatement.getA(), ctx, tracker).ifPresent(pokeStatement::setA);
-                    dispatcher.dispatch(pokeStatement.getB(), ctx, tracker).ifPresent(pokeStatement::setB);
-                }
                 case CallStatement callStatement -> dispatcher.dispatch(callStatement.getExpr(), ctx, tracker).ifPresent(callStatement::setExpr);
                 case GotoGosubStatement ignored -> {}
                 case LabelStatement ignored -> {}

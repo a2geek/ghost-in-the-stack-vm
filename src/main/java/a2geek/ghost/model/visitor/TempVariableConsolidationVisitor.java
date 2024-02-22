@@ -40,6 +40,7 @@ public class TempVariableConsolidationVisitor implements ProgramVisitor {
             case BooleanConstant ignored -> {}
             case FunctionExpression func -> func.getParameters().forEach(param -> captureActiveRanges(param, ctx, tracker));
             case IntegerConstant ignored -> {}
+            case ByteConstant ignored -> {}
             case PlaceholderExpression ignored -> {}
             case StringConstant ignored -> {}
             case UnaryExpression unary -> captureActiveRanges(unary.getExpr(), ctx, tracker);
@@ -73,6 +74,7 @@ public class TempVariableConsolidationVisitor implements ProgramVisitor {
                 }
             }
             case IntegerConstant ignored -> {}
+            case ByteConstant ignored -> {}
             case PlaceholderExpression ignored -> {}
             case StringConstant ignored -> {}
             case UnaryExpression unary -> {

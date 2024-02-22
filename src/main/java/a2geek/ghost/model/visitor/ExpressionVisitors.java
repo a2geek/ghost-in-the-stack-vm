@@ -5,6 +5,7 @@ import a2geek.ghost.model.Symbol;
 import a2geek.ghost.model.expression.*;
 
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * This class contains simple visitors that are implemented in a single recursive method.
@@ -25,6 +26,7 @@ public class ExpressionVisitors {
             case BooleanConstant ignored -> false;
             case FunctionExpression func -> func.getParameters().stream().map(param -> hasSymbol(param, symbol)).reduce(Boolean::logicalOr).orElse(false);
             case IntegerConstant ignored -> false;
+            case ByteConstant ignored -> false;
             case PlaceholderExpression ignored -> false;
             case StringConstant ignored -> false;
             case UnaryExpression unary -> hasSymbol(unary.getExpr(), symbol);
@@ -47,6 +49,7 @@ public class ExpressionVisitors {
             case BooleanConstant ignored -> false;
             case FunctionExpression func -> func.getParameters().stream().map(param -> hasSubexpression(param, target)).reduce(Boolean::logicalOr).orElse(false);
             case IntegerConstant ignored -> false;
+            case ByteConstant ignored -> false;
             case PlaceholderExpression ignored -> false;
             case StringConstant ignored -> false;
             case UnaryExpression unary -> hasSubexpression(unary.getExpr(), target);
@@ -73,6 +76,7 @@ public class ExpressionVisitors {
                 yield functionExpression.getParameters().stream().map(ExpressionVisitors::hasVolatileFunction).reduce(Boolean::logicalOr).orElse(false);
             }
             case IntegerConstant ignored -> false;
+            case ByteConstant ignored -> false;
             case PlaceholderExpression ignored -> false;
             case StringConstant ignored -> false;
             case UnaryExpression unaryExpression -> hasVolatileFunction(unaryExpression.getExpr());
@@ -87,6 +91,7 @@ public class ExpressionVisitors {
      * everything else will be larger. Hypothetically, this could be used to prioritize which
      * expressions are optimized first, should that become useful.
      */
+    private static final Set<String> UNARY_IGNORE = Set.of("w2b", "b2w");   // no-ops and can cause problems
     public static int weight(Expression expression) {
         return switch (expression) {
             case AddressOfFunction ignored -> 1;
@@ -95,9 +100,15 @@ public class ExpressionVisitors {
             case BooleanConstant ignored -> 1;
             case FunctionExpression functionExpression -> 2 + functionExpression.getParameters().stream().mapToInt(ExpressionVisitors::weight).sum();
             case IntegerConstant ignored -> 1;
+            case ByteConstant ignored -> 1;
             case PlaceholderExpression ignored -> 1;
             case StringConstant ignored -> 1;
-            case UnaryExpression unaryExpression -> 1 + weight(unaryExpression.getExpr());
+            case UnaryExpression unaryExpression -> {
+                if (UNARY_IGNORE.contains(unaryExpression.getOp())) {
+                    yield weight(unaryExpression.getExpr());
+                }
+                yield 1 + weight(unaryExpression.getExpr());
+            }
             case VariableReference ignored -> 1;
             default -> throw new RuntimeException("[compiler bug] unexpected expression: " + expression);
         };

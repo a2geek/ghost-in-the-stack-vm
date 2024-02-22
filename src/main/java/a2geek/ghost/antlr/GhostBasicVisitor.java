@@ -15,7 +15,7 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static a2geek.ghost.model.CommonExpressions.arrayReference;
+import static a2geek.ghost.model.CommonExpressions.*;
 import static a2geek.ghost.model.ModelBuilder.*;
 
 public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
@@ -563,6 +563,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                     case BOOLEAN -> model.callLibrarySubroutine("print_boolean", expr);
                     case STRING -> model.callLibrarySubroutine("print_string", expr);
                     case ADDRESS -> model.callLibrarySubroutine("print_address", expr);
+                    case BYTE -> model.callLibrarySubroutine("print_byte", expr);
                     default -> throw new RuntimeException("Unsupported PRINT type: " + expr.getType());
                 }
             }
@@ -583,7 +584,11 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     public Expression visitPokeStmt(BasicParser.PokeStmtContext ctx) {
         var a = visit(ctx.a);
         var b = visit(ctx.b);
-        model.pokeStmt(ctx.op.getText(), a, b);
+        switch (ctx.op.getText().toLowerCase()) {
+            case "poke" -> model.assignStmt(derefByte(a), b);
+            case "pokew" -> model.assignStmt(derefWord(a), b);
+            default -> throw new RuntimeException("[compiler bug] unknown poke statement: " + ctx.getText());
+        }
         return null;
     }
 
@@ -924,14 +929,22 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             ctx.expr().stream().map(this::visit).forEach(params::add);
         }
 
-        if ("ubound".equalsIgnoreCase(id)) {
-            if (params.size() == 1 && params.getFirst() instanceof VariableReference varRef) {
-                return new ArrayLengthFunction(varRef.getSymbol(), 1);
+        switch (id.toLowerCase()) {
+            case "ubound" -> {
+                if (params.size() == 1 && params.getFirst() instanceof VariableReference varRef) {
+                    return new ArrayLengthFunction(varRef.getSymbol(), 1);
+                }
+                else if (params.size() == 2 && params.getFirst() instanceof VariableReference varRef && params.getLast().isConstant()) {
+                    return new ArrayLengthFunction(varRef.getSymbol(), params.getLast().asInteger().orElseThrow());
+                }
+                throw new RuntimeException("ubound expects a variable name (and optionally an index number) as its argument: " + ctx.getText());
             }
-            else if (params.size() == 2 && params.getFirst() instanceof VariableReference varRef && params.getLast().isConstant()) {
-                return new ArrayLengthFunction(varRef.getSymbol(), params.getLast().asInteger().orElseThrow());
+            case "peek" -> {
+                return derefByte(params.getFirst());
             }
-            throw new RuntimeException("ubound expects a variable name (and optionally an index number) as its argument: " + ctx.getText());
+            case "peekw" -> {
+                return derefWord(params.getFirst());
+            }
         }
 
         if (model.isFunction(id)) {

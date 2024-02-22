@@ -15,6 +15,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import java.util.*;
 
 import static a2geek.ghost.model.CommonExpressions.arrayReference;
+import static a2geek.ghost.model.CommonExpressions.derefByte;
 import static a2geek.ghost.model.ModelBuilder.*;
 
 public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
@@ -542,7 +543,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     public Expression visitPokeStatement(IntegerParser.PokeStatementContext ctx) {
         var addr = visit(ctx.addr);
         var e = visit(ctx.e);
-        model.pokeStmt("poke", addr, e);
+        model.assignStmt(derefByte(addr), e);
         return null;
     }
 
@@ -721,6 +722,9 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     public Expression visitIntArgFunc(IntegerParser.IntArgFuncContext ctx) {
         var f = ctx.f.getText();
         var e = visit(ctx.e);
+        if ("peek".equalsIgnoreCase(f)) {
+            return derefByte(e);
+        }
         return model.callFunction(f, e);
     }
 

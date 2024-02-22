@@ -9,33 +9,33 @@ import java.util.function.BiFunction;
 public class BinaryExpression implements Expression {
     private static final List<Descriptor> DESCRIPTORS = List.of(
         // Arithmetic
-        new Descriptor("+", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN),
-        new Descriptor("+", DataType.ADDRESS, DataType.STRING, DataType.INTEGER),       // STR + n  => ADDR
-        new Descriptor("+", DataType.ADDRESS, DataType.ADDRESS, DataType.INTEGER),      // ADDR + n => ADDR
-        new Descriptor("-", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN),
-        new Descriptor("-", DataType.ADDRESS, DataType.ADDRESS, DataType.INTEGER),      // ADDR - n => ADDR
-        new Descriptor("*", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN),
-        new Descriptor("/", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN),
-        new Descriptor("mod", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN),
-        new Descriptor("^", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN),
+        new Descriptor("+", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN, DataType.BYTE),
+        new Descriptor("+", DataType.ADDRESS, DataType.STRING, DataType.INTEGER, DataType.BYTE),       // STR + n  => ADDR
+        new Descriptor("+", DataType.ADDRESS, DataType.ADDRESS, DataType.INTEGER, DataType.BYTE),      // ADDR + n => ADDR
+        new Descriptor("-", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN, DataType.BYTE),
+        new Descriptor("-", DataType.ADDRESS, DataType.ADDRESS, DataType.INTEGER, DataType.BYTE),      // ADDR - n => ADDR
+        new Descriptor("*", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN, DataType.BYTE),
+        new Descriptor("/", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN, DataType.BYTE),
+        new Descriptor("mod", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN, DataType.BYTE),
+        new Descriptor("^", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN, DataType.BYTE),
         // Comparison
-        new Descriptor("<", DataType.BOOLEAN, DataType.INTEGER, DataType.BOOLEAN, DataType.ADDRESS),
-        new Descriptor(">", DataType.BOOLEAN, DataType.INTEGER, DataType.BOOLEAN, DataType.ADDRESS),
-        new Descriptor("<=", DataType.BOOLEAN, DataType.INTEGER, DataType.BOOLEAN, DataType.ADDRESS),
-        new Descriptor(">=", DataType.BOOLEAN, DataType.INTEGER, DataType.BOOLEAN, DataType.ADDRESS),
-        new Descriptor("=", DataType.BOOLEAN, DataType.INTEGER, DataType.BOOLEAN, DataType.ADDRESS),
-        new Descriptor("<>", DataType.BOOLEAN, DataType.INTEGER, DataType.BOOLEAN, DataType.ADDRESS),
+        new Descriptor("<", DataType.BOOLEAN, DataType.INTEGER, DataType.BOOLEAN, DataType.ADDRESS, DataType.BYTE),
+        new Descriptor(">", DataType.BOOLEAN, DataType.INTEGER, DataType.BOOLEAN, DataType.ADDRESS, DataType.BYTE),
+        new Descriptor("<=", DataType.BOOLEAN, DataType.INTEGER, DataType.BOOLEAN, DataType.ADDRESS, DataType.BYTE),
+        new Descriptor(">=", DataType.BOOLEAN, DataType.INTEGER, DataType.BOOLEAN, DataType.ADDRESS, DataType.BYTE),
+        new Descriptor("=", DataType.BOOLEAN, DataType.INTEGER, DataType.BOOLEAN, DataType.ADDRESS, DataType.BYTE),
+        new Descriptor("<>", DataType.BOOLEAN, DataType.INTEGER, DataType.BOOLEAN, DataType.ADDRESS, DataType.BYTE),
         // Logical
         new Descriptor("or", DataType.BOOLEAN, DataType.BOOLEAN),
         new Descriptor("and", DataType.BOOLEAN, DataType.BOOLEAN),
         new Descriptor("xor", DataType.BOOLEAN, DataType.BOOLEAN),
         // Bit
-        new Descriptor("or", DataType.INTEGER, DataType.INTEGER),
-        new Descriptor("and", DataType.INTEGER, DataType.INTEGER),
-        new Descriptor("xor", DataType.INTEGER, DataType.INTEGER),
-        new Descriptor("<<", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN),
+        new Descriptor("or", DataType.INTEGER, DataType.INTEGER, DataType.BYTE),
+        new Descriptor("and", DataType.INTEGER, DataType.INTEGER, DataType.BYTE),
+        new Descriptor("xor", DataType.INTEGER, DataType.INTEGER, DataType.BYTE),
+        new Descriptor("<<", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN, DataType.BYTE),
         // FIXME: STRING needs to be replaced here
-        new Descriptor(">>", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN, DataType.STRING, DataType.ADDRESS)
+        new Descriptor(">>", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN, DataType.STRING, DataType.ADDRESS, DataType.BYTE)
     );
     public static Optional<Descriptor> findDescriptor(String operator, DataType left, DataType right) {
         for (var d : DESCRIPTORS) {
@@ -175,7 +175,8 @@ public class BinaryExpression implements Expression {
         if (isConstant()) {
             return switch (descriptor.returnType()) {
                 case BOOLEAN -> asBoolean().map(b -> b ? "True" : "False");
-                case INTEGER -> asInteger().map(i -> Integer.toString(i));
+                // TODO fix this up when byte becomes a real type
+                case INTEGER, BYTE -> asInteger().map(i -> Integer.toString(i));
                 case STRING -> throw new RuntimeException("unable to evaluate string expressions at this time");
                 case ADDRESS -> throw new RuntimeException("unable to evaluate address expressions at this time");
             };

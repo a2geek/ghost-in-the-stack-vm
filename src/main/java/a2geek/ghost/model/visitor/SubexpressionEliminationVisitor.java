@@ -59,7 +59,6 @@ public class SubexpressionEliminationVisitor implements ProgramVisitor {
                     yield null;
                 }
                 case OnErrorStatement ignored -> null;
-                case PokeStatement pokeStatement -> captureParams(tracker, List.of(pokeStatement.getA(), pokeStatement.getB()), i);
                 case PopStatement ignored -> null;
                 case RaiseErrorStatement ignored -> null;
                 case ReturnStatement returnStatement -> returnStatement.getExpr() == null ? null : capture(tracker, returnStatement.getExpr(), i);
@@ -122,10 +121,6 @@ public class SubexpressionEliminationVisitor implements ProgramVisitor {
                     return;
                 }
                 case OnErrorStatement ignored -> {}
-                case PokeStatement pokeStatement -> {
-                    pokeStatement.setA(replace(pokeStatement.getA(), candidate, replacement));
-                    pokeStatement.setB(replace(pokeStatement.getB(), candidate, replacement));
-                }
                 case PopStatement ignored -> {}
                 case RaiseErrorStatement ignored -> {}
                 case ReturnStatement returnStatement -> {
@@ -184,6 +179,7 @@ public class SubexpressionEliminationVisitor implements ProgramVisitor {
             case BooleanConstant ignored -> null;
             case FunctionExpression functionExpression -> captureParams(tracker, functionExpression.getParameters(), n);
             case IntegerConstant ignored -> null;
+            case ByteConstant ignored -> null;
             case PlaceholderExpression ignored -> null;
             case StringConstant ignored -> null;
             case UnaryExpression unaryExpression -> capture(tracker, unaryExpression.getExpr(), n);

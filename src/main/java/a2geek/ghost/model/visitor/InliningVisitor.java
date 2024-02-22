@@ -175,13 +175,6 @@ public class InliningVisitor extends Visitor implements RepeatingVisitor {
         }
 
         @Override
-        public void visit(PokeStatement statement, VisitorContext context) {
-            var a = dispatch(statement.getA()).orElseThrow();
-            var b = dispatch(statement.getB()).orElseThrow();
-            addStatement(new PokeStatement(statement.getOp(), a, b));
-        }
-
-        @Override
         public void visit(CallSubroutine statement, VisitorContext context) {
             var params = dispatchAll(statement.getParameters());
             addStatement(new CallSubroutine(statement.getSubroutine(), params));
@@ -222,10 +215,12 @@ public class InliningVisitor extends Visitor implements RepeatingVisitor {
 
         @Override
         public void visit(AssignmentStatement statement, VisitorContext context) {
-            // this has to be a VariableReference on the LHS, right?
-            var ref = dispatch(statement.getVar()).map(VariableReference.class::cast).orElseThrow();
             var expr = dispatch(statement.getValue()).orElseThrow();
-            addStatement(new AssignmentStatement(ref, expr));
+            switch (dispatch(statement.getVar()).orElseThrow()) {
+                case VariableReference ref -> addStatement(new AssignmentStatement(ref, expr));
+                case UnaryExpression unary -> addStatement(new AssignmentStatement(unary, expr));
+                default -> throw new RuntimeException("[compiler bug] unexpected LHS of assignment: " + statement);
+            }
         }
 
         @Override
@@ -252,6 +247,11 @@ public class InliningVisitor extends Visitor implements RepeatingVisitor {
         }
 
         @Override
+        public Expression visit(ByteConstant expression) {
+            return expression;
+        }
+
+        @Override
         public Expression visit(StringConstant expression) {
             return expression;
         }
@@ -264,7 +264,8 @@ public class InliningVisitor extends Visitor implements RepeatingVisitor {
         @Override
         public Expression visit(UnaryExpression expression) {
             var expr = dispatch(expression.getExpr());
-            return new UnaryExpression(expression.getOp(), expr.orElseThrow());
+            // preserve the datatype since it can be type conversion
+            return new UnaryExpression(expression.getOp(), expr.orElseThrow(), expression.getType());
         }
 
         @Override

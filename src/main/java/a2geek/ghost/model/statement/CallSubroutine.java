@@ -33,6 +33,7 @@ public class CallSubroutine implements Statement {
             new Descriptor("print_boolean", RUNTIME_LIBRARY, DataType.BOOLEAN),
             new Descriptor("print_comma", RUNTIME_LIBRARY),
             new Descriptor("print_integer", RUNTIME_LIBRARY, DataType.INTEGER),
+            new Descriptor("print_byte", RUNTIME_LIBRARY, DataType.INTEGER),    // FIXME?
             new Descriptor("print_newline", RUNTIME_LIBRARY),
             new Descriptor("print_string", RUNTIME_LIBRARY, DataType.STRING),
             new Descriptor("print_address", RUNTIME_LIBRARY, DataType.ADDRESS),

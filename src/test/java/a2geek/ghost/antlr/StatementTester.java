@@ -221,10 +221,21 @@ public abstract class StatementTester {
     }
 
     public StatementTester poke(String op, Expression addr, Expression value) {
-        var stmt = nextStatement(PokeStatement.class);
-        assertEquals(op, stmt.getOp());
-        assertEquals(addr, stmt.getA());
-        assertEquals(value, stmt.getB());
+        var expectedType = switch (op) {
+            case "poke" -> DataType.BYTE;
+            case "pokew" -> DataType.INTEGER;
+            default -> throw new RuntimeException("unexpected poke operator: " + op);
+        };
+        var stmt = nextStatement(AssignmentStatement.class);
+        assertEquals(value, stmt.getValue());
+        if (stmt.getVar() instanceof UnaryExpression unaryExpression) {
+            assertEquals("*", unaryExpression.getOp());
+            assertEquals(expectedType, unaryExpression.getType());
+            assertEquals(addr, unaryExpression.getExpr());
+        }
+        else {
+            fail("expecting poke (deref assignment) statement");
+        }
         return this;
     }
 

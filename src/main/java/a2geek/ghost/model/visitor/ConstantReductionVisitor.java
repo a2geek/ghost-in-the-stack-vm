@@ -53,7 +53,8 @@ public class ConstantReductionVisitor extends Visitor {
     public Optional<Expression> constantReduction(Expression expression) {
         if (expression.isConstant()) {
             return switch (expression.getType()) {
-                case INTEGER -> expression.asInteger().map(IntegerConstant::new);
+                // TODO fix when BYTE becomes a real type
+                case INTEGER, BYTE -> expression.asInteger().map(IntegerConstant::new);
                 case BOOLEAN -> expression.asBoolean().map(BooleanConstant::new);
                 case STRING -> expression.asString().map(StringConstant::new);
                 case ADDRESS -> Optional.empty();

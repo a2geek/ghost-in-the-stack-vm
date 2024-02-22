@@ -31,7 +31,6 @@ public abstract class DispatchVisitor implements ProgramVisitor {
             case AssignmentStatement s -> visit(s, context);
             case EndStatement s -> visit(s, context);
             case IfStatement s -> visit(s, context);
-            case PokeStatement s -> visit(s, context);
             case CallStatement s -> visit(s, context);
             case GotoGosubStatement s -> visit(s, context);
             case LabelStatement s -> visit(s, context);
@@ -51,6 +50,7 @@ public abstract class DispatchVisitor implements ProgramVisitor {
             // Catching it here instead of testing everywhere else as issues are discovered.
             case null -> Optional.empty();
             case BinaryExpression e -> Optional.ofNullable(visit(e));
+            case ByteConstant e -> Optional.ofNullable(visit(e));
             case VariableReference e -> Optional.ofNullable(visit(e));
             case IntegerConstant e -> Optional.ofNullable(visit(e));
             case StringConstant e -> Optional.ofNullable(visit(e));
@@ -102,7 +102,6 @@ public abstract class DispatchVisitor implements ProgramVisitor {
     public abstract void visit(EndStatement statement, VisitorContext context);
     public abstract void visit(CallStatement statement, VisitorContext context);
     public abstract void visit(IfStatement statement, VisitorContext context);
-    public abstract void visit(PokeStatement statement, VisitorContext context);
     public abstract void visit(GotoGosubStatement statement, VisitorContext context);
     public abstract void visit(DynamicGotoGosubStatement statement, VisitorContext context);
     public abstract void visit(LabelStatement statement, VisitorContext context);
@@ -115,6 +114,7 @@ public abstract class DispatchVisitor implements ProgramVisitor {
     public abstract Expression visit(BinaryExpression expression);
     public abstract Expression visit(VariableReference expression);
     public abstract Expression visit(IntegerConstant expression);
+    public abstract Expression visit(ByteConstant expression);
     public abstract Expression visit(StringConstant expression);
     public abstract Expression visit(BooleanConstant expression);
     public abstract Expression visit(UnaryExpression expression);

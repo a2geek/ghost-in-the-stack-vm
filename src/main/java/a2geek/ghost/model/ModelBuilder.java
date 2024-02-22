@@ -15,6 +15,8 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import static a2geek.ghost.model.CommonExpressions.derefByte;
+import static a2geek.ghost.model.CommonExpressions.derefWord;
 import static a2geek.ghost.model.Symbol.in;
 import static a2geek.ghost.model.Symbol.named;
 import static a2geek.ghost.model.visitor.ExpressionVisitors.weight;
@@ -89,7 +91,7 @@ public class ModelBuilder {
     public void useMemoryForHeap(int startAddress) {
         this.heapFunction = "memory.heapalloc";
         this.pushStatementBlock(new StatementBlock());
-        pokeStmt("pokew", new IntegerConstant(0x69), new IntegerConstant(startAddress));
+        assignStmt(derefWord(new IntegerConstant(0x69)), new IntegerConstant(startAddress));
         var sb = this.popStatementBlock();
         this.addInitializationStatements(sb);
     }
@@ -383,11 +385,6 @@ public class ModelBuilder {
         addStatement(callStatement);
     }
 
-    public void pokeStmt(String op, Expression addr, Expression value) {
-        PokeStatement pokeStatement = new PokeStatement(op, addr, value);
-        addStatement(pokeStatement);
-    }
-
     public void labelStmt(Symbol label) {
         LabelStatement labelStatement = new LabelStatement(label);
         addStatement(labelStatement);
@@ -436,7 +433,7 @@ public class ModelBuilder {
         var allocFn = callFunction(heapFunction, bytes);
         assignStmt(varRef, allocFn);
         for (int i=0; i<sizes.size(); i++) {
-            pokeStmt("pokew", varRef.plus(new IntegerConstant(i * DataType.INTEGER.sizeof())), sizes.get(i));
+            assignStmt(derefWord(varRef.plus(new IntegerConstant(i * DataType.INTEGER.sizeof()))), sizes.get(i));
         }
     }
     /**
@@ -459,7 +456,7 @@ public class ModelBuilder {
         var bytes = length.plus(IntegerConstant.TWO);
         var allocFn = callFunction(heapFunction, bytes);
         assignStmt(varRef, allocFn);
-        pokeStmt("poke", varRef, length);
+        assignStmt(derefByte(varRef), length);
     }
 
     public void checkArrayBounds(Symbol symbol, List<Expression> indexes, int linenum, String source) {

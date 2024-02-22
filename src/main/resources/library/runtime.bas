@@ -13,6 +13,7 @@ module runtime
     const INPTR = 0x7f
     const BUFFER = 0x200
     const GETLN1 = 0xfd6f
+    const MON_PRBYTE = 0xfdda
 
     sub print_comma
         ' FIXME
@@ -28,6 +29,10 @@ module runtime
         call STROUT
     end sub
 
+    sub print_byte(b as integer)    ' note: no byte type in language...
+        cpu.register.a = b
+        call MON_PRBYTE
+    end sub
 
     sub print_string(s as string)
         ' String starts with max length byte

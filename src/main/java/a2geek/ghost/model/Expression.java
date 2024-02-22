@@ -1,6 +1,7 @@
 package a2geek.ghost.model;
 
 import a2geek.ghost.model.expression.BinaryExpression;
+import a2geek.ghost.model.expression.ByteConstant;
 import a2geek.ghost.model.expression.IntegerConstant;
 import a2geek.ghost.model.expression.UnaryExpression;
 
@@ -24,8 +25,19 @@ public interface Expression {
                 }
             }
             case INTEGER -> {
-                if (isType(DataType.INTEGER, DataType.ADDRESS, DataType.BOOLEAN)) {
+                if (isType(DataType.INTEGER, DataType.ADDRESS, DataType.BOOLEAN, DataType.STRING)) {
                     return this;
+                }
+                else if (isType(DataType.BYTE)) {
+                    return this.toWord();
+                }
+            }
+            case BYTE -> {
+                if (isType(DataType.BYTE)) {
+                    return this;
+                }
+                else if (isType(DataType.INTEGER, DataType.ADDRESS, DataType.BOOLEAN)) {
+                    return this.toByte();
                 }
             }
             case BOOLEAN -> {
@@ -98,5 +110,24 @@ public interface Expression {
     }
     default UnaryExpression negate() {
         return new UnaryExpression("-", this);
+    }
+    default Expression toByte() {
+        if (getType().sizeof() == 2) {
+            if (this.isConstant() && this.asInteger().isPresent()) {
+                return new ByteConstant(this.asInteger().get());
+            }
+            return new UnaryExpression("w2b", this, DataType.BYTE);
+        }
+        return this;
+    }
+
+    default Expression toWord() {
+        if (getType().sizeof() == 1) {
+            if (this.isConstant() && this.asInteger().isPresent()) {
+                return new IntegerConstant(this.asInteger().get());
+            }
+            return new UnaryExpression("b2w", this, DataType.INTEGER);
+        }
+        return this;
     }
 }
