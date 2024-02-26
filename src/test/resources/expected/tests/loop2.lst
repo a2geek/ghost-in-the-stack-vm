@@ -1,0 +1,67 @@
+MAIN:
+    DIM _ONERR_TARGET AS ADDRESS = null
+    DIM _ONERR_FP AS ADDRESS = null
+    DIM _ONERR_SP AS ADDRESS = null
+    DIM I AS INTEGER = null
+   0:     CALL TEXT.TEXT()
+   1:     CALL TEXT.HOME()
+   2:     CALL RUNTIME.PRINT_STRING("positive step")
+   3:     CALL RUNTIME.PRINT_NEWLINE()
+   4:     I = 1
+   5: _FOR_LOOP491:
+   6:     IF (MATH.SGN(1) >= 0) THEN
+   0:         IF (I <= 10) THEN
+   0:             CALL RUNTIME.PRINT_INTEGER(I)
+   1:             CALL RUNTIME.PRINT_NEWLINE()
+   2:             IF (I = 5) THEN
+   0:                 GOTO _FOR_EXIT491
+                  END IF
+   3: _FOR_CONTINUE491:
+   4:             I = (I + 1)
+   5:             GOTO _FOR_LOOP491
+              END IF
+          ELSE
+   0:         IF (I >= 10) THEN
+   0:             CALL RUNTIME.PRINT_INTEGER(I)
+   1:             CALL RUNTIME.PRINT_NEWLINE()
+   2:             IF (I = 5) THEN
+   0:                 GOTO _FOR_EXIT491
+                  END IF
+   3: _FOR_CONTINUE491:
+   4:             I = (I + 1)
+   5:             GOTO _FOR_LOOP491
+              END IF
+          END IF
+   7: _FOR_EXIT491:
+   8:     CALL RUNTIME.PRINT_STRING("negative step")
+   9:     CALL RUNTIME.PRINT_NEWLINE()
+  10:     I = 10
+  11: _FOR_LOOP492:
+  12:     IF (MATH.SGN((- 1)) >= 0) THEN
+   0:         IF (I <= 1) THEN
+   0:             CALL RUNTIME.PRINT_INTEGER(I)
+   1:             CALL RUNTIME.PRINT_NEWLINE()
+   2:             IF (I = 5) THEN
+   0:                 GOTO _FOR_EXIT492
+                  END IF
+   3: _FOR_CONTINUE492:
+   4:             I = (I + (- 1))
+   5:             GOTO _FOR_LOOP492
+              END IF
+          ELSE
+   0:         IF (I >= 1) THEN
+   0:             CALL RUNTIME.PRINT_INTEGER(I)
+   1:             CALL RUNTIME.PRINT_NEWLINE()
+   2:             IF (I = 5) THEN
+   0:                 GOTO _FOR_EXIT492
+                  END IF
+   3: _FOR_CONTINUE492:
+   4:             I = (I + (- 1))
+   5:             GOTO _FOR_LOOP492
+              END IF
+          END IF
+  13: _FOR_EXIT492:
+  14:     CALL RUNTIME.PRINT_STRING("done")
+  15:     CALL RUNTIME.PRINT_NEWLINE()
+  16:     END
+

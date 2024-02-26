@@ -1,0 +1,107 @@
+MAIN:
+    DIM _ONERR_TARGET AS ADDRESS = null
+    DIM _ONERR_FP AS ADDRESS = null
+    DIM _ONERR_SP AS ADDRESS = null
+    DIM DEVNUM AS INTEGER = null
+    DIM BLOCK AS INTEGER = null
+    DIM BUFFER AS ADDRESS = null
+    DIM I AS INTEGER = null
+    DIM J AS INTEGER = null
+    DIM CH AS INTEGER = null
+   0:     CALL PRODOS.ENSUREPREFIXSET()
+   0:     BLOCK = 2
+   1:     BUFFER = 32768
+   2:     DEVNUM = PRODOS.LASTDEVICE()
+   3:     CALL RUNTIME.PRINT_STRING("Device = $")
+   4:     CALL PRHEX2(DEVNUM)
+   5:     CALL RUNTIME.PRINT_NEWLINE()
+   6:     CALL RUNTIME.PRINT_STRING("Block =  $")
+   7:     CALL PRHEX2(BLOCK)
+   8:     CALL RUNTIME.PRINT_NEWLINE()
+   9:     CALL RUNTIME.PRINT_STRING("Buffer = $")
+  10:     CALL PRHEX4(BUFFER)
+  11:     CALL RUNTIME.PRINT_NEWLINE()
+  12:     CALL PRODOS.READBLOCK(DEVNUM, BLOCK, BUFFER)
+  13:     I = BUFFER
+  14: _FOR_LOOP225:
+  15:     IF (MATH.SGN(8) >= 0) THEN
+   0:         IF (I <= ((BUFFER + 512) - 1)) THEN
+   0:             CALL PRHEX4(I)
+   1:             CALL RUNTIME.PRINT_STRING("- ")
+   2:             J = 0
+   3: _FOR_LOOP226:
+   4:             IF (MATH.SGN(1) >= 0) THEN
+   0:                 IF (J <= 7) THEN
+   0:                     CH = b2w(*((I + J)))
+   1:                     CALL PRHEX2(CH)
+   2:                     CALL RUNTIME.PRINT_STRING(" ")
+   3:                     *(((*(40) + 32) + J)) = w2b(CH)
+   4: _FOR_CONTINUE226:
+   5:                     J = (J + 1)
+   6:                     GOTO _FOR_LOOP226
+                      END IF
+                  ELSE
+   0:                 IF (J >= 7) THEN
+   0:                     CH = b2w(*((I + J)))
+   1:                     CALL PRHEX2(CH)
+   2:                     CALL RUNTIME.PRINT_STRING(" ")
+   3:                     *(((*(40) + 32) + J)) = w2b(CH)
+   4: _FOR_CONTINUE226:
+   5:                     J = (J + 1)
+   6:                     GOTO _FOR_LOOP226
+                      END IF
+                  END IF
+   5: _FOR_EXIT226:
+   6:             CALL RUNTIME.PRINT_NEWLINE()
+   7: _FOR_CONTINUE225:
+   8:             I = (I + 8)
+   9:             GOTO _FOR_LOOP225
+              END IF
+          ELSE
+   0:         IF (I >= ((BUFFER + 512) - 1)) THEN
+   0:             CALL PRHEX4(I)
+   1:             CALL RUNTIME.PRINT_STRING("- ")
+   2:             J = 0
+   3: _FOR_LOOP226:
+   4:             IF (MATH.SGN(1) >= 0) THEN
+   0:                 IF (J <= 7) THEN
+   0:                     CH = b2w(*((I + J)))
+   1:                     CALL PRHEX2(CH)
+   2:                     CALL RUNTIME.PRINT_STRING(" ")
+   3:                     *(((*(40) + 32) + J)) = w2b(CH)
+   4: _FOR_CONTINUE226:
+   5:                     J = (J + 1)
+   6:                     GOTO _FOR_LOOP226
+                      END IF
+                  ELSE
+   0:                 IF (J >= 7) THEN
+   0:                     CH = b2w(*((I + J)))
+   1:                     CALL PRHEX2(CH)
+   2:                     CALL RUNTIME.PRINT_STRING(" ")
+   3:                     *(((*(40) + 32) + J)) = w2b(CH)
+   4: _FOR_CONTINUE226:
+   5:                     J = (J + 1)
+   6:                     GOTO _FOR_LOOP226
+                      END IF
+                  END IF
+   5: _FOR_EXIT226:
+   6:             CALL RUNTIME.PRINT_NEWLINE()
+   7: _FOR_CONTINUE225:
+   8:             I = (I + 8)
+   9:             GOTO _FOR_LOOP225
+              END IF
+          END IF
+  16: _FOR_EXIT225:
+
+SUB PRHEX2(N AS INTEGER)
+   0:     CPU.REGISTER.A = N
+   1:     CALL 64986
+END SUB
+
+SUB PRHEX4(N AS INTEGER)
+   0:     CPU.REGISTER.A = (N / 256)
+   1:     CALL 64986
+   2:     CPU.REGISTER.A = N
+   3:     CALL 64986
+END SUB
+

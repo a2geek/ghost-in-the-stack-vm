@@ -1,0 +1,81 @@
+MAIN:
+    DIM _ONERR_TARGET AS ADDRESS = null
+    DIM _ONERR_FP AS ADDRESS = null
+    DIM _ONERR_SP AS ADDRESS = null
+    DIM ITERATION AS INTEGER = null
+    DIM Y AS INTEGER = null
+    DIM X AS INTEGER = null
+    DIM C AS INTEGER = null
+   0:     CALL TEXT.TEXT()
+   1:     CALL TEXT.HOME()
+   2:     CALL LORES.GR()
+   3: _DO_LOOP232:
+   4:     ITERATION = (ITERATION + 1)
+   5:     CALL RUNTIME.PRINT_INTEGER(ITERATION)
+   6:     CALL RUNTIME.PRINT_NEWLINE()
+   7:     Y = 15
+   8: _FOR_LOOP233:
+   9:     IF (MATH.SGN(1) >= 0) THEN
+   0:         IF (Y <= 25) THEN
+   0:             X = 15
+   1: _FOR_LOOP234:
+   2:             IF (MATH.SGN(1) >= 0) THEN
+   0:                 IF (X <= 25) THEN
+   0:                     C = LORES.SCRN(X, Y)
+   1:                     CALL LORES.COLOR((C + 1))
+   2:                     CALL LORES.PLOT(X, Y)
+   3: _FOR_CONTINUE234:
+   4:                     X = (X + 1)
+   5:                     GOTO _FOR_LOOP234
+                      END IF
+                  ELSE
+   0:                 IF (X >= 25) THEN
+   0:                     C = LORES.SCRN(X, Y)
+   1:                     CALL LORES.COLOR((C + 1))
+   2:                     CALL LORES.PLOT(X, Y)
+   3: _FOR_CONTINUE234:
+   4:                     X = (X + 1)
+   5:                     GOTO _FOR_LOOP234
+                      END IF
+                  END IF
+   3: _FOR_EXIT234:
+   4: _FOR_CONTINUE233:
+   5:             Y = (Y + 1)
+   6:             GOTO _FOR_LOOP233
+              END IF
+          ELSE
+   0:         IF (Y >= 25) THEN
+   0:             X = 15
+   1: _FOR_LOOP234:
+   2:             IF (MATH.SGN(1) >= 0) THEN
+   0:                 IF (X <= 25) THEN
+   0:                     C = LORES.SCRN(X, Y)
+   1:                     CALL LORES.COLOR((C + 1))
+   2:                     CALL LORES.PLOT(X, Y)
+   3: _FOR_CONTINUE234:
+   4:                     X = (X + 1)
+   5:                     GOTO _FOR_LOOP234
+                      END IF
+                  ELSE
+   0:                 IF (X >= 25) THEN
+   0:                     C = LORES.SCRN(X, Y)
+   1:                     CALL LORES.COLOR((C + 1))
+   2:                     CALL LORES.PLOT(X, Y)
+   3: _FOR_CONTINUE234:
+   4:                     X = (X + 1)
+   5:                     GOTO _FOR_LOOP234
+                      END IF
+                  END IF
+   3: _FOR_EXIT234:
+   4: _FOR_CONTINUE233:
+   5:             Y = (Y + 1)
+   6:             GOTO _FOR_LOOP233
+              END IF
+          END IF
+  10: _FOR_EXIT233:
+  11:     IF (*((- 16384)) < 128) THEN
+   0:         GOTO _DO_LOOP232
+          END IF
+  12: _DO_EXIT232:
+  13:     END
+

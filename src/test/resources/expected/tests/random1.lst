@@ -1,0 +1,55 @@
+MAIN:
+    DIM _ONERR_TARGET AS ADDRESS = null
+    DIM _ONERR_FP AS ADDRESS = null
+    DIM _ONERR_SP AS ADDRESS = null
+    DIM I AS INTEGER = null
+   0:     CALL TEXT.TEXT()
+   1:     CALL TEXT.HOME()
+   2:     CALL RUNTIME.PRINT_STRING("RANDOM()")
+   3:     CALL RUNTIME.PRINT_NEWLINE()
+   4:     I = 1
+   5: _FOR_LOOP277:
+   6:     IF (MATH.SGN(1) >= 0) THEN
+   0:         IF (I <= 10) THEN
+   0:             CALL RUNTIME.PRINT_INTEGER(MATH.RANDOM())
+   1:             CALL RUNTIME.PRINT_NEWLINE()
+   2: _FOR_CONTINUE277:
+   3:             I = (I + 1)
+   4:             GOTO _FOR_LOOP277
+              END IF
+          ELSE
+   0:         IF (I >= 10) THEN
+   0:             CALL RUNTIME.PRINT_INTEGER(MATH.RANDOM())
+   1:             CALL RUNTIME.PRINT_NEWLINE()
+   2: _FOR_CONTINUE277:
+   3:             I = (I + 1)
+   4:             GOTO _FOR_LOOP277
+              END IF
+          END IF
+   7: _FOR_EXIT277:
+   8:     CALL RUNTIME.PRINT_STRING("RND(10)")
+   9:     CALL RUNTIME.PRINT_NEWLINE()
+  10:     I = 1
+  11: _FOR_LOOP278:
+  12:     IF (MATH.SGN(1) >= 0) THEN
+   0:         IF (I <= 10) THEN
+   0:             CALL RUNTIME.PRINT_INTEGER(MATH.RND(10))
+   1:             CALL RUNTIME.PRINT_NEWLINE()
+   2: _FOR_CONTINUE278:
+   3:             I = (I + 1)
+   4:             GOTO _FOR_LOOP278
+              END IF
+          ELSE
+   0:         IF (I >= 10) THEN
+   0:             CALL RUNTIME.PRINT_INTEGER(MATH.RND(10))
+   1:             CALL RUNTIME.PRINT_NEWLINE()
+   2: _FOR_CONTINUE278:
+   3:             I = (I + 1)
+   4:             GOTO _FOR_LOOP278
+              END IF
+          END IF
+  13: _FOR_EXIT278:
+  14:     CALL RUNTIME.PRINT_STRING("END")
+  15:     CALL RUNTIME.PRINT_NEWLINE()
+  16:     END
+

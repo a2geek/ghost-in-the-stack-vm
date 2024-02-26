@@ -1,0 +1,266 @@
+MAIN:
+    DIM _ONERR_TARGET AS ADDRESS = null
+    DIM _ONERR_FP AS ADDRESS = null
+    DIM _ONERR_SP AS ADDRESS = null
+    DIM Y() AS INTEGER = null
+    DIM C AS INTEGER = null
+    DIM FOR_C_END0 AS INTEGER = null
+    DIM FOR_C_STEP0 AS INTEGER = null
+    DIM FOR_C_NEXT0 AS ADDRESS = null
+    DIM FOR_C_EXIT0 AS ADDRESS = null
+    DIM X AS INTEGER = null
+    DIM FOR_X_END1 AS INTEGER = null
+    DIM FOR_X_STEP1 AS INTEGER = null
+    DIM FOR_X_NEXT1 AS ADDRESS = null
+    DIM FOR_X_EXIT1 AS ADDRESS = null
+   0: _L10_300:
+   1:     Y() = ALLOC((2 + ((15 + 1) * 2)))
+   2:     *((Y() + 0)) = 15
+   3: _L20_301:
+   4:     IF (0 > ubound(Y(),1)) THEN **
+   0:         ERR.NUMBER = 107
+   1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
+   2:         ERR.LINENUM = 2
+   3:         ERR.CONTEXT = "Y()"
+   4:         ERR.SOURCE = "ARRAYS2.INT"
+   5:         RAISE ERROR
+          END IF
+   5:     *(((Y() + 2) + (0 * 2))) = 15
+   6:     IF (1 > ubound(Y(),1)) THEN **
+   0:         ERR.NUMBER = 107
+   1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
+   2:         ERR.LINENUM = 2
+   3:         ERR.CONTEXT = "Y()"
+   4:         ERR.SOURCE = "ARRAYS2.INT"
+   5:         RAISE ERROR
+          END IF
+   7:     *(((Y() + 2) + (1 * 2))) = 15
+   8:     IF (2 > ubound(Y(),1)) THEN **
+   0:         ERR.NUMBER = 107
+   1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
+   2:         ERR.LINENUM = 2
+   3:         ERR.CONTEXT = "Y()"
+   4:         ERR.SOURCE = "ARRAYS2.INT"
+   5:         RAISE ERROR
+          END IF
+   9:     *(((Y() + 2) + (2 * 2))) = 15
+  10:     IF (3 > ubound(Y(),1)) THEN **
+   0:         ERR.NUMBER = 107
+   1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
+   2:         ERR.LINENUM = 2
+   3:         ERR.CONTEXT = "Y()"
+   4:         ERR.SOURCE = "ARRAYS2.INT"
+   5:         RAISE ERROR
+          END IF
+  11:     *(((Y() + 2) + (3 * 2))) = 15
+  12:     IF (4 > ubound(Y(),1)) THEN **
+   0:         ERR.NUMBER = 107
+   1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
+   2:         ERR.LINENUM = 2
+   3:         ERR.CONTEXT = "Y()"
+   4:         ERR.SOURCE = "ARRAYS2.INT"
+   5:         RAISE ERROR
+          END IF
+  13:     *(((Y() + 2) + (4 * 2))) = 14
+  14: _L30_302:
+  15:     IF (5 > ubound(Y(),1)) THEN **
+   0:         ERR.NUMBER = 107
+   1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
+   2:         ERR.LINENUM = 3
+   3:         ERR.CONTEXT = "Y()"
+   4:         ERR.SOURCE = "ARRAYS2.INT"
+   5:         RAISE ERROR
+          END IF
+  16:     *(((Y() + 2) + (5 * 2))) = 14
+  17:     IF (6 > ubound(Y(),1)) THEN **
+   0:         ERR.NUMBER = 107
+   1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
+   2:         ERR.LINENUM = 3
+   3:         ERR.CONTEXT = "Y()"
+   4:         ERR.SOURCE = "ARRAYS2.INT"
+   5:         RAISE ERROR
+          END IF
+  18:     *(((Y() + 2) + (6 * 2))) = 14
+  19:     IF (7 > ubound(Y(),1)) THEN **
+   0:         ERR.NUMBER = 107
+   1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
+   2:         ERR.LINENUM = 3
+   3:         ERR.CONTEXT = "Y()"
+   4:         ERR.SOURCE = "ARRAYS2.INT"
+   5:         RAISE ERROR
+          END IF
+  20:     *(((Y() + 2) + (7 * 2))) = 13
+  21:     IF (8 > ubound(Y(),1)) THEN **
+   0:         ERR.NUMBER = 107
+   1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
+   2:         ERR.LINENUM = 3
+   3:         ERR.CONTEXT = "Y()"
+   4:         ERR.SOURCE = "ARRAYS2.INT"
+   5:         RAISE ERROR
+          END IF
+  22:     *(((Y() + 2) + (8 * 2))) = 13
+  23:     IF (9 > ubound(Y(),1)) THEN **
+   0:         ERR.NUMBER = 107
+   1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
+   2:         ERR.LINENUM = 3
+   3:         ERR.CONTEXT = "Y()"
+   4:         ERR.SOURCE = "ARRAYS2.INT"
+   5:         RAISE ERROR
+          END IF
+  24:     *(((Y() + 2) + (9 * 2))) = 12
+  25: _L40_303:
+  26:     IF (10 > ubound(Y(),1)) THEN **
+   0:         ERR.NUMBER = 107
+   1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
+   2:         ERR.LINENUM = 4
+   3:         ERR.CONTEXT = "Y()"
+   4:         ERR.SOURCE = "ARRAYS2.INT"
+   5:         RAISE ERROR
+          END IF
+  27:     *(((Y() + 2) + (10 * 2))) = 11
+  28:     IF (11 > ubound(Y(),1)) THEN **
+   0:         ERR.NUMBER = 107
+   1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
+   2:         ERR.LINENUM = 4
+   3:         ERR.CONTEXT = "Y()"
+   4:         ERR.SOURCE = "ARRAYS2.INT"
+   5:         RAISE ERROR
+          END IF
+  29:     *(((Y() + 2) + (11 * 2))) = 10
+  30:     IF (12 > ubound(Y(),1)) THEN **
+   0:         ERR.NUMBER = 107
+   1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
+   2:         ERR.LINENUM = 4
+   3:         ERR.CONTEXT = "Y()"
+   4:         ERR.SOURCE = "ARRAYS2.INT"
+   5:         RAISE ERROR
+          END IF
+  31:     *(((Y() + 2) + (12 * 2))) = 9
+  32:     IF (13 > ubound(Y(),1)) THEN **
+   0:         ERR.NUMBER = 107
+   1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
+   2:         ERR.LINENUM = 4
+   3:         ERR.CONTEXT = "Y()"
+   4:         ERR.SOURCE = "ARRAYS2.INT"
+   5:         RAISE ERROR
+          END IF
+  33:     *(((Y() + 2) + (13 * 2))) = 7
+  34:     IF (14 > ubound(Y(),1)) THEN **
+   0:         ERR.NUMBER = 107
+   1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
+   2:         ERR.LINENUM = 4
+   3:         ERR.CONTEXT = "Y()"
+   4:         ERR.SOURCE = "ARRAYS2.INT"
+   5:         RAISE ERROR
+          END IF
+  35:     *(((Y() + 2) + (14 * 2))) = 5
+  36:     IF (15 > ubound(Y(),1)) THEN **
+   0:         ERR.NUMBER = 107
+   1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
+   2:         ERR.LINENUM = 4
+   3:         ERR.CONTEXT = "Y()"
+   4:         ERR.SOURCE = "ARRAYS2.INT"
+   5:         RAISE ERROR
+          END IF
+  37:     *(((Y() + 2) + (15 * 2))) = 0
+  38: _L50_304:
+  39:     CALL LORES.GR()
+  40: _L60_305:
+  41:     C = 1
+  42:     FOR_C_END0 = 15
+  43:     FOR_C_STEP0 = 1
+  44:     FOR_C_NEXT0 = (addrof(_FOR_NEXT306) - 1)
+  45:     GOTO _FOR_LOOP306
+  46: _FOR_NEXT306:
+  47:     C = (C + FOR_C_STEP0)
+  48:     IF (MATH.SGN(1) >= 0) THEN
+   0:         IF (C <= FOR_C_END0) THEN
+   0:             GOTO _FOR_LOOP306
+              END IF
+          ELSE
+   0:         IF (C >= FOR_C_END0) THEN
+   0:             GOTO _FOR_LOOP306
+              END IF
+          END IF
+  49:     GOTO *FOR_C_EXIT0
+  50: _FOR_LOOP306:
+  51: _L65_307:
+  52:     CALL RUNTIME.PRINT_STRING("COLOR=")
+  53:     CALL RUNTIME.PRINT_INTEGER(C)
+  54:     CALL RUNTIME.PRINT_NEWLINE()
+  55: _L70_308:
+  56:     CALL LORES.COLOR(C)
+  57: _L80_309:
+  58:     X = 0
+  59:     FOR_X_END1 = 15
+  60:     FOR_X_STEP1 = 1
+  61:     FOR_X_NEXT1 = (addrof(_FOR_NEXT310) - 1)
+  62:     GOTO _FOR_LOOP310
+  63: _FOR_NEXT310:
+  64:     X = (X + FOR_X_STEP1)
+  65:     IF (MATH.SGN(1) >= 0) THEN
+   0:         IF (X <= FOR_X_END1) THEN
+   0:             GOTO _FOR_LOOP310
+              END IF
+          ELSE
+   0:         IF (X >= FOR_X_END1) THEN
+   0:             GOTO _FOR_LOOP310
+              END IF
+          END IF
+  66:     GOTO *FOR_X_EXIT1
+  67: _FOR_LOOP310:
+  68: _L90_311:
+  69:     IF (X > ubound(Y(),1)) THEN **
+   0:         ERR.NUMBER = 107
+   1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
+   2:         ERR.LINENUM = 10
+   3:         ERR.CONTEXT = "Y()"
+   4:         ERR.SOURCE = "ARRAYS2.INT"
+   5:         RAISE ERROR
+          END IF
+  70:     CALL LORES.PLOT((20 + X), (20 + *(((Y() + 2) + (X * 2)))))
+  71: _L100_312:
+  72:     IF (X > ubound(Y(),1)) THEN **
+   0:         ERR.NUMBER = 107
+   1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
+   2:         ERR.LINENUM = 11
+   3:         ERR.CONTEXT = "Y()"
+   4:         ERR.SOURCE = "ARRAYS2.INT"
+   5:         RAISE ERROR
+          END IF
+  73:     CALL LORES.PLOT((20 - X), (20 + *(((Y() + 2) + (X * 2)))))
+  74: _L110_313:
+  75:     IF (X > ubound(Y(),1)) THEN **
+   0:         ERR.NUMBER = 107
+   1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
+   2:         ERR.LINENUM = 12
+   3:         ERR.CONTEXT = "Y()"
+   4:         ERR.SOURCE = "ARRAYS2.INT"
+   5:         RAISE ERROR
+          END IF
+  76:     CALL LORES.PLOT((20 + X), (20 - *(((Y() + 2) + (X * 2)))))
+  77: _L120_314:
+  78:     IF (X > ubound(Y(),1)) THEN **
+   0:         ERR.NUMBER = 107
+   1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
+   2:         ERR.LINENUM = 13
+   3:         ERR.CONTEXT = "Y()"
+   4:         ERR.SOURCE = "ARRAYS2.INT"
+   5:         RAISE ERROR
+          END IF
+  79:     CALL LORES.PLOT((20 - X), (20 - *(((Y() + 2) + (X * 2)))))
+  80: _L130_315:
+  81:     FOR_X_EXIT1 = (addrof(_FOR_EXIT316) - 1)
+  82:     GOTO *FOR_X_NEXT1
+  83: _FOR_EXIT316:
+  84: _L140_317:
+  85:     FOR_C_EXIT0 = (addrof(_FOR_EXIT318) - 1)
+  86:     GOTO *FOR_C_NEXT0
+  87: _FOR_EXIT318:
+  88: _L150_319:
+  89:     GOTO _L60_305
+  90:     END
+
+FUNCTION _LHS_STRING(START AS INTEGER, STRING AS STRING) AS STRING
+END FUNCTION
+

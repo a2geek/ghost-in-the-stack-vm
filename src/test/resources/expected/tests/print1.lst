@@ -1,0 +1,8 @@
+MAIN:
+    DIM _ONERR_TARGET AS ADDRESS = null
+    DIM _ONERR_FP AS ADDRESS = null
+    DIM _ONERR_SP AS ADDRESS = null
+   0:     CALL RUNTIME.PRINT_STRING("Hello World!")
+   1:     CALL RUNTIME.PRINT_NEWLINE()
+   2:     END
+

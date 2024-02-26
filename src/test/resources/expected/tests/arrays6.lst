@@ -1,0 +1,54 @@
+MAIN:
+    DIM _ONERR_TARGET AS ADDRESS = null
+    DIM _ONERR_FP AS ADDRESS = null
+    DIM _ONERR_SP AS ADDRESS = null
+    DIM A AS INTEGER = [1, 2, 3, 4]
+    DIM B AS INTEGER = [1, 3, 5, 7]
+   0:     CALL RUNTIME.PRINT_STRING("TOTAL(A) = ")
+   1:     CALL RUNTIME.PRINT_INTEGER(ARRAYTOTAL(A))
+   2:     CALL RUNTIME.PRINT_NEWLINE()
+   3:     CALL RUNTIME.PRINT_STRING("TOTAL(B) = ")
+   4:     CALL RUNTIME.PRINT_INTEGER(ARRAYTOTAL(B))
+   5:     CALL RUNTIME.PRINT_NEWLINE()
+   6:     END
+
+FUNCTION ARRAYTOTAL(MYARRAY AS INTEGER) AS INTEGER
+    DIM TOTAL AS INTEGER = null
+    DIM I AS INTEGER = null
+   0:     I = 0
+   1: _FOR_LOOP9:
+   2:     IF (MATH.SGN(1) >= 0) THEN
+   0:         IF (I <= (ubound(MYARRAY,1) - 1)) THEN
+   0:             IF (I > ubound(MYARRAY,1)) THEN **
+   0:                 ERR.NUMBER = 107
+   1:                 ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
+   2:                 ERR.LINENUM = 5
+   3:                 ERR.CONTEXT = "MYARRAY"
+   4:                 ERR.SOURCE = "ARRAYTOTAL"
+   5:                 RAISE ERROR
+                  END IF
+   1:             TOTAL = (TOTAL + *(((MYARRAY + 2) + (I * 2))))
+   2: _FOR_CONTINUE9:
+   3:             I = (I + 1)
+   4:             GOTO _FOR_LOOP9
+              END IF
+          ELSE
+   0:         IF (I >= (ubound(MYARRAY,1) - 1)) THEN
+   0:             IF (I > ubound(MYARRAY,1)) THEN **
+   0:                 ERR.NUMBER = 107
+   1:                 ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
+   2:                 ERR.LINENUM = 5
+   3:                 ERR.CONTEXT = "MYARRAY"
+   4:                 ERR.SOURCE = "ARRAYTOTAL"
+   5:                 RAISE ERROR
+                  END IF
+   1:             TOTAL = (TOTAL + *(((MYARRAY + 2) + (I * 2))))
+   2: _FOR_CONTINUE9:
+   3:             I = (I + 1)
+   4:             GOTO _FOR_LOOP9
+              END IF
+          END IF
+   3: _FOR_EXIT9:
+   4:     RETURN TOTAL
+END FUNCTION
+

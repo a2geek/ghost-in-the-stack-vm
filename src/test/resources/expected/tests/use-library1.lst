@@ -1,0 +1,16 @@
+MAIN:
+    DIM _ONERR_TARGET AS ADDRESS = null
+    DIM _ONERR_FP AS ADDRESS = null
+    DIM _ONERR_SP AS ADDRESS = null
+   0:     CALL LORES.GR()
+   1:     CALL LORES.COLOR(9)
+   2:     CALL LORES.HLIN(10, 30, 10)
+   3:     CALL LORES.VLIN(10, 30, 10)
+   4:     CALL LORES.HLIN(10, 30, 30)
+   5:     CALL LORES.VLIN(10, 30, 30)
+   6:     CALL LORES.COLOR(15)
+   7:     CALL LORES.PLOT(5, 35)
+   8:     CALL LORES.COLOR(5)
+   9:     CALL LORES.PLOT(35, 5)
+  10:     END
+

@@ -1,0 +1,48 @@
+MAIN:
+    DIM _ONERR_TARGET AS ADDRESS = null
+    DIM _ONERR_FP AS ADDRESS = null
+    DIM _ONERR_SP AS ADDRESS = null
+    DIM I AS INTEGER = null
+    DIM ON_GOSUB AS ADDRESS = [addrof(_SOMETHING184), addrof(_SOMETHING285), addrof(_SOMETHING386)]
+   0:     CALL RUNTIME.PRINT_STRING("TEST OF 'ON ... GOSUB' STATEMENT")
+   1:     CALL RUNTIME.PRINT_NEWLINE()
+   2:     I = 0
+   3: _FOR_LOOP83:
+   4:     IF (MATH.SGN(1) >= 0) THEN
+   0:         IF (I <= 4) THEN
+   0:             CALL RUNTIME.PRINT_INTEGER(I)
+   1:             CALL RUNTIME.PRINT_NEWLINE()
+   2:             IF ((I > 0) and (I <= ubound(ON_GOSUB,1))) THEN
+   0:                 GOTO **(((ON_GOSUB + 2) + ((I - 1) * 2)))
+                  END IF
+   3: _FOR_CONTINUE83:
+   4:             I = (I + 1)
+   5:             GOTO _FOR_LOOP83
+              END IF
+          ELSE
+   0:         IF (I >= 4) THEN
+   0:             CALL RUNTIME.PRINT_INTEGER(I)
+   1:             CALL RUNTIME.PRINT_NEWLINE()
+   2:             IF ((I > 0) and (I <= ubound(ON_GOSUB,1))) THEN
+   0:                 GOTO **(((ON_GOSUB + 2) + ((I - 1) * 2)))
+                  END IF
+   3: _FOR_CONTINUE83:
+   4:             I = (I + 1)
+   5:             GOTO _FOR_LOOP83
+              END IF
+          END IF
+   5: _FOR_EXIT83:
+   6:     END
+   7: _SOMETHING184:
+   8:     CALL RUNTIME.PRINT_STRING("ONE")
+   9:     CALL RUNTIME.PRINT_NEWLINE()
+  10:     RETURN
+  11: _SOMETHING285:
+  12:     CALL RUNTIME.PRINT_STRING("ANOTHER")
+  13:     CALL RUNTIME.PRINT_NEWLINE()
+  14:     RETURN
+  15: _SOMETHING386:
+  16:     CALL RUNTIME.PRINT_STRING("HI!!")
+  17:     CALL RUNTIME.PRINT_NEWLINE()
+  18:     RETURN
+

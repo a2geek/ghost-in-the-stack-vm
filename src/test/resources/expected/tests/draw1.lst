@@ -1,0 +1,49 @@
+MAIN:
+    DIM _ONERR_TARGET AS ADDRESS = null
+    DIM _ONERR_FP AS ADDRESS = null
+    DIM _ONERR_SP AS ADDRESS = null
+    DIM X AS INTEGER = null
+    DIM Y AS INTEGER = null
+    DIM C AS INTEGER = null
+    DIM CH AS INTEGER = null
+   0:     CALL TEXT.TEXT()
+   1:     CALL TEXT.HOME()
+   2:     CALL LORES.GR()
+   3:     X = 0
+   4:     Y = 0
+   5: _WHILE_LOOP119:
+   6:     IF True THEN
+   0:         C = LORES.SCRN(X, Y)
+   1:         CALL LORES.COLOR((15 - C))
+   2:         CALL LORES.PLOT(X, Y)
+   3:         CALL LORES.COLOR(C)
+   4:         CALL LORES.PLOT(X, Y)
+   5:         CH = b2w(*((- 16384)))
+   6:         IF (CH > 128) THEN
+   0:             *((- 16368)) = 0
+   1:             IF ((CH >= STRINGS.ASC("0")) and (CH <= STRINGS.ASC("9"))) THEN
+   0:                 CALL LORES.COLOR((CH - STRINGS.ASC("0")))
+   1:                 CALL LORES.PLOT(X, Y)
+                  END IF
+   2:             IF (((CH = STRINGS.ASC("U")) or (CH = STRINGS.ASC("u"))) and (Y > 0)) THEN
+   0:                 Y = (Y - 1)
+                  END IF
+   3:             IF (((CH = STRINGS.ASC("D")) or (CH = STRINGS.ASC("d"))) and (Y < 39)) THEN
+   0:                 Y = (Y + 1)
+                  END IF
+   4:             IF (((CH = STRINGS.ASC("L")) or (CH = STRINGS.ASC("l"))) and (X > 0)) THEN
+   0:                 X = (X - 1)
+                  END IF
+   5:             IF (((CH = STRINGS.ASC("R")) or (CH = STRINGS.ASC("r"))) and (X < 39)) THEN
+   0:                 X = (X + 1)
+                  END IF
+   6:             CALL TEXT.HOME()
+   7:             CALL RUNTIME.PRINT_INTEGER(X)
+   8:             CALL RUNTIME.PRINT_COMMA()
+   9:             CALL RUNTIME.PRINT_INTEGER(Y)
+  10:             CALL RUNTIME.PRINT_NEWLINE()
+              END IF
+   7:         GOTO _WHILE_LOOP119
+          END IF
+   7: _WHILE_EXIT119:
+

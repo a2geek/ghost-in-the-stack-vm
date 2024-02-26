@@ -1,0 +1,96 @@
+MAIN:
+    DIM _ONERR_TARGET AS ADDRESS = null
+    DIM _ONERR_FP AS ADDRESS = null
+    DIM _ONERR_SP AS ADDRESS = null
+    DIM A AS INTEGER = null
+    DIM I AS INTEGER = null
+   0:     A = ALLOC((2 + ((2 + 1) * 2)))
+   1:     *((A + 0)) = 2
+   2:     IF (0 > ubound(A,1)) THEN **
+   0:         ERR.NUMBER = 107
+   1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
+   2:         ERR.LINENUM = 2
+   3:         ERR.CONTEXT = "A"
+   4:         ERR.SOURCE = "ARRAYS3.BAS"
+   5:         RAISE ERROR
+          END IF
+   3:     *(((A + 2) + (0 * 2))) = 5
+   4:     IF (1 > ubound(A,1)) THEN **
+   0:         ERR.NUMBER = 107
+   1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
+   2:         ERR.LINENUM = 3
+   3:         ERR.CONTEXT = "A"
+   4:         ERR.SOURCE = "ARRAYS3.BAS"
+   5:         RAISE ERROR
+          END IF
+   5:     IF (0 > ubound(A,1)) THEN **
+   0:         ERR.NUMBER = 107
+   1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
+   2:         ERR.LINENUM = 3
+   3:         ERR.CONTEXT = "A"
+   4:         ERR.SOURCE = "ARRAYS3.BAS"
+   5:         RAISE ERROR
+          END IF
+   6:     *(((A + 2) + (1 * 2))) = (*(((A + 2) + (0 * 2))) + 5)
+   7:     IF (2 > ubound(A,1)) THEN **
+   0:         ERR.NUMBER = 107
+   1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
+   2:         ERR.LINENUM = 4
+   3:         ERR.CONTEXT = "A"
+   4:         ERR.SOURCE = "ARRAYS3.BAS"
+   5:         RAISE ERROR
+          END IF
+   8:     IF (1 > ubound(A,1)) THEN **
+   0:         ERR.NUMBER = 107
+   1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
+   2:         ERR.LINENUM = 4
+   3:         ERR.CONTEXT = "A"
+   4:         ERR.SOURCE = "ARRAYS3.BAS"
+   5:         RAISE ERROR
+          END IF
+   9:     *(((A + 2) + (2 * 2))) = (*(((A + 2) + (1 * 2))) + 5)
+  10:     IF (0 > ubound(A,1)) THEN **
+   0:         ERR.NUMBER = 107
+   1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
+   2:         ERR.LINENUM = 5
+   3:         ERR.CONTEXT = "A"
+   4:         ERR.SOURCE = "ARRAYS3.BAS"
+   5:         RAISE ERROR
+          END IF
+  11:     CALL RUNTIME.PRINT_INTEGER(*(((A + 2) + (0 * 2))))
+  12:     CALL RUNTIME.PRINT_COMMA()
+  13:     IF (1 > ubound(A,1)) THEN **
+   0:         ERR.NUMBER = 107
+   1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
+   2:         ERR.LINENUM = 5
+   3:         ERR.CONTEXT = "A"
+   4:         ERR.SOURCE = "ARRAYS3.BAS"
+   5:         RAISE ERROR
+          END IF
+  14:     CALL RUNTIME.PRINT_INTEGER(*(((A + 2) + (1 * 2))))
+  15:     CALL RUNTIME.PRINT_COMMA()
+  16:     IF (2 > ubound(A,1)) THEN **
+   0:         ERR.NUMBER = 107
+   1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
+   2:         ERR.LINENUM = 5
+   3:         ERR.CONTEXT = "A"
+   4:         ERR.SOURCE = "ARRAYS3.BAS"
+   5:         RAISE ERROR
+          END IF
+  17:     CALL RUNTIME.PRINT_INTEGER(*(((A + 2) + (2 * 2))))
+  18:     CALL RUNTIME.PRINT_NEWLINE()
+  19:     CALL RUNTIME.PRINT_STRING("LENGTH OF A() = ")
+  20:     CALL RUNTIME.PRINT_INTEGER(ubound(A,1))
+  21:     CALL RUNTIME.PRINT_NEWLINE()
+  22:     I = 5
+  23:     IF (I > ubound(A,1)) THEN **
+   0:         ERR.NUMBER = 107
+   1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
+   2:         ERR.LINENUM = 9
+   3:         ERR.CONTEXT = "A"
+   4:         ERR.SOURCE = "ARRAYS3.BAS"
+   5:         RAISE ERROR
+          END IF
+  24:     *(((A + 2) + (I * 2))) = I
+  25:     END
+

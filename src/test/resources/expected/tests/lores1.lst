@@ -1,0 +1,22 @@
+MAIN:
+    DIM _ONERR_TARGET AS ADDRESS = null
+    DIM _ONERR_FP AS ADDRESS = null
+    DIM _ONERR_SP AS ADDRESS = null
+    DIM C AS INTEGER = null
+   0:     CALL (- 1216)
+   1:     CPU.REGISTER.A = 5
+   2:     CALL (- 1948)
+   3:     CPU.REGISTER.Y = 5
+   4:     CPU.REGISTER.A = 10
+   5:     CALL (- 2048)
+   6:     CPU.REGISTER.Y = 5
+   7:     CPU.REGISTER.A = 10
+   8:     CALL (- 1935)
+   9:     C = CPU.REGISTER.A
+  10:     CPU.REGISTER.A = (C + 1)
+  11:     CALL (- 1948)
+  12:     CPU.REGISTER.Y = 6
+  13:     CPU.REGISTER.A = 11
+  14:     CALL (- 2048)
+  15:     END
+

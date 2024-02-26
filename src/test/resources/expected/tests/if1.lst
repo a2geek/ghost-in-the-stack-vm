@@ -1,0 +1,56 @@
+MAIN:
+    DIM _ONERR_TARGET AS ADDRESS = null
+    DIM _ONERR_FP AS ADDRESS = null
+    DIM _ONERR_SP AS ADDRESS = null
+    DIM A AS INTEGER = null
+    DIM B AS INTEGER = null
+   0:     CALL RUNTIME.PRINT_STRING("COMPARISONS")
+   1:     CALL RUNTIME.PRINT_NEWLINE()
+   2:     CALL RUNTIME.PRINT_NEWLINE()
+   3:     CALL RUNTIME.PRINT_STRING("<  <= >  >= =  <> A B")
+   4:     CALL RUNTIME.PRINT_NEWLINE()
+   5:     A = 1
+   6:     B = 2
+   7:     GOSUB _COMPARE37
+   8:     A = 2
+   9:     GOSUB _COMPARE37
+  10:     A = 3
+  11:     GOSUB _COMPARE37
+  12:     END
+  13: _COMPARE37:
+  14:     IF (A < B) THEN
+   0:         CALL RUNTIME.PRINT_STRING("T  ")
+          ELSE
+   0:         CALL RUNTIME.PRINT_STRING("F  ")
+          END IF
+  15:     IF (A <= B) THEN
+   0:         CALL RUNTIME.PRINT_STRING("T  ")
+          ELSE
+   0:         CALL RUNTIME.PRINT_STRING("F  ")
+          END IF
+  16:     IF (A > B) THEN
+   0:         CALL RUNTIME.PRINT_STRING("T  ")
+          ELSE
+   0:         CALL RUNTIME.PRINT_STRING("F  ")
+          END IF
+  17:     IF (A >= B) THEN
+   0:         CALL RUNTIME.PRINT_STRING("T  ")
+          ELSE
+   0:         CALL RUNTIME.PRINT_STRING("F  ")
+          END IF
+  18:     IF (A = B) THEN
+   0:         CALL RUNTIME.PRINT_STRING("T  ")
+          ELSE
+   0:         CALL RUNTIME.PRINT_STRING("F  ")
+          END IF
+  19:     IF (A <> B) THEN
+   0:         CALL RUNTIME.PRINT_STRING("T  ")
+          ELSE
+   0:         CALL RUNTIME.PRINT_STRING("F  ")
+          END IF
+  20:     CALL RUNTIME.PRINT_INTEGER(A)
+  21:     CALL RUNTIME.PRINT_COMMA()
+  22:     CALL RUNTIME.PRINT_INTEGER(B)
+  23:     CALL RUNTIME.PRINT_NEWLINE()
+  24:     RETURN
+

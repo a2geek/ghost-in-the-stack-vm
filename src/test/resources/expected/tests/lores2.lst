@@ -1,0 +1,74 @@
+MAIN:
+    DIM _ONERR_TARGET AS ADDRESS = null
+    DIM _ONERR_FP AS ADDRESS = null
+    DIM _ONERR_SP AS ADDRESS = null
+    DIM C AS INTEGER = null
+    DIM R AS INTEGER = null
+    DIM T1 AS INTEGER = null
+    DIM X AS INTEGER = null
+    DIM Y AS INTEGER = null
+    DIM T2 AS INTEGER = null
+   0:     CALL TEXT.TEXT()
+   1:     CALL TEXT.HOME()
+   2:     CALL LORES.GR()
+   3:     C = 15
+   4: _FOR_LOOP270:
+   5:     IF (MATH.SGN((- 1)) >= 0) THEN
+   0:         IF (C <= 1) THEN
+   0:             CALL LORES.COLOR(C)
+   1:             R = (C + 4)
+   2:             T1 = (R / 16)
+   3:             X = R
+   4:             Y = 0
+   5: _DO_LOOP271:
+   6:             IF (X < Y) THEN
+   0:                 GOTO _DO_EXIT271
+                  END IF
+   7:             CALL LORES.HLIN((19 - X), (20 + X), (20 + Y))
+   8:             CALL LORES.HLIN((19 - X), (20 + X), (19 - Y))
+   9:             CALL LORES.HLIN((19 - Y), (20 + Y), (20 + X))
+  10:             CALL LORES.HLIN((19 - Y), (20 + Y), (20 - X))
+  11:             Y = (Y + 1)
+  12:             T1 = (T1 + Y)
+  13:             T2 = (T1 - X)
+  14:             IF (T2 >= 0) THEN
+   0:                 T1 = T2
+   1:                 X = (X - 1)
+                  END IF
+  15:             GOTO _DO_LOOP271
+  16: _DO_EXIT271:
+  17: _FOR_CONTINUE270:
+  18:             C = (C + (- 1))
+  19:             GOTO _FOR_LOOP270
+              END IF
+          ELSE
+   0:         IF (C >= 1) THEN
+   0:             CALL LORES.COLOR(C)
+   1:             R = (C + 4)
+   2:             T1 = (R / 16)
+   3:             X = R
+   4:             Y = 0
+   5: _DO_LOOP271:
+   6:             IF (X < Y) THEN
+   0:                 GOTO _DO_EXIT271
+                  END IF
+   7:             CALL LORES.HLIN((19 - X), (20 + X), (20 + Y))
+   8:             CALL LORES.HLIN((19 - X), (20 + X), (19 - Y))
+   9:             CALL LORES.HLIN((19 - Y), (20 + Y), (20 + X))
+  10:             CALL LORES.HLIN((19 - Y), (20 + Y), (20 - X))
+  11:             Y = (Y + 1)
+  12:             T1 = (T1 + Y)
+  13:             T2 = (T1 - X)
+  14:             IF (T2 >= 0) THEN
+   0:                 T1 = T2
+   1:                 X = (X - 1)
+                  END IF
+  15:             GOTO _DO_LOOP271
+  16: _DO_EXIT271:
+  17: _FOR_CONTINUE270:
+  18:             C = (C + (- 1))
+  19:             GOTO _FOR_LOOP270
+              END IF
+          END IF
+   6: _FOR_EXIT270:
+

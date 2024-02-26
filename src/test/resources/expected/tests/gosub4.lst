@@ -1,0 +1,27 @@
+MAIN:
+    DIM _ONERR_TARGET AS ADDRESS = null
+    DIM _ONERR_FP AS ADDRESS = null
+    DIM _ONERR_SP AS ADDRESS = null
+    DIM N AS INTEGER = [10, 20, 30]
+    DIM I AS INTEGER = null
+    DIM _TEMP477 AS INTEGER = null
+    DIM ON_GOSUB AS ADDRESS = [addrof(_ONE478), addrof(_TWO479), addrof(_THREE480)]
+   0:     I = 10
+   1:     _TEMP477 = RUNTIME.LINE_INDEX(I, N)
+   2:     IF ((_TEMP477 > 0) and (_TEMP477 <= ubound(ON_GOSUB,1))) THEN
+   0:         GOTO **(((ON_GOSUB + 2) + ((_TEMP477 - 1) * 2)))
+          END IF
+   3:     END
+   4: _ONE478:
+   5:     CALL RUNTIME.PRINT_STRING("ONE")
+   6:     CALL RUNTIME.PRINT_NEWLINE()
+   7:     RETURN
+   8: _TWO479:
+   9:     CALL RUNTIME.PRINT_STRING("TWO")
+  10:     CALL RUNTIME.PRINT_NEWLINE()
+  11:     RETURN
+  12: _THREE480:
+  13:     CALL RUNTIME.PRINT_STRING("THREE")
+  14:     CALL RUNTIME.PRINT_NEWLINE()
+  15:     RETURN
+

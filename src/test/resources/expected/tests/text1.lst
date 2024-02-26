@@ -1,0 +1,70 @@
+MAIN:
+    DIM _ONERR_TARGET AS ADDRESS = null
+    DIM _ONERR_FP AS ADDRESS = null
+    DIM _ONERR_SP AS ADDRESS = null
+    DIM Y AS INTEGER = null
+    DIM X AS INTEGER = null
+   0:     CALL TEXT.TEXT()
+   1:     CALL TEXT.HOME()
+   2:     Y = 20
+   3: _FOR_LOOP7:
+   4:     IF (MATH.SGN((- 3)) >= 0) THEN
+   0:         IF (Y <= 5) THEN
+   0:             CALL TEXT.VTAB(Y)
+   1:             X = 35
+   2: _FOR_LOOP8:
+   3:             IF (MATH.SGN((- 7)) >= 0) THEN
+   0:                 IF (X <= 5) THEN
+   0:                     CALL TEXT.HTAB(X)
+   1:                     CALL RUNTIME.PRINT_INTEGER((X + Y))
+   2: _FOR_CONTINUE8:
+   3:                     X = (X + (- 7))
+   4:                     GOTO _FOR_LOOP8
+                      END IF
+                  ELSE
+   0:                 IF (X >= 5) THEN
+   0:                     CALL TEXT.HTAB(X)
+   1:                     CALL RUNTIME.PRINT_INTEGER((X + Y))
+   2: _FOR_CONTINUE8:
+   3:                     X = (X + (- 7))
+   4:                     GOTO _FOR_LOOP8
+                      END IF
+                  END IF
+   4: _FOR_EXIT8:
+   5: _FOR_CONTINUE7:
+   6:             Y = (Y + (- 3))
+   7:             GOTO _FOR_LOOP7
+              END IF
+          ELSE
+   0:         IF (Y >= 5) THEN
+   0:             CALL TEXT.VTAB(Y)
+   1:             X = 35
+   2: _FOR_LOOP8:
+   3:             IF (MATH.SGN((- 7)) >= 0) THEN
+   0:                 IF (X <= 5) THEN
+   0:                     CALL TEXT.HTAB(X)
+   1:                     CALL RUNTIME.PRINT_INTEGER((X + Y))
+   2: _FOR_CONTINUE8:
+   3:                     X = (X + (- 7))
+   4:                     GOTO _FOR_LOOP8
+                      END IF
+                  ELSE
+   0:                 IF (X >= 5) THEN
+   0:                     CALL TEXT.HTAB(X)
+   1:                     CALL RUNTIME.PRINT_INTEGER((X + Y))
+   2: _FOR_CONTINUE8:
+   3:                     X = (X + (- 7))
+   4:                     GOTO _FOR_LOOP8
+                      END IF
+                  END IF
+   4: _FOR_EXIT8:
+   5: _FOR_CONTINUE7:
+   6:             Y = (Y + (- 3))
+   7:             GOTO _FOR_LOOP7
+              END IF
+          END IF
+   5: _FOR_EXIT7:
+   6:     CALL TEXT.VTAB(22)
+   7:     CALL RUNTIME.PRINT_NEWLINE()
+   8:     END
+

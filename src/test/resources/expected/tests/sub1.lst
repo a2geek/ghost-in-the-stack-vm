@@ -1,0 +1,16 @@
+MAIN:
+    DIM _ONERR_TARGET AS ADDRESS = null
+    DIM _ONERR_FP AS ADDRESS = null
+    DIM _ONERR_SP AS ADDRESS = null
+    DIM X AS INTEGER = null
+    DIM Y AS INTEGER = null
+   0:     X = 5
+   1:     Y = 10
+   2:     CALL WTF(X, Y)
+   3:     END
+
+SUB WTF(B AS INTEGER, A AS INTEGER)
+    DIM C AS INTEGER = null
+   0:     C = (A + B)
+END SUB
+

@@ -14,16 +14,21 @@ import static a2geek.ghost.model.Symbol.in;
 
 public class PrettyPrintVisitor {
     public static String format(Program program) {
-        PrettyPrintVisitor visitor = new PrettyPrintVisitor(4);
+        return format(program, config());
+    }
+    public static String format(Program program, Config config) {
+        PrettyPrintVisitor visitor = new PrettyPrintVisitor(config, 4);
         visitor.formatProgram(program);
         return visitor.sb.toString();
     }
 
+    private final Config config;
     private int indent = 0;
     private final int indentIncrement;
     private final StringBuilder sb = new StringBuilder();
 
-    private PrettyPrintVisitor(int indentIncrement) {
+    private PrettyPrintVisitor(Config config, int indentIncrement) {
+        this.config = config;
         this.indentIncrement = indentIncrement;
     }
 
@@ -35,6 +40,9 @@ public class PrettyPrintVisitor {
         sb.append("\n");
         indent -= indentIncrement;
         program.findAllLocalScope(in(SymbolType.FUNCTION,SymbolType.SUBROUTINE)).forEach(symbol -> {
+            if (!config.includeModules && symbol.name().contains(".")) {
+                return;
+            }
             dispatch(symbol.scope());
         });
     }
@@ -119,5 +127,18 @@ public class PrettyPrintVisitor {
                 .filter(s -> s.symbolType() == SymbolType.PARAMETER)
                 .map(s -> String.format("%s AS %s", s.name(), s.dataType()))
                 .collect(Collectors.joining(", "));
+    }
+
+    public static Config config() {
+        return new Config();
+    }
+
+    public static class Config {
+        private boolean includeModules = true;
+
+        public Config includeModules(boolean flag) {
+            this.includeModules = flag;
+            return this;
+        }
     }
 }

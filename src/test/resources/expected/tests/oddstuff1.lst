@@ -1,0 +1,15 @@
+MAIN:
+    DIM _ONERR_TARGET AS ADDRESS = null
+    DIM _ONERR_FP AS ADDRESS = null
+    DIM _ONERR_SP AS ADDRESS = null
+   0:     CALL LORES.GR()
+   1:     CALL TEXT.HOME()
+   2:     CALL RUNTIME.PRINT_NEWLINE()
+   3:     CALL LORES.COLOR(5)
+   4:     CALL LORES.HLIN(5, 35, 20)
+   5:     CALL LORES.COLOR(8)
+   6:     CALL LORES.VLIN(5, 35, 20)
+   7:     *(768) = 17
+   8:     *(780) = 25
+   9:     END
+

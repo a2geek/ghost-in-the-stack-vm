@@ -1,0 +1,79 @@
+MAIN:
+    DIM _ONERR_TARGET AS ADDRESS = null
+    DIM _ONERR_FP AS ADDRESS = null
+    DIM _ONERR_SP AS ADDRESS = null
+    DIM I AS INTEGER = null
+    DIM FOR_I_END2 AS INTEGER = null
+    DIM FOR_I_STEP2 AS INTEGER = null
+    DIM FOR_I_NEXT2 AS ADDRESS = null
+    DIM FOR_I_EXIT2 AS ADDRESS = null
+   0: _L10_344:
+   1:     CALL TEXT.TEXT()
+   2:     CALL (- 936)
+   3: _L20_345:
+   4:     CALL RUNTIME.PRINT_STRING("POSITIVE STEP")
+   5:     CALL RUNTIME.PRINT_NEWLINE()
+   6: _L30_346:
+   7:     I = 1
+   8:     FOR_I_END2 = 5
+   9:     FOR_I_STEP2 = 1
+  10:     FOR_I_NEXT2 = (addrof(_FOR_NEXT347) - 1)
+  11:     GOTO _FOR_LOOP347
+  12: _FOR_NEXT347:
+  13:     I = (I + FOR_I_STEP2)
+  14:     IF (MATH.SGN(1) >= 0) THEN
+   0:         IF (I <= FOR_I_END2) THEN
+   0:             GOTO _FOR_LOOP347
+              END IF
+          ELSE
+   0:         IF (I >= FOR_I_END2) THEN
+   0:             GOTO _FOR_LOOP347
+              END IF
+          END IF
+  15:     GOTO *FOR_I_EXIT2
+  16: _FOR_LOOP347:
+  17: _L40_348:
+  18:     CALL RUNTIME.PRINT_INTEGER(I)
+  19:     CALL RUNTIME.PRINT_NEWLINE()
+  20: _L50_349:
+  21:     FOR_I_EXIT2 = (addrof(_FOR_EXIT350) - 1)
+  22:     GOTO *FOR_I_NEXT2
+  23: _FOR_EXIT350:
+  24: _L60_351:
+  25:     CALL RUNTIME.PRINT_STRING("NEGATIVE STEP")
+  26:     CALL RUNTIME.PRINT_NEWLINE()
+  27: _L70_352:
+  28:     I = 10
+  29:     FOR_I_END2 = 5
+  30:     FOR_I_STEP2 = (- 1)
+  31:     FOR_I_NEXT2 = (addrof(_FOR_NEXT353) - 1)
+  32:     GOTO _FOR_LOOP353
+  33: _FOR_NEXT353:
+  34:     I = (I + FOR_I_STEP2)
+  35:     IF (MATH.SGN((- 1)) >= 0) THEN
+   0:         IF (I <= FOR_I_END2) THEN
+   0:             GOTO _FOR_LOOP353
+              END IF
+          ELSE
+   0:         IF (I >= FOR_I_END2) THEN
+   0:             GOTO _FOR_LOOP353
+              END IF
+          END IF
+  36:     GOTO *FOR_I_EXIT2
+  37: _FOR_LOOP353:
+  38: _L80_354:
+  39:     CALL RUNTIME.PRINT_INTEGER(I)
+  40:     CALL RUNTIME.PRINT_NEWLINE()
+  41: _L90_355:
+  42:     FOR_I_EXIT2 = (addrof(_FOR_EXIT356) - 1)
+  43:     GOTO *FOR_I_NEXT2
+  44: _FOR_EXIT356:
+  45: _L100_357:
+  46:     CALL RUNTIME.PRINT_STRING("DONE")
+  47:     CALL RUNTIME.PRINT_NEWLINE()
+  48: _L110_358:
+  49:     END
+
+FUNCTION _LHS_STRING(START AS INTEGER, STRING AS STRING) AS STRING
+END FUNCTION
+

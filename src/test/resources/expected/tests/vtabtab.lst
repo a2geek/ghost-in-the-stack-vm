@@ -1,0 +1,44 @@
+MAIN:
+    DIM _ONERR_TARGET AS ADDRESS = null
+    DIM _ONERR_FP AS ADDRESS = null
+    DIM _ONERR_SP AS ADDRESS = null
+    DIM I AS INTEGER = null
+    DIM FOR_I_END3 AS INTEGER = null
+    DIM FOR_I_STEP3 AS INTEGER = null
+    DIM FOR_I_NEXT3 AS ADDRESS = null
+    DIM FOR_I_EXIT3 AS ADDRESS = null
+   0: _L10_396:
+   1:     I = 1
+   2:     FOR_I_END3 = 24
+   3:     FOR_I_STEP3 = 1
+   4:     FOR_I_NEXT3 = (addrof(_FOR_NEXT397) - 1)
+   5:     GOTO _FOR_LOOP397
+   6: _FOR_NEXT397:
+   7:     I = (I + FOR_I_STEP3)
+   8:     IF (MATH.SGN(1) >= 0) THEN
+   0:         IF (I <= FOR_I_END3) THEN
+   0:             GOTO _FOR_LOOP397
+              END IF
+          ELSE
+   0:         IF (I >= FOR_I_END3) THEN
+   0:             GOTO _FOR_LOOP397
+              END IF
+          END IF
+   9:     GOTO *FOR_I_EXIT3
+  10: _FOR_LOOP397:
+  11: _L20_398:
+  12:     CALL TEXT.VTAB(I)
+  13:     CALL TEXT.HTAB(I)
+  14:     CALL RUNTIME.PRINT_INTEGER(I)
+  15: _L30_399:
+  16:     FOR_I_EXIT3 = (addrof(_FOR_EXIT400) - 1)
+  17:     GOTO *FOR_I_NEXT3
+  18: _FOR_EXIT400:
+  19: _L40_401:
+  20:     CALL TEXT.VTAB(10)
+  21: _L50_402:
+  22:     END
+
+FUNCTION _LHS_STRING(START AS INTEGER, STRING AS STRING) AS STRING
+END FUNCTION
+
