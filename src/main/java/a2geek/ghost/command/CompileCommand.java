@@ -24,6 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -341,45 +342,46 @@ public class CompileCommand implements Callable<Integer> {
         }
 
         public void apply(Program program) {
-            if (constantReduction) {
-                execute(program, new ConstantReductionVisitor());
-            }
             if (noOptimizations) {
-                // Constant reduction must be present at this time since ASC("A") doesn't exist in runtime.
                 return;
             }
+
+            var optimizations = new HashSet<Supplier<ProgramVisitor>>();
+            if (constantReduction) {
+                optimizations.add(ConstantReductionVisitor::new);
+            }
             if (codeInlining) {
-                execute(program, new InliningVisitor());
-                execute(program, new InliningCleanupVisitor());
+                optimizations.add(InliningVisitor::new);
+                optimizations.add(InliningCleanupVisitor::new);
             }
             if (strengthReduction) {
-                execute(program, new StrengthReductionVisitor());
+                optimizations.add(StrengthReductionVisitor::new);
             }
             if (deadCodeElimination) {
-                execute(program, new DeadCodeEliminationVisitor());
+                optimizations.add(DeadCodeEliminationVisitor::new);
             }
             if (expressionRewriting) {
-                execute(program, new ExpressionRewriteVisitor());
+                optimizations.add(ExpressionRewriteVisitor::new);
             }
             if (subexpressionElimination) {
-                execute(program, new SubexpressionEliminationVisitor());
+                optimizations.add(SubexpressionEliminationVisitor::new);
             }
             if (tempVariableConsolidation) {
-                execute(program, new TempVariableConsolidationVisitor());
+                optimizations.add(TempVariableConsolidationVisitor::new);
             }
-        }
 
-        void execute(Program program, ProgramVisitor visitor) {
-            if (visitor instanceof RepeatingVisitor repeating) {
-                int counter = 0;
-                do {
-                    counter = repeating.getCounter();
+            int counter = 0;
+            int oldCounter = 0;
+            do {
+                oldCounter = counter;
+                for (var optimizer : optimizations) {
+                    var visitor = optimizer.get();
                     visitor.visit(program);
-                } while (repeating.getCounter() != counter);
-            }
-            else {
-                visitor.visit(program);
-            }
+                    if (visitor instanceof RepeatingVisitor repeating) {
+                        counter += repeating.getCounter();
+                    }
+                }
+            } while (counter != oldCounter);
         }
 
         public void apply(List<Instruction> code) {
