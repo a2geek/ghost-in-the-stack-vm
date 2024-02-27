@@ -8,7 +8,6 @@ import a2geek.ghost.model.SymbolType;
 import java.util.function.BiFunction;
 
 public class ForFrame {
-    private static int forNumber = 0;
     private final Symbol varRef;
     private final Symbol endRef;
     private final Symbol stepRef;
@@ -17,7 +16,7 @@ public class ForFrame {
 
     public ForFrame(Symbol varRef, Scope scope) {
         this.varRef = varRef;
-        var num = forNumber++;
+        var num = Scope.nextSymbolNumber();
         BiFunction<String,DataType,Symbol.Builder> mkBuilder = (fmt, dt) -> Symbol.variable(String.format(fmt, varRef.name(), num), SymbolType.VARIABLE).dataType(dt);
         this.endRef = scope.addLocalSymbol(mkBuilder.apply("for_%s_end%d", varRef.dataType()));
         this.stepRef = scope.addLocalSymbol(mkBuilder.apply("for_%s_step%d", varRef.dataType()));

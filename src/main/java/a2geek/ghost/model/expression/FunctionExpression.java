@@ -137,8 +137,8 @@ public class FunctionExpression implements Expression {
             return Optional.of(s.getValue().charAt(0)|0x80);
         }
         else if (matches("sgn", "math.sgn") && parameters.size() == 1 &&
-                parameters.getFirst() instanceof IntegerConstant i) {
-            return Optional.of(Integer.signum(i.getValue()));
+                parameters.getFirst().isConstant()) {
+            return Optional.of(Integer.signum(parameters.getFirst().asInteger().orElseThrow()));
         }
         return Optional.empty();
     }

@@ -22,6 +22,10 @@ public class Scope extends StatementBlock {
     public static void reset() {
         symbolNumber = 1;
     }
+    public static int nextSymbolNumber() {
+        symbolNumber += 1;
+        return symbolNumber;
+    }
 
     public Scope(Function<String,String> caseStrategy, String name) {
         this.caseStrategy = caseStrategy;

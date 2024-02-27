@@ -4,6 +4,10 @@ import a2geek.ghost.antlr.ParseUtil;
 import a2geek.ghost.command.util.PrettyPrintVisitor;
 import a2geek.ghost.model.ModelBuilder;
 import a2geek.ghost.model.scope.Program;
+import com.github.difflib.DiffUtils;
+import com.github.difflib.patch.DeltaType;
+import com.github.difflib.text.DiffRow;
+import com.github.difflib.text.DiffRowGenerator;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -14,9 +18,14 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.github.difflib.DiffUtils.diff;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * This test compiles everything in the tests directory and compares the results to what existed before.
@@ -58,7 +67,32 @@ public class CompileResultTest {
         if (Files.exists(expectedIntermediate)) {
             // compare
             var expected = Files.readString(expectedIntermediate);
-            assertEquals(expected, actual);
+
+            var patches = DiffUtils.diff(expected, actual, null);
+            var sb = new StringBuilder();
+            patches.getDeltas().forEach(delta -> {
+                if (delta.getType() != DeltaType.EQUAL) {
+                    sb.append(toString(delta.getSource().getChangePosition()));
+                    sb.append(delta.getType());
+                    sb.append(toString(delta.getTarget().getChangePosition()));
+                    sb.append("\n");
+                    if (delta.getSource().getLines() != null) {
+                        delta.getSource().getLines().forEach(line -> {
+                            sb.append(String.format("< %s\n", line));
+                        });
+                    }
+                    sb.append("---\n");
+                    if (delta.getTarget().getLines() != null) {
+                        delta.getTarget().getLines().forEach(line -> {
+                            sb.append(String.format("> %s\n", line));
+                        });
+                    }
+                }
+            });
+
+            if (!sb.isEmpty()) {
+                fail(sb.toString());
+            }
         }
         else {
             // save output
@@ -67,5 +101,12 @@ public class CompileResultTest {
             }
             Files.write(expectedIntermediate, actual.getBytes());
         }
+    }
+
+    static String toString(List<Integer> lines) {
+        if (lines == null || lines.isEmpty()) {
+            return "";
+        }
+        return lines.stream().map(Object::toString).collect(Collectors.joining(","));
     }
 }
