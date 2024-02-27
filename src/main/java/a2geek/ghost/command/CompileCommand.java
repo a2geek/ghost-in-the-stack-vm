@@ -346,7 +346,7 @@ public class CompileCommand implements Callable<Integer> {
                 return;
             }
 
-            var optimizations = new HashSet<Supplier<ProgramVisitor>>();
+            var optimizations = new ArrayList<Supplier<ProgramVisitor>>();
             if (constantReduction) {
                 optimizations.add(ConstantReductionVisitor::new);
             }
