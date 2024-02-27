@@ -19,6 +19,10 @@ public class Scope extends StatementBlock {
     /** Tracking a distinct global label number to prevent name collisions. */
     private static int symbolNumber = 1;
 
+    public static void reset() {
+        symbolNumber = 1;
+    }
+
     public Scope(Function<String,String> caseStrategy, String name) {
         this.caseStrategy = caseStrategy;
         this.name = caseStrategy.apply(name);

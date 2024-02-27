@@ -8,59 +8,59 @@ MAIN:
    2:     CALL RUNTIME.PRINT_STRING("positive step")
    3:     CALL RUNTIME.PRINT_NEWLINE()
    4:     I = 1
-   5: _FOR_LOOP491:
+   5: _FOR_LOOP7:
    6:     IF (MATH.SGN(1) >= 0) THEN
    0:         IF (I <= 10) THEN
    0:             CALL RUNTIME.PRINT_INTEGER(I)
    1:             CALL RUNTIME.PRINT_NEWLINE()
    2:             IF (I = 5) THEN
-   0:                 GOTO _FOR_EXIT491
+   0:                 GOTO _FOR_EXIT7
                   END IF
-   3: _FOR_CONTINUE491:
+   3: _FOR_CONTINUE7:
    4:             I = (I + 1)
-   5:             GOTO _FOR_LOOP491
+   5:             GOTO _FOR_LOOP7
               END IF
           ELSE
    0:         IF (I >= 10) THEN
    0:             CALL RUNTIME.PRINT_INTEGER(I)
    1:             CALL RUNTIME.PRINT_NEWLINE()
    2:             IF (I = 5) THEN
-   0:                 GOTO _FOR_EXIT491
+   0:                 GOTO _FOR_EXIT7
                   END IF
-   3: _FOR_CONTINUE491:
+   3: _FOR_CONTINUE7:
    4:             I = (I + 1)
-   5:             GOTO _FOR_LOOP491
+   5:             GOTO _FOR_LOOP7
               END IF
           END IF
-   7: _FOR_EXIT491:
+   7: _FOR_EXIT7:
    8:     CALL RUNTIME.PRINT_STRING("negative step")
    9:     CALL RUNTIME.PRINT_NEWLINE()
   10:     I = 10
-  11: _FOR_LOOP492:
+  11: _FOR_LOOP8:
   12:     IF (MATH.SGN((- 1)) >= 0) THEN
    0:         IF (I <= 1) THEN
    0:             CALL RUNTIME.PRINT_INTEGER(I)
    1:             CALL RUNTIME.PRINT_NEWLINE()
    2:             IF (I = 5) THEN
-   0:                 GOTO _FOR_EXIT492
+   0:                 GOTO _FOR_EXIT8
                   END IF
-   3: _FOR_CONTINUE492:
+   3: _FOR_CONTINUE8:
    4:             I = (I + (- 1))
-   5:             GOTO _FOR_LOOP492
+   5:             GOTO _FOR_LOOP8
               END IF
           ELSE
    0:         IF (I >= 1) THEN
    0:             CALL RUNTIME.PRINT_INTEGER(I)
    1:             CALL RUNTIME.PRINT_NEWLINE()
    2:             IF (I = 5) THEN
-   0:                 GOTO _FOR_EXIT492
+   0:                 GOTO _FOR_EXIT8
                   END IF
-   3: _FOR_CONTINUE492:
+   3: _FOR_CONTINUE8:
    4:             I = (I + (- 1))
-   5:             GOTO _FOR_LOOP492
+   5:             GOTO _FOR_LOOP8
               END IF
           END IF
-  13: _FOR_EXIT492:
+  13: _FOR_EXIT8:
   14:     CALL RUNTIME.PRINT_STRING("done")
   15:     CALL RUNTIME.PRINT_NEWLINE()
   16:     END

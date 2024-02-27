@@ -16,7 +16,7 @@ FUNCTION ARRAYTOTAL(MYARRAY AS INTEGER) AS INTEGER
     DIM TOTAL AS INTEGER = null
     DIM I AS INTEGER = null
    0:     I = 0
-   1: _FOR_LOOP9:
+   1: _FOR_LOOP2:
    2:     IF (MATH.SGN(1) >= 0) THEN
    0:         IF (I <= (ubound(MYARRAY,1) - 1)) THEN
    0:             IF (I > ubound(MYARRAY,1)) THEN **
@@ -28,9 +28,9 @@ FUNCTION ARRAYTOTAL(MYARRAY AS INTEGER) AS INTEGER
    5:                 RAISE ERROR
                   END IF
    1:             TOTAL = (TOTAL + *(((MYARRAY + 2) + (I * 2))))
-   2: _FOR_CONTINUE9:
+   2: _FOR_CONTINUE2:
    3:             I = (I + 1)
-   4:             GOTO _FOR_LOOP9
+   4:             GOTO _FOR_LOOP2
               END IF
           ELSE
    0:         IF (I >= (ubound(MYARRAY,1) - 1)) THEN
@@ -43,12 +43,12 @@ FUNCTION ARRAYTOTAL(MYARRAY AS INTEGER) AS INTEGER
    5:                 RAISE ERROR
                   END IF
    1:             TOTAL = (TOTAL + *(((MYARRAY + 2) + (I * 2))))
-   2: _FOR_CONTINUE9:
+   2: _FOR_CONTINUE2:
    3:             I = (I + 1)
-   4:             GOTO _FOR_LOOP9
+   4:             GOTO _FOR_LOOP2
               END IF
           END IF
-   3: _FOR_EXIT9:
+   3: _FOR_EXIT2:
    4:     RETURN TOTAL
 END FUNCTION
 

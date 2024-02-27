@@ -11,11 +11,11 @@ MAIN:
    1:     *((XY + 0)) = 5
    2:     *((XY + 2)) = 5
    3:     X = 1
-   4: _FOR_LOOP364:
+   4: _FOR_LOOP7:
    5:     IF (MATH.SGN(1) >= 0) THEN
    0:         IF (X <= 5) THEN
    0:             Y = 1
-   1: _FOR_LOOP365:
+   1: _FOR_LOOP8:
    2:             IF (MATH.SGN(1) >= 0) THEN
    0:                 IF (Y <= 5) THEN
    0:                     IF ((X > ubound(XY,1)) or (Y > ubound(XY,2))) THEN **
@@ -27,9 +27,9 @@ MAIN:
    5:                         RAISE ERROR
                           END IF
    1:                     *(((XY + 4) + (((X * (5 + 1)) + Y) * 2))) = MATH.RND(16)
-   2: _FOR_CONTINUE365:
+   2: _FOR_CONTINUE8:
    3:                     Y = (Y + 1)
-   4:                     GOTO _FOR_LOOP365
+   4:                     GOTO _FOR_LOOP8
                       END IF
                   ELSE
    0:                 IF (Y >= 5) THEN
@@ -42,20 +42,20 @@ MAIN:
    5:                         RAISE ERROR
                           END IF
    1:                     *(((XY + 4) + (((X * (5 + 1)) + Y) * 2))) = MATH.RND(16)
-   2: _FOR_CONTINUE365:
+   2: _FOR_CONTINUE8:
    3:                     Y = (Y + 1)
-   4:                     GOTO _FOR_LOOP365
+   4:                     GOTO _FOR_LOOP8
                       END IF
                   END IF
-   3: _FOR_EXIT365:
-   4: _FOR_CONTINUE364:
+   3: _FOR_EXIT8:
+   4: _FOR_CONTINUE7:
    5:             X = (X + 1)
-   6:             GOTO _FOR_LOOP364
+   6:             GOTO _FOR_LOOP7
               END IF
           ELSE
    0:         IF (X >= 5) THEN
    0:             Y = 1
-   1: _FOR_LOOP365:
+   1: _FOR_LOOP8:
    2:             IF (MATH.SGN(1) >= 0) THEN
    0:                 IF (Y <= 5) THEN
    0:                     IF ((X > ubound(XY,1)) or (Y > ubound(XY,2))) THEN **
@@ -67,9 +67,9 @@ MAIN:
    5:                         RAISE ERROR
                           END IF
    1:                     *(((XY + 4) + (((X * (5 + 1)) + Y) * 2))) = MATH.RND(16)
-   2: _FOR_CONTINUE365:
+   2: _FOR_CONTINUE8:
    3:                     Y = (Y + 1)
-   4:                     GOTO _FOR_LOOP365
+   4:                     GOTO _FOR_LOOP8
                       END IF
                   ELSE
    0:                 IF (Y >= 5) THEN
@@ -82,33 +82,33 @@ MAIN:
    5:                         RAISE ERROR
                           END IF
    1:                     *(((XY + 4) + (((X * (5 + 1)) + Y) * 2))) = MATH.RND(16)
-   2: _FOR_CONTINUE365:
+   2: _FOR_CONTINUE8:
    3:                     Y = (Y + 1)
-   4:                     GOTO _FOR_LOOP365
+   4:                     GOTO _FOR_LOOP8
                       END IF
                   END IF
-   3: _FOR_EXIT365:
-   4: _FOR_CONTINUE364:
+   3: _FOR_EXIT8:
+   4: _FOR_CONTINUE7:
    5:             X = (X + 1)
-   6:             GOTO _FOR_LOOP364
+   6:             GOTO _FOR_LOOP7
               END IF
           END IF
-   6: _FOR_EXIT364:
+   6: _FOR_EXIT7:
    7:     CALL LORES.GR()
    8:     I = 0
-   9: _FOR_LOOP366:
+   9: _FOR_LOOP9:
   10:     IF (MATH.SGN(5) >= 0) THEN
    0:         IF (I <= 39) THEN
    0:             J = 0
-   1: _FOR_LOOP367:
+   1: _FOR_LOOP10:
    2:             IF (MATH.SGN(5) >= 0) THEN
    0:                 IF (J <= 39) THEN
    0:                     X = 1
-   1: _FOR_LOOP368:
+   1: _FOR_LOOP11:
    2:                     IF (MATH.SGN(1) >= 0) THEN
    0:                         IF (X <= 5) THEN
    0:                             Y = 1
-   1: _FOR_LOOP369:
+   1: _FOR_LOOP12:
    2:                             IF (MATH.SGN(1) >= 0) THEN
    0:                                 IF (Y <= 5) THEN
    0:                                     IF ((X > ubound(XY,1)) or (Y > ubound(XY,2))) THEN **
@@ -121,9 +121,9 @@ MAIN:
                                           END IF
    1:                                     CALL LORES.COLOR(*(((XY + 4) + (((X * (5 + 1)) + Y) * 2))))
    2:                                     CALL LORES.PLOT(((X - 1) + I), ((Y - 1) + J))
-   3: _FOR_CONTINUE369:
+   3: _FOR_CONTINUE12:
    4:                                     Y = (Y + 1)
-   5:                                     GOTO _FOR_LOOP369
+   5:                                     GOTO _FOR_LOOP12
                                       END IF
                                   ELSE
    0:                                 IF (Y >= 5) THEN
@@ -137,20 +137,20 @@ MAIN:
                                           END IF
    1:                                     CALL LORES.COLOR(*(((XY + 4) + (((X * (5 + 1)) + Y) * 2))))
    2:                                     CALL LORES.PLOT(((X - 1) + I), ((Y - 1) + J))
-   3: _FOR_CONTINUE369:
+   3: _FOR_CONTINUE12:
    4:                                     Y = (Y + 1)
-   5:                                     GOTO _FOR_LOOP369
+   5:                                     GOTO _FOR_LOOP12
                                       END IF
                                   END IF
-   3: _FOR_EXIT369:
-   4: _FOR_CONTINUE368:
+   3: _FOR_EXIT12:
+   4: _FOR_CONTINUE11:
    5:                             X = (X + 1)
-   6:                             GOTO _FOR_LOOP368
+   6:                             GOTO _FOR_LOOP11
                               END IF
                           ELSE
    0:                         IF (X >= 5) THEN
    0:                             Y = 1
-   1: _FOR_LOOP369:
+   1: _FOR_LOOP12:
    2:                             IF (MATH.SGN(1) >= 0) THEN
    0:                                 IF (Y <= 5) THEN
    0:                                     IF ((X > ubound(XY,1)) or (Y > ubound(XY,2))) THEN **
@@ -163,9 +163,9 @@ MAIN:
                                           END IF
    1:                                     CALL LORES.COLOR(*(((XY + 4) + (((X * (5 + 1)) + Y) * 2))))
    2:                                     CALL LORES.PLOT(((X - 1) + I), ((Y - 1) + J))
-   3: _FOR_CONTINUE369:
+   3: _FOR_CONTINUE12:
    4:                                     Y = (Y + 1)
-   5:                                     GOTO _FOR_LOOP369
+   5:                                     GOTO _FOR_LOOP12
                                       END IF
                                   ELSE
    0:                                 IF (Y >= 5) THEN
@@ -179,30 +179,30 @@ MAIN:
                                           END IF
    1:                                     CALL LORES.COLOR(*(((XY + 4) + (((X * (5 + 1)) + Y) * 2))))
    2:                                     CALL LORES.PLOT(((X - 1) + I), ((Y - 1) + J))
-   3: _FOR_CONTINUE369:
+   3: _FOR_CONTINUE12:
    4:                                     Y = (Y + 1)
-   5:                                     GOTO _FOR_LOOP369
+   5:                                     GOTO _FOR_LOOP12
                                       END IF
                                   END IF
-   3: _FOR_EXIT369:
-   4: _FOR_CONTINUE368:
+   3: _FOR_EXIT12:
+   4: _FOR_CONTINUE11:
    5:                             X = (X + 1)
-   6:                             GOTO _FOR_LOOP368
+   6:                             GOTO _FOR_LOOP11
                               END IF
                           END IF
-   3: _FOR_EXIT368:
-   4: _FOR_CONTINUE367:
+   3: _FOR_EXIT11:
+   4: _FOR_CONTINUE10:
    5:                     J = (J + 5)
-   6:                     GOTO _FOR_LOOP367
+   6:                     GOTO _FOR_LOOP10
                       END IF
                   ELSE
    0:                 IF (J >= 39) THEN
    0:                     X = 1
-   1: _FOR_LOOP368:
+   1: _FOR_LOOP11:
    2:                     IF (MATH.SGN(1) >= 0) THEN
    0:                         IF (X <= 5) THEN
    0:                             Y = 1
-   1: _FOR_LOOP369:
+   1: _FOR_LOOP12:
    2:                             IF (MATH.SGN(1) >= 0) THEN
    0:                                 IF (Y <= 5) THEN
    0:                                     IF ((X > ubound(XY,1)) or (Y > ubound(XY,2))) THEN **
@@ -215,9 +215,9 @@ MAIN:
                                           END IF
    1:                                     CALL LORES.COLOR(*(((XY + 4) + (((X * (5 + 1)) + Y) * 2))))
    2:                                     CALL LORES.PLOT(((X - 1) + I), ((Y - 1) + J))
-   3: _FOR_CONTINUE369:
+   3: _FOR_CONTINUE12:
    4:                                     Y = (Y + 1)
-   5:                                     GOTO _FOR_LOOP369
+   5:                                     GOTO _FOR_LOOP12
                                       END IF
                                   ELSE
    0:                                 IF (Y >= 5) THEN
@@ -231,20 +231,20 @@ MAIN:
                                           END IF
    1:                                     CALL LORES.COLOR(*(((XY + 4) + (((X * (5 + 1)) + Y) * 2))))
    2:                                     CALL LORES.PLOT(((X - 1) + I), ((Y - 1) + J))
-   3: _FOR_CONTINUE369:
+   3: _FOR_CONTINUE12:
    4:                                     Y = (Y + 1)
-   5:                                     GOTO _FOR_LOOP369
+   5:                                     GOTO _FOR_LOOP12
                                       END IF
                                   END IF
-   3: _FOR_EXIT369:
-   4: _FOR_CONTINUE368:
+   3: _FOR_EXIT12:
+   4: _FOR_CONTINUE11:
    5:                             X = (X + 1)
-   6:                             GOTO _FOR_LOOP368
+   6:                             GOTO _FOR_LOOP11
                               END IF
                           ELSE
    0:                         IF (X >= 5) THEN
    0:                             Y = 1
-   1: _FOR_LOOP369:
+   1: _FOR_LOOP12:
    2:                             IF (MATH.SGN(1) >= 0) THEN
    0:                                 IF (Y <= 5) THEN
    0:                                     IF ((X > ubound(XY,1)) or (Y > ubound(XY,2))) THEN **
@@ -257,9 +257,9 @@ MAIN:
                                           END IF
    1:                                     CALL LORES.COLOR(*(((XY + 4) + (((X * (5 + 1)) + Y) * 2))))
    2:                                     CALL LORES.PLOT(((X - 1) + I), ((Y - 1) + J))
-   3: _FOR_CONTINUE369:
+   3: _FOR_CONTINUE12:
    4:                                     Y = (Y + 1)
-   5:                                     GOTO _FOR_LOOP369
+   5:                                     GOTO _FOR_LOOP12
                                       END IF
                                   ELSE
    0:                                 IF (Y >= 5) THEN
@@ -273,40 +273,40 @@ MAIN:
                                           END IF
    1:                                     CALL LORES.COLOR(*(((XY + 4) + (((X * (5 + 1)) + Y) * 2))))
    2:                                     CALL LORES.PLOT(((X - 1) + I), ((Y - 1) + J))
-   3: _FOR_CONTINUE369:
+   3: _FOR_CONTINUE12:
    4:                                     Y = (Y + 1)
-   5:                                     GOTO _FOR_LOOP369
+   5:                                     GOTO _FOR_LOOP12
                                       END IF
                                   END IF
-   3: _FOR_EXIT369:
-   4: _FOR_CONTINUE368:
+   3: _FOR_EXIT12:
+   4: _FOR_CONTINUE11:
    5:                             X = (X + 1)
-   6:                             GOTO _FOR_LOOP368
+   6:                             GOTO _FOR_LOOP11
                               END IF
                           END IF
-   3: _FOR_EXIT368:
-   4: _FOR_CONTINUE367:
+   3: _FOR_EXIT11:
+   4: _FOR_CONTINUE10:
    5:                     J = (J + 5)
-   6:                     GOTO _FOR_LOOP367
+   6:                     GOTO _FOR_LOOP10
                       END IF
                   END IF
-   3: _FOR_EXIT367:
-   4: _FOR_CONTINUE366:
+   3: _FOR_EXIT10:
+   4: _FOR_CONTINUE9:
    5:             I = (I + 5)
-   6:             GOTO _FOR_LOOP366
+   6:             GOTO _FOR_LOOP9
               END IF
           ELSE
    0:         IF (I >= 39) THEN
    0:             J = 0
-   1: _FOR_LOOP367:
+   1: _FOR_LOOP10:
    2:             IF (MATH.SGN(5) >= 0) THEN
    0:                 IF (J <= 39) THEN
    0:                     X = 1
-   1: _FOR_LOOP368:
+   1: _FOR_LOOP11:
    2:                     IF (MATH.SGN(1) >= 0) THEN
    0:                         IF (X <= 5) THEN
    0:                             Y = 1
-   1: _FOR_LOOP369:
+   1: _FOR_LOOP12:
    2:                             IF (MATH.SGN(1) >= 0) THEN
    0:                                 IF (Y <= 5) THEN
    0:                                     IF ((X > ubound(XY,1)) or (Y > ubound(XY,2))) THEN **
@@ -319,9 +319,9 @@ MAIN:
                                           END IF
    1:                                     CALL LORES.COLOR(*(((XY + 4) + (((X * (5 + 1)) + Y) * 2))))
    2:                                     CALL LORES.PLOT(((X - 1) + I), ((Y - 1) + J))
-   3: _FOR_CONTINUE369:
+   3: _FOR_CONTINUE12:
    4:                                     Y = (Y + 1)
-   5:                                     GOTO _FOR_LOOP369
+   5:                                     GOTO _FOR_LOOP12
                                       END IF
                                   ELSE
    0:                                 IF (Y >= 5) THEN
@@ -335,20 +335,20 @@ MAIN:
                                           END IF
    1:                                     CALL LORES.COLOR(*(((XY + 4) + (((X * (5 + 1)) + Y) * 2))))
    2:                                     CALL LORES.PLOT(((X - 1) + I), ((Y - 1) + J))
-   3: _FOR_CONTINUE369:
+   3: _FOR_CONTINUE12:
    4:                                     Y = (Y + 1)
-   5:                                     GOTO _FOR_LOOP369
+   5:                                     GOTO _FOR_LOOP12
                                       END IF
                                   END IF
-   3: _FOR_EXIT369:
-   4: _FOR_CONTINUE368:
+   3: _FOR_EXIT12:
+   4: _FOR_CONTINUE11:
    5:                             X = (X + 1)
-   6:                             GOTO _FOR_LOOP368
+   6:                             GOTO _FOR_LOOP11
                               END IF
                           ELSE
    0:                         IF (X >= 5) THEN
    0:                             Y = 1
-   1: _FOR_LOOP369:
+   1: _FOR_LOOP12:
    2:                             IF (MATH.SGN(1) >= 0) THEN
    0:                                 IF (Y <= 5) THEN
    0:                                     IF ((X > ubound(XY,1)) or (Y > ubound(XY,2))) THEN **
@@ -361,9 +361,9 @@ MAIN:
                                           END IF
    1:                                     CALL LORES.COLOR(*(((XY + 4) + (((X * (5 + 1)) + Y) * 2))))
    2:                                     CALL LORES.PLOT(((X - 1) + I), ((Y - 1) + J))
-   3: _FOR_CONTINUE369:
+   3: _FOR_CONTINUE12:
    4:                                     Y = (Y + 1)
-   5:                                     GOTO _FOR_LOOP369
+   5:                                     GOTO _FOR_LOOP12
                                       END IF
                                   ELSE
    0:                                 IF (Y >= 5) THEN
@@ -377,30 +377,30 @@ MAIN:
                                           END IF
    1:                                     CALL LORES.COLOR(*(((XY + 4) + (((X * (5 + 1)) + Y) * 2))))
    2:                                     CALL LORES.PLOT(((X - 1) + I), ((Y - 1) + J))
-   3: _FOR_CONTINUE369:
+   3: _FOR_CONTINUE12:
    4:                                     Y = (Y + 1)
-   5:                                     GOTO _FOR_LOOP369
+   5:                                     GOTO _FOR_LOOP12
                                       END IF
                                   END IF
-   3: _FOR_EXIT369:
-   4: _FOR_CONTINUE368:
+   3: _FOR_EXIT12:
+   4: _FOR_CONTINUE11:
    5:                             X = (X + 1)
-   6:                             GOTO _FOR_LOOP368
+   6:                             GOTO _FOR_LOOP11
                               END IF
                           END IF
-   3: _FOR_EXIT368:
-   4: _FOR_CONTINUE367:
+   3: _FOR_EXIT11:
+   4: _FOR_CONTINUE10:
    5:                     J = (J + 5)
-   6:                     GOTO _FOR_LOOP367
+   6:                     GOTO _FOR_LOOP10
                       END IF
                   ELSE
    0:                 IF (J >= 39) THEN
    0:                     X = 1
-   1: _FOR_LOOP368:
+   1: _FOR_LOOP11:
    2:                     IF (MATH.SGN(1) >= 0) THEN
    0:                         IF (X <= 5) THEN
    0:                             Y = 1
-   1: _FOR_LOOP369:
+   1: _FOR_LOOP12:
    2:                             IF (MATH.SGN(1) >= 0) THEN
    0:                                 IF (Y <= 5) THEN
    0:                                     IF ((X > ubound(XY,1)) or (Y > ubound(XY,2))) THEN **
@@ -413,9 +413,9 @@ MAIN:
                                           END IF
    1:                                     CALL LORES.COLOR(*(((XY + 4) + (((X * (5 + 1)) + Y) * 2))))
    2:                                     CALL LORES.PLOT(((X - 1) + I), ((Y - 1) + J))
-   3: _FOR_CONTINUE369:
+   3: _FOR_CONTINUE12:
    4:                                     Y = (Y + 1)
-   5:                                     GOTO _FOR_LOOP369
+   5:                                     GOTO _FOR_LOOP12
                                       END IF
                                   ELSE
    0:                                 IF (Y >= 5) THEN
@@ -429,20 +429,20 @@ MAIN:
                                           END IF
    1:                                     CALL LORES.COLOR(*(((XY + 4) + (((X * (5 + 1)) + Y) * 2))))
    2:                                     CALL LORES.PLOT(((X - 1) + I), ((Y - 1) + J))
-   3: _FOR_CONTINUE369:
+   3: _FOR_CONTINUE12:
    4:                                     Y = (Y + 1)
-   5:                                     GOTO _FOR_LOOP369
+   5:                                     GOTO _FOR_LOOP12
                                       END IF
                                   END IF
-   3: _FOR_EXIT369:
-   4: _FOR_CONTINUE368:
+   3: _FOR_EXIT12:
+   4: _FOR_CONTINUE11:
    5:                             X = (X + 1)
-   6:                             GOTO _FOR_LOOP368
+   6:                             GOTO _FOR_LOOP11
                               END IF
                           ELSE
    0:                         IF (X >= 5) THEN
    0:                             Y = 1
-   1: _FOR_LOOP369:
+   1: _FOR_LOOP12:
    2:                             IF (MATH.SGN(1) >= 0) THEN
    0:                                 IF (Y <= 5) THEN
    0:                                     IF ((X > ubound(XY,1)) or (Y > ubound(XY,2))) THEN **
@@ -455,9 +455,9 @@ MAIN:
                                           END IF
    1:                                     CALL LORES.COLOR(*(((XY + 4) + (((X * (5 + 1)) + Y) * 2))))
    2:                                     CALL LORES.PLOT(((X - 1) + I), ((Y - 1) + J))
-   3: _FOR_CONTINUE369:
+   3: _FOR_CONTINUE12:
    4:                                     Y = (Y + 1)
-   5:                                     GOTO _FOR_LOOP369
+   5:                                     GOTO _FOR_LOOP12
                                       END IF
                                   ELSE
    0:                                 IF (Y >= 5) THEN
@@ -471,30 +471,30 @@ MAIN:
                                           END IF
    1:                                     CALL LORES.COLOR(*(((XY + 4) + (((X * (5 + 1)) + Y) * 2))))
    2:                                     CALL LORES.PLOT(((X - 1) + I), ((Y - 1) + J))
-   3: _FOR_CONTINUE369:
+   3: _FOR_CONTINUE12:
    4:                                     Y = (Y + 1)
-   5:                                     GOTO _FOR_LOOP369
+   5:                                     GOTO _FOR_LOOP12
                                       END IF
                                   END IF
-   3: _FOR_EXIT369:
-   4: _FOR_CONTINUE368:
+   3: _FOR_EXIT12:
+   4: _FOR_CONTINUE11:
    5:                             X = (X + 1)
-   6:                             GOTO _FOR_LOOP368
+   6:                             GOTO _FOR_LOOP11
                               END IF
                           END IF
-   3: _FOR_EXIT368:
-   4: _FOR_CONTINUE367:
+   3: _FOR_EXIT11:
+   4: _FOR_CONTINUE10:
    5:                     J = (J + 5)
-   6:                     GOTO _FOR_LOOP367
+   6:                     GOTO _FOR_LOOP10
                       END IF
                   END IF
-   3: _FOR_EXIT367:
-   4: _FOR_CONTINUE366:
+   3: _FOR_EXIT10:
+   4: _FOR_CONTINUE9:
    5:             I = (I + 5)
-   6:             GOTO _FOR_LOOP366
+   6:             GOTO _FOR_LOOP9
               END IF
           END IF
-  11: _FOR_EXIT366:
+  11: _FOR_EXIT9:
   12:     CALL RUNTIME.PRINT_STRING("SHOULD BE A 5X5 COLOR GRID")
   13:     CALL RUNTIME.PRINT_NEWLINE()
   14:     END

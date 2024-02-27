@@ -12,7 +12,7 @@ MAIN:
    1:     CALL TEXT.HOME()
    2:     CALL LORES.GR()
    3:     C = 15
-   4: _FOR_LOOP270:
+   4: _FOR_LOOP7:
    5:     IF (MATH.SGN((- 1)) >= 0) THEN
    0:         IF (C <= 1) THEN
    0:             CALL LORES.COLOR(C)
@@ -20,9 +20,9 @@ MAIN:
    2:             T1 = (R / 16)
    3:             X = R
    4:             Y = 0
-   5: _DO_LOOP271:
+   5: _DO_LOOP8:
    6:             IF (X < Y) THEN
-   0:                 GOTO _DO_EXIT271
+   0:                 GOTO _DO_EXIT8
                   END IF
    7:             CALL LORES.HLIN((19 - X), (20 + X), (20 + Y))
    8:             CALL LORES.HLIN((19 - X), (20 + X), (19 - Y))
@@ -35,11 +35,11 @@ MAIN:
    0:                 T1 = T2
    1:                 X = (X - 1)
                   END IF
-  15:             GOTO _DO_LOOP271
-  16: _DO_EXIT271:
-  17: _FOR_CONTINUE270:
+  15:             GOTO _DO_LOOP8
+  16: _DO_EXIT8:
+  17: _FOR_CONTINUE7:
   18:             C = (C + (- 1))
-  19:             GOTO _FOR_LOOP270
+  19:             GOTO _FOR_LOOP7
               END IF
           ELSE
    0:         IF (C >= 1) THEN
@@ -48,9 +48,9 @@ MAIN:
    2:             T1 = (R / 16)
    3:             X = R
    4:             Y = 0
-   5: _DO_LOOP271:
+   5: _DO_LOOP8:
    6:             IF (X < Y) THEN
-   0:                 GOTO _DO_EXIT271
+   0:                 GOTO _DO_EXIT8
                   END IF
    7:             CALL LORES.HLIN((19 - X), (20 + X), (20 + Y))
    8:             CALL LORES.HLIN((19 - X), (20 + X), (19 - Y))
@@ -63,12 +63,12 @@ MAIN:
    0:                 T1 = T2
    1:                 X = (X - 1)
                   END IF
-  15:             GOTO _DO_LOOP271
-  16: _DO_EXIT271:
-  17: _FOR_CONTINUE270:
+  15:             GOTO _DO_LOOP8
+  16: _DO_EXIT8:
+  17: _FOR_CONTINUE7:
   18:             C = (C + (- 1))
-  19:             GOTO _FOR_LOOP270
+  19:             GOTO _FOR_LOOP7
               END IF
           END IF
-   6: _FOR_EXIT270:
+   6: _FOR_EXIT7:
 

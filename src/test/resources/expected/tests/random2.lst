@@ -8,16 +8,16 @@ MAIN:
    0:     CALL TEXT.TEXT()
    1:     CALL TEXT.HOME()
    2:     CALL LORES.GR()
-   3: _DO_LOOP165:
+   3: _DO_LOOP7:
    4:     C = MATH.RND(16)
    5:     X = MATH.RND(40)
    6:     Y = MATH.RND(40)
    7:     CALL LORES.COLOR(C)
    8:     CALL LORES.PLOT(X, Y)
    9:     IF (*((- 16384)) < 128) THEN
-   0:         GOTO _DO_LOOP165
+   0:         GOTO _DO_LOOP7
           END IF
-  10: _DO_EXIT165:
+  10: _DO_EXIT7:
   11:     *((- 16368)) = 0
   12:     CALL RUNTIME.PRINT_STRING("DONE!")
   13:     CALL RUNTIME.PRINT_NEWLINE()

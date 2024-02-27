@@ -7,7 +7,7 @@ MAIN:
    0:     CALL TEXT.TEXT()
    1:     CALL TEXT.HOME()
    2:     I = 1
-   3: _FOR_LOOP159:
+   3: _FOR_LOOP7:
    4:     IF (MATH.SGN(1) >= 0) THEN
    0:         IF (I <= 500) THEN
    0:             K = (MATH.RND(77) + 141)
@@ -59,9 +59,9 @@ MAIN:
    0:                 CALL RUNTIME.PRINT_INTEGER((MATH.RND(77) + 141))
    1:                 CALL RUNTIME.PRINT_STRING(", ")
                   END IF
-  13: _FOR_CONTINUE159:
+  13: _FOR_CONTINUE7:
   14:             I = (I + 1)
-  15:             GOTO _FOR_LOOP159
+  15:             GOTO _FOR_LOOP7
               END IF
           ELSE
    0:         IF (I >= 500) THEN
@@ -114,11 +114,11 @@ MAIN:
    0:                 CALL RUNTIME.PRINT_INTEGER((MATH.RND(77) + 141))
    1:                 CALL RUNTIME.PRINT_STRING(", ")
                   END IF
-  13: _FOR_CONTINUE159:
+  13: _FOR_CONTINUE7:
   14:             I = (I + 1)
-  15:             GOTO _FOR_LOOP159
+  15:             GOTO _FOR_LOOP7
               END IF
           END IF
-   5: _FOR_EXIT159:
+   5: _FOR_EXIT7:
    6:     END
 

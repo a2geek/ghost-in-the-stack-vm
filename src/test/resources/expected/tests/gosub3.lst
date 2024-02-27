@@ -8,51 +8,51 @@ MAIN:
     DIM FOR_I_NEXT4 AS ADDRESS = null
     DIM FOR_I_EXIT4 AS ADDRESS = null
     DIM _LINE_NUMBERS() AS INTEGER = [10, 15, 20, 30, 40, 100, 200, 300]
-    DIM _LINE_LABELS() AS ADDRESS = [addrof(_L10_461), addrof(_L15_463), addrof(_L20_464), addrof(_L30_466), addrof(_L40_468), addrof(_L100_469), addrof(_L200_470), addrof(_L300_471)]
-    DIM _TEMP465 AS INTEGER = null
-   0: _L10_461:
+    DIM _LINE_LABELS() AS ADDRESS = [addrof(_L10_12), addrof(_L15_14), addrof(_L20_15), addrof(_L30_17), addrof(_L40_19), addrof(_L100_20), addrof(_L200_21), addrof(_L300_22)]
+    DIM _TEMP16 AS INTEGER = null
+   0: _L10_12:
    1:     I = 1
    2:     FOR_I_END4 = 3
    3:     FOR_I_STEP4 = 1
-   4:     FOR_I_NEXT4 = (addrof(_FOR_NEXT462) - 1)
-   5:     GOTO _FOR_LOOP462
-   6: _FOR_NEXT462:
+   4:     FOR_I_NEXT4 = (addrof(_FOR_NEXT13) - 1)
+   5:     GOTO _FOR_LOOP13
+   6: _FOR_NEXT13:
    7:     I = (I + FOR_I_STEP4)
    8:     IF (MATH.SGN(1) >= 0) THEN
    0:         IF (I <= FOR_I_END4) THEN
-   0:             GOTO _FOR_LOOP462
+   0:             GOTO _FOR_LOOP13
               END IF
           ELSE
    0:         IF (I >= FOR_I_END4) THEN
-   0:             GOTO _FOR_LOOP462
+   0:             GOTO _FOR_LOOP13
               END IF
           END IF
    9:     GOTO *FOR_I_EXIT4
-  10: _FOR_LOOP462:
-  11: _L15_463:
+  10: _FOR_LOOP13:
+  11: _L15_14:
   12:     CALL RUNTIME.PRINT_STRING("GOSUB ")
   13:     CALL RUNTIME.PRINT_INTEGER((I * 100))
   14:     CALL RUNTIME.PRINT_NEWLINE()
-  15: _L20_464:
-  16:     _TEMP465 = RUNTIME.LINE_INDEX((I * 100), _LINE_NUMBERS())
-  17:     IF ((_TEMP465 > 0) and (_TEMP465 <= ubound(_LINE_NUMBERS(),1))) THEN
-   0:         GOTO **(((_LINE_LABELS() + 2) + ((_TEMP465 - 1) * 2)))
+  15: _L20_15:
+  16:     _TEMP16 = RUNTIME.LINE_INDEX((I * 100), _LINE_NUMBERS())
+  17:     IF ((_TEMP16 > 0) and (_TEMP16 <= ubound(_LINE_NUMBERS(),1))) THEN
+   0:         GOTO **(((_LINE_LABELS() + 2) + ((_TEMP16 - 1) * 2)))
           END IF
-  18: _L30_466:
-  19:     FOR_I_EXIT4 = (addrof(_FOR_EXIT467) - 1)
+  18: _L30_17:
+  19:     FOR_I_EXIT4 = (addrof(_FOR_EXIT18) - 1)
   20:     GOTO *FOR_I_NEXT4
-  21: _FOR_EXIT467:
-  22: _L40_468:
+  21: _FOR_EXIT18:
+  22: _L40_19:
   23:     END
-  24: _L100_469:
+  24: _L100_20:
   25:     CALL RUNTIME.PRINT_STRING("ONE")
   26:     CALL RUNTIME.PRINT_NEWLINE()
   27:     RETURN
-  28: _L200_470:
+  28: _L200_21:
   29:     CALL RUNTIME.PRINT_STRING("TWO")
   30:     CALL RUNTIME.PRINT_NEWLINE()
   31:     RETURN
-  32: _L300_471:
+  32: _L300_22:
   33:     CALL RUNTIME.PRINT_STRING("THREE")
   34:     CALL RUNTIME.PRINT_NEWLINE()
   35:     RETURN

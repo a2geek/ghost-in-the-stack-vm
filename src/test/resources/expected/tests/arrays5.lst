@@ -6,10 +6,10 @@ MAIN:
     DIM C AS INTEGER = null
     DIM X AS INTEGER = null
    0:     CALL LORES.GR()
-   1: _WHILE_LOOP413:
+   1: _WHILE_LOOP7:
    2:     IF True THEN
    0:         C = 1
-   1: _FOR_LOOP414:
+   1: _FOR_LOOP8:
    2:         IF (MATH.SGN(1) >= 0) THEN
    0:             IF (C <= 15) THEN
    0:                 CALL RUNTIME.PRINT_STRING("COLOR=")
@@ -17,7 +17,7 @@ MAIN:
    2:                 CALL RUNTIME.PRINT_NEWLINE()
    3:                 CALL LORES.COLOR(C)
    4:                 X = 0
-   5: _FOR_LOOP415:
+   5: _FOR_LOOP9:
    6:                 IF (MATH.SGN(1) >= 0) THEN
    0:                     IF (X <= 15) THEN
    0:                         IF (X > ubound(Y,1)) THEN **
@@ -56,9 +56,9 @@ MAIN:
    5:                             RAISE ERROR
                               END IF
    7:                         CALL LORES.PLOT((20 - X), (20 - *(((Y + 2) + (X * 2)))))
-   8: _FOR_CONTINUE415:
+   8: _FOR_CONTINUE9:
    9:                         X = (X + 1)
-  10:                         GOTO _FOR_LOOP415
+  10:                         GOTO _FOR_LOOP9
                           END IF
                       ELSE
    0:                     IF (X >= 15) THEN
@@ -98,15 +98,15 @@ MAIN:
    5:                             RAISE ERROR
                               END IF
    7:                         CALL LORES.PLOT((20 - X), (20 - *(((Y + 2) + (X * 2)))))
-   8: _FOR_CONTINUE415:
+   8: _FOR_CONTINUE9:
    9:                         X = (X + 1)
-  10:                         GOTO _FOR_LOOP415
+  10:                         GOTO _FOR_LOOP9
                           END IF
                       END IF
-   7: _FOR_EXIT415:
-   8: _FOR_CONTINUE414:
+   7: _FOR_EXIT9:
+   8: _FOR_CONTINUE8:
    9:                 C = (C + 1)
-  10:                 GOTO _FOR_LOOP414
+  10:                 GOTO _FOR_LOOP8
                   END IF
               ELSE
    0:             IF (C >= 15) THEN
@@ -115,7 +115,7 @@ MAIN:
    2:                 CALL RUNTIME.PRINT_NEWLINE()
    3:                 CALL LORES.COLOR(C)
    4:                 X = 0
-   5: _FOR_LOOP415:
+   5: _FOR_LOOP9:
    6:                 IF (MATH.SGN(1) >= 0) THEN
    0:                     IF (X <= 15) THEN
    0:                         IF (X > ubound(Y,1)) THEN **
@@ -154,9 +154,9 @@ MAIN:
    5:                             RAISE ERROR
                               END IF
    7:                         CALL LORES.PLOT((20 - X), (20 - *(((Y + 2) + (X * 2)))))
-   8: _FOR_CONTINUE415:
+   8: _FOR_CONTINUE9:
    9:                         X = (X + 1)
-  10:                         GOTO _FOR_LOOP415
+  10:                         GOTO _FOR_LOOP9
                           END IF
                       ELSE
    0:                     IF (X >= 15) THEN
@@ -196,19 +196,19 @@ MAIN:
    5:                             RAISE ERROR
                               END IF
    7:                         CALL LORES.PLOT((20 - X), (20 - *(((Y + 2) + (X * 2)))))
-   8: _FOR_CONTINUE415:
+   8: _FOR_CONTINUE9:
    9:                         X = (X + 1)
-  10:                         GOTO _FOR_LOOP415
+  10:                         GOTO _FOR_LOOP9
                           END IF
                       END IF
-   7: _FOR_EXIT415:
-   8: _FOR_CONTINUE414:
+   7: _FOR_EXIT9:
+   8: _FOR_CONTINUE8:
    9:                 C = (C + 1)
-  10:                 GOTO _FOR_LOOP414
+  10:                 GOTO _FOR_LOOP8
                   END IF
               END IF
-   3: _FOR_EXIT414:
-   4:         GOTO _WHILE_LOOP413
+   3: _FOR_EXIT8:
+   4:         GOTO _WHILE_LOOP7
           END IF
-   3: _WHILE_EXIT413:
+   3: _WHILE_EXIT7:
 

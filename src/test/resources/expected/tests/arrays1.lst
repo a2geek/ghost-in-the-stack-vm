@@ -4,10 +4,10 @@ MAIN:
     DIM _ONERR_SP AS ADDRESS = null
     DIM A() AS INTEGER = null
     DIM I AS INTEGER = null
-   0: _L10_202:
+   0: _L10_12:
    1:     A() = ALLOC((2 + ((2 + 1) * 2)))
    2:     *((A() + 0)) = 2
-   3: _L20_203:
+   3: _L20_13:
    4:     IF (0 > ubound(A(),1)) THEN **
    0:         ERR.NUMBER = 107
    1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
@@ -17,7 +17,7 @@ MAIN:
    5:         RAISE ERROR
           END IF
    5:     *(((A() + 2) + (0 * 2))) = 5
-   6: _L30_204:
+   6: _L30_14:
    7:     IF (0 > ubound(A(),1)) THEN **
    0:         ERR.NUMBER = 107
    1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
@@ -35,7 +35,7 @@ MAIN:
    5:         RAISE ERROR
           END IF
    9:     *(((A() + 2) + (1 * 2))) = (*(((A() + 2) + (0 * 2))) + 5)
-  10: _L40_205:
+  10: _L40_15:
   11:     IF (1 > ubound(A(),1)) THEN **
    0:         ERR.NUMBER = 107
    1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
@@ -53,7 +53,7 @@ MAIN:
    5:         RAISE ERROR
           END IF
   13:     *(((A() + 2) + (2 * 2))) = (*(((A() + 2) + (1 * 2))) + 5)
-  14: _L50_206:
+  14: _L50_16:
   15:     IF (0 > ubound(A(),1)) THEN **
    0:         ERR.NUMBER = 107
    1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
@@ -84,8 +84,8 @@ MAIN:
           END IF
   22:     CALL RUNTIME.PRINT_INTEGER(*(((A() + 2) + (2 * 2))))
   23:     CALL RUNTIME.PRINT_NEWLINE()
-  24: _L60_207:
-  25: _L70_208:
+  24: _L60_17:
+  25: _L70_18:
   26:     I = 5
   27:     IF (I > ubound(A(),1)) THEN **
    0:         ERR.NUMBER = 107
@@ -96,7 +96,7 @@ MAIN:
    5:         RAISE ERROR
           END IF
   28:     *(((A() + 2) + (I * 2))) = I
-  29: _L80_209:
+  29: _L80_19:
   30:     END
 
 FUNCTION _LHS_STRING(START AS INTEGER, STRING AS STRING) AS STRING

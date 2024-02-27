@@ -8,47 +8,47 @@ MAIN:
    2:     CALL RUNTIME.PRINT_STRING("RANDOM()")
    3:     CALL RUNTIME.PRINT_NEWLINE()
    4:     I = 1
-   5: _FOR_LOOP277:
+   5: _FOR_LOOP7:
    6:     IF (MATH.SGN(1) >= 0) THEN
    0:         IF (I <= 10) THEN
    0:             CALL RUNTIME.PRINT_INTEGER(MATH.RANDOM())
    1:             CALL RUNTIME.PRINT_NEWLINE()
-   2: _FOR_CONTINUE277:
+   2: _FOR_CONTINUE7:
    3:             I = (I + 1)
-   4:             GOTO _FOR_LOOP277
+   4:             GOTO _FOR_LOOP7
               END IF
           ELSE
    0:         IF (I >= 10) THEN
    0:             CALL RUNTIME.PRINT_INTEGER(MATH.RANDOM())
    1:             CALL RUNTIME.PRINT_NEWLINE()
-   2: _FOR_CONTINUE277:
+   2: _FOR_CONTINUE7:
    3:             I = (I + 1)
-   4:             GOTO _FOR_LOOP277
+   4:             GOTO _FOR_LOOP7
               END IF
           END IF
-   7: _FOR_EXIT277:
+   7: _FOR_EXIT7:
    8:     CALL RUNTIME.PRINT_STRING("RND(10)")
    9:     CALL RUNTIME.PRINT_NEWLINE()
   10:     I = 1
-  11: _FOR_LOOP278:
+  11: _FOR_LOOP8:
   12:     IF (MATH.SGN(1) >= 0) THEN
    0:         IF (I <= 10) THEN
    0:             CALL RUNTIME.PRINT_INTEGER(MATH.RND(10))
    1:             CALL RUNTIME.PRINT_NEWLINE()
-   2: _FOR_CONTINUE278:
+   2: _FOR_CONTINUE8:
    3:             I = (I + 1)
-   4:             GOTO _FOR_LOOP278
+   4:             GOTO _FOR_LOOP8
               END IF
           ELSE
    0:         IF (I >= 10) THEN
    0:             CALL RUNTIME.PRINT_INTEGER(MATH.RND(10))
    1:             CALL RUNTIME.PRINT_NEWLINE()
-   2: _FOR_CONTINUE278:
+   2: _FOR_CONTINUE8:
    3:             I = (I + 1)
-   4:             GOTO _FOR_LOOP278
+   4:             GOTO _FOR_LOOP8
               END IF
           END IF
-  13: _FOR_EXIT278:
+  13: _FOR_EXIT8:
   14:     CALL RUNTIME.PRINT_STRING("END")
   15:     CALL RUNTIME.PRINT_NEWLINE()
   16:     END

@@ -155,11 +155,11 @@ MAIN:
   35:     CALL RUNTIME.PRINT_STRING("--- GRID ---")
   36:     CALL RUNTIME.PRINT_NEWLINE()
   37:     I = 0
-  38: _FOR_LOOP30:
+  38: _FOR_LOOP7:
   39:     IF (MATH.SGN(1) >= 0) THEN
    0:         IF (I <= 3) THEN
    0:             J = 0
-   1: _FOR_LOOP31:
+   1: _FOR_LOOP8:
    2:             IF (MATH.SGN(1) >= 0) THEN
    0:                 IF (J <= 3) THEN
    0:                     CALL RUNTIME.PRINT_STRING(":")
@@ -173,9 +173,9 @@ MAIN:
                           END IF
    2:                     CALL RUNTIME.PRINT_STRING(*(((A$ + 4) + (((I * (3 + 1)) + J) * 2))))
    3:                     CALL RUNTIME.PRINT_STRING(": ")
-   4: _FOR_CONTINUE31:
+   4: _FOR_CONTINUE8:
    5:                     J = (J + 1)
-   6:                     GOTO _FOR_LOOP31
+   6:                     GOTO _FOR_LOOP8
                       END IF
                   ELSE
    0:                 IF (J >= 3) THEN
@@ -190,21 +190,21 @@ MAIN:
                           END IF
    2:                     CALL RUNTIME.PRINT_STRING(*(((A$ + 4) + (((I * (3 + 1)) + J) * 2))))
    3:                     CALL RUNTIME.PRINT_STRING(": ")
-   4: _FOR_CONTINUE31:
+   4: _FOR_CONTINUE8:
    5:                     J = (J + 1)
-   6:                     GOTO _FOR_LOOP31
+   6:                     GOTO _FOR_LOOP8
                       END IF
                   END IF
-   3: _FOR_EXIT31:
+   3: _FOR_EXIT8:
    4:             CALL RUNTIME.PRINT_NEWLINE()
-   5: _FOR_CONTINUE30:
+   5: _FOR_CONTINUE7:
    6:             I = (I + 1)
-   7:             GOTO _FOR_LOOP30
+   7:             GOTO _FOR_LOOP7
               END IF
           ELSE
    0:         IF (I >= 3) THEN
    0:             J = 0
-   1: _FOR_LOOP31:
+   1: _FOR_LOOP8:
    2:             IF (MATH.SGN(1) >= 0) THEN
    0:                 IF (J <= 3) THEN
    0:                     CALL RUNTIME.PRINT_STRING(":")
@@ -218,9 +218,9 @@ MAIN:
                           END IF
    2:                     CALL RUNTIME.PRINT_STRING(*(((A$ + 4) + (((I * (3 + 1)) + J) * 2))))
    3:                     CALL RUNTIME.PRINT_STRING(": ")
-   4: _FOR_CONTINUE31:
+   4: _FOR_CONTINUE8:
    5:                     J = (J + 1)
-   6:                     GOTO _FOR_LOOP31
+   6:                     GOTO _FOR_LOOP8
                       END IF
                   ELSE
    0:                 IF (J >= 3) THEN
@@ -235,19 +235,19 @@ MAIN:
                           END IF
    2:                     CALL RUNTIME.PRINT_STRING(*(((A$ + 4) + (((I * (3 + 1)) + J) * 2))))
    3:                     CALL RUNTIME.PRINT_STRING(": ")
-   4: _FOR_CONTINUE31:
+   4: _FOR_CONTINUE8:
    5:                     J = (J + 1)
-   6:                     GOTO _FOR_LOOP31
+   6:                     GOTO _FOR_LOOP8
                       END IF
                   END IF
-   3: _FOR_EXIT31:
+   3: _FOR_EXIT8:
    4:             CALL RUNTIME.PRINT_NEWLINE()
-   5: _FOR_CONTINUE30:
+   5: _FOR_CONTINUE7:
    6:             I = (I + 1)
-   7:             GOTO _FOR_LOOP30
+   7:             GOTO _FOR_LOOP7
               END IF
           END IF
-  40: _FOR_EXIT30:
+  40: _FOR_EXIT7:
   41:     CALL RUNTIME.PRINT_STRING("--- DONE ---")
   42:     CALL RUNTIME.PRINT_NEWLINE()
   43:     END

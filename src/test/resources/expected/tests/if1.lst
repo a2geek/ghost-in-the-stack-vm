@@ -11,13 +11,13 @@ MAIN:
    4:     CALL RUNTIME.PRINT_NEWLINE()
    5:     A = 1
    6:     B = 2
-   7:     GOSUB _COMPARE37
+   7:     GOSUB _COMPARE7
    8:     A = 2
-   9:     GOSUB _COMPARE37
+   9:     GOSUB _COMPARE7
   10:     A = 3
-  11:     GOSUB _COMPARE37
+  11:     GOSUB _COMPARE7
   12:     END
-  13: _COMPARE37:
+  13: _COMPARE7:
   14:     IF (A < B) THEN
    0:         CALL RUNTIME.PRINT_STRING("T  ")
           ELSE

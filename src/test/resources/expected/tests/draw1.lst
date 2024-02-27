@@ -11,7 +11,7 @@ MAIN:
    2:     CALL LORES.GR()
    3:     X = 0
    4:     Y = 0
-   5: _WHILE_LOOP119:
+   5: _WHILE_LOOP7:
    6:     IF True THEN
    0:         C = LORES.SCRN(X, Y)
    1:         CALL LORES.COLOR((15 - C))
@@ -43,7 +43,7 @@ MAIN:
    9:             CALL RUNTIME.PRINT_INTEGER(Y)
   10:             CALL RUNTIME.PRINT_NEWLINE()
               END IF
-   7:         GOTO _WHILE_LOOP119
+   7:         GOTO _WHILE_LOOP7
           END IF
-   7: _WHILE_EXIT119:
+   7: _WHILE_EXIT7:
 

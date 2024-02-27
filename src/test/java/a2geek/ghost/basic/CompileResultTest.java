@@ -37,6 +37,7 @@ public class CompileResultTest {
     @MethodSource({ "sourceFiles" })
     public void test(Path path) throws IOException {
         ModelBuilder model = new ModelBuilder(String::toUpperCase);
+        Program.reset();    // reset any global trackers for each program
         CharStream charStream = CharStreams.fromPath(path);
         if (BASIC_MATCHER.matches(path.getFileName())) {
             checkProgram(ParseUtil.basicToModel(charStream, model), path);
