@@ -30,6 +30,13 @@ public class ConstantReductionVisitor extends Visitor {
     }
 
     @Override
+    public Expression visit(DereferenceOperator expression) {
+        dispatch(expression.getExpr()).ifPresent(expression::setExpr);
+
+        return constantReduction(expression).orElse(null);
+    }
+
+    @Override
     public Expression visit(FunctionExpression expression) {
         List<Expression> exprs = expression.getParameters();
         for (int i=0; i<exprs.size(); i++) {

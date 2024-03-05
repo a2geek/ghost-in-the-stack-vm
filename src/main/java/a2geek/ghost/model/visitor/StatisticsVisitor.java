@@ -64,7 +64,7 @@ public class StatisticsVisitor extends Visitor {
             dispatch(statement.getValue());
         }
         else {
-            // Note that no instance of candidate UnaryExpressions (array references) have been seen yet
+            // Note that no instance of candidate DereferenceOperator (array references) have been seen yet
             // so we pass that on
             super.visit(statement, context);
         }

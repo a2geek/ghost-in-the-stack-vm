@@ -166,10 +166,17 @@ public abstract class Visitor extends DispatchVisitor {
     }
 
     @Override
-    public Expression visit(AddressOfFunction expression) {
     public Expression visit(AddressOfOperator expression) {
         return null;
     }
+
+    @Override
+    public Expression visit(DereferenceOperator expression) {
+        var e = dispatch(expression.getExpr());
+        if (e.isPresent()) {
+            e.ifPresent(expression::setExpr);
+            return expression;
+        }
         return null;
     }
 

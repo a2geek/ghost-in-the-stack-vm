@@ -218,7 +218,7 @@ public class InliningVisitor extends Visitor implements RepeatingVisitor {
             var expr = dispatch(statement.getValue()).orElseThrow();
             switch (dispatch(statement.getVar()).orElseThrow()) {
                 case VariableReference ref -> addStatement(new AssignmentStatement(ref, expr));
-                case UnaryExpression unary -> addStatement(new AssignmentStatement(unary, expr));
+                case DereferenceOperator deref -> addStatement(new AssignmentStatement(deref, expr));
                 default -> throw new RuntimeException("[compiler bug] unexpected LHS of assignment: " + statement);
             }
         }
@@ -266,6 +266,13 @@ public class InliningVisitor extends Visitor implements RepeatingVisitor {
             var expr = dispatch(expression.getExpr());
             // preserve the datatype since it can be type conversion
             return new UnaryExpression(expression.getOp(), expr.orElseThrow(), expression.getType());
+        }
+
+        @Override
+        public Expression visit(DereferenceOperator expression) {
+            var expr = dispatch(expression.getExpr());
+
+            return new DereferenceOperator(expr.orElseThrow(), expression.getType());
         }
 
         @Override

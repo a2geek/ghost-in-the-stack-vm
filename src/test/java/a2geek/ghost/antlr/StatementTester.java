@@ -1,8 +1,8 @@
 package a2geek.ghost.antlr;
 
 import a2geek.ghost.model.*;
+import a2geek.ghost.model.expression.DereferenceOperator;
 import a2geek.ghost.model.expression.IntegerConstant;
-import a2geek.ghost.model.expression.UnaryExpression;
 import a2geek.ghost.model.expression.VariableReference;
 import a2geek.ghost.model.scope.Subroutine;
 import a2geek.ghost.model.statement.*;
@@ -135,10 +135,9 @@ public abstract class StatementTester {
             assertEquals(fixCase(varName), ref.getSymbol().name());
         }
         // making assumptions of the expression structure... *(((array() + 2) + (index * 2))) :: all INTEGER types
-        else if (stmt.getVar() instanceof UnaryExpression unary) {
+        else if (stmt.getVar() instanceof DereferenceOperator deref) {
             var expected = VariableReference.with(symbol).plus(IntegerConstant.TWO).plus(index.times(IntegerConstant.TWO));
-            assertEquals("*", unary.getOp());
-            assertEquals(expected, unary.getExpr());
+            assertEquals(expected, deref.getExpr());
         }
         else {
             fail("unexpected left side of assignment: " + stmt);
@@ -228,10 +227,9 @@ public abstract class StatementTester {
         };
         var stmt = nextStatement(AssignmentStatement.class);
         assertEquals(value, stmt.getValue());
-        if (stmt.getVar() instanceof UnaryExpression unaryExpression) {
-            assertEquals("*", unaryExpression.getOp());
-            assertEquals(expectedType, unaryExpression.getType());
-            assertEquals(addr, unaryExpression.getExpr());
+        if (stmt.getVar() instanceof DereferenceOperator dereferenceOperator) {
+            assertEquals(expectedType, dereferenceOperator.getType());
+            assertEquals(addr, dereferenceOperator.getExpr());
         }
         else {
             fail("expecting poke (deref assignment) statement");
