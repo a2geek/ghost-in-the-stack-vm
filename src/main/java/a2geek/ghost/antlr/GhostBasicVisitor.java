@@ -98,8 +98,8 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             model.assignStmt(varRef, expr);
             return null;
         }
-        else if (ref instanceof UnaryExpression unaryRef) {
-            model.assignStmt(unaryRef, expr);
+        else if (ref instanceof DereferenceOperator deref) {
+            model.assignStmt(deref, expr);
             return null;
         }
         else {
@@ -687,7 +687,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                         var expr = visit(defaultExpr);
                         if (isArray && !expr.isConstant()) {
                             throw new RuntimeException("array default values currently must be constant: "
-                                + defaultExpr.getText());
+                                    + defaultExpr.getText());
                         }
                         defaultValues.add(expr);
                     }
@@ -756,8 +756,8 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         List<Symbol.Builder> params = Collections.emptyList();
         if (ctx.paramDecl() != null) {
             params = buildIdDeclarationList(ctx.paramDecl().paramIdDecl()).stream()
-                .map(IdDeclaration::toParameter)
-                .collect(Collectors.toList());
+                    .map(IdDeclaration::toParameter)
+                    .collect(Collectors.toList());
         }
 
         var sub = model.subDeclBegin(ctx.id.getText(), params);
@@ -808,8 +808,8 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         List<Symbol.Builder> params = Collections.emptyList();
         if (ctx.paramDecl() != null) {
             params = buildIdDeclarationList(ctx.paramDecl().paramIdDecl()).stream()
-                .map(IdDeclaration::toParameter)
-                .collect(Collectors.toList());
+                    .map(IdDeclaration::toParameter)
+                    .collect(Collectors.toList());
         }
         var id = ctx.id.getText();
         DataType dt = buildDataType(id, ctx.datatype());
@@ -845,7 +845,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                         }
                     });
                     model.addArrayDefaultVariable(decl.name(), decl.dataType(),
-                        decl.dimensions(), decl.defaultValues());
+                            decl.dimensions(), decl.defaultValues());
                 }
                 else {
                     var symbol = model.addArrayVariable(decl.name(), decl.dataType(), decl.dimensions());
@@ -1003,9 +1003,9 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         if (l.isType(DataType.STRING) && r.isType(DataType.STRING)) {
             if ("=".equals(op) || "<>".equals(op)) {
                 return new BinaryExpression(
-                    model.callFunction("strings.strcmp", Arrays.asList(l,r)),
-                    IntegerConstant.ZERO,
-                    op);
+                        model.callFunction("strings.strcmp", Arrays.asList(l,r)),
+                        IntegerConstant.ZERO,
+                        op);
             }
             else {
                 throw new RuntimeException("strings only support in/equality: " + ctx.getText());

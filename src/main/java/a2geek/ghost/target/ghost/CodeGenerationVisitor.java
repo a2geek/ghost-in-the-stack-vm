@@ -182,13 +182,13 @@ public class CodeGenerationVisitor extends DispatchVisitor {
             // A = <expr> (simple assignment)
             emitStore(ref.getSymbol());
         }
-        else if (statement.getVar() instanceof UnaryExpression unary && "*".equals(unary.getOp())) {
+        else if (statement.getVar() instanceof DereferenceOperator deref) {
             // *(<expr1>) = <expr2>   (dereferenced assignment)
-            dispatch(unary.getExpr());
+            dispatch(deref.getExpr());
             switch (statement.getValue().getType()) {
                 case BYTE -> code.emit(Opcode.ISTOREB);
                 case INTEGER, ADDRESS, STRING, BOOLEAN -> code.emit(Opcode.ISTOREW);
-                default -> throw new RuntimeException("unexpected type for dereferenced assignment: " + unary.getType());
+                default -> throw new RuntimeException("unexpected type for dereferenced assignment: " + deref.getType());
             }
         }
         else {
@@ -631,15 +631,6 @@ public class CodeGenerationVisitor extends DispatchVisitor {
             }
             code.emit(Opcode.XOR);
         }
-        else if ("*".equals(expression.getOp())) {
-            // *(<expr>)   (dereferenced load)
-            dispatch(expression.getExpr());
-            switch (expression.getType()) {
-                case BYTE -> code.emit(Opcode.ILOADB);
-                case INTEGER, ADDRESS, STRING, BOOLEAN -> code.emit(Opcode.ILOADW);
-                default -> throw new RuntimeException("unexpected type for dereferenced load: " + expression.getType());
-            }
-        }
         else if ("w2b".equals(expression.getOp())) {
             // TODO just a placeholder for now
             dispatch(expression.getExpr());
@@ -650,6 +641,18 @@ public class CodeGenerationVisitor extends DispatchVisitor {
         }
         else {
             throw new RuntimeException("unknown unary operator: " + expression.getOp());
+        }
+        return null;
+    }
+
+    @Override
+    public Expression visit(DereferenceOperator expression) {
+        // *(<expr>)   (dereferenced load)
+        dispatch(expression.getExpr());
+        switch (expression.getType()) {
+            case BYTE -> code.emit(Opcode.ILOADB);
+            case INTEGER, ADDRESS, STRING, BOOLEAN -> code.emit(Opcode.ILOADW);
+            default -> throw new RuntimeException("unexpected type for dereferenced load: " + expression.getType());
         }
         return null;
     }

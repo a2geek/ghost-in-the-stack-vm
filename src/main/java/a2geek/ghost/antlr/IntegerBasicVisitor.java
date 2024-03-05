@@ -465,8 +465,8 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         if (ivar instanceof VariableReference ref) {
             model.assignStmt(ref, expr);
         }
-        else if (ivar instanceof UnaryExpression unary && "*".equals(unary.getOp())) {
-            model.assignStmt(unary, expr);
+        else if (ivar instanceof DereferenceOperator deref) {
+            model.assignStmt(deref, expr);
         }
         else {
             throw new RuntimeException("unknown variable type: " + ivar);

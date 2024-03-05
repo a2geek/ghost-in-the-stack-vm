@@ -19,7 +19,6 @@ public class UnaryExpression implements Expression {
         this.op = op;
         this.expr = switch (this.op) {
             case "-", "not", "w2b" -> expr.checkAndCoerce(DataType.INTEGER);
-            case "*" -> expr.checkAndCoerce(DataType.ADDRESS);
             case "b2w" -> expr.checkAndCoerce(DataType.BYTE);
             default -> throw new RuntimeException("unknown unary operation: " + this.op);
         };
@@ -28,17 +27,11 @@ public class UnaryExpression implements Expression {
 
     @Override
     public boolean isConstant() {
-        if ("*".equals(this.op)) {
-            return false;
-        }
         return expr.isConstant();
     }
 
     @Override
     public Optional<Integer> asInteger() {
-        if ("*".equals(this.op)) {
-            return Optional.empty();
-        }
         return expr.asInteger().map(i -> switch (op) {
             case "-" -> -i;
             case "not" -> i==0 ? 1 : 0;
@@ -89,7 +82,7 @@ public class UnaryExpression implements Expression {
 
     @Override
     public String toString() {
-        if (Set.of("*", "b2w", "w2b").contains(op)) {
+        if (Set.of("b2w", "w2b").contains(op)) {
             return String.format("%s(%s)", op, expr);
         }
         return String.format("(%s %s)", op, expr);

@@ -1,9 +1,6 @@
 package a2geek.ghost.model;
 
-import a2geek.ghost.model.expression.BinaryExpression;
-import a2geek.ghost.model.expression.ByteConstant;
-import a2geek.ghost.model.expression.IntegerConstant;
-import a2geek.ghost.model.expression.UnaryExpression;
+import a2geek.ghost.model.expression.*;
 
 import java.util.Optional;
 
@@ -110,6 +107,12 @@ public interface Expression {
     }
     default UnaryExpression negate() {
         return new UnaryExpression("-", this);
+    }
+    default DereferenceOperator deref() {
+        return new DereferenceOperator(this, getType());
+    }
+    default DereferenceOperator deref(DataType type) {
+        return new DereferenceOperator(this, type);
     }
     default Expression toByte() {
         if (getType().sizeof() == 2) {

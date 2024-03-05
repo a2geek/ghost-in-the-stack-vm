@@ -24,13 +24,35 @@ public class ExpressionVisitors {
             case ArrayLengthFunction arrayLen -> Objects.equals(arrayLen.getSymbol(), symbol);
             case BinaryExpression bin -> hasSymbol(bin.getL(), symbol) || hasSymbol(bin.getR(), symbol);
             case BooleanConstant ignored -> false;
+            case ByteConstant ignored -> false;
+            case DereferenceOperator deref -> hasSymbol(deref.getExpr(), symbol);
             case FunctionExpression func -> func.getParameters().stream().map(param -> hasSymbol(param, symbol)).reduce(Boolean::logicalOr).orElse(false);
             case IntegerConstant ignored -> false;
-            case ByteConstant ignored -> false;
             case PlaceholderExpression ignored -> false;
             case StringConstant ignored -> false;
             case UnaryExpression unary -> hasSymbol(unary.getExpr(), symbol);
             case VariableReference ref -> Objects.equals(ref.getSymbol(), symbol);
+            default -> throw new RuntimeException("[compiler bug] unsupported expression type: " + expr);
+        };
+    }
+
+    /**
+     * Determine if the expression uses any type of array symbol.
+     */
+    public static boolean hasAnyArraySymbol(Expression expr) {
+        return switch (expr) {
+            case AddressOfOperator addrOf -> addrOf.getSymbol().numDimensions() > 0;
+            case ArrayLengthFunction arrayLen -> arrayLen.getSymbol().numDimensions() > 0;
+            case BinaryExpression bin -> hasAnyArraySymbol(bin.getL()) || hasAnyArraySymbol(bin.getR());
+            case BooleanConstant ignored -> false;
+            case ByteConstant ignored -> false;
+            case DereferenceOperator deref -> hasAnyArraySymbol(deref.getExpr());
+            case FunctionExpression func -> func.getParameters().stream().map(ExpressionVisitors::hasAnyArraySymbol).reduce(Boolean::logicalOr).orElse(false);
+            case IntegerConstant ignored -> false;
+            case PlaceholderExpression ignored -> false;
+            case StringConstant ignored -> false;
+            case UnaryExpression unary -> hasAnyArraySymbol(unary.getExpr());
+            case VariableReference ref -> ref.getSymbol().numDimensions() > 0;
             default -> throw new RuntimeException("[compiler bug] unsupported expression type: " + expr);
         };
     }
@@ -47,9 +69,10 @@ public class ExpressionVisitors {
             case ArrayLengthFunction ignored -> false;
             case BinaryExpression bin -> hasSubexpression(bin.getL(), target) || hasSubexpression(bin.getR(), target);
             case BooleanConstant ignored -> false;
+            case ByteConstant ignored -> false;
+            case DereferenceOperator deref -> hasSubexpression(deref.getExpr(), target);
             case FunctionExpression func -> func.getParameters().stream().map(param -> hasSubexpression(param, target)).reduce(Boolean::logicalOr).orElse(false);
             case IntegerConstant ignored -> false;
-            case ByteConstant ignored -> false;
             case PlaceholderExpression ignored -> false;
             case StringConstant ignored -> false;
             case UnaryExpression unary -> hasSubexpression(unary.getExpr(), target);
@@ -69,6 +92,8 @@ public class ExpressionVisitors {
             case ArrayLengthFunction ignored -> false;
             case BinaryExpression binaryExpression -> hasVolatileFunction(binaryExpression.getL()) || hasVolatileFunction(binaryExpression.getR());
             case BooleanConstant ignored -> false;
+            case ByteConstant ignored -> false;
+            case DereferenceOperator deref -> hasVolatileFunction(deref.getExpr());
             case FunctionExpression functionExpression -> {
                 if (functionExpression.isVolatile()) {
                     yield true;
@@ -76,7 +101,6 @@ public class ExpressionVisitors {
                 yield functionExpression.getParameters().stream().map(ExpressionVisitors::hasVolatileFunction).reduce(Boolean::logicalOr).orElse(false);
             }
             case IntegerConstant ignored -> false;
-            case ByteConstant ignored -> false;
             case PlaceholderExpression ignored -> false;
             case StringConstant ignored -> false;
             case UnaryExpression unaryExpression -> hasVolatileFunction(unaryExpression.getExpr());
@@ -98,9 +122,10 @@ public class ExpressionVisitors {
             case ArrayLengthFunction ignored -> 2;
             case BinaryExpression binaryExpression -> weight(binaryExpression.getL()) + weight(binaryExpression.getR());
             case BooleanConstant ignored -> 1;
+            case ByteConstant ignored -> 1;
+            case DereferenceOperator deref -> 1 + weight(deref.getExpr());
             case FunctionExpression functionExpression -> 2 + functionExpression.getParameters().stream().mapToInt(ExpressionVisitors::weight).sum();
             case IntegerConstant ignored -> 1;
-            case ByteConstant ignored -> 1;
             case PlaceholderExpression ignored -> 1;
             case StringConstant ignored -> 1;
             case UnaryExpression unaryExpression -> {
