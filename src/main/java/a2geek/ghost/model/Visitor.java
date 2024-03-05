@@ -161,6 +161,16 @@ public abstract class Visitor extends DispatchVisitor {
     }
 
     @Override
+    public Expression visit(TypeConversionOperator expression) {
+        var expr = dispatch(expression.getExpr());
+        if (expr.isPresent()) {
+            expr.ifPresent(expression::setExpr);
+            return expression;
+        }
+        return null;
+    }
+
+    @Override
     public Expression visit(ArrayLengthFunction expression) {
         return null;
     }

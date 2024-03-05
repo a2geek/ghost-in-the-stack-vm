@@ -631,14 +631,6 @@ public class CodeGenerationVisitor extends DispatchVisitor {
             }
             code.emit(Opcode.XOR);
         }
-        else if ("w2b".equals(expression.getOp())) {
-            // TODO just a placeholder for now
-            dispatch(expression.getExpr());
-        }
-        else if ("b2w".equals(expression.getOp())) {
-            // TODO just a placeholder for now
-            dispatch(expression.getExpr());
-        }
         else {
             throw new RuntimeException("unknown unary operator: " + expression.getOp());
         }
@@ -667,6 +659,13 @@ public class CodeGenerationVisitor extends DispatchVisitor {
     @Override
     public Expression visit(AddressOfOperator expression) {
         code.emit(Opcode.LOADA, expression.getSymbol().name());
+        return null;
+    }
+
+    @Override
+    public Expression visit(TypeConversionOperator expression) {
+        // TODO we don't really have "real" type conversions yet
+        dispatch(expression.getExpr());
         return null;
     }
 

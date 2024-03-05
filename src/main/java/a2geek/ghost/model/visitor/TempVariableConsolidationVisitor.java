@@ -44,6 +44,7 @@ public class TempVariableConsolidationVisitor implements ProgramVisitor {
             case IntegerConstant ignored -> {}
             case PlaceholderExpression ignored -> {}
             case StringConstant ignored -> {}
+            case TypeConversionOperator conversion -> captureActiveRanges(conversion.getExpr(), ctx, tracker);
             case UnaryExpression unary -> captureActiveRanges(unary.getExpr(), ctx, tracker);
             case VariableReference ref -> tracker.merge(ref.getSymbol(), ctx);
             default -> throw new RuntimeException("[compiler bug] unsupported expression type: " + expression);
@@ -81,6 +82,9 @@ public class TempVariableConsolidationVisitor implements ProgramVisitor {
             case IntegerConstant ignored -> {}
             case PlaceholderExpression ignored -> {}
             case StringConstant ignored -> {}
+            case TypeConversionOperator conversion -> {
+                reassignTempVariables(conversion.getExpr(), ctx, tracker).ifPresent(conversion::setExpr);
+            }
             case UnaryExpression unary -> {
                 reassignTempVariables(unary.getExpr(), ctx, tracker).ifPresent(unary::setExpr);
             }

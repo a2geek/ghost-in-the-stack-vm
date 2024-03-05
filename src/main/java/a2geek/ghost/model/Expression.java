@@ -115,22 +115,23 @@ public interface Expression {
         return new DereferenceOperator(this, type);
     }
     default Expression toByte() {
-        if (getType().sizeof() == 2) {
-            if (this.isConstant() && this.asInteger().isPresent()) {
-                return new ByteConstant(this.asInteger().get());
-            }
-            return new UnaryExpression("w2b", this, DataType.BYTE);
+        if (getType().sizeof() == 1) {
+            return this;
         }
-        return this;
+        if (this.isConstant() && this.asInteger().isPresent()) {
+            return new ByteConstant(this.asInteger().get());
+        }
+        return new TypeConversionOperator(this, DataType.BYTE);
     }
 
     default Expression toWord() {
-        if (getType().sizeof() == 1) {
-            if (this.isConstant() && this.asInteger().isPresent()) {
-                return new IntegerConstant(this.asInteger().get());
-            }
-            return new UnaryExpression("b2w", this, DataType.INTEGER);
+        if (getType().sizeof() == 2) {
+            return this;
         }
-        return this;
+        if (this.isConstant() && this.asInteger().isPresent()) {
+            return new IntegerConstant(this.asInteger().get());
+        }
+        // TODO we don't really care about type since it's size, is INTEGER a good enough general case?
+        return new TypeConversionOperator(this, DataType.INTEGER);
     }
 }

@@ -5,7 +5,6 @@ import a2geek.ghost.model.Symbol;
 import a2geek.ghost.model.expression.*;
 
 import java.util.Objects;
-import java.util.Set;
 
 /**
  * This class contains simple visitors that are implemented in a single recursive method.
@@ -30,6 +29,7 @@ public class ExpressionVisitors {
             case IntegerConstant ignored -> false;
             case PlaceholderExpression ignored -> false;
             case StringConstant ignored -> false;
+            case TypeConversionOperator conversion -> hasSymbol(conversion.getExpr(), symbol);
             case UnaryExpression unary -> hasSymbol(unary.getExpr(), symbol);
             case VariableReference ref -> Objects.equals(ref.getSymbol(), symbol);
             default -> throw new RuntimeException("[compiler bug] unsupported expression type: " + expr);
@@ -51,6 +51,7 @@ public class ExpressionVisitors {
             case IntegerConstant ignored -> false;
             case PlaceholderExpression ignored -> false;
             case StringConstant ignored -> false;
+            case TypeConversionOperator conversion -> hasAnyArraySymbol(conversion.getExpr());
             case UnaryExpression unary -> hasAnyArraySymbol(unary.getExpr());
             case VariableReference ref -> ref.getSymbol().numDimensions() > 0;
             default -> throw new RuntimeException("[compiler bug] unsupported expression type: " + expr);
@@ -75,6 +76,7 @@ public class ExpressionVisitors {
             case IntegerConstant ignored -> false;
             case PlaceholderExpression ignored -> false;
             case StringConstant ignored -> false;
+            case TypeConversionOperator conversion -> hasSubexpression(conversion.getExpr(), target);
             case UnaryExpression unary -> hasSubexpression(unary.getExpr(), target);
             case VariableReference ignored -> false;
             default -> throw new RuntimeException("[compiler bug] unsupported expression type: " + expression);
@@ -103,6 +105,7 @@ public class ExpressionVisitors {
             case IntegerConstant ignored -> false;
             case PlaceholderExpression ignored -> false;
             case StringConstant ignored -> false;
+            case TypeConversionOperator conversion -> hasVolatileFunction(conversion.getExpr());
             case UnaryExpression unaryExpression -> hasVolatileFunction(unaryExpression.getExpr());
             case VariableReference ignored -> false;
             default -> throw new RuntimeException("[compiler bug] unexpected expression: " + expression);
@@ -115,7 +118,6 @@ public class ExpressionVisitors {
      * everything else will be larger. Hypothetically, this could be used to prioritize which
      * expressions are optimized first, should that become useful.
      */
-    private static final Set<String> UNARY_IGNORE = Set.of("w2b", "b2w");   // no-ops and can cause problems
     public static int weight(Expression expression) {
         return switch (expression) {
             case AddressOfOperator ignored -> 1;
@@ -128,12 +130,8 @@ public class ExpressionVisitors {
             case IntegerConstant ignored -> 1;
             case PlaceholderExpression ignored -> 1;
             case StringConstant ignored -> 1;
-            case UnaryExpression unaryExpression -> {
-                if (UNARY_IGNORE.contains(unaryExpression.getOp())) {
-                    yield weight(unaryExpression.getExpr());
-                }
-                yield 1 + weight(unaryExpression.getExpr());
-            }
+            case TypeConversionOperator conversion -> 1 + weight(conversion.getExpr());
+            case UnaryExpression unaryExpression -> 1 + weight(unaryExpression.getExpr());
             case VariableReference ignored -> 1;
             default -> throw new RuntimeException("[compiler bug] unexpected expression: " + expression);
         };

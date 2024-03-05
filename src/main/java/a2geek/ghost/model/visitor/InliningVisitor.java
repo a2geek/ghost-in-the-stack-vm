@@ -264,8 +264,13 @@ public class InliningVisitor extends Visitor implements RepeatingVisitor {
         @Override
         public Expression visit(UnaryExpression expression) {
             var expr = dispatch(expression.getExpr());
-            // preserve the datatype since it can be type conversion
-            return new UnaryExpression(expression.getOp(), expr.orElseThrow(), expression.getType());
+            return new UnaryExpression(expression.getOp(), expr.orElseThrow());
+        }
+
+        @Override
+        public Expression visit(TypeConversionOperator expression) {
+            var expr = dispatch(expression.getExpr());
+            return new TypeConversionOperator(expr.orElseThrow(), expression.getType());
         }
 
         @Override

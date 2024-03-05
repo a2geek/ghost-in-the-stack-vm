@@ -154,6 +154,9 @@ public class SubexpressionEliminationVisitor implements ProgramVisitor {
         else if (original instanceof DereferenceOperator dereferenceOperator) {
             dereferenceOperator.setExpr(replace(dereferenceOperator.getExpr(), candidate, replacement));
         }
+        else if (original instanceof TypeConversionOperator conversionOperator) {
+            conversionOperator.setExpr(replace(conversionOperator.getExpr(), candidate, replacement));
+        }
         return original;
     }
 
@@ -186,6 +189,7 @@ public class SubexpressionEliminationVisitor implements ProgramVisitor {
             case IntegerConstant ignored -> null;
             case PlaceholderExpression ignored -> null;
             case StringConstant ignored -> null;
+            case TypeConversionOperator conversion -> capture(tracker, conversion.getExpr(), n);
             case UnaryExpression unaryExpression -> capture(tracker, unaryExpression.getExpr(), n);
             case VariableReference ignored -> null;
             default -> throw new RuntimeException("[compiler bug] unexpected expression: " + expression);

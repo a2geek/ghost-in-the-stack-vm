@@ -5,7 +5,6 @@ import a2geek.ghost.model.Expression;
 
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 
 public class UnaryExpression implements Expression {
     private final DataType type;
@@ -13,16 +12,15 @@ public class UnaryExpression implements Expression {
     private final String op;
 
     public UnaryExpression(String op, Expression expr) {
-        this(op, expr, null);
-    }
-    public UnaryExpression(String op, Expression expr, DataType dataType) {
         this.op = op;
         this.expr = switch (this.op) {
-            case "-", "not", "w2b" -> expr.checkAndCoerce(DataType.INTEGER);
-            case "b2w" -> expr.checkAndCoerce(DataType.BYTE);
+            case "-", "not" -> expr.checkAndCoerce(DataType.INTEGER);
             default -> throw new RuntimeException("unknown unary operation: " + this.op);
         };
-        this.type = dataType == null ? expr.getType() : dataType;
+        this.type = expr.getType();
+        if (!expr.isType(DataType.INTEGER, DataType.BOOLEAN)) {
+            throw new RuntimeException("Unary operation must be of type Integer or Boolean");
+        }
     }
 
     @Override
@@ -35,7 +33,6 @@ public class UnaryExpression implements Expression {
         return expr.asInteger().map(i -> switch (op) {
             case "-" -> -i;
             case "not" -> i==0 ? 1 : 0;
-            case "b2w", "w2b" -> i;
             default -> throw new RuntimeException("unknown unary operation: " + op);
         });
     }
@@ -82,9 +79,6 @@ public class UnaryExpression implements Expression {
 
     @Override
     public String toString() {
-        if (Set.of("b2w", "w2b").contains(op)) {
-            return String.format("%s(%s)", op, expr);
-        }
         return String.format("(%s %s)", op, expr);
     }
 }
