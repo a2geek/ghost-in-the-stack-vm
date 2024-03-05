@@ -167,6 +167,9 @@ public abstract class Visitor extends DispatchVisitor {
 
     @Override
     public Expression visit(AddressOfFunction expression) {
+    public Expression visit(AddressOfOperator expression) {
+        return null;
+    }
         return null;
     }
 

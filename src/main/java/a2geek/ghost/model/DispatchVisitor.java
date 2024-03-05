@@ -58,7 +58,8 @@ public abstract class DispatchVisitor implements ProgramVisitor {
             case UnaryExpression e -> Optional.ofNullable(visit(e));
             case FunctionExpression e -> Optional.ofNullable(visit(e));
             case ArrayLengthFunction e -> Optional.ofNullable(visit(e));
-            case AddressOfFunction e -> Optional.ofNullable(visit(e));
+            case DereferenceOperator e -> Optional.ofNullable(visit(e));
+            case AddressOfOperator e -> Optional.ofNullable(visit(e));
             case PlaceholderExpression e -> Optional.ofNullable(visit(e));
             default -> throw new RuntimeException("expression type not supported: " +
                             expression.getClass().getName());
@@ -120,6 +121,7 @@ public abstract class DispatchVisitor implements ProgramVisitor {
     public abstract Expression visit(UnaryExpression expression);
     public abstract Expression visit(FunctionExpression expression);
     public abstract Expression visit(ArrayLengthFunction expression);
-    public abstract Expression visit(AddressOfFunction expression);
+    public abstract Expression visit(DereferenceOperator expression);
+    public abstract Expression visit(AddressOfOperator expression);
     public abstract Expression visit(PlaceholderExpression expression);
 }

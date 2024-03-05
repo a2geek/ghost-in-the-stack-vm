@@ -95,9 +95,9 @@ public class CodeGenerationVisitor extends DispatchVisitor {
                 emitStore(symbol);
             } else if (dataType == DataType.ADDRESS) {
                 List<Symbol> labels = symbol.defaultValues().stream()
-                    .filter(AddressOfFunction.class::isInstance)
-                    .map(AddressOfFunction.class::cast)
-                    .map(AddressOfFunction::getSymbol)
+                    .filter(AddressOfOperator.class::isInstance)
+                    .map(AddressOfOperator.class::cast)
+                    .map(AddressOfOperator::getSymbol)
                     .toList();
                 var label = label("ADDRARYCONST");
                 var actual = code.emitConstantLabels(label.getFirst(), labels);
@@ -662,7 +662,7 @@ public class CodeGenerationVisitor extends DispatchVisitor {
     }
 
     @Override
-    public Expression visit(AddressOfFunction expression) {
+    public Expression visit(AddressOfOperator expression) {
         code.emit(Opcode.LOADA, expression.getSymbol().name());
         return null;
     }

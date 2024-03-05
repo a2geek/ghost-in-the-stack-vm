@@ -6,9 +6,10 @@ import a2geek.ghost.model.Symbol;
 
 import java.util.Objects;
 
-public class AddressOfFunction implements Expression {
+public class AddressOfOperator implements Expression {
     private final Symbol symbol;
-    public AddressOfFunction(Symbol symbol) {
+
+    public AddressOfOperator(Symbol symbol) {
         this.symbol = symbol;
     }
 
@@ -30,7 +31,7 @@ public class AddressOfFunction implements Expression {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        AddressOfFunction that = (AddressOfFunction) o;
+        AddressOfOperator that = (AddressOfOperator) o;
         return Objects.equals(symbol, that.symbol);
     }
 

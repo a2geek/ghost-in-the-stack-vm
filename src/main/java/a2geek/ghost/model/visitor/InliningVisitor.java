@@ -296,13 +296,13 @@ public class InliningVisitor extends Visitor implements RepeatingVisitor {
         }
 
         @Override
-        public Expression visit(AddressOfFunction expression) {
+        public Expression visit(AddressOfOperator expression) {
             if (replacements.containsKey(expression.getSymbol())) {
                 var replacement = replacements.get(expression.getSymbol());
                 if (replacement instanceof VariableReference ref) {
                     var symbol = ref.getSymbol();
                     if (symbol.numDimensions() > 0) {
-                        return new AddressOfFunction(symbol);
+                        return new AddressOfOperator(symbol);
                     }
                 }
                 var msg = String.format("unable to combine '%s' and '%s'", expression, replacement);

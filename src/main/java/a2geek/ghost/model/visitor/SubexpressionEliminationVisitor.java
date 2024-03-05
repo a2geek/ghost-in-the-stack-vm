@@ -173,7 +173,7 @@ public class SubexpressionEliminationVisitor implements ProgramVisitor {
             return expression;
         }
         return switch (expression) {
-            case AddressOfFunction ignored -> null;
+            case AddressOfOperator ignored -> null;
             case ArrayLengthFunction ignored -> null;
             case BinaryExpression binaryExpression -> captureParams(tracker, List.of(binaryExpression.getL(), binaryExpression.getR()), n);
             case BooleanConstant ignored -> null;

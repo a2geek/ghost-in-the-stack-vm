@@ -31,7 +31,7 @@ public class TempVariableConsolidationVisitor implements ProgramVisitor {
 
     public Optional<Expression> captureActiveRanges(Expression expression, VisitorContext ctx, SymbolRangeTracker tracker) {
         switch (expression) {
-            case AddressOfFunction addrOf -> tracker.merge(addrOf.getSymbol(), ctx);
+            case AddressOfOperator addrOf -> tracker.merge(addrOf.getSymbol(), ctx);
             case ArrayLengthFunction arrayLen -> tracker.merge(arrayLen.getSymbol(), ctx);
             case BinaryExpression bin -> {
                 captureActiveRanges(bin.getL(), ctx, tracker.create(ctx));
@@ -52,8 +52,8 @@ public class TempVariableConsolidationVisitor implements ProgramVisitor {
 
     public Optional<Expression> reassignTempVariables(Expression expression, VisitorContext ctx, SymbolRangeTracker tracker) {
         switch (expression) {
-            case AddressOfFunction addrOf -> {
-                expression = new AddressOfFunction(tracker.replacement(addrOf.getSymbol(), ctx));
+            case AddressOfOperator addrOf -> {
+                expression = new AddressOfOperator(tracker.replacement(addrOf.getSymbol(), ctx));
             }
             case ArrayLengthFunction arrayLen -> {
                 expression = new ArrayLengthFunction(

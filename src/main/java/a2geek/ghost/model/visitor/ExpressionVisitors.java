@@ -20,7 +20,7 @@ public class ExpressionVisitors {
      */
     public static boolean hasSymbol(Expression expr, Symbol symbol) {
         return switch (expr) {
-            case AddressOfFunction addrOf -> Objects.equals(addrOf.getSymbol(), symbol);
+            case AddressOfOperator addrOf -> Objects.equals(addrOf.getSymbol(), symbol);
             case ArrayLengthFunction arrayLen -> Objects.equals(arrayLen.getSymbol(), symbol);
             case BinaryExpression bin -> hasSymbol(bin.getL(), symbol) || hasSymbol(bin.getR(), symbol);
             case BooleanConstant ignored -> false;
@@ -43,7 +43,7 @@ public class ExpressionVisitors {
             return true;
         }
         return switch (expression) {
-            case AddressOfFunction ignored -> false;
+            case AddressOfOperator ignored -> false;
             case ArrayLengthFunction ignored -> false;
             case BinaryExpression bin -> hasSubexpression(bin.getL(), target) || hasSubexpression(bin.getR(), target);
             case BooleanConstant ignored -> false;
@@ -65,7 +65,7 @@ public class ExpressionVisitors {
      */
     public static boolean hasVolatileFunction(Expression expression) {
         return switch (expression) {
-            case AddressOfFunction ignored -> false;
+            case AddressOfOperator ignored -> false;
             case ArrayLengthFunction ignored -> false;
             case BinaryExpression binaryExpression -> hasVolatileFunction(binaryExpression.getL()) || hasVolatileFunction(binaryExpression.getR());
             case BooleanConstant ignored -> false;
@@ -94,7 +94,7 @@ public class ExpressionVisitors {
     private static final Set<String> UNARY_IGNORE = Set.of("w2b", "b2w");   // no-ops and can cause problems
     public static int weight(Expression expression) {
         return switch (expression) {
-            case AddressOfFunction ignored -> 1;
+            case AddressOfOperator ignored -> 1;
             case ArrayLengthFunction ignored -> 2;
             case BinaryExpression binaryExpression -> weight(binaryExpression.getL()) + weight(binaryExpression.getR());
             case BooleanConstant ignored -> 1;

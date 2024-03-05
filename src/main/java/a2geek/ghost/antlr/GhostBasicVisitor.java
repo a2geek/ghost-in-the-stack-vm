@@ -628,7 +628,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         var expr = model.simplify(visit(ctx.a));
         var addrof = ctx.identifier().stream()
                 .map(this::findGotoGosubLabel)
-                .map(AddressOfFunction::new)
+                .map(AddressOfOperator::new)
                 .map(Expression.class::cast)
                 .toList();
 
