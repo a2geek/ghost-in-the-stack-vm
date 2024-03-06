@@ -924,10 +924,13 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     }
 
     private final Map<String, BiFunction<List<Expression>,ParseTree,Expression>> FUNCTION_HANDLERS = Map.of(
-        "ubound", this::handleUboundFunction,
+        "addrof", this::handleAddrOfFunction,
+        "cbool", this::handleCBoolFunction,
+        "cbyte", this::handleCByteFunction,
+        "cint", this::handleCIntFunction,
         "peek", this::handlePeekFunction,
         "peekw", this::handlePeekwFunction,
-        "addrof", this::handleAddrOfFunction
+        "ubound", this::handleUboundFunction
     );
     Expression handleUboundFunction(List<Expression> params, ParseTree ctx) {
         if (params.size() == 1 && params.getFirst() instanceof VariableReference varRef) {
@@ -959,6 +962,24 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             return deref.getExpr();
         }
         throw new RuntimeException("can only take addrof a simple variable or an array index: " + ctx.getText());
+    }
+    Expression handleCBoolFunction(List<Expression> params, ParseTree ctx) {
+        if (params.size() == 1) {
+            return new TypeConversionOperator(params.getFirst(), DataType.BOOLEAN);
+        }
+        throw new RuntimeException("can only use CBool on a simple variable: " + ctx.getText());
+    }
+    Expression handleCByteFunction(List<Expression> params, ParseTree ctx) {
+        if (params.size() == 1) {
+            return new TypeConversionOperator(params.getFirst(), DataType.BYTE);
+        }
+        throw new RuntimeException("can only use CByte on a simple variable: " + ctx.getText());
+    }
+    Expression handleCIntFunction(List<Expression> params, ParseTree ctx) {
+        if (params.size() == 1) {
+            return new TypeConversionOperator(params.getFirst(), DataType.INTEGER);
+        }
+        throw new RuntimeException("can only use CInt on a simple variable: " + ctx.getText());
     }
 
     @Override
