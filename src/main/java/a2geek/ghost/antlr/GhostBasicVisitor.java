@@ -12,11 +12,13 @@ import a2geek.ghost.model.statement.OnErrorStatement;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static a2geek.ghost.model.CommonExpressions.*;
 import static a2geek.ghost.model.ModelBuilder.*;
+import static a2geek.ghost.model.visitor.ExpressionVisitors.hasAnyArraySymbol;
 
 public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     private final ModelBuilder model;
@@ -940,10 +942,26 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                 throw new RuntimeException("ubound expects a variable name (and optionally an index number) as its argument: " + ctx.getText());
             }
             case "peek" -> {
-                return derefByte(params.getFirst());
+                if (params.size() == 1) {
+                    return derefByte(params.getFirst());
+                }
+                throw new RuntimeException("peek expects one paramter: " + ctx.getText());
             }
             case "peekw" -> {
-                return derefWord(params.getFirst());
+                if (params.size() == 1) {
+                    return derefWord(params.getFirst());
+                }
+                throw new RuntimeException("peekw expects one paramter: " + ctx.getText());
+            }
+            case "addrof" -> {
+                if (params.size() == 1 && params.getFirst() instanceof VariableReference varRef) {
+                    return new AddressOfOperator(varRef.getSymbol());
+                }
+                // Array references end up wrapped in a dereference operator, so we need to unwrap it
+                else if (params.size() == 1 && params.getFirst() instanceof DereferenceOperator deref && hasAnyArraySymbol(deref.getExpr())) {
+                    return deref.getExpr();
+                }
+                throw new RuntimeException("can only take addressof a simple variable or an array index: " + ctx.getText());
             }
         }
 

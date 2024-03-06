@@ -1,0 +1,138 @@
+MAIN:
+    DIM _ONERR_TARGET AS ADDRESS = null
+    DIM _ONERR_FP AS ADDRESS = null
+    DIM _ONERR_SP AS ADDRESS = null
+    DIM N AS INTEGER = null
+    DIM N0 AS INTEGER = null
+    DIM N1 AS INTEGER = null
+    DIM N2 AS INTEGER = null
+    DIM N3 AS INTEGER = null
+    DIM N4 AS INTEGER = null
+    DIM N5 AS INTEGER = null
+    DIM GOOD AS INTEGER = null
+    DIM BAD AS INTEGER = null
+   0:     N = ALLOC((2 + ((5 + 1) * 2)))
+   1:     *((N + 0)) = 5
+   2:     CALL TEXT.TEXT()
+   3:     CALL TEXT.HOME()
+   4:     CALL RUNTIME.PRINT_STRING("1. Picking random numbers")
+   5:     CALL RUNTIME.PRINT_NEWLINE()
+   6:     N0 = MATH.RANDOM()
+   7:     N1 = MATH.RANDOM()
+   8:     N2 = MATH.RANDOM()
+   9:     N3 = MATH.RANDOM()
+  10:     N4 = MATH.RANDOM()
+  11:     N5 = MATH.RANDOM()
+  12:     CALL RUNTIME.PRINT_STRING("2. Uses ADDROF(..) to assign values")
+  13:     CALL RUNTIME.PRINT_NEWLINE()
+  14:     IF (0 > ubound(N,1)) THEN **
+   0:         ERR.NUMBER = 107
+   1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
+   2:         ERR.LINENUM = 35
+   3:         ERR.CONTEXT = "N"
+   4:         ERR.SOURCE = "ARRAYS9.BAS"
+   5:         RAISE ERROR
+          END IF
+  15:     *(((N + 2) + (0 * 2))) = N0
+  16:     IF (1 > ubound(N,1)) THEN **
+   0:         ERR.NUMBER = 107
+   1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
+   2:         ERR.LINENUM = 36
+   3:         ERR.CONTEXT = "N"
+   4:         ERR.SOURCE = "ARRAYS9.BAS"
+   5:         RAISE ERROR
+          END IF
+  17:     *(((N + 2) + (1 * 2))) = N1
+  18:     IF (2 > ubound(N,1)) THEN **
+   0:         ERR.NUMBER = 107
+   1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
+   2:         ERR.LINENUM = 37
+   3:         ERR.CONTEXT = "N"
+   4:         ERR.SOURCE = "ARRAYS9.BAS"
+   5:         RAISE ERROR
+          END IF
+  19:     *(((N + 2) + (2 * 2))) = N2
+  20:     IF (3 > ubound(N,1)) THEN **
+   0:         ERR.NUMBER = 107
+   1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
+   2:         ERR.LINENUM = 38
+   3:         ERR.CONTEXT = "N"
+   4:         ERR.SOURCE = "ARRAYS9.BAS"
+   5:         RAISE ERROR
+          END IF
+  21:     *(((N + 2) + (3 * 2))) = N3
+  22:     IF (4 > ubound(N,1)) THEN **
+   0:         ERR.NUMBER = 107
+   1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
+   2:         ERR.LINENUM = 39
+   3:         ERR.CONTEXT = "N"
+   4:         ERR.SOURCE = "ARRAYS9.BAS"
+   5:         RAISE ERROR
+          END IF
+  23:     *(((N + 2) + (4 * 2))) = N4
+  24:     IF (5 > ubound(N,1)) THEN **
+   0:         ERR.NUMBER = 107
+   1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
+   2:         ERR.LINENUM = 40
+   3:         ERR.CONTEXT = "N"
+   4:         ERR.SOURCE = "ARRAYS9.BAS"
+   5:         RAISE ERROR
+          END IF
+  25:     *(((N + 2) + (5 * 2))) = N5
+  26:     CALL RUNTIME.PRINT_STRING("3. Checks results via array indexes")
+  27:     CALL RUNTIME.PRINT_NEWLINE()
+  28:     CALL CHECK(0, N0)
+  29:     CALL CHECK(1, N1)
+  30:     CALL CHECK(2, N2)
+  31:     CALL CHECK(3, N3)
+  32:     CALL CHECK(4, N4)
+  33:     CALL CHECK(5, N5)
+  34:     CALL TEXT.INVERSE()
+  35:     IF (BAD = 0) THEN
+   0:         CALL RUNTIME.PRINT_STRING("SUCCESS")
+   1:         CALL RUNTIME.PRINT_NEWLINE()
+          ELSE
+   0:         CALL RUNTIME.PRINT_STRING("FAILURE; GOOD=")
+   1:         CALL RUNTIME.PRINT_INTEGER(GOOD)
+   2:         CALL RUNTIME.PRINT_STRING(", BAD=")
+   3:         CALL RUNTIME.PRINT_INTEGER(BAD)
+   4:         CALL RUNTIME.PRINT_NEWLINE()
+          END IF
+  36:     CALL TEXT.NORMAL()
+  37:     END
+
+SUB CHECK(EXPECTED AS INTEGER, I AS INTEGER)
+   0:     CALL RUNTIME.PRINT_STRING("Index ")
+   1:     CALL RUNTIME.PRINT_INTEGER(I)
+   2:     CALL RUNTIME.PRINT_STRING(": ")
+   3:     IF (I > ubound(N,1)) THEN **
+   0:         ERR.NUMBER = 107
+   1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
+   2:         ERR.LINENUM = 11
+   3:         ERR.CONTEXT = "N"
+   4:         ERR.SOURCE = "CHECK"
+   5:         RAISE ERROR
+          END IF
+   4:     CALL RUNTIME.PRINT_INTEGER(*(((N + 2) + (I * 2))))
+   5:     CALL RUNTIME.PRINT_STRING(" = ")
+   6:     CALL RUNTIME.PRINT_INTEGER(EXPECTED)
+   7:     CALL RUNTIME.PRINT_STRING(": ")
+   8:     IF (I > ubound(N,1)) THEN **
+   0:         ERR.NUMBER = 107
+   1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
+   2:         ERR.LINENUM = 12
+   3:         ERR.CONTEXT = "N"
+   4:         ERR.SOURCE = "CHECK"
+   5:         RAISE ERROR
+          END IF
+   9:     IF (*(((N + 2) + (I * 2))) = EXPECTED) THEN
+   0:         CALL RUNTIME.PRINT_STRING("Ok.")
+   1:         CALL RUNTIME.PRINT_NEWLINE()
+   2:         GOOD = (GOOD + 1)
+          ELSE
+   0:         CALL RUNTIME.PRINT_STRING("Incorrect.")
+   1:         CALL RUNTIME.PRINT_NEWLINE()
+   2:         BAD = (BAD + 1)
+          END IF
+END SUB
+
