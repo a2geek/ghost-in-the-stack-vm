@@ -12,7 +12,7 @@ import a2geek.ghost.model.statement.OnErrorStatement;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.util.*;
-import java.util.function.Consumer;
+import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -923,6 +923,44 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         return defaultDataType;
     }
 
+    private final Map<String, BiFunction<List<Expression>,ParseTree,Expression>> FUNCTION_HANDLERS = Map.of(
+        "ubound", this::handleUboundFunction,
+        "peek", this::handlePeekFunction,
+        "peekw", this::handlePeekwFunction,
+        "addrof", this::handleAddrOfFunction
+    );
+    Expression handleUboundFunction(List<Expression> params, ParseTree ctx) {
+        if (params.size() == 1 && params.getFirst() instanceof VariableReference varRef) {
+            return new ArrayLengthFunction(varRef.getSymbol(), 1);
+        }
+        else if (params.size() == 2 && params.getFirst() instanceof VariableReference varRef && params.getLast().isConstant()) {
+            return new ArrayLengthFunction(varRef.getSymbol(), params.getLast().asInteger().orElseThrow());
+        }
+        throw new RuntimeException("ubound expects a variable name (and optionally an index number) as its argument: " + ctx.getText());
+    }
+    Expression handlePeekFunction(List<Expression> params, ParseTree ctx) {
+        if (params.size() == 1) {
+            return derefByte(params.getFirst());
+        }
+        throw new RuntimeException("peek expects one paramter: " + ctx.getText());
+    }
+    Expression handlePeekwFunction(List<Expression> params, ParseTree ctx) {
+        if (params.size() == 1) {
+            return derefWord(params.getFirst());
+        }
+        throw new RuntimeException("peekw expects one paramter: " + ctx.getText());
+    }
+    Expression handleAddrOfFunction(List<Expression> params, ParseTree ctx) {
+        if (params.size() == 1 && params.getFirst() instanceof VariableReference varRef) {
+            return new AddressOfOperator(varRef.getSymbol());
+        }
+        // Array references end up wrapped in a dereference operator, so we need to unwrap it
+        else if (params.size() == 1 && params.getFirst() instanceof DereferenceOperator deref && hasAnyArraySymbol(deref.getExpr())) {
+            return deref.getExpr();
+        }
+        throw new RuntimeException("can only take addrof a simple variable or an array index: " + ctx.getText());
+    }
+
     @Override
     public Expression visitArrayOrFunctionRef(BasicParser.ArrayOrFunctionRefContext ctx) {
         var id = ctx.extendedID().getText();
@@ -931,38 +969,9 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             ctx.expr().stream().map(this::visit).forEach(params::add);
         }
 
-        switch (id.toLowerCase()) {
-            case "ubound" -> {
-                if (params.size() == 1 && params.getFirst() instanceof VariableReference varRef) {
-                    return new ArrayLengthFunction(varRef.getSymbol(), 1);
-                }
-                else if (params.size() == 2 && params.getFirst() instanceof VariableReference varRef && params.getLast().isConstant()) {
-                    return new ArrayLengthFunction(varRef.getSymbol(), params.getLast().asInteger().orElseThrow());
-                }
-                throw new RuntimeException("ubound expects a variable name (and optionally an index number) as its argument: " + ctx.getText());
-            }
-            case "peek" -> {
-                if (params.size() == 1) {
-                    return derefByte(params.getFirst());
-                }
-                throw new RuntimeException("peek expects one paramter: " + ctx.getText());
-            }
-            case "peekw" -> {
-                if (params.size() == 1) {
-                    return derefWord(params.getFirst());
-                }
-                throw new RuntimeException("peekw expects one paramter: " + ctx.getText());
-            }
-            case "addrof" -> {
-                if (params.size() == 1 && params.getFirst() instanceof VariableReference varRef) {
-                    return new AddressOfOperator(varRef.getSymbol());
-                }
-                // Array references end up wrapped in a dereference operator, so we need to unwrap it
-                else if (params.size() == 1 && params.getFirst() instanceof DereferenceOperator deref && hasAnyArraySymbol(deref.getExpr())) {
-                    return deref.getExpr();
-                }
-                throw new RuntimeException("can only take addressof a simple variable or an array index: " + ctx.getText());
-            }
+        var fnHandler = FUNCTION_HANDLERS.get(id.toLowerCase());
+        if (fnHandler != null) {
+            return fnHandler.apply(params, ctx);
         }
 
         if (model.isFunction(id)) {
