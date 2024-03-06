@@ -36,7 +36,7 @@ public class CommonExpressions {
         var offset = VariableReference.with(array).plus(overheadBytes).plus(elementNumber.times(sizeof));
         // *(array+((index+1)*sizeof(datatype))
         // *(array+(ubound(array,1)*sizeof(datatype)+(index+dims)*sizeof(datatype))
-        return offset.deref(array.dataType());
+        return offset.derefAs(array.dataType());
     }
 
     public static ArrayLengthFunction ubound(Symbol symbol, int dimensionNumber) {
@@ -44,10 +44,10 @@ public class CommonExpressions {
     }
 
     public static DereferenceOperator derefByte(Expression address) {
-        return address.deref(DataType.BYTE);
+        return address.derefAs(DataType.BYTE);
     }
 
     public static DereferenceOperator derefWord(Expression address) {
-        return address.deref(DataType.INTEGER);
+        return address.derefAs(DataType.INTEGER);
     }
 }

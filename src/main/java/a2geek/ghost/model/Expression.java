@@ -111,7 +111,7 @@ public interface Expression {
     default DereferenceOperator deref() {
         return new DereferenceOperator(this, getType());
     }
-    default DereferenceOperator deref(DataType type) {
+    default DereferenceOperator derefAs(DataType type) {
         return new DereferenceOperator(this, type);
     }
     default Expression toByte() {
