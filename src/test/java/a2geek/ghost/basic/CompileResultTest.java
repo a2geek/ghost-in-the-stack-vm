@@ -6,8 +6,6 @@ import a2geek.ghost.model.ModelBuilder;
 import a2geek.ghost.model.scope.Program;
 import com.github.difflib.DiffUtils;
 import com.github.difflib.patch.DeltaType;
-import com.github.difflib.text.DiffRow;
-import com.github.difflib.text.DiffRowGenerator;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -18,13 +16,10 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.github.difflib.DiffUtils.diff;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
 /**
