@@ -6,6 +6,7 @@ syntax does no exporting and `math.min(a,b)` calls the same function.
 
 Sections:
 * [Err](#err) - error handling module
+* [Hires](#hires) - hires (HGR) module
 * [Lores](#lores) - lores (GR) module
 * [Math](#math) - math module
 * [Memory](#memory) - memory module
@@ -23,6 +24,26 @@ Module to support the `on error` handler(s).
 |:--------------|:-------:|:--------------------------------------------------|
 | `err.number`  | Integer | Last error number. Used for `on error` handling.  |
 | `err.message` | String  | Last error message. Used for `on error` handling. |
+| `err.linenum` | Integer | Line number for last error.                       |
+| `err.source`  | String  | Source file for last error.                       |
+| `err.context` | String  | Context (such as variable name) for last error.   |
+
+## Hires
+
+| Name                 | Type | Description                                   |
+|:---------------------|:----:|:----------------------------------------------|
+| `hgr()`              |  -   | Enable hires (HGR) mode, page 1.              |
+| `hgr2()`             |  -   | Enable hires (HGR2) mode, page 2.             |
+| `hcolor(c)`          |  -   | Set the hires color.                          |
+| `hplotAt(x,y)`       |  -   | Plot a point at `x`, `y` on the hires screen. |
+| `hplotTo(x,y)`       |  -   | Draw a line to `x`, `y`.                      |
+| `hplot(x0,y0,x1,y1)` |  -   | Draw a line from `x0`, `y0` to `x1`, `y1`.    |
+| `shapeTable(ptr)`    |  -   | Setup shape table at address `ptr`.           |
+| `scale(n)`           |  -   | Set the shape table scaling factor.           |
+| `rot(n)`             |  -   | Set the shape table rotation factor.          |
+| `draw(shape,x,y)`    |  -   | Draw `shape` at `x`, `y`.                     |
+| `xdraw(shape,xy)`    |  -   | Xdraw `shape` at `x`, `y`.                    |
+
 
 ## Lores
 
@@ -55,10 +76,12 @@ Math related module.
 
 Note that these are mostly used by the runtime.
 
-| Name               |  Type   | Description                                                                          |
-|:-------------------|:-------:|:-------------------------------------------------------------------------------------|
-| `memclr(p,bytes)`  |    -    | Clear memory at address `p` for `bytes` length.                                      |
-| `heapalloc(bytes)` | Address | Allocate `bytes` of memory and return a pointer. (Very basic function at this time.) |
+| Name               |  Type   | Description                                      |
+|:-------------------|:-------:|:-------------------------------------------------|
+| `memclr(p,bytes)`  |    -    | Clear memory at address `p` for `bytes` length.  |
+| `memfree()`        | Integer | Returns number of bytes free in heap.            |
+| `heapalloc(bytes)` | Address | Allocate `bytes` of memory and return a pointer. |
+| `heapfree(ptr)`    |    -    | Free the memory allocated by `heapalloc(...)`.   |
 
 ## Misc
 
@@ -81,38 +104,40 @@ if no prefix has been set, sets it to the last used device.
 
 | Name                                            |  Type   | Description                                                                                          |
 |:------------------------------------------------|:-------:|:-----------------------------------------------------------------------------------------------------|
-| `mliErrorMesage(errnum)`                        | String  | Convert a MLI error number to a descriptive string.                                                  |
+| `bload(pathname,addr)`                          |    -    | Load a file at a specified address. Uses OPEN ($C8), GET_EOF ($D1), READ ($CA), and CLOSE ($CC).     |
 | `callMLI(functionCode)`                         |    -    | (Internal)  Calls an MLI routine. Raises an error if the return code is non-zero.                    |
-| `quit()`                                        |    -    | Call QUIT ($65).                                                                                     |
-| `readBlock(unitNumber,blockNumber,dataBuffer)`  |    -    | Call READ_BLOCK ($80).                                                                               |
-| `writeBlock(unitNumber,blockNumber,dataBuffer)` |    -    | Call WRITE_BLOCK ($81).                                                                              |
-| `getDate()`                                     | Integer | Call GET_TIME ($82) and return the date portion.                                                     |
-| `getTime()`                                     | Integer | Call GET_TIME ($82) and return the time portion.                                                     |
+| `close(refnum)`                                 |    -    | Call CLOSE ($CC) to close an open file.                                                              |
 | `createFile(pathname,filetype,auxtype)`         |    -    | Call CREATE ($C0) to create a new file.                                                              |
 | `destroy(pathname)`                             |    -    | Call DESTROY ($C1) to delete a file or empty subdirectory.                                           |
-| `rename(oldpathname,newpathname)`               |    -    | Call RENAME ($C2) to rename a file or directory.                                                     |
-| `lock(pathname)`                                |    -    | Lock a file/directory. Uses GET_FILE_INFO ($C4) and SET_FILE_INFO ($C3) to set access bits to $C3.   |
-| `unlock(pathname)`                              |    -    | Unlock a file/directory. Uses GET_FILE_INFO ($C4) and SET_FILE_INFO ($C3) to set access bits to $01. |
-| `setPrefix(newprefix)`                          |    -    | Call SET_PREFIX ($C6) to set the default prefix.                                                     |
-| `getPrefix()`                                   | String  | Call GET_PREFIX ($C7) to set the default prefix.                                                     |
-| `open(filename,buffer)`                         | Integer | Call OPEN ($C8) to open a file. Returns `refnum`.                                                    |
-| `newline(refnum,mask,char)`                     |    -    | Call NEWLINE ($C9).                                                                                  |
-| `read(refnum,buffer,length)`                    | Integer | Call READ ($CA) to read from an open file. Returns number of bytes actually read.                    |
-| `write(refnum,buffer,length)`                   | Integer | Call WRITE ($CB) to write to an open file. Returns number of bytes actually written.                 |
-| `close(refnum)`                                 |    -    | Call CLOSE ($CC) to close an open file.                                                              |
 | `flush(refnum)`                                 |    -    | Call FLUSH ($CD) to flush pending data to an open file.                                              |
-| `lastDevice()`                                  | Integer | Returns last used device stored in DEVNUM ($BF30).                                                   |
-| `isPrefixActive()`                              | Boolean | Indicates if there is an active prefix based on PFXPTR ($BF9A).                                      |
-| `isAppleII()`                                   | Boolean | Indicates if the Apple II MACHID ($BF98) bits are set (`00..0...`).                                  |
-| `isAppleIIplus()`                               | Boolean | Indicates if the Apple II+ MACHID ($BF98) bits are set (`01..0...`).                                 |
-| `isAppleIIe()`                                  | Boolean | Indicates if the Apple IIe MACHID ($BF98) bits are set (`10..0...`).                                 |
-| `isAppleIII()`                                  | Boolean | Indicates if the Apple III MACHID ($BF98) bits are set (`11..0...`).                                 |
-| `isAppleIIc()`                                  | Boolean | Indicates if the Apple IIc MACHID ($BF98) bits are set (`10..1...`).                                 |
+| `lock(pathname)`                                |    -    | Lock a file/directory. Uses GET_FILE_INFO ($C4) and SET_FILE_INFO ($C3) to set access bits to $C3.   |
+| `getDate()`                                     | Integer | Call GET_TIME ($82) and return the date portion.                                                     |
+| `getEOF(refnum)`                                | Integer | Call GET_EOF ($D1) to get file EOF. Note this truncates high byte.                                   |
+| `getPrefix()`                                   | String  | Call GET_PREFIX ($C7) to set the default prefix.                                                     |
+| `getTime()`                                     | Integer | Call GET_TIME ($82) and return the time portion.                                                     |
 | `has48K()`                                      | Boolean | Indicates if MACHID ($BF98) indicates this machine has 48K (`..01....`).                             |
 | `has64K()`                                      | Boolean | Indicates if MACHID ($BF98) indicates this machine has 64K (`..10....`).                             |
 | `has128K()`                                     | Boolean | Indicates if MACHID ($BF98) indicates this machine has 128K (`..11....`).                            |
 | `has80Cols()`                                   | Boolean | Indicates if MACHID ($BF98) indicates this machine has 80 columns (`......1.`).                      |
 | `hasClock()`                                    | Boolean | Indicates if MACHID ($BF98) indicates this machine has a clock (`.......1`).                         |
+| `isAppleII()`                                   | Boolean | Indicates if the Apple II MACHID ($BF98) bits are set (`00..0...`).                                  |
+| `isAppleIIplus()`                               | Boolean | Indicates if the Apple II+ MACHID ($BF98) bits are set (`01..0...`).                                 |
+| `isAppleIIe()`                                  | Boolean | Indicates if the Apple IIe MACHID ($BF98) bits are set (`10..0...`).                                 |
+| `isAppleIII()`                                  | Boolean | Indicates if the Apple III MACHID ($BF98) bits are set (`11..0...`).                                 |
+| `isAppleIIc()`                                  | Boolean | Indicates if the Apple IIc MACHID ($BF98) bits are set (`10..1...`).                                 |
+| `isPrefixActive()`                              | Boolean | Indicates if there is an active prefix based on PFXPTR ($BF9A).                                      |
+| `lastDevice()`                                  | Integer | Returns last used device stored in DEVNUM ($BF30).                                                   |
+| `mliErrorMesage(errnum)`                        | String  | Convert a MLI error number to a descriptive string.                                                  |
+| `open(filename,buffer)`                         | Integer | Call OPEN ($C8) to open a file. Returns `refnum`.                                                    |
+| `newline(refnum,mask,char)`                     |    -    | Call NEWLINE ($C9).                                                                                  |
+| `quit()`                                        |    -    | Call QUIT ($65).                                                                                     |
+| `read(refnum,buffer,length)`                    | Integer | Call READ ($CA) to read from an open file. Returns number of bytes actually read.                    |
+| `readBlock(unitNumber,blockNumber,dataBuffer)`  |    -    | Call READ_BLOCK ($80).                                                                               |
+| `rename(oldpathname,newpathname)`               |    -    | Call RENAME ($C2) to rename a file or directory.                                                     |
+| `setPrefix(newprefix)`                          |    -    | Call SET_PREFIX ($C6) to set the default prefix.                                                     |
+| `unlock(pathname)`                              |    -    | Unlock a file/directory. Uses GET_FILE_INFO ($C4) and SET_FILE_INFO ($C3) to set access bits to $01. |
+| `write(refnum,buffer,length)`                   | Integer | Call WRITE ($CB) to write to an open file. Returns number of bytes actually written.                 |
+| `writeBlock(unitNumber,blockNumber,dataBuffer)` |    -    | Call WRITE_BLOCK ($81).                                                                              |
 
 ## Runtime
 
@@ -145,3 +170,4 @@ Support for the `string` data type. Very rudimentary.
 | `normal()`  |  -   | Set normal text mode.                        |
 | `inverse()` |  -   | Set inverse text mode.                       |
 | `flash()`   |  -   | Set flashing text mode.                      |
+| `speed(n)`  |  -   | Sets the text output speed in $F1.           |
