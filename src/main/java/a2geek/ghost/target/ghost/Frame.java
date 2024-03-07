@@ -24,8 +24,8 @@ public record Frame(
         // program treats global variables as local
         for (var ref : program.findAllLocalScope(is(DeclarationType.GLOBAL).and(in(SymbolType.VARIABLE)))) {
             varOffsets.put(ref, varOffset);
-            varOffset += ref.dataType().sizeof();
-            reservation += ref.dataType().sizeof();
+            varOffset += sizeOnHeap(ref);
+            reservation += sizeOnHeap(ref);
         }
         return new Frame(program, varOffsets, reservation, varOffset);
     }
@@ -36,15 +36,15 @@ public record Frame(
         // local variables are at TOS
         for (var ref : subroutine.findAllLocalScope(is(DeclarationType.LOCAL).and(in(SymbolType.VARIABLE)))) {
             varOffsets.put(ref, varOffset);
-            varOffset += ref.dataType().sizeof();
-            reservation += ref.dataType().sizeof();
+            varOffset += sizeOnHeap(ref);
+            reservation += sizeOnHeap(ref);
         }
         // frame overhead: return address (2 bytes) + stack index (2 bytes)
         varOffset += DataType.ADDRESS.sizeof() * 2;
         // parameters are above the frame details
         for (var ref : subroutine.findAllLocalScope(in(SymbolType.PARAMETER))) {
             varOffsets.put(ref, varOffset);
-            varOffset += ref.dataType().sizeof();
+            varOffset += sizeOnHeap(ref);
         }
         if (subroutine instanceof Function fn) {
             var refs = fn.findAllLocalScope(in(SymbolType.RETURN_VALUE));
@@ -53,9 +53,15 @@ public record Frame(
             }
             for (var ref : refs) {
                 varOffsets.put(ref, varOffset);
-                varOffset += ref.dataType().sizeof();
+                varOffset += sizeOnHeap(ref);
             }
         }
         return new Frame(subroutine, varOffsets, reservation, varOffset);
+    }
+    public static int sizeOnHeap(Symbol symbol) {
+        if (symbol.numDimensions() > 0) {
+            return DataType.ADDRESS.sizeof();
+        }
+        return symbol.dataType().sizeof();
     }
 }

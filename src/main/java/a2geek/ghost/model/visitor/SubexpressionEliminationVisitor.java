@@ -65,7 +65,7 @@ public class SubexpressionEliminationVisitor implements ProgramVisitor {
                 default -> throw new RuntimeException("[compiler bug] unexpected statement type: " + statements.get(i));
             };
             // Loop variables can trigger optimization and then get removed due to assignment (like "I = I + 1")
-            if (candidate != null && tracker.exists(candidate)) {
+            if (candidate != null && tracker.exists(candidate) && candidate.isType(DataType.INTEGER, DataType.BOOLEAN, DataType.ADDRESS)) {
                 var replacement = makeTempVariable.apply(candidate.getType());
                 var n = tracker.remove(candidate);
                 replace(replacement, statements.subList(n, statements.size()), candidate);

@@ -157,6 +157,7 @@ datatype
     | 'boolean'
     | 'string'
     | 'address'
+    | 'byte'
     ;
 
 parameters
