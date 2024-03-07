@@ -12,11 +12,13 @@ import a2geek.ghost.model.statement.OnErrorStatement;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static a2geek.ghost.model.CommonExpressions.*;
 import static a2geek.ghost.model.ModelBuilder.*;
+import static a2geek.ghost.model.visitor.ExpressionVisitors.hasAnyArraySymbol;
 
 public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     private final ModelBuilder model;
@@ -98,8 +100,8 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             model.assignStmt(varRef, expr);
             return null;
         }
-        else if (ref instanceof UnaryExpression unaryRef) {
-            model.assignStmt(unaryRef, expr);
+        else if (ref instanceof DereferenceOperator deref) {
+            model.assignStmt(deref, expr);
             return null;
         }
         else {
@@ -628,7 +630,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         var expr = model.simplify(visit(ctx.a));
         var addrof = ctx.identifier().stream()
                 .map(this::findGotoGosubLabel)
-                .map(AddressOfFunction::new)
+                .map(AddressOfOperator::new)
                 .map(Expression.class::cast)
                 .toList();
 
@@ -687,7 +689,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                         var expr = visit(defaultExpr);
                         if (isArray && !expr.isConstant()) {
                             throw new RuntimeException("array default values currently must be constant: "
-                                + defaultExpr.getText());
+                                    + defaultExpr.getText());
                         }
                         defaultValues.add(expr);
                     }
@@ -756,8 +758,8 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         List<Symbol.Builder> params = Collections.emptyList();
         if (ctx.paramDecl() != null) {
             params = buildIdDeclarationList(ctx.paramDecl().paramIdDecl()).stream()
-                .map(IdDeclaration::toParameter)
-                .collect(Collectors.toList());
+                    .map(IdDeclaration::toParameter)
+                    .collect(Collectors.toList());
         }
 
         var sub = model.subDeclBegin(ctx.id.getText(), params);
@@ -808,8 +810,8 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         List<Symbol.Builder> params = Collections.emptyList();
         if (ctx.paramDecl() != null) {
             params = buildIdDeclarationList(ctx.paramDecl().paramIdDecl()).stream()
-                .map(IdDeclaration::toParameter)
-                .collect(Collectors.toList());
+                    .map(IdDeclaration::toParameter)
+                    .collect(Collectors.toList());
         }
         var id = ctx.id.getText();
         DataType dt = buildDataType(id, ctx.datatype());
@@ -845,7 +847,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                         }
                     });
                     model.addArrayDefaultVariable(decl.name(), decl.dataType(),
-                        decl.dimensions(), decl.defaultValues());
+                            decl.dimensions(), decl.defaultValues());
                 }
                 else {
                     var symbol = model.addArrayVariable(decl.name(), decl.dataType(), decl.dimensions());
@@ -921,6 +923,65 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         return defaultDataType;
     }
 
+    private final Map<String, BiFunction<List<Expression>,ParseTree,Expression>> FUNCTION_HANDLERS = Map.of(
+        "addrof", this::handleAddrOfFunction,
+        "cbool", this::handleCBoolFunction,
+        "cbyte", this::handleCByteFunction,
+        "cint", this::handleCIntFunction,
+        "peek", this::handlePeekFunction,
+        "peekw", this::handlePeekwFunction,
+        "ubound", this::handleUboundFunction
+    );
+    Expression handleUboundFunction(List<Expression> params, ParseTree ctx) {
+        if (params.size() == 1 && params.getFirst() instanceof VariableReference varRef) {
+            return new ArrayLengthFunction(varRef.getSymbol(), 1);
+        }
+        else if (params.size() == 2 && params.getFirst() instanceof VariableReference varRef && params.getLast().isConstant()) {
+            return new ArrayLengthFunction(varRef.getSymbol(), params.getLast().asInteger().orElseThrow());
+        }
+        throw new RuntimeException("ubound expects a variable name (and optionally an index number) as its argument: " + ctx.getText());
+    }
+    Expression handlePeekFunction(List<Expression> params, ParseTree ctx) {
+        if (params.size() == 1) {
+            return derefByte(params.getFirst());
+        }
+        throw new RuntimeException("peek expects one paramter: " + ctx.getText());
+    }
+    Expression handlePeekwFunction(List<Expression> params, ParseTree ctx) {
+        if (params.size() == 1) {
+            return derefWord(params.getFirst());
+        }
+        throw new RuntimeException("peekw expects one paramter: " + ctx.getText());
+    }
+    Expression handleAddrOfFunction(List<Expression> params, ParseTree ctx) {
+        if (params.size() == 1 && params.getFirst() instanceof VariableReference varRef) {
+            return new AddressOfOperator(varRef.getSymbol());
+        }
+        // Array references end up wrapped in a dereference operator, so we need to unwrap it
+        else if (params.size() == 1 && params.getFirst() instanceof DereferenceOperator deref && hasAnyArraySymbol(deref.getExpr())) {
+            return deref.getExpr();
+        }
+        throw new RuntimeException("can only take addrof a simple variable or an array index: " + ctx.getText());
+    }
+    Expression handleCBoolFunction(List<Expression> params, ParseTree ctx) {
+        if (params.size() == 1) {
+            return new TypeConversionOperator(params.getFirst(), DataType.BOOLEAN);
+        }
+        throw new RuntimeException("can only use CBool on a simple variable: " + ctx.getText());
+    }
+    Expression handleCByteFunction(List<Expression> params, ParseTree ctx) {
+        if (params.size() == 1) {
+            return new TypeConversionOperator(params.getFirst(), DataType.BYTE);
+        }
+        throw new RuntimeException("can only use CByte on a simple variable: " + ctx.getText());
+    }
+    Expression handleCIntFunction(List<Expression> params, ParseTree ctx) {
+        if (params.size() == 1) {
+            return new TypeConversionOperator(params.getFirst(), DataType.INTEGER);
+        }
+        throw new RuntimeException("can only use CInt on a simple variable: " + ctx.getText());
+    }
+
     @Override
     public Expression visitArrayOrFunctionRef(BasicParser.ArrayOrFunctionRefContext ctx) {
         var id = ctx.extendedID().getText();
@@ -929,22 +990,9 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             ctx.expr().stream().map(this::visit).forEach(params::add);
         }
 
-        switch (id.toLowerCase()) {
-            case "ubound" -> {
-                if (params.size() == 1 && params.getFirst() instanceof VariableReference varRef) {
-                    return new ArrayLengthFunction(varRef.getSymbol(), 1);
-                }
-                else if (params.size() == 2 && params.getFirst() instanceof VariableReference varRef && params.getLast().isConstant()) {
-                    return new ArrayLengthFunction(varRef.getSymbol(), params.getLast().asInteger().orElseThrow());
-                }
-                throw new RuntimeException("ubound expects a variable name (and optionally an index number) as its argument: " + ctx.getText());
-            }
-            case "peek" -> {
-                return derefByte(params.getFirst());
-            }
-            case "peekw" -> {
-                return derefWord(params.getFirst());
-            }
+        var fnHandler = FUNCTION_HANDLERS.get(id.toLowerCase());
+        if (fnHandler != null) {
+            return fnHandler.apply(params, ctx);
         }
 
         if (model.isFunction(id)) {
@@ -1003,9 +1051,9 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         if (l.isType(DataType.STRING) && r.isType(DataType.STRING)) {
             if ("=".equals(op) || "<>".equals(op)) {
                 return new BinaryExpression(
-                    model.callFunction("strings.strcmp", Arrays.asList(l,r)),
-                    IntegerConstant.ZERO,
-                    op);
+                        model.callFunction("strings.strcmp", Arrays.asList(l,r)),
+                        IntegerConstant.ZERO,
+                        op);
             }
             else {
                 throw new RuntimeException("strings only support in/equality: " + ctx.getText());

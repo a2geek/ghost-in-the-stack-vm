@@ -1,8 +1,8 @@
 package a2geek.ghost.model;
 
 import a2geek.ghost.model.expression.ArrayLengthFunction;
+import a2geek.ghost.model.expression.DereferenceOperator;
 import a2geek.ghost.model.expression.IntegerConstant;
-import a2geek.ghost.model.expression.UnaryExpression;
 import a2geek.ghost.model.expression.VariableReference;
 
 import java.util.List;
@@ -15,7 +15,7 @@ public class CommonExpressions {
         // prevent construction
     }
 
-    public static UnaryExpression arrayReference(Symbol array, List<Expression> indexes) {
+    public static DereferenceOperator arrayReference(Symbol array, List<Expression> indexes) {
         if (array.numDimensions() != indexes.size()) {
             var msg = String.format("dimension mismatch - symbol: '%s', indexes: %s", array, indexes);
             throw new RuntimeException(msg);
@@ -36,18 +36,18 @@ public class CommonExpressions {
         var offset = VariableReference.with(array).plus(overheadBytes).plus(elementNumber.times(sizeof));
         // *(array+((index+1)*sizeof(datatype))
         // *(array+(ubound(array,1)*sizeof(datatype)+(index+dims)*sizeof(datatype))
-        return new UnaryExpression("*", offset, array.dataType());
+        return offset.derefAs(array.dataType());
     }
 
     public static ArrayLengthFunction ubound(Symbol symbol, int dimensionNumber) {
         return new ArrayLengthFunction(symbol, dimensionNumber);
     }
 
-    public static UnaryExpression derefByte(Expression address) {
-        return new UnaryExpression("*", address, DataType.BYTE);
+    public static DereferenceOperator derefByte(Expression address) {
+        return address.derefAs(DataType.BYTE);
     }
 
-    public static UnaryExpression derefWord(Expression address) {
-        return new UnaryExpression("*", address, DataType.INTEGER);
+    public static DereferenceOperator derefWord(Expression address) {
+        return address.derefAs(DataType.INTEGER);
     }
 }

@@ -1,8 +1,8 @@
 package a2geek.ghost.model;
 
 import a2geek.ghost.model.expression.BinaryExpression;
+import a2geek.ghost.model.expression.DereferenceOperator;
 import a2geek.ghost.model.expression.IntegerConstant;
-import a2geek.ghost.model.expression.UnaryExpression;
 import a2geek.ghost.model.expression.VariableReference;
 import org.junit.jupiter.api.Test;
 
@@ -26,8 +26,8 @@ public class CommonExpressionTest {
             bin.getL().asInteger().ifPresent(i -> bin.setL(new IntegerConstant(i)));
             bin.getR().asInteger().ifPresent(i -> bin.setR(new IntegerConstant(i)));
         }
-        else if (expression instanceof UnaryExpression unary) {
-            patch(unary.getExpr());
+        else if (expression instanceof DereferenceOperator deref) {
+            patch(deref.getExpr());
         }
     }
 
@@ -43,8 +43,7 @@ public class CommonExpressionTest {
         //  +------+---+---+---+---+---+---+---+---+---+---+----+
         //  | DIM1 | 0 | 1 | 2 | 3 | 4 |>5<| 6 | 7 | 8 | 9 | 10 |
         //  +------+---+---+---+---+---+---+---+---+---+---+----+
-        var expected = new UnaryExpression("*",
-            VariableReference.with(array).plus(TWO).plus(new IntegerConstant(10)));
+        var expected = VariableReference.with(array).plus(TWO).plus(new IntegerConstant(10)).deref();
         assertEquals(expected, actual);
     }
 
@@ -60,8 +59,7 @@ public class CommonExpressionTest {
         // +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
         // | [2] | [3] | 0,0 | 0,1 | 0,2 | 0,3 | 1,0 | 1,1 | 1,2 | 1,3 | 2,0 | 2,1 | 2,2 | 2,3 |
         // +-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+-----+
-        var expected = new UnaryExpression("*",
-            VariableReference.with(array).plus(FOUR).plus(new IntegerConstant(22)));
+        var expected = VariableReference.with(array).plus(FOUR).plus(new IntegerConstant(22)).deref();
         assertEquals(expected, actual);
     }
 }

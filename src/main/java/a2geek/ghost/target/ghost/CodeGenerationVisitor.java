@@ -95,9 +95,9 @@ public class CodeGenerationVisitor extends DispatchVisitor {
                 emitStore(symbol);
             } else if (dataType == DataType.ADDRESS) {
                 List<Symbol> labels = symbol.defaultValues().stream()
-                    .filter(AddressOfFunction.class::isInstance)
-                    .map(AddressOfFunction.class::cast)
-                    .map(AddressOfFunction::getSymbol)
+                    .filter(AddressOfOperator.class::isInstance)
+                    .map(AddressOfOperator.class::cast)
+                    .map(AddressOfOperator::getSymbol)
                     .toList();
                 var label = label("ADDRARYCONST");
                 var actual = code.emitConstantLabels(label.getFirst(), labels);
@@ -182,13 +182,13 @@ public class CodeGenerationVisitor extends DispatchVisitor {
             // A = <expr> (simple assignment)
             emitStore(ref.getSymbol());
         }
-        else if (statement.getVar() instanceof UnaryExpression unary && "*".equals(unary.getOp())) {
+        else if (statement.getVar() instanceof DereferenceOperator deref) {
             // *(<expr1>) = <expr2>   (dereferenced assignment)
-            dispatch(unary.getExpr());
+            dispatch(deref.getExpr());
             switch (statement.getValue().getType()) {
                 case BYTE -> code.emit(Opcode.ISTOREB);
                 case INTEGER, ADDRESS, STRING, BOOLEAN -> code.emit(Opcode.ISTOREW);
-                default -> throw new RuntimeException("unexpected type for dereferenced assignment: " + unary.getType());
+                default -> throw new RuntimeException("unexpected type for dereferenced assignment: " + deref.getType());
             }
         }
         else {
@@ -631,25 +631,20 @@ public class CodeGenerationVisitor extends DispatchVisitor {
             }
             code.emit(Opcode.XOR);
         }
-        else if ("*".equals(expression.getOp())) {
-            // *(<expr>)   (dereferenced load)
-            dispatch(expression.getExpr());
-            switch (expression.getType()) {
-                case BYTE -> code.emit(Opcode.ILOADB);
-                case INTEGER, ADDRESS, STRING, BOOLEAN -> code.emit(Opcode.ILOADW);
-                default -> throw new RuntimeException("unexpected type for dereferenced load: " + expression.getType());
-            }
-        }
-        else if ("w2b".equals(expression.getOp())) {
-            // TODO just a placeholder for now
-            dispatch(expression.getExpr());
-        }
-        else if ("b2w".equals(expression.getOp())) {
-            // TODO just a placeholder for now
-            dispatch(expression.getExpr());
-        }
         else {
             throw new RuntimeException("unknown unary operator: " + expression.getOp());
+        }
+        return null;
+    }
+
+    @Override
+    public Expression visit(DereferenceOperator expression) {
+        // *(<expr>)   (dereferenced load)
+        dispatch(expression.getExpr());
+        switch (expression.getType()) {
+            case BYTE -> code.emit(Opcode.ILOADB);
+            case INTEGER, ADDRESS, STRING, BOOLEAN -> code.emit(Opcode.ILOADW);
+            default -> throw new RuntimeException("unexpected type for dereferenced load: " + expression.getType());
         }
         return null;
     }
@@ -662,8 +657,15 @@ public class CodeGenerationVisitor extends DispatchVisitor {
     }
 
     @Override
-    public Expression visit(AddressOfFunction expression) {
+    public Expression visit(AddressOfOperator expression) {
         code.emit(Opcode.LOADA, expression.getSymbol().name());
+        return null;
+    }
+
+    @Override
+    public Expression visit(TypeConversionOperator expression) {
+        // TODO we don't really have "real" type conversions yet
+        dispatch(expression.getExpr());
         return null;
     }
 

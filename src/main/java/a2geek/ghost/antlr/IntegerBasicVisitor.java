@@ -83,7 +83,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
                 placeholder.setExpression(new IntegerConstant(lineLabels.size()));
             }
             lineLabels.values().stream()
-                    .map(AddressOfFunction::new)
+                    .map(AddressOfOperator::new)
                     .forEach(expr -> symbol.defaultValues().add(expr));
         });
         // Any strings that do not have a DIM, we need to dim as length 1.
@@ -282,7 +282,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         model.assignStmt(varRef, first);
         model.assignStmt(endRef, last);
         model.assignStmt(stepRef, step);
-        model.assignStmt(nextRef, new AddressOfFunction(nextLabel).minus1());
+        model.assignStmt(nextRef, new AddressOfOperator(nextLabel).minus1());
         model.gotoGosubStmt("goto", loopLabel);
 
         // handle loop increment and test
@@ -334,7 +334,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
             var labels = model.addLabels("FOR_EXIT");
             var exitLabel = labels.getFirst();
 
-            model.assignStmt(exitRef, new AddressOfFunction(exitLabel).minus1());
+            model.assignStmt(exitRef, new AddressOfOperator(exitLabel).minus1());
             model.dynamicGotoGosubStmt("goto", VariableReference.with(frame.getNextRef()), false);
             model.labelStmt(exitLabel);
         }
@@ -465,8 +465,8 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         if (ivar instanceof VariableReference ref) {
             model.assignStmt(ref, expr);
         }
-        else if (ivar instanceof UnaryExpression unary && "*".equals(unary.getOp())) {
-            model.assignStmt(unary, expr);
+        else if (ivar instanceof DereferenceOperator deref) {
+            model.assignStmt(deref, expr);
         }
         else {
             throw new RuntimeException("unknown variable type: " + ivar);

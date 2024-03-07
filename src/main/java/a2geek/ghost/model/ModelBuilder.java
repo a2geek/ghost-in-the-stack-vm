@@ -312,8 +312,8 @@ public class ModelBuilder {
         AssignmentStatement assignmentStatement = new AssignmentStatement(ref, expr);
         addStatement(assignmentStatement);
     }
-    public void assignStmt(UnaryExpression unary, Expression expr) {
-        AssignmentStatement assignmentStatement = new AssignmentStatement(unary, expr);
+    public void assignStmt(DereferenceOperator deref, Expression expr) {
+        AssignmentStatement assignmentStatement = new AssignmentStatement(deref, expr);
         addStatement(assignmentStatement);
     }
     public void ifStmt(Expression expr, StatementBlock trueStatements, StatementBlock falseStatements) {

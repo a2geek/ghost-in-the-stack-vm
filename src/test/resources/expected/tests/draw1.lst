@@ -18,7 +18,7 @@ MAIN:
    2:         CALL LORES.PLOT(X, Y)
    3:         CALL LORES.COLOR(C)
    4:         CALL LORES.PLOT(X, Y)
-   5:         CH = b2w(*((- 16384)))
+   5:         CH = CInt(*((- 16384)))
    6:         IF (CH > 128) THEN
    0:             *((- 16368)) = 0
    1:             IF ((CH >= STRINGS.ASC("0")) and (CH <= STRINGS.ASC("9"))) THEN

@@ -25,10 +25,10 @@ public class SubexpressionEliminationVisitor implements ProgramVisitor {
                 case AssignmentStatement assignmentStatement -> {
                     var expr = capture(tracker, assignmentStatement.getValue(), i);
                     switch (assignmentStatement.getVar()) {
-                        case UnaryExpression unaryExpression -> {
-                            var expr2 = capture(tracker, unaryExpression.getExpr(), i);
+                        case DereferenceOperator dereferenceOperator -> {
+                            var expr2 = capture(tracker, dereferenceOperator.getExpr(), i);
                             if (expr == null) expr = expr2;
-                            tracker.changed(unaryExpression);   // mark the assignment itself as changed
+                            tracker.changed(dereferenceOperator);   // mark the assignment itself as changed
                         }
                         case VariableReference variableReference -> {
                             tracker.changed(variableReference.getSymbol());
@@ -82,10 +82,10 @@ public class SubexpressionEliminationVisitor implements ProgramVisitor {
                 case AssignmentStatement assignmentStatement -> {
                     assignmentStatement.setValue(replace(assignmentStatement.getValue(), candidate, replacement));
                     switch (assignmentStatement.getVar()) {
-                        case UnaryExpression unaryExpression -> {
-                            unaryExpression.setExpr(replace(unaryExpression.getExpr(), candidate, replacement));
+                        case DereferenceOperator dereferenceOperator -> {
+                            dereferenceOperator.setExpr(replace(dereferenceOperator.getExpr(), candidate, replacement));
                             // this is an assignment to an array reference, time to exit
-                            if (ExpressionVisitors.hasSubexpression(candidate, unaryExpression)) return;
+                            if (ExpressionVisitors.hasSubexpression(candidate, dereferenceOperator)) return;
                         }
                         case VariableReference variableReference -> {
                             // once the value changes, we stop processing
@@ -151,6 +151,12 @@ public class SubexpressionEliminationVisitor implements ProgramVisitor {
         else if (original instanceof FunctionExpression functionExpression) {
             functionExpression.getParameters().replaceAll(expression -> replace(expression, candidate, replacement));
         }
+        else if (original instanceof DereferenceOperator dereferenceOperator) {
+            dereferenceOperator.setExpr(replace(dereferenceOperator.getExpr(), candidate, replacement));
+        }
+        else if (original instanceof TypeConversionOperator conversionOperator) {
+            conversionOperator.setExpr(replace(conversionOperator.getExpr(), candidate, replacement));
+        }
         return original;
     }
 
@@ -173,15 +179,17 @@ public class SubexpressionEliminationVisitor implements ProgramVisitor {
             return expression;
         }
         return switch (expression) {
-            case AddressOfFunction ignored -> null;
+            case AddressOfOperator ignored -> null;
             case ArrayLengthFunction ignored -> null;
             case BinaryExpression binaryExpression -> captureParams(tracker, List.of(binaryExpression.getL(), binaryExpression.getR()), n);
             case BooleanConstant ignored -> null;
+            case ByteConstant ignored -> null;
+            case DereferenceOperator dereferenceOperator -> capture(tracker, dereferenceOperator.getExpr(), n);
             case FunctionExpression functionExpression -> captureParams(tracker, functionExpression.getParameters(), n);
             case IntegerConstant ignored -> null;
-            case ByteConstant ignored -> null;
             case PlaceholderExpression ignored -> null;
             case StringConstant ignored -> null;
+            case TypeConversionOperator conversion -> capture(tracker, conversion.getExpr(), n);
             case UnaryExpression unaryExpression -> capture(tracker, unaryExpression.getExpr(), n);
             case VariableReference ignored -> null;
             default -> throw new RuntimeException("[compiler bug] unexpected expression: " + expression);

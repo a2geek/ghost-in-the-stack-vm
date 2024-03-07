@@ -1,9 +1,6 @@
 package a2geek.ghost.model;
 
-import a2geek.ghost.model.expression.BinaryExpression;
-import a2geek.ghost.model.expression.ByteConstant;
-import a2geek.ghost.model.expression.IntegerConstant;
-import a2geek.ghost.model.expression.UnaryExpression;
+import a2geek.ghost.model.expression.*;
 
 import java.util.Optional;
 
@@ -111,23 +108,30 @@ public interface Expression {
     default UnaryExpression negate() {
         return new UnaryExpression("-", this);
     }
+    default DereferenceOperator deref() {
+        return new DereferenceOperator(this, getType());
+    }
+    default DereferenceOperator derefAs(DataType type) {
+        return new DereferenceOperator(this, type);
+    }
     default Expression toByte() {
-        if (getType().sizeof() == 2) {
-            if (this.isConstant() && this.asInteger().isPresent()) {
-                return new ByteConstant(this.asInteger().get());
-            }
-            return new UnaryExpression("w2b", this, DataType.BYTE);
+        if (getType().sizeof() == 1) {
+            return this;
         }
-        return this;
+        if (this.isConstant() && this.asInteger().isPresent()) {
+            return new ByteConstant(this.asInteger().get());
+        }
+        return new TypeConversionOperator(this, DataType.BYTE);
     }
 
     default Expression toWord() {
-        if (getType().sizeof() == 1) {
-            if (this.isConstant() && this.asInteger().isPresent()) {
-                return new IntegerConstant(this.asInteger().get());
-            }
-            return new UnaryExpression("b2w", this, DataType.INTEGER);
+        if (getType().sizeof() == 2) {
+            return this;
         }
-        return this;
+        if (this.isConstant() && this.asInteger().isPresent()) {
+            return new IntegerConstant(this.asInteger().get());
+        }
+        // TODO we don't really care about type since it's size, is INTEGER a good enough general case?
+        return new TypeConversionOperator(this, DataType.INTEGER);
     }
 }

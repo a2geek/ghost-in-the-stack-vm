@@ -49,17 +49,19 @@ public abstract class DispatchVisitor implements ProgramVisitor {
             // This occurs when the expression is optional, such as the RETURN statement.
             // Catching it here instead of testing everywhere else as issues are discovered.
             case null -> Optional.empty();
-            case BinaryExpression e -> Optional.ofNullable(visit(e));
-            case ByteConstant e -> Optional.ofNullable(visit(e));
-            case VariableReference e -> Optional.ofNullable(visit(e));
-            case IntegerConstant e -> Optional.ofNullable(visit(e));
-            case StringConstant e -> Optional.ofNullable(visit(e));
-            case BooleanConstant e -> Optional.ofNullable(visit(e));
-            case UnaryExpression e -> Optional.ofNullable(visit(e));
-            case FunctionExpression e -> Optional.ofNullable(visit(e));
+            case AddressOfOperator e -> Optional.ofNullable(visit(e));
             case ArrayLengthFunction e -> Optional.ofNullable(visit(e));
-            case AddressOfFunction e -> Optional.ofNullable(visit(e));
+            case BinaryExpression e -> Optional.ofNullable(visit(e));
+            case BooleanConstant e -> Optional.ofNullable(visit(e));
+            case ByteConstant e -> Optional.ofNullable(visit(e));
+            case DereferenceOperator e -> Optional.ofNullable(visit(e));
+            case FunctionExpression e -> Optional.ofNullable(visit(e));
+            case IntegerConstant e -> Optional.ofNullable(visit(e));
             case PlaceholderExpression e -> Optional.ofNullable(visit(e));
+            case StringConstant e -> Optional.ofNullable(visit(e));
+            case TypeConversionOperator e -> Optional.ofNullable(visit(e));
+            case UnaryExpression e -> Optional.ofNullable(visit(e));
+            case VariableReference e -> Optional.ofNullable(visit(e));
             default -> throw new RuntimeException("expression type not supported: " +
                             expression.getClass().getName());
         };
@@ -111,15 +113,17 @@ public abstract class DispatchVisitor implements ProgramVisitor {
     public abstract void visit(OnErrorStatement statement, VisitorContext context);
     public abstract void visit(RaiseErrorStatement statement, VisitorContext context);
 
-    public abstract Expression visit(BinaryExpression expression);
-    public abstract Expression visit(VariableReference expression);
-    public abstract Expression visit(IntegerConstant expression);
-    public abstract Expression visit(ByteConstant expression);
-    public abstract Expression visit(StringConstant expression);
-    public abstract Expression visit(BooleanConstant expression);
-    public abstract Expression visit(UnaryExpression expression);
-    public abstract Expression visit(FunctionExpression expression);
+    public abstract Expression visit(AddressOfOperator expression);
     public abstract Expression visit(ArrayLengthFunction expression);
-    public abstract Expression visit(AddressOfFunction expression);
+    public abstract Expression visit(BinaryExpression expression);
+    public abstract Expression visit(BooleanConstant expression);
+    public abstract Expression visit(ByteConstant expression);
+    public abstract Expression visit(DereferenceOperator expression);
+    public abstract Expression visit(FunctionExpression expression);
+    public abstract Expression visit(IntegerConstant expression);
     public abstract Expression visit(PlaceholderExpression expression);
+    public abstract Expression visit(StringConstant expression);
+    public abstract Expression visit(TypeConversionOperator expression);
+    public abstract Expression visit(UnaryExpression expression);
+    public abstract Expression visit(VariableReference expression);
 }

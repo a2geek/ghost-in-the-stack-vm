@@ -2,7 +2,7 @@ package a2geek.ghost.model.statement;
 
 import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.Statement;
-import a2geek.ghost.model.expression.UnaryExpression;
+import a2geek.ghost.model.expression.DereferenceOperator;
 import a2geek.ghost.model.expression.VariableReference;
 
 public class AssignmentStatement implements Statement {
@@ -13,12 +13,9 @@ public class AssignmentStatement implements Statement {
         this.var = var;
         this.value = value.checkAndCoerce(var.getType());
     }
-    public AssignmentStatement(UnaryExpression var, Expression value) {
-        if (!"*".equals(var.getOp())) {
-            throw new RuntimeException("assignment can only be to a variable or a dereference operation");
-        }
-        this.var = var;
-        this.value = value.checkAndCoerce(var.getType());
+    public AssignmentStatement(DereferenceOperator deref, Expression value) {
+        this.var = deref;
+        this.value = value.checkAndCoerce(deref.getType());
     }
 
     public Expression getVar() {

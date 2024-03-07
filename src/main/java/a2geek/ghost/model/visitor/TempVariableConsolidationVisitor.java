@@ -31,18 +31,20 @@ public class TempVariableConsolidationVisitor implements ProgramVisitor {
 
     public Optional<Expression> captureActiveRanges(Expression expression, VisitorContext ctx, SymbolRangeTracker tracker) {
         switch (expression) {
-            case AddressOfFunction addrOf -> tracker.merge(addrOf.getSymbol(), ctx);
+            case AddressOfOperator addrOf -> tracker.merge(addrOf.getSymbol(), ctx);
             case ArrayLengthFunction arrayLen -> tracker.merge(arrayLen.getSymbol(), ctx);
             case BinaryExpression bin -> {
                 captureActiveRanges(bin.getL(), ctx, tracker.create(ctx));
                 captureActiveRanges(bin.getR(), ctx, tracker.create(ctx));
             }
             case BooleanConstant ignored -> {}
+            case ByteConstant ignored -> {}
+            case DereferenceOperator deref -> captureActiveRanges(deref.getExpr(), ctx, tracker);
             case FunctionExpression func -> func.getParameters().forEach(param -> captureActiveRanges(param, ctx, tracker));
             case IntegerConstant ignored -> {}
-            case ByteConstant ignored -> {}
             case PlaceholderExpression ignored -> {}
             case StringConstant ignored -> {}
+            case TypeConversionOperator conversion -> captureActiveRanges(conversion.getExpr(), ctx, tracker);
             case UnaryExpression unary -> captureActiveRanges(unary.getExpr(), ctx, tracker);
             case VariableReference ref -> tracker.merge(ref.getSymbol(), ctx);
             default -> throw new RuntimeException("[compiler bug] unsupported expression type: " + expression);
@@ -52,8 +54,8 @@ public class TempVariableConsolidationVisitor implements ProgramVisitor {
 
     public Optional<Expression> reassignTempVariables(Expression expression, VisitorContext ctx, SymbolRangeTracker tracker) {
         switch (expression) {
-            case AddressOfFunction addrOf -> {
-                expression = new AddressOfFunction(tracker.replacement(addrOf.getSymbol(), ctx));
+            case AddressOfOperator addrOf -> {
+                expression = new AddressOfOperator(tracker.replacement(addrOf.getSymbol(), ctx));
             }
             case ArrayLengthFunction arrayLen -> {
                 expression = new ArrayLengthFunction(
@@ -65,6 +67,10 @@ public class TempVariableConsolidationVisitor implements ProgramVisitor {
                 reassignTempVariables(bin.getR(), ctx, tracker.create(ctx)).ifPresent(bin::setR);
             }
             case BooleanConstant ignored -> {}
+            case ByteConstant ignored -> {}
+            case DereferenceOperator deref -> {
+                reassignTempVariables(deref.getExpr(), ctx, tracker).ifPresent(deref::setExpr);
+            }
             case FunctionExpression func -> {
                 for (int i=0; i<func.getParameters().size(); i++) {
                     var param = reassignTempVariables(func.getParameters().get(i), ctx, tracker);
@@ -74,9 +80,11 @@ public class TempVariableConsolidationVisitor implements ProgramVisitor {
                 }
             }
             case IntegerConstant ignored -> {}
-            case ByteConstant ignored -> {}
             case PlaceholderExpression ignored -> {}
             case StringConstant ignored -> {}
+            case TypeConversionOperator conversion -> {
+                reassignTempVariables(conversion.getExpr(), ctx, tracker).ifPresent(conversion::setExpr);
+            }
             case UnaryExpression unary -> {
                 reassignTempVariables(unary.getExpr(), ctx, tracker).ifPresent(unary::setExpr);
             }

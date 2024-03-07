@@ -32,20 +32,20 @@ MAIN:
    3: _FOR_LOOP13:
    4:             IF (MATH.SGN(1) >= 0) THEN
    0:                 IF (J <= 7) THEN
-   0:                     CH = b2w(*((I + J)))
+   0:                     CH = CInt(*((I + J)))
    1:                     CALL PRHEX2(CH)
    2:                     CALL RUNTIME.PRINT_STRING(" ")
-   3:                     *(((*(40) + 32) + J)) = w2b(CH)
+   3:                     *(((*(40) + 32) + J)) = CByte(CH)
    4: _FOR_CONTINUE13:
    5:                     J = (J + 1)
    6:                     GOTO _FOR_LOOP13
                       END IF
                   ELSE
    0:                 IF (J >= 7) THEN
-   0:                     CH = b2w(*((I + J)))
+   0:                     CH = CInt(*((I + J)))
    1:                     CALL PRHEX2(CH)
    2:                     CALL RUNTIME.PRINT_STRING(" ")
-   3:                     *(((*(40) + 32) + J)) = w2b(CH)
+   3:                     *(((*(40) + 32) + J)) = CByte(CH)
    4: _FOR_CONTINUE13:
    5:                     J = (J + 1)
    6:                     GOTO _FOR_LOOP13
@@ -65,20 +65,20 @@ MAIN:
    3: _FOR_LOOP13:
    4:             IF (MATH.SGN(1) >= 0) THEN
    0:                 IF (J <= 7) THEN
-   0:                     CH = b2w(*((I + J)))
+   0:                     CH = CInt(*((I + J)))
    1:                     CALL PRHEX2(CH)
    2:                     CALL RUNTIME.PRINT_STRING(" ")
-   3:                     *(((*(40) + 32) + J)) = w2b(CH)
+   3:                     *(((*(40) + 32) + J)) = CByte(CH)
    4: _FOR_CONTINUE13:
    5:                     J = (J + 1)
    6:                     GOTO _FOR_LOOP13
                       END IF
                   ELSE
    0:                 IF (J >= 7) THEN
-   0:                     CH = b2w(*((I + J)))
+   0:                     CH = CInt(*((I + J)))
    1:                     CALL PRHEX2(CH)
    2:                     CALL RUNTIME.PRINT_STRING(" ")
-   3:                     *(((*(40) + 32) + J)) = w2b(CH)
+   3:                     *(((*(40) + 32) + J)) = CByte(CH)
    4: _FOR_CONTINUE13:
    5:                     J = (J + 1)
    6:                     GOTO _FOR_LOOP13

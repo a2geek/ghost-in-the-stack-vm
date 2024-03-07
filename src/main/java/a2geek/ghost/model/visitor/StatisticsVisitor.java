@@ -4,7 +4,7 @@ import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.Symbol;
 import a2geek.ghost.model.Visitor;
 import a2geek.ghost.model.VisitorContext;
-import a2geek.ghost.model.expression.AddressOfFunction;
+import a2geek.ghost.model.expression.AddressOfOperator;
 import a2geek.ghost.model.expression.VariableReference;
 import a2geek.ghost.model.statement.AssignmentStatement;
 import a2geek.ghost.model.statement.GotoGosubStatement;
@@ -64,7 +64,7 @@ public class StatisticsVisitor extends Visitor {
             dispatch(statement.getValue());
         }
         else {
-            // Note that no instance of candidate UnaryExpressions (array references) have been seen yet
+            // Note that no instance of candidate DereferenceOperator (array references) have been seen yet
             // so we pass that on
             super.visit(statement, context);
         }
@@ -83,7 +83,7 @@ public class StatisticsVisitor extends Visitor {
     }
 
     @Override
-    public Expression visit(AddressOfFunction expression) {
+    public Expression visit(AddressOfOperator expression) {
         usedLabels.add(expression.getSymbol());
         return super.visit(expression);
     }

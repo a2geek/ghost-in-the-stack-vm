@@ -218,7 +218,7 @@ public class InliningVisitor extends Visitor implements RepeatingVisitor {
             var expr = dispatch(statement.getValue()).orElseThrow();
             switch (dispatch(statement.getVar()).orElseThrow()) {
                 case VariableReference ref -> addStatement(new AssignmentStatement(ref, expr));
-                case UnaryExpression unary -> addStatement(new AssignmentStatement(unary, expr));
+                case DereferenceOperator deref -> addStatement(new AssignmentStatement(deref, expr));
                 default -> throw new RuntimeException("[compiler bug] unexpected LHS of assignment: " + statement);
             }
         }
@@ -264,8 +264,20 @@ public class InliningVisitor extends Visitor implements RepeatingVisitor {
         @Override
         public Expression visit(UnaryExpression expression) {
             var expr = dispatch(expression.getExpr());
-            // preserve the datatype since it can be type conversion
-            return new UnaryExpression(expression.getOp(), expr.orElseThrow(), expression.getType());
+            return new UnaryExpression(expression.getOp(), expr.orElseThrow());
+        }
+
+        @Override
+        public Expression visit(TypeConversionOperator expression) {
+            var expr = dispatch(expression.getExpr());
+            return new TypeConversionOperator(expr.orElseThrow(), expression.getType());
+        }
+
+        @Override
+        public Expression visit(DereferenceOperator expression) {
+            var expr = dispatch(expression.getExpr());
+
+            return new DereferenceOperator(expr.orElseThrow(), expression.getType());
         }
 
         @Override
@@ -296,13 +308,13 @@ public class InliningVisitor extends Visitor implements RepeatingVisitor {
         }
 
         @Override
-        public Expression visit(AddressOfFunction expression) {
+        public Expression visit(AddressOfOperator expression) {
             if (replacements.containsKey(expression.getSymbol())) {
                 var replacement = replacements.get(expression.getSymbol());
                 if (replacement instanceof VariableReference ref) {
                     var symbol = ref.getSymbol();
                     if (symbol.numDimensions() > 0) {
-                        return new AddressOfFunction(symbol);
+                        return new AddressOfOperator(symbol);
                     }
                 }
                 var msg = String.format("unable to combine '%s' and '%s'", expression, replacement);

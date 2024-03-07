@@ -413,7 +413,11 @@ Any built-in functions are referenced here.
 | Function                 | Library   | Notes                                                                           |
 |:-------------------------|:----------|:--------------------------------------------------------------------------------|
 | `abs(iexpr)`             | Math      | Returns the absolute value of `iexpr`.                                          |
+| `addrof(var)`            | Intrinsic | Calculate address of a variable.                                                |
 | `asc(string)`            | Intrinsic | Returns the ASCII value of the first character of the string with high bit set. |
+| `cbool(expr)`            | Intrinsic | Converts expression to boolean.                                                 |
+| `cbyte(expr)`            | Intrinsic | Converts expression to byte.                                                    |
+| `cint(expr)`             | Intrinsic | Converts expression to integer.                                                 |
 | `pdl(iexpr)`             | Misc      | Reads paddle specified by `iexpr`.                                              |
 | `peek(addr)`             | Intrinsic | Read byte from memory location `addr`.                                          |
 | `peekw(addr)`            | Intrinsic | Read word from memory location `addr`.                                          |
@@ -422,7 +426,6 @@ Any built-in functions are referenced here.
 | `scrn(xexpr,yexpr)`      | Lores     | Read color of lores graphics point at `xexpr`, `yexpr` coordinate.              |
 | `sgn(iexpr)`             | Math      | Returns 1,0,-1 if `iexpr < 0`, or `iexpr = 0`, or `iexpr > 0`.                  |
 | `ubound(arrayVar[,dim])` | Intrinsic | Returns length of an array dimension (default is 1).                            |
-| `addrof(var)`            | Intrinsic | Calculate address of a variable.                                                |
 
 Note that the library specified is lowercase in the `uses` phrase. 
 All library functions are currently prefixed by the library name.
