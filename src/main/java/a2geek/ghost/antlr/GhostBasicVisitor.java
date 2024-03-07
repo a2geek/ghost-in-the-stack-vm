@@ -925,6 +925,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
     private final Map<String, BiFunction<List<Expression>,ParseTree,Expression>> FUNCTION_HANDLERS = Map.of(
         "addrof", this::handleAddrOfFunction,
+        "caddr", this::handleCAddrFunction,
         "cbool", this::handleCBoolFunction,
         "cbyte", this::handleCByteFunction,
         "cint", this::handleCIntFunction,
@@ -962,6 +963,12 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             return deref.getExpr();
         }
         throw new RuntimeException("can only take addrof a simple variable or an array index: " + ctx.getText());
+    }
+    Expression handleCAddrFunction(List<Expression> params, ParseTree ctx) {
+        if (params.size() == 1) {
+            return new TypeConversionOperator(params.getFirst(), DataType.ADDRESS);
+        }
+        throw new RuntimeException("can only use CAddr on a simple variable: " + ctx.getText());
     }
     Expression handleCBoolFunction(List<Expression> params, ParseTree ctx) {
         if (params.size() == 1) {
