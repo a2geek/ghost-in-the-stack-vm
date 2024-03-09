@@ -8,26 +8,12 @@ module prodos
     const MACHID = 0xbf98
     const PFXPTR = 0xbf9a
 
-    ' this should be kept internal to ProDOS since there's going to be a better way to do it!
-
-    private function pstring(name as string) as address
-        dim buffer as address = 0x280
-        poke buffer, 0x3f   ' set max length
-        poke buffer+1, 0x00 ' fake an end of string
+    private sub pstring(buffer as address, name as string)
         dim len as integer = strings.len(name)
-        strings.strcpy(buffer, 0, name, 0, len)
         poke buffer, len
-        return buffer
-    end function
-    private function pstring2(name as string) as address
-        dim buffer as address = 0x2c0
-        poke buffer, 0x3f   ' set max length
         poke buffer+1, 0x00 ' fake an end of string
-        dim len as integer = strings.len(name)
-        strings.strcpy(buffer, 0, name, 0, len)
-        poke buffer, len
-        return buffer
-    end function
+        strings.strcpy(buffer, 1, name, 1, len)
+    end sub
 
     ' end of internal junk
 
@@ -114,7 +100,7 @@ module prodos
         call CODE
         rc = cpu.register.a ' preserve because PRINT(etc) use the registers as well
         if rc <> 0 then
-            raise error rc, "PRODOS ERROR"
+            raise error rc, "PRODOS ERROR", "SEE $303 FOR FN CODE"
         end if
     end sub
 
@@ -154,8 +140,10 @@ module prodos
     end function
 
     export sub createFile(pathname as string, filetype as integer, auxtype as integer)
+        dim pPathname(strings.len(pathname)+2) as byte
+        pstring(addrof(pPathname(0)), pathname)
         poke PARAMS, 0x07
-        pokew PARAMS+1, pstring(pathname)
+        pokew PARAMS+1, addrof(pPathname(0))
         poke PARAMS+3, 0xc3
         poke PARAMS+4, filetype
         pokew PARAMS+5, auxtype
@@ -166,22 +154,30 @@ module prodos
     end sub
 
     export sub destroy(pathname as string)
+        dim pPathname(strings.len(pathname)+2) as byte
+        pstring(addrof(pPathname(0)), pathname)
         poke PARAMS, 0x01
-        pokew PARAMS+1, pstring(pathname)
+        pokew PARAMS+1, addrof(pPathname(0))
         callMLI(0xc1)
     end sub
 
     export sub rename(oldpathname as string, newpathname as string)
+        dim pOldPathname(strings.len(oldpathname)+2) as byte
+        dim pNewPathname(strings.len(newpathname)+2) as byte
+        pstring(addrof(pOldPathname(0)), oldpathname)
+        pstring(addrof(pNewPathname(0)), newpathname)
         poke PARAMS, 0x02
-        pokew PARAMS+1, pstring(oldpathname)
-        pokew PARAMS+3, pstring2(newpathname)
+        pokew PARAMS+1, addrof(pOldPathname(0))
+        pokew PARAMS+3, addrof(pNewPathname(0))
         callMLI(0xc2)
     end sub
 
     export sub lock(pathname as string)
+        dim pPathname(strings.len(pathname)+2) as byte
+        pstring(addrof(pPathname(0)), pathname)
         ' populate with current info
         poke PARAMS, 0x0a
-        pokew PARAMS+1, pstring(pathname)
+        pokew PARAMS+1, addrof(pPathname(0))
         callMLI(0xc4)
         ' change access bits and save chane
         poke PARAMS, 0x07
@@ -190,9 +186,11 @@ module prodos
     end sub
 
     export sub unlock(pathname as string)
+        dim pPathname(strings.len(pathname)+2) as byte
+        pstring(addrof(pPathname(0)), pathname)
         ' populate with current info
         poke PARAMS, 0x0a
-        pokew PARAMS+1, pstring(pathname)
+        pokew PARAMS+1, addrof(pPathname(0))
         callMLI(0xc4)
         ' change access bits and save chane
         poke PARAMS, 0x07
@@ -219,8 +217,10 @@ module prodos
     end sub
 
     export sub setPrefix(newprefix as string)
+        dim pPrefix(strings.len(newprefix)+2) as byte
+        pstring(addrof(pPrefix(0)), newprefix)
         poke PARAMS, 0x01
-        pokew PARAMS+1, pstring(newprefix)
+        pokew PARAMS+1, addrof(pPrefix(0))
         callMLI(0xc6)
     end sub
 
