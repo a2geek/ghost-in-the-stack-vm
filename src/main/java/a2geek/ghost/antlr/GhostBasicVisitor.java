@@ -32,6 +32,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     public GhostBasicVisitor(ModelBuilder model) {
         this.model = model;
         Intrinsic.CPU_REGISTERS.forEach(name -> model.addVariable(name, SymbolType.INTRINSIC, DataType.INTEGER));
+        Intrinsic.CPU_REGISTERS.forEach(name -> model.addIntrinsicVariable(name, DataType.INTEGER));
     }
 
     public ModelBuilder getModel() {

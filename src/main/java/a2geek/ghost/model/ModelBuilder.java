@@ -138,8 +138,8 @@ public class ModelBuilder {
     public Symbol addVariable(String name, DataType dataType) {
         return this.scope.peek().addLocalSymbol(Symbol.variable(name, SymbolType.VARIABLE).dataType(dataType));
     }
-    public Symbol addVariable(String name, SymbolType type, DataType dataType) {
-        return this.scope.peek().addLocalSymbol(Symbol.variable(name, type).dataType(dataType));
+    public void addIntrinsicVariable(String name, DataType dataType) {
+        this.scope.peek().addLocalSymbol(Symbol.variable(name, SymbolType.VARIABLE).dataType(dataType).declarationType(DeclarationType.INTRINSIC));
     }
     public Symbol addArrayVariable(String name, DataType dataType, List<Expression> dimensions) {
         return this.scope.peek().addLocalSymbol(

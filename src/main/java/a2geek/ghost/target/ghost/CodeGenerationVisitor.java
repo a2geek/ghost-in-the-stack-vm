@@ -132,15 +132,15 @@ public class CodeGenerationVisitor extends DispatchVisitor {
                 switch (symbol.declarationType()) {
                     case LOCAL -> this.code.emit(Opcode.LOCAL_LOAD, localFrameOffset(symbol));
                     case GLOBAL -> this.code.emit(Opcode.GLOBAL_LOAD, globalFrameOffset(symbol));
+                    case INTRINSIC -> {
+                        switch (symbol.name().toLowerCase()) {
+                            case Intrinsic.CPU_REGISTER_A -> this.code.emit(Opcode.GETACC);
+                            case Intrinsic.CPU_REGISTER_X -> this.code.emit(Opcode.GETXREG);
+                            case Intrinsic.CPU_REGISTER_Y -> this.code.emit(Opcode.GETYREG);
+                            default -> throw new RuntimeException("unknown intrinsic: " + symbol.name());
+                        }
+                    }
                     default -> throw new RuntimeException("expecting declaration symbolType but it was: " + symbol.declarationType());
-                }
-            }
-            case INTRINSIC -> {
-                switch (symbol.name().toLowerCase()) {
-                    case Intrinsic.CPU_REGISTER_A -> this.code.emit(Opcode.GETACC);
-                    case Intrinsic.CPU_REGISTER_X -> this.code.emit(Opcode.GETXREG);
-                    case Intrinsic.CPU_REGISTER_Y -> this.code.emit(Opcode.GETYREG);
-                    default -> throw new RuntimeException("unknown intrinsic: " + symbol.name());
                 }
             }
             case CONSTANT -> {
@@ -158,15 +158,15 @@ public class CodeGenerationVisitor extends DispatchVisitor {
                 switch (symbol.declarationType()) {
                     case LOCAL -> this.code.emit(Opcode.LOCAL_STORE, localFrameOffset(symbol));
                     case GLOBAL -> this.code.emit(Opcode.GLOBAL_STORE, globalFrameOffset(symbol));
+                    case INTRINSIC -> {
+                        switch (symbol.name().toLowerCase()) {
+                            case Intrinsic.CPU_REGISTER_A -> this.code.emit(Opcode.SETACC);
+                            case Intrinsic.CPU_REGISTER_X -> this.code.emit(Opcode.SETXREG);
+                            case Intrinsic.CPU_REGISTER_Y -> this.code.emit(Opcode.SETYREG);
+                            default -> throw new RuntimeException("unknown intrinsic: " + symbol.name());
+                        }
+                    }
                     default -> throw new RuntimeException("expecting declaration symbolType but it was: " + symbol.declarationType());
-                }
-            }
-            case INTRINSIC -> {
-                switch (symbol.name().toLowerCase()) {
-                    case Intrinsic.CPU_REGISTER_A -> this.code.emit(Opcode.SETACC);
-                    case Intrinsic.CPU_REGISTER_X -> this.code.emit(Opcode.SETXREG);
-                    case Intrinsic.CPU_REGISTER_Y -> this.code.emit(Opcode.SETYREG);
-                    default -> throw new RuntimeException("unknown intrinsic: " + symbol.name());
                 }
             }
             case CONSTANT -> {
