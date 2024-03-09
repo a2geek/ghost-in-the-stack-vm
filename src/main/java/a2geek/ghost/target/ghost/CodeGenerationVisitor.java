@@ -132,15 +132,15 @@ public class CodeGenerationVisitor extends DispatchVisitor {
                 switch (symbol.declarationType()) {
                     case LOCAL -> this.code.emit(Opcode.LOCAL_LOAD, localFrameOffset(symbol));
                     case GLOBAL -> this.code.emit(Opcode.GLOBAL_LOAD, globalFrameOffset(symbol));
+                    case INTRINSIC -> {
+                        switch (symbol.name().toLowerCase()) {
+                            case Intrinsic.CPU_REGISTER_A -> this.code.emit(Opcode.GETACC);
+                            case Intrinsic.CPU_REGISTER_X -> this.code.emit(Opcode.GETXREG);
+                            case Intrinsic.CPU_REGISTER_Y -> this.code.emit(Opcode.GETYREG);
+                            default -> throw new RuntimeException("unknown intrinsic: " + symbol.name());
+                        }
+                    }
                     default -> throw new RuntimeException("expecting declaration symbolType but it was: " + symbol.declarationType());
-                }
-            }
-            case INTRINSIC -> {
-                switch (symbol.name().toLowerCase()) {
-                    case Intrinsic.CPU_REGISTER_A -> this.code.emit(Opcode.GETACC);
-                    case Intrinsic.CPU_REGISTER_X -> this.code.emit(Opcode.GETXREG);
-                    case Intrinsic.CPU_REGISTER_Y -> this.code.emit(Opcode.GETYREG);
-                    default -> throw new RuntimeException("unknown intrinsic: " + symbol.name());
                 }
             }
             case CONSTANT -> {
@@ -158,15 +158,15 @@ public class CodeGenerationVisitor extends DispatchVisitor {
                 switch (symbol.declarationType()) {
                     case LOCAL -> this.code.emit(Opcode.LOCAL_STORE, localFrameOffset(symbol));
                     case GLOBAL -> this.code.emit(Opcode.GLOBAL_STORE, globalFrameOffset(symbol));
+                    case INTRINSIC -> {
+                        switch (symbol.name().toLowerCase()) {
+                            case Intrinsic.CPU_REGISTER_A -> this.code.emit(Opcode.SETACC);
+                            case Intrinsic.CPU_REGISTER_X -> this.code.emit(Opcode.SETXREG);
+                            case Intrinsic.CPU_REGISTER_Y -> this.code.emit(Opcode.SETYREG);
+                            default -> throw new RuntimeException("unknown intrinsic: " + symbol.name());
+                        }
+                    }
                     default -> throw new RuntimeException("expecting declaration symbolType but it was: " + symbol.declarationType());
-                }
-            }
-            case INTRINSIC -> {
-                switch (symbol.name().toLowerCase()) {
-                    case Intrinsic.CPU_REGISTER_A -> this.code.emit(Opcode.SETACC);
-                    case Intrinsic.CPU_REGISTER_X -> this.code.emit(Opcode.SETXREG);
-                    case Intrinsic.CPU_REGISTER_Y -> this.code.emit(Opcode.SETYREG);
-                    default -> throw new RuntimeException("unknown intrinsic: " + symbol.name());
                 }
             }
             case CONSTANT -> {
@@ -352,6 +352,18 @@ public class CodeGenerationVisitor extends DispatchVisitor {
     public void visit(CallSubroutine statement, VisitorContext context) {
         // Using the "program" frame
         var subFullName = statement.getSubroutine().getFullPathName();
+        if ("dealloc".equalsIgnoreCase(subFullName)) {
+            // We assume we have 1 parameter and try to optimize operation based on being a constant or not...
+            var param = statement.getParameters().getFirst();
+            if (param.asInteger().isPresent()) {
+                code.emit(Opcode.POPN, param.asInteger().get());
+            }
+            else {
+                dispatch(param);
+                code.emit(Opcode.POP);
+            }
+            return;
+        }
         var scope = frames.getFirst().scope()
                 .findFirstLocalScope(named(subFullName).and(in(SymbolType.SUBROUTINE)))
                 .map(Symbol::scope)

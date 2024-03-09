@@ -16,6 +16,7 @@ public class Scope extends StatementBlock {
     private final List<Symbol> symbolTable = new ArrayList<>();
     private final Set<Symbol> exports = new HashSet<>();
     private OnErrorContext onErrorContext;
+    private MemoryManagement memoryManagementStrategy;
     /** Tracking a distinct global label number to prevent name collisions. */
     private static int symbolNumber = 1;
 
@@ -27,13 +28,15 @@ public class Scope extends StatementBlock {
         return symbolNumber;
     }
 
-    public Scope(Function<String,String> caseStrategy, String name) {
+    public Scope(Function<String,String> caseStrategy, MemoryManagement memoryManagementStrategy, String name) {
         this.caseStrategy = caseStrategy;
+        this.memoryManagementStrategy = memoryManagementStrategy;
         this.name = caseStrategy.apply(name);
         this.defaultDeclarationType = DeclarationType.GLOBAL;
     }
     public Scope(Scope parent, String name, DeclarationType defaultDeclarationType) {
         this.caseStrategy = parent.caseStrategy;
+        this.memoryManagementStrategy = parent.getMemoryManagementStrategy().create();
         this.name = caseStrategy.apply(name);
         this.parent = parent;
         this.defaultDeclarationType = defaultDeclarationType;
@@ -84,6 +87,13 @@ public class Scope extends StatementBlock {
     }
     public void setOnErrorContext(OnErrorContext onErrorContext) {
         this.onErrorContext = onErrorContext;
+    }
+
+    public MemoryManagement getMemoryManagementStrategy() {
+        return memoryManagementStrategy;
+    }
+    public void setMemoryManagementStrategy(MemoryManagement memoryManagementStrategy) {
+        this.memoryManagementStrategy = memoryManagementStrategy;
     }
 
     public List<Symbol> getLocalSymbols() {

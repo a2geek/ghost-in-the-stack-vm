@@ -31,7 +31,10 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
     public GhostBasicVisitor(ModelBuilder model) {
         this.model = model;
-        Intrinsic.CPU_REGISTERS.forEach(name -> model.addVariable(name, SymbolType.INTRINSIC, DataType.INTEGER));
+        Intrinsic.CPU_REGISTERS.forEach(name -> model.addIntrinsicVariable(name, DataType.INTEGER));
+        //
+        var sub = new Subroutine(model.getProgram(), "dealloc", List.of(Symbol.variable("bytes", SymbolType.PARAMETER).dataType(DataType.INTEGER)));
+        model.peekScope().addLocalSymbol(Symbol.scope(sub).declarationType(DeclarationType.INTRINSIC));
     }
 
     public ModelBuilder getModel() {
@@ -669,7 +672,6 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                 if (names.contains(id)) {
                     throw new RuntimeException("variable already defined: " + id);
                 }
-                DataType dt = buildDataType(id, idDecl.datatype());
                 List<Expression> dimensions = new ArrayList<>();
                 for (var expr : idDecl.expr()) {
                     dimensions.add(visit(expr));
@@ -683,6 +685,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                     dimensions.add(new IntegerConstant(1));
                 }
                 boolean isArray = !dimensions.isEmpty();
+                DataType dt = buildDataType(id, idDecl.datatype(), dimensions.isEmpty());
                 List<Expression> defaultValues = new ArrayList<>();
                 if (idDecl.idDeclDefault() != null && idDecl.idDeclDefault().expr() != null) {
                     for (var defaultExpr : idDecl.idDeclDefault().expr()) {
@@ -704,11 +707,14 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         }
         return decls;
     }
-    DataType buildDataType(String id, BasicParser.DatatypeContext ctx) {
+    DataType buildDataType(String id, BasicParser.DatatypeContext ctx, boolean isNotArray) {
         DataType nameType = determineDataType(id, null);
         DataType dt = null;
         if (ctx != null) {
             dt = DataType.valueOf(ctx.getText().toUpperCase());
+        }
+        if (isNotArray && dt == DataType.BYTE) {
+            dt = DataType.INTEGER;
         }
         if (nameType == null && dt == null) {
             return DataType.INTEGER;
@@ -735,7 +741,6 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                 if (names.contains(id)) {
                     throw new RuntimeException("parameter already defined: " + id);
                 }
-                DataType dt = buildDataType(id, idDecl.datatype());
                 int numDimensions = 0;
                 if (idDecl.getText().contains("(")) {
                     // count the number of commas to figure out dimensions.  "SUB NAME(ARRAY(,,) AS INTEGER)" => 3 dimensions
@@ -746,6 +751,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                     // not actual dimension size; but Symbol holds on to the defining dimension expressions
                     dimensions.add(PlaceholderExpression.of(DataType.INTEGER));
                 }
+                DataType dt = buildDataType(id, idDecl.datatype(), dimensions.isEmpty());
                 names.add(id);
                 decls.add(new IdDeclaration(Set.of(), id, dt, dimensions, List.of()));
             });
@@ -768,6 +774,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         ensureValidConstruct(sub);
         visit(ctx.s);
         model.subDeclEnd();
+        // TODO free any allocated memory!
         return null;
     }
 
@@ -814,13 +821,14 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                     .collect(Collectors.toList());
         }
         var id = ctx.id.getText();
-        DataType dt = buildDataType(id, ctx.datatype());
+        DataType dt = buildDataType(id, ctx.datatype(), true);  // we know this is not an array ;-)
 
         var func = model.funcDeclBegin(id, dt, params);
         applyModifiers(ctx.modifiers(), func);
         applyVisibility(ctx.visibility(), func);
         ensureValidConstruct(func);
         visit(ctx.s);
+        // TODO free any allocated memory!
         model.funcDeclEnd();
         return null;
     }
@@ -925,6 +933,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
     private final Map<String, BiFunction<List<Expression>,ParseTree,Expression>> FUNCTION_HANDLERS = Map.of(
         "addrof", this::handleAddrOfFunction,
+        "caddr", this::handleCAddrFunction,
         "cbool", this::handleCBoolFunction,
         "cbyte", this::handleCByteFunction,
         "cint", this::handleCIntFunction,
@@ -962,6 +971,12 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             return deref.getExpr();
         }
         throw new RuntimeException("can only take addrof a simple variable or an array index: " + ctx.getText());
+    }
+    Expression handleCAddrFunction(List<Expression> params, ParseTree ctx) {
+        if (params.size() == 1) {
+            return new TypeConversionOperator(params.getFirst(), DataType.ADDRESS);
+        }
+        throw new RuntimeException("can only use CAddr on a simple variable: " + ctx.getText());
     }
     Expression handleCBoolFunction(List<Expression> params, ParseTree ctx) {
         if (params.size() == 1) {

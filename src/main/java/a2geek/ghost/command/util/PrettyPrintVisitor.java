@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static a2geek.ghost.model.Symbol.in;
+import static a2geek.ghost.model.Symbol.is;
+import static java.util.function.Predicate.not;
 
 public class PrettyPrintVisitor {
     public static String format(Program program) {
@@ -39,7 +41,7 @@ public class PrettyPrintVisitor {
         formatStatementBlock(program);
         sb.append("\n");
         indent -= indentIncrement;
-        program.findAllLocalScope(in(SymbolType.FUNCTION,SymbolType.SUBROUTINE)).forEach(symbol -> {
+        program.findAllLocalScope(in(SymbolType.FUNCTION,SymbolType.SUBROUTINE).and(not(is(DeclarationType.INTRINSIC)))).forEach(symbol -> {
             if (!config.includeModules && symbol.name().contains(".")) {
                 return;
             }
@@ -80,6 +82,7 @@ public class PrettyPrintVisitor {
         scope.getLocalSymbols().stream()
                 // Only variables
                 .filter(s -> s.symbolType() == SymbolType.VARIABLE)
+                .filter(s -> s.declarationType() != DeclarationType.INTRINSIC)
                 .forEach(s -> {
                     var fmt = String.format("DIM %s AS %s = %s", s.name(), s.dataType(), s.defaultValues()).indent(indent);
                     sb.append(fmt);

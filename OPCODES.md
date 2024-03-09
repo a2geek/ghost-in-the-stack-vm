@@ -79,7 +79,7 @@ Therefore, the `Opcode.java` and `interp.asm` just need to be ordered the same.
 | `LOAD1`        |   1    | Load 1 to TOS.                                                                                                                                                                                                |
 | `LOAD2`        |   1    | Load 2 to TOS.                                                                                                                                                                                                |
 | `POP2`         |   1    | Pop 2 bytes off TOS.                                                                                                                                                                                          |
-
+| `POP`          |   `    | Pop TOS bytes off of TOS.                                                                                                                                                                                     |
 
 ### Stack Frame
 

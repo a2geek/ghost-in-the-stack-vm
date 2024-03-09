@@ -65,6 +65,7 @@ All variables are assumed to be 16 bit integers. Other data types exist in expre
 |  Integer  | 16-bit integer (-32768..32767).                                                                                                    |
 |  Boolean  | True/False. All inequalities resolve to a Boolean. When added to an Integer, a Boolean is valued as `0` for False or `1` for True. |
 |  String   | String constants. Enclosed in quotes (`"`). Mostly used by `print` statement or `asc(..)` function.                                |
+|   Byte    | Only allowed for byte arrays; any other local variable is treated as in integer.                                                   |
 
 ## Declarations
 

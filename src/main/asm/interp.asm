@@ -257,6 +257,7 @@ brtable:
     .addr _incr-1
     .addr _decr-1
     .addr _pushz-1
+    .addr _pop-1
     .addr _loadsp-1
     .addr _storesp-1
     .addr _loadlp-1
@@ -575,16 +576,24 @@ _call:
     sty yreg
     jmp loop
 
+; POP: (TOS-n ... TOS-1 TOS N) => ()
+_pop:
+    pla
+    beq popnexit
+    tay
+    pla
+    jmp popnloop
+
 ; POPN <n>: (TOS-n ... TOS-1 TOS) => ()
 _popn:
     jsr fetch
-    beq @nothingtodo    ; TODO: is this a code generation bug or not?
+    beq popnexit    ; TODO: is this a code generation bug or not?
     tay
-@poploop:
+popnloop:
     pla
     dey
-    bne @poploop
-@nothingtodo:
+    bne popnloop
+popnexit:
     jmp loop
 
 ; PUSHZ: (N) => (0 0 0 0 ... 0n)

@@ -17,7 +17,7 @@ public interface Expression {
     default Expression checkAndCoerce(DataType target) {
         switch (target) {
             case ADDRESS -> {
-                if (isType(DataType.ADDRESS, DataType.STRING, DataType.INTEGER)) {
+                if (isType(DataType.ADDRESS, DataType.STRING, DataType.INTEGER, DataType.BYTE)) {
                     return this;
                 }
             }

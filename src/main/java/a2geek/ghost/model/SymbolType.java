@@ -4,7 +4,6 @@ public enum SymbolType {
     ALIAS,
     CONSTANT,
     FUNCTION,
-    INTRINSIC,
     LABEL,
     MODULE,
     PARAMETER,

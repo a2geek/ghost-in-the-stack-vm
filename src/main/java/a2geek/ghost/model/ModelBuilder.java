@@ -1,6 +1,8 @@
 package a2geek.ghost.model;
 
 import a2geek.ghost.antlr.ParseUtil;
+import a2geek.ghost.memorymanagement.HeapMemoryManagement;
+import a2geek.ghost.memorymanagement.StackMemoryManagement;
 import a2geek.ghost.model.expression.*;
 import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.scope.Subroutine;
@@ -43,12 +45,10 @@ public class ModelBuilder {
     private final Set<String> librariesIncluded = new HashSet<>();
     private boolean trace = false;
     private boolean boundsCheck = true;
-    private String heapFunction;
 
     public ModelBuilder(Function<String,String> caseStrategy) {
         this.caseStrategy = caseStrategy;
-        useStackForHeap();  // default
-        Program program = new Program(caseStrategy);
+        Program program = new Program(caseStrategy, new StackMemoryManagement(this));
         var onerr = OnErrorContext.createPrimary(program);     // always (assumed)
         program.setOnErrorContext(onerr);
         this.scope.push(program);
@@ -86,17 +86,17 @@ public class ModelBuilder {
     }
 
     public void useStackForHeap() {
-        this.heapFunction = "alloc";
+        getProgram().setMemoryManagementStrategy(new StackMemoryManagement(this));
     }
     public void useMemoryForHeap(int startAddress) {
-        this.heapFunction = "memory.heapalloc";
+        getProgram().setMemoryManagementStrategy(new HeapMemoryManagement(this));
         this.pushStatementBlock(new StatementBlock());
         assignStmt(derefWord(new IntegerConstant(0x69)), new IntegerConstant(startAddress));
         var sb = this.popStatementBlock();
         this.addInitializationStatements(sb);
     }
     public boolean isUsingMemory() {
-        return !"alloc".equals(this.heapFunction);
+        return getProgram().getMemoryManagementStrategy().isUsingMemory();
     }
 
     public void addInitializationStatements(StatementBlock statements) {
@@ -138,8 +138,8 @@ public class ModelBuilder {
     public Symbol addVariable(String name, DataType dataType) {
         return this.scope.peek().addLocalSymbol(Symbol.variable(name, SymbolType.VARIABLE).dataType(dataType));
     }
-    public Symbol addVariable(String name, SymbolType type, DataType dataType) {
-        return this.scope.peek().addLocalSymbol(Symbol.variable(name, type).dataType(dataType));
+    public void addIntrinsicVariable(String name, DataType dataType) {
+        this.scope.peek().addLocalSymbol(Symbol.variable(name, SymbolType.VARIABLE).dataType(dataType).declarationType(DeclarationType.INTRINSIC));
     }
     public Symbol addArrayVariable(String name, DataType dataType, List<Expression> dimensions) {
         return this.scope.peek().addLocalSymbol(
@@ -217,11 +217,14 @@ public class ModelBuilder {
     }
 
     public void callLibrarySubroutine(String name, Expression... params) {
-        var descriptor = CallSubroutine.getDescriptor(name).orElseThrow();
+        var descriptor = CallSubroutine.getDescriptor(name).orElseThrow(() -> new RuntimeException("library subroutine not found: " + name));
         uses(descriptor.library(), nothingExported());
-        callSubroutine(descriptor.fullName(), Arrays.asList(params));
+        callSubroutine(descriptor.fullName(), params);
     }
 
+    public void callSubroutine(String name, Expression... params) {
+        callSubroutine(name, Arrays.asList(params));
+    }
     public void callSubroutine(String name, List<Expression> params) {
         ensureModuleIncluded(name);
         var subName = fixCase(name);
@@ -345,8 +348,8 @@ public class ModelBuilder {
         return sub;
     }
     public void subDeclEnd() {
-        // TODO does this need to be validated?
         Scope sub = popScope();
+        sub.getMemoryManagementStrategy().deallocateAll();
         popStatementBlock();
         setupOnErrorContext(sub);
     }
@@ -359,7 +362,6 @@ public class ModelBuilder {
 
     public a2geek.ghost.model.scope.Function funcDeclBegin(String name, DataType returnType, List<Symbol.Builder> params) {
         trace("compiling function '%s'", name);
-        // FIXME? naming is really awkward due to naming conflicts!
         a2geek.ghost.model.scope.Function func =
             new a2geek.ghost.model.scope.Function(scope.peek(),
                 Symbol.variable(name, SymbolType.RETURN_VALUE).dataType(returnType), params);
@@ -370,8 +372,8 @@ public class ModelBuilder {
         return func;
     }
     public void funcDeclEnd() {
-        // TODO does this need to be validated?
         Scope func = popScope();
+        func.getMemoryManagementStrategy().deallocateAll();
         popStatementBlock();
         setupOnErrorContext(func);
     }
@@ -430,8 +432,7 @@ public class ModelBuilder {
         // The element count is the sum of each dimension +1 multiplied out
         var elementCount = sizes.stream().map(e -> e.plus(IntegerConstant.ONE)).reduce(Expression::times).orElseThrow();
         var bytes = overheadBytes.plus(elementCount.times(new IntegerConstant(symbol.dataType().sizeof())));
-        var allocFn = callFunction(heapFunction, bytes);
-        assignStmt(varRef, allocFn);
+        assignStmt(varRef, this.scope.peek().getMemoryManagementStrategy().allocate(symbol, bytes));
         for (int i=0; i<sizes.size(); i++) {
             assignStmt(derefWord(varRef.plus(new IntegerConstant(i * DataType.INTEGER.sizeof()))), sizes.get(i));
         }
@@ -454,8 +455,7 @@ public class ModelBuilder {
     public void allocateStringArray(Symbol symbol, Expression length) {
         var varRef = VariableReference.with(symbol);
         var bytes = length.plus(IntegerConstant.TWO);
-        var allocFn = callFunction(heapFunction, bytes);
-        assignStmt(varRef, allocFn);
+        assignStmt(varRef, this.scope.peek().getMemoryManagementStrategy().allocate(symbol, bytes));
         assignStmt(derefByte(varRef), length);
     }
 
