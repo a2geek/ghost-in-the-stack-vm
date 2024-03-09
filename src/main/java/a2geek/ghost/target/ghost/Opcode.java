@@ -35,6 +35,7 @@ public enum Opcode {
     INCR(0),
     DECR(0),
     PUSHZ(0),
+    POP(0),
     LOADSP(0),
     STORESP(0),
     LOADLP(0),
