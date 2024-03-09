@@ -4,7 +4,7 @@ option strict
 ' very basic heap
 ' this is a linked list, initially only one chunk with all of memory in the chunk
 '
-module Memory
+module memory
     ' Header:
     '   +0 next: address
     '   +2 size: integer

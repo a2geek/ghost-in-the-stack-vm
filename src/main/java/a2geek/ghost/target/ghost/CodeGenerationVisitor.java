@@ -352,6 +352,18 @@ public class CodeGenerationVisitor extends DispatchVisitor {
     public void visit(CallSubroutine statement, VisitorContext context) {
         // Using the "program" frame
         var subFullName = statement.getSubroutine().getFullPathName();
+        if ("dealloc".equalsIgnoreCase(subFullName)) {
+            // We assume we have 1 parameter and try to optimize operation based on being a constant or not...
+            var param = statement.getParameters().getFirst();
+            if (param.asInteger().isPresent()) {
+                code.emit(Opcode.POPN, param.asInteger().get());
+            }
+            else {
+                dispatch(param);
+                code.emit(Opcode.POP);
+            }
+            return;
+        }
         var scope = frames.getFirst().scope()
                 .findFirstLocalScope(named(subFullName).and(in(SymbolType.SUBROUTINE)))
                 .map(Symbol::scope)

@@ -31,8 +31,10 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
     public GhostBasicVisitor(ModelBuilder model) {
         this.model = model;
-        Intrinsic.CPU_REGISTERS.forEach(name -> model.addVariable(name, SymbolType.INTRINSIC, DataType.INTEGER));
         Intrinsic.CPU_REGISTERS.forEach(name -> model.addIntrinsicVariable(name, DataType.INTEGER));
+        //
+        var sub = new Subroutine(model.getProgram(), "dealloc", List.of(Symbol.variable("bytes", SymbolType.PARAMETER).dataType(DataType.INTEGER)));
+        model.peekScope().addLocalSymbol(Symbol.scope(sub).declarationType(DeclarationType.INTRINSIC));
     }
 
     public ModelBuilder getModel() {
@@ -772,6 +774,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         ensureValidConstruct(sub);
         visit(ctx.s);
         model.subDeclEnd();
+        // TODO free any allocated memory!
         return null;
     }
 
@@ -825,6 +828,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         applyVisibility(ctx.visibility(), func);
         ensureValidConstruct(func);
         visit(ctx.s);
+        // TODO free any allocated memory!
         model.funcDeclEnd();
         return null;
     }
