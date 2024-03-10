@@ -103,4 +103,20 @@ module strings
         end while
         poke t, 0
     end sub
+
+    sub strcat(a as string, b as string)
+        dim p as address, q as address
+        p = a
+        poke p, len(a)+len(b)
+        p = p + 1
+        while peek(p) <> 0
+            p = p + 1
+        end while
+        q = b + 1
+        while peek(q) <> 0
+            poke p, peek(q)
+            p = p + 1
+            q = q + 1
+        end while
+    end sub
 end module

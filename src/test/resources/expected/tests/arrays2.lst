@@ -4,19 +4,19 @@ MAIN:
     DIM _ONERR_SP AS ADDRESS = null
     DIM Y() AS INTEGER = null
     DIM C AS INTEGER = null
-    DIM FOR_C_END18 AS INTEGER = null
-    DIM FOR_C_STEP18 AS INTEGER = null
-    DIM FOR_C_NEXT18 AS ADDRESS = null
-    DIM FOR_C_EXIT18 AS ADDRESS = null
+    DIM FOR_C_END20 AS INTEGER = null
+    DIM FOR_C_STEP20 AS INTEGER = null
+    DIM FOR_C_NEXT20 AS ADDRESS = null
+    DIM FOR_C_EXIT20 AS ADDRESS = null
     DIM X AS INTEGER = null
-    DIM FOR_X_END23 AS INTEGER = null
-    DIM FOR_X_STEP23 AS INTEGER = null
-    DIM FOR_X_NEXT23 AS ADDRESS = null
-    DIM FOR_X_EXIT23 AS ADDRESS = null
-   0: _L10_12:
+    DIM FOR_X_END25 AS INTEGER = null
+    DIM FOR_X_STEP25 AS INTEGER = null
+    DIM FOR_X_NEXT25 AS ADDRESS = null
+    DIM FOR_X_EXIT25 AS ADDRESS = null
+   0: _L10_14:
    1:     Y() = ALLOC((2 + ((15 + 1) * 2)))
    2:     *((Y() + 0)) = 15
-   3: _L20_13:
+   3: _L20_15:
    4:     IF (0 > ubound(Y(),1)) THEN **
    0:         ERR.NUMBER = 107
    1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
@@ -62,7 +62,7 @@ MAIN:
    5:         RAISE ERROR
           END IF
   13:     *(((Y() + 2) + (4 * 2))) = 14
-  14: _L30_14:
+  14: _L30_16:
   15:     IF (5 > ubound(Y(),1)) THEN **
    0:         ERR.NUMBER = 107
    1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
@@ -108,7 +108,7 @@ MAIN:
    5:         RAISE ERROR
           END IF
   24:     *(((Y() + 2) + (9 * 2))) = 12
-  25: _L40_15:
+  25: _L40_17:
   26:     IF (10 > ubound(Y(),1)) THEN **
    0:         ERR.NUMBER = 107
    1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
@@ -163,53 +163,53 @@ MAIN:
    5:         RAISE ERROR
           END IF
   37:     *(((Y() + 2) + (15 * 2))) = 0
-  38: _L50_16:
+  38: _L50_18:
   39:     CALL LORES.GR()
-  40: _L60_17:
+  40: _L60_19:
   41:     C = 1
-  42:     FOR_C_END18 = 15
-  43:     FOR_C_STEP18 = 1
-  44:     FOR_C_NEXT18 = (addrof(_FOR_NEXT19) - 1)
-  45:     GOTO _FOR_LOOP19
-  46: _FOR_NEXT19:
-  47:     C = (C + FOR_C_STEP18)
+  42:     FOR_C_END20 = 15
+  43:     FOR_C_STEP20 = 1
+  44:     FOR_C_NEXT20 = (addrof(_FOR_NEXT21) - 1)
+  45:     GOTO _FOR_LOOP21
+  46: _FOR_NEXT21:
+  47:     C = (C + FOR_C_STEP20)
   48:     IF (MATH.SGN(1) >= 0) THEN
-   0:         IF (C <= FOR_C_END18) THEN
-   0:             GOTO _FOR_LOOP19
+   0:         IF (C <= FOR_C_END20) THEN
+   0:             GOTO _FOR_LOOP21
               END IF
           ELSE
-   0:         IF (C >= FOR_C_END18) THEN
-   0:             GOTO _FOR_LOOP19
+   0:         IF (C >= FOR_C_END20) THEN
+   0:             GOTO _FOR_LOOP21
               END IF
           END IF
-  49:     GOTO *FOR_C_EXIT18
-  50: _FOR_LOOP19:
-  51: _L65_20:
+  49:     GOTO *FOR_C_EXIT20
+  50: _FOR_LOOP21:
+  51: _L65_22:
   52:     CALL RUNTIME.PRINT_STRING("COLOR=")
   53:     CALL RUNTIME.PRINT_INTEGER(C)
   54:     CALL RUNTIME.PRINT_NEWLINE()
-  55: _L70_21:
+  55: _L70_23:
   56:     CALL LORES.COLOR(C)
-  57: _L80_22:
+  57: _L80_24:
   58:     X = 0
-  59:     FOR_X_END23 = 15
-  60:     FOR_X_STEP23 = 1
-  61:     FOR_X_NEXT23 = (addrof(_FOR_NEXT24) - 1)
-  62:     GOTO _FOR_LOOP24
-  63: _FOR_NEXT24:
-  64:     X = (X + FOR_X_STEP23)
+  59:     FOR_X_END25 = 15
+  60:     FOR_X_STEP25 = 1
+  61:     FOR_X_NEXT25 = (addrof(_FOR_NEXT26) - 1)
+  62:     GOTO _FOR_LOOP26
+  63: _FOR_NEXT26:
+  64:     X = (X + FOR_X_STEP25)
   65:     IF (MATH.SGN(1) >= 0) THEN
-   0:         IF (X <= FOR_X_END23) THEN
-   0:             GOTO _FOR_LOOP24
+   0:         IF (X <= FOR_X_END25) THEN
+   0:             GOTO _FOR_LOOP26
               END IF
           ELSE
-   0:         IF (X >= FOR_X_END23) THEN
-   0:             GOTO _FOR_LOOP24
+   0:         IF (X >= FOR_X_END25) THEN
+   0:             GOTO _FOR_LOOP26
               END IF
           END IF
-  66:     GOTO *FOR_X_EXIT23
-  67: _FOR_LOOP24:
-  68: _L90_25:
+  66:     GOTO *FOR_X_EXIT25
+  67: _FOR_LOOP26:
+  68: _L90_27:
   69:     IF (X > ubound(Y(),1)) THEN **
    0:         ERR.NUMBER = 107
    1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
@@ -219,7 +219,7 @@ MAIN:
    5:         RAISE ERROR
           END IF
   70:     CALL LORES.PLOT((20 + X), (20 + *(((Y() + 2) + (X * 2)))))
-  71: _L100_26:
+  71: _L100_28:
   72:     IF (X > ubound(Y(),1)) THEN **
    0:         ERR.NUMBER = 107
    1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
@@ -229,7 +229,7 @@ MAIN:
    5:         RAISE ERROR
           END IF
   73:     CALL LORES.PLOT((20 - X), (20 + *(((Y() + 2) + (X * 2)))))
-  74: _L110_27:
+  74: _L110_29:
   75:     IF (X > ubound(Y(),1)) THEN **
    0:         ERR.NUMBER = 107
    1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
@@ -239,7 +239,7 @@ MAIN:
    5:         RAISE ERROR
           END IF
   76:     CALL LORES.PLOT((20 + X), (20 - *(((Y() + 2) + (X * 2)))))
-  77: _L120_28:
+  77: _L120_30:
   78:     IF (X > ubound(Y(),1)) THEN **
    0:         ERR.NUMBER = 107
    1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
@@ -249,16 +249,16 @@ MAIN:
    5:         RAISE ERROR
           END IF
   79:     CALL LORES.PLOT((20 - X), (20 - *(((Y() + 2) + (X * 2)))))
-  80: _L130_29:
-  81:     FOR_X_EXIT23 = (addrof(_FOR_EXIT30) - 1)
-  82:     GOTO *FOR_X_NEXT23
-  83: _FOR_EXIT30:
-  84: _L140_31:
-  85:     FOR_C_EXIT18 = (addrof(_FOR_EXIT32) - 1)
-  86:     GOTO *FOR_C_NEXT18
-  87: _FOR_EXIT32:
-  88: _L150_33:
-  89:     GOTO _L60_17
+  80: _L130_31:
+  81:     FOR_X_EXIT25 = (addrof(_FOR_EXIT32) - 1)
+  82:     GOTO *FOR_X_NEXT25
+  83: _FOR_EXIT32:
+  84: _L140_33:
+  85:     FOR_C_EXIT20 = (addrof(_FOR_EXIT34) - 1)
+  86:     GOTO *FOR_C_NEXT20
+  87: _FOR_EXIT34:
+  88: _L150_35:
+  89:     GOTO _L60_19
   90:     END
 
 FUNCTION _LHS_STRING(START AS INTEGER, STRING AS STRING) AS STRING

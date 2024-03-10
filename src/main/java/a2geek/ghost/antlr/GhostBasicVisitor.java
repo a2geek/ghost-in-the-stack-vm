@@ -1065,10 +1065,23 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         // FIXME need to handle differing data types better
         if (l.isType(DataType.STRING) && r.isType(DataType.STRING)) {
             if ("=".equals(op) || "<>".equals(op)) {
+                // strcmp(l,r) op 0
                 return new BinaryExpression(
                         model.callFunction("strings.strcmp", Arrays.asList(l,r)),
                         IntegerConstant.ZERO,
                         op);
+            }
+            else if ("+".equals(op)) {
+                // t1 = new(len(left)+len(right)+2)
+                // strcat(t1,"Hello")   ' sets length as well
+                // strcat(t1,", ")      ' ditto
+                // uses t1 as expression
+                var symbol = model.addTempVariable(DataType.STRING);
+                model.allocateStringArray(symbol, model.callFunction("strings.len",l).plus(model.callFunction("strings.len",r)));
+                var temp = VariableReference.with(symbol);
+                model.callSubroutine("strings.strcat", temp, l);
+                model.callSubroutine("strings.strcat", temp, r);
+                return temp;
             }
             else {
                 throw new RuntimeException("strings only support in/equality: " + ctx.getText());

@@ -23,22 +23,22 @@ MAIN:
   11:     CALL RUNTIME.PRINT_NEWLINE()
   12:     CALL PRODOS.READBLOCK(DEVNUM, BLOCK, BUFFER)
   13:     I = BUFFER
-  14: _FOR_LOOP19:
+  14: _FOR_LOOP21:
   15:     IF (MATH.SGN(8) >= 0) THEN
    0:         IF (I <= ((BUFFER + 512) - 1)) THEN
    0:             CALL PRHEX4(I)
    1:             CALL RUNTIME.PRINT_STRING("- ")
    2:             J = 0
-   3: _FOR_LOOP20:
+   3: _FOR_LOOP22:
    4:             IF (MATH.SGN(1) >= 0) THEN
    0:                 IF (J <= 7) THEN
    0:                     CH = CInt(*((I + J)))
    1:                     CALL PRHEX2(CH)
    2:                     CALL RUNTIME.PRINT_STRING(" ")
    3:                     *(((*(40) + 32) + J)) = CByte(CH)
-   4: _FOR_CONTINUE20:
+   4: _FOR_CONTINUE22:
    5:                     J = (J + 1)
-   6:                     GOTO _FOR_LOOP20
+   6:                     GOTO _FOR_LOOP22
                       END IF
                   ELSE
    0:                 IF (J >= 7) THEN
@@ -46,32 +46,32 @@ MAIN:
    1:                     CALL PRHEX2(CH)
    2:                     CALL RUNTIME.PRINT_STRING(" ")
    3:                     *(((*(40) + 32) + J)) = CByte(CH)
-   4: _FOR_CONTINUE20:
+   4: _FOR_CONTINUE22:
    5:                     J = (J + 1)
-   6:                     GOTO _FOR_LOOP20
+   6:                     GOTO _FOR_LOOP22
                       END IF
                   END IF
-   5: _FOR_EXIT20:
+   5: _FOR_EXIT22:
    6:             CALL RUNTIME.PRINT_NEWLINE()
-   7: _FOR_CONTINUE19:
+   7: _FOR_CONTINUE21:
    8:             I = (I + 8)
-   9:             GOTO _FOR_LOOP19
+   9:             GOTO _FOR_LOOP21
               END IF
           ELSE
    0:         IF (I >= ((BUFFER + 512) - 1)) THEN
    0:             CALL PRHEX4(I)
    1:             CALL RUNTIME.PRINT_STRING("- ")
    2:             J = 0
-   3: _FOR_LOOP20:
+   3: _FOR_LOOP22:
    4:             IF (MATH.SGN(1) >= 0) THEN
    0:                 IF (J <= 7) THEN
    0:                     CH = CInt(*((I + J)))
    1:                     CALL PRHEX2(CH)
    2:                     CALL RUNTIME.PRINT_STRING(" ")
    3:                     *(((*(40) + 32) + J)) = CByte(CH)
-   4: _FOR_CONTINUE20:
+   4: _FOR_CONTINUE22:
    5:                     J = (J + 1)
-   6:                     GOTO _FOR_LOOP20
+   6:                     GOTO _FOR_LOOP22
                       END IF
                   ELSE
    0:                 IF (J >= 7) THEN
@@ -79,19 +79,19 @@ MAIN:
    1:                     CALL PRHEX2(CH)
    2:                     CALL RUNTIME.PRINT_STRING(" ")
    3:                     *(((*(40) + 32) + J)) = CByte(CH)
-   4: _FOR_CONTINUE20:
+   4: _FOR_CONTINUE22:
    5:                     J = (J + 1)
-   6:                     GOTO _FOR_LOOP20
+   6:                     GOTO _FOR_LOOP22
                       END IF
                   END IF
-   5: _FOR_EXIT20:
+   5: _FOR_EXIT22:
    6:             CALL RUNTIME.PRINT_NEWLINE()
-   7: _FOR_CONTINUE19:
+   7: _FOR_CONTINUE21:
    8:             I = (I + 8)
-   9:             GOTO _FOR_LOOP19
+   9:             GOTO _FOR_LOOP21
               END IF
           END IF
-  16: _FOR_EXIT19:
+  16: _FOR_EXIT21:
 
 SUB PRHEX2(N AS INTEGER)
    0:     CPU.REGISTER.A = N

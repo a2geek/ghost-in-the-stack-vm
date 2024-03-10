@@ -151,13 +151,14 @@ The runtime support module has all the input and print routines, support for ON.
 
 Support for the `string` data type. Very rudimentary.
 
-| Name                                                      |  Type   | Description                                                        |
-|:----------------------------------------------------------|:-------:|:-------------------------------------------------------------------|
-| `strmax(s)`                                               | Integer | The maximum length supported by a string.                          |
-| `asc(s)`                                                  | Integer | The ASCII value of a string. Most likely with the high bit set.    |
-| `len(s)`                                                  | Integer | The length of a string.                                            |
-| `strcmp(s1,s2)`                                           | Integer | String comparison. -1 if less than, 0 if equal, 1 if greater than. |
-| `strcpy(target,targetStart,source,sourceStart,sourceEnd)` |    -    | Copy strings.                                                      |
+| Name                                                      |  Type   | Description                                                                       |
+|:----------------------------------------------------------|:-------:|:----------------------------------------------------------------------------------|
+| `strmax(s)`                                               | Integer | The maximum length supported by a string.                                         |
+| `asc(s)`                                                  | Integer | The ASCII value of a string. Most likely with the high bit set.                   |
+| `len(s)`                                                  | Integer | The length of a string.                                                           |
+| `strcat(s1,s2)`                                           |    -    | Concatenates `s2` onto the end of `s1`. Be certain there is enough space in `s1`. |
+| `strcmp(s1,s2)`                                           | Integer | String comparison. -1 if less than, 0 if equal, 1 if greater than.                |
+| `strcpy(target,targetStart,source,sourceStart,sourceEnd)` |    -    | Copy strings.                                                                     |
 
 ## Text
 

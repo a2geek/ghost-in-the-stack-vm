@@ -5,48 +5,48 @@ MAIN:
     DIM A$ AS STRING = null
    0:     A$ = ALLOC((1 + 2))
    1:     *(A$) = 1
-   0: _L10_12:
+   0: _L10_14:
    1:     A$ = ALLOC((3 + 2))
    2:     *(A$) = 3
-   3: _L20_13:
+   3: _L20_15:
    4:     CALL STRINGS.STRCPY(A$, 1, "YES", 1, 3)
-   5: _L30_14:
-   6:     GOSUB _L200_15
-   7: _L40_16:
+   5: _L30_16:
+   6:     GOSUB _L200_17
+   7: _L40_18:
    8:     CALL STRINGS.STRCPY(A$, 1, "NO", 1, 2)
-   9: _L50_17:
-  10:     GOSUB _L200_15
-  11: _L60_18:
+   9: _L50_19:
+  10:     GOSUB _L200_17
+  11: _L60_20:
   12:     CALL STRINGS.STRCPY(A$, 1, "Y", 1, 1)
-  13: _L70_19:
-  14:     GOSUB _L200_15
-  15: _L80_20:
+  13: _L70_21:
+  14:     GOSUB _L200_17
+  15: _L80_22:
   16:     CALL STRINGS.STRCPY(A$, 2, "ES", 1, 2)
-  17: _L90_21:
-  18:     GOSUB _L200_15
-  19: _L100_22:
+  17: _L90_23:
+  18:     GOSUB _L200_17
+  19: _L100_24:
   20:     CALL RUNTIME.PRINT_STRING("ENTER YES OR NO (MAX 3 CHARS): ")
   21:     CALL RUNTIME.INPUT_READLINE()
   22:     CALL RUNTIME.INPUT_SCANSTRING(A$)
-  23: _L110_23:
-  24:     GOSUB _L200_15
-  25: _L190_24:
+  23: _L110_25:
+  24:     GOSUB _L200_17
+  25: _L190_26:
   26:     END
-  27: _L200_15:
+  27: _L200_17:
   28:     CALL RUNTIME.PRINT_STRING("A$=")
   29:     CALL RUNTIME.PRINT_STRING(A$)
   30:     CALL RUNTIME.PRINT_NEWLINE()
-  31: _L210_25:
+  31: _L210_27:
   32:     IF ((STRINGS.STRCMP(A$, "YES") = 0) or (STRINGS.STRCMP(A$, "Y") = 0)) THEN
    0:         CALL RUNTIME.PRINT_STRING("A$ IS 'YES'")
    1:         CALL RUNTIME.PRINT_NEWLINE()
           END IF
-  33: _L220_26:
+  33: _L220_28:
   34:     IF ((STRINGS.STRCMP(A$, "YES") <> 0) and (STRINGS.STRCMP(A$, "Y") <> 0)) THEN
    0:         CALL RUNTIME.PRINT_STRING("A$ IS NOT 'YES', IT IS SOMETHING ELSE")
    1:         CALL RUNTIME.PRINT_NEWLINE()
           END IF
-  35: _L230_27:
+  35: _L230_29:
   36:     RETURN
   37:     END
 

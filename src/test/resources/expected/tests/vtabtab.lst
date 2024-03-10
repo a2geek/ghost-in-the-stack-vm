@@ -3,40 +3,40 @@ MAIN:
     DIM _ONERR_FP AS ADDRESS = null
     DIM _ONERR_SP AS ADDRESS = null
     DIM I AS INTEGER = null
-    DIM FOR_I_END13 AS INTEGER = null
-    DIM FOR_I_STEP13 AS INTEGER = null
-    DIM FOR_I_NEXT13 AS ADDRESS = null
-    DIM FOR_I_EXIT13 AS ADDRESS = null
-   0: _L10_12:
+    DIM FOR_I_END15 AS INTEGER = null
+    DIM FOR_I_STEP15 AS INTEGER = null
+    DIM FOR_I_NEXT15 AS ADDRESS = null
+    DIM FOR_I_EXIT15 AS ADDRESS = null
+   0: _L10_14:
    1:     I = 1
-   2:     FOR_I_END13 = 24
-   3:     FOR_I_STEP13 = 1
-   4:     FOR_I_NEXT13 = (addrof(_FOR_NEXT14) - 1)
-   5:     GOTO _FOR_LOOP14
-   6: _FOR_NEXT14:
-   7:     I = (I + FOR_I_STEP13)
+   2:     FOR_I_END15 = 24
+   3:     FOR_I_STEP15 = 1
+   4:     FOR_I_NEXT15 = (addrof(_FOR_NEXT16) - 1)
+   5:     GOTO _FOR_LOOP16
+   6: _FOR_NEXT16:
+   7:     I = (I + FOR_I_STEP15)
    8:     IF (MATH.SGN(1) >= 0) THEN
-   0:         IF (I <= FOR_I_END13) THEN
-   0:             GOTO _FOR_LOOP14
+   0:         IF (I <= FOR_I_END15) THEN
+   0:             GOTO _FOR_LOOP16
               END IF
           ELSE
-   0:         IF (I >= FOR_I_END13) THEN
-   0:             GOTO _FOR_LOOP14
+   0:         IF (I >= FOR_I_END15) THEN
+   0:             GOTO _FOR_LOOP16
               END IF
           END IF
-   9:     GOTO *FOR_I_EXIT13
-  10: _FOR_LOOP14:
-  11: _L20_15:
+   9:     GOTO *FOR_I_EXIT15
+  10: _FOR_LOOP16:
+  11: _L20_17:
   12:     CALL TEXT.VTAB(I)
   13:     CALL TEXT.HTAB(I)
   14:     CALL RUNTIME.PRINT_INTEGER(I)
-  15: _L30_16:
-  16:     FOR_I_EXIT13 = (addrof(_FOR_EXIT17) - 1)
-  17:     GOTO *FOR_I_NEXT13
-  18: _FOR_EXIT17:
-  19: _L40_18:
+  15: _L30_18:
+  16:     FOR_I_EXIT15 = (addrof(_FOR_EXIT19) - 1)
+  17:     GOTO *FOR_I_NEXT15
+  18: _FOR_EXIT19:
+  19: _L40_20:
   20:     CALL TEXT.VTAB(10)
-  21: _L50_19:
+  21: _L50_21:
   22:     END
 
 FUNCTION _LHS_STRING(START AS INTEGER, STRING AS STRING) AS STRING
