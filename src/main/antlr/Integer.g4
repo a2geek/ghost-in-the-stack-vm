@@ -2,10 +2,6 @@ grammar Integer;
 
 options { caseInsensitive=true; }
 
-@header {
-package a2geek.ghost.antlr.generated;
-}
-
 program
     : line+ EOF
     ;

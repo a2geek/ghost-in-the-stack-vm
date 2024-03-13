@@ -2,10 +2,6 @@ grammar Basic;
 
 options { caseInsensitive=true; }
 
-@header {
-package a2geek.ghost.antlr.generated;
-}
-
 program
     : directives*
       ( module
