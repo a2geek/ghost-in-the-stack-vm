@@ -12,9 +12,12 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
 
 public class PreprocessorVisitor extends PreprocessorGrammarBaseVisitor<Expression> {
     public static final String OPTION_HEAP = "option.heap";
+    public static final Predicate<String> OPTION_REGEX = Pattern.compile(".*option[^\r\n]+heap.+").asPredicate();
     private final Map<String,Expression> variables = new HashMap<>();
     private final StringBuilder code = new StringBuilder();
     /** Tracking code capture state as a simple boolean. */
@@ -32,7 +35,7 @@ public class PreprocessorVisitor extends PreprocessorGrammarBaseVisitor<Expressi
     @Override
     public Expression visitTerminal(TerminalNode node) {
         if (node.getSymbol().getType() == PreprocessorLexer.CODE) {
-            if (node.getText().matches(".*option.+heap.*")) {
+            if (OPTION_REGEX.test(node.getText()))  {
                 variables.put(OPTION_HEAP, new BooleanConstant(true));
             }
             if (capture) {

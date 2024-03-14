@@ -3,13 +3,28 @@ package a2geek.ghost.antlr;
 import org.antlr.v4.runtime.CharStreams;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static a2geek.ghost.antlr.PreprocessorVisitor.OPTION_REGEX;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class PreprocessorVisitorTest {
     public static void verifyExpected(final String source, final String expected) {
         var stream = CharStreams.fromString(source);
         var actual = ParseUtil.preprocessor(stream);
         assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testRegex() {
+        assertTrue(OPTION_REGEX.test("option heap lomem=1234"));
+        assertFalse(OPTION_REGEX.test("print 'not option stuff'"));
+        assertTrue(OPTION_REGEX.test("""
+            option heap lomem=1234
+            print "hello world"
+            """));
+        assertFalse(OPTION_REGEX.test("""
+            print "not option"
+            print "heap stuff"
+            """));
     }
 
     @Test
@@ -90,6 +105,48 @@ public class PreprocessorVisitorTest {
             """,
             """
             print "start of program"
+            print "end of program"
+            end
+            """);
+    }
+
+    @Test
+    public void testOptionHeapDetection0() {
+        verifyExpected("""
+            print "start of program"
+            #if defined(option.heap)
+            print "heap defined"
+            #else
+            print "heap not defined"
+            #endif
+            print "end of program"
+            end
+            """,
+            """
+            print "start of program"
+            print "heap not defined"
+            print "end of program"
+            end
+            """);
+    }
+
+    @Test
+    public void testOptionHeapDetection1() {
+        verifyExpected("""
+            option heap lomem=1234
+            print "start of program"
+            #if defined(option.heap)
+            print "heap defined"
+            #else
+            print "heap not defined"
+            #endif
+            print "end of program"
+            end
+            """,
+            """
+            option heap lomem=1234
+            print "start of program"
+            print "heap defined"
             print "end of program"
             end
             """);

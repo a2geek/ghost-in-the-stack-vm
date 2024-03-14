@@ -22,7 +22,7 @@ RPAREN : ')' ;
 
 EOL : [\r]? [\n]+ -> popMode ;
 WS  : [ \t\r\n] -> skip ;
-ID  : LETTERS ( LETTERS | DIGITS )* ;
+ID  : LETTERS ( LETTERS | DIGITS | '.' )* ;
 
 STRING  : '"' ~["]* '"' ;
 LETTERS : [a-z] ;
