@@ -9,13 +9,13 @@ directives
     | START ELSEIF expr EOL         # elseIfDirective
     | START ELSE EOL                # elseDirective
     | START ENDIF EOL               # endIfDirective
-    | START DEFINE EOL              # defineDirective
+    | START DEFINE ID expr EOL      # defineDirective
     ;
 
 expr
-    : expr ( EQ | NE ) expr         # comparisonExpr
+    : l=expr op=( EQ | NE ) r=expr  # comparisonExpr
     | ID ( LPAREN expr RPAREN )?    # idOrFnExpr
     | DIGITS+                       # integerExpr
     | STRING                        # stringExpr
-    | (TRUE | FALSE )               # booleanExpr
+    | ( TRUE | FALSE )              # booleanExpr
     ;
