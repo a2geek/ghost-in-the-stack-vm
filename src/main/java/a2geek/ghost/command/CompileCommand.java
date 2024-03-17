@@ -126,12 +126,12 @@ public class CompileCommand implements Callable<Integer> {
         CompilerConfiguration config = CompilerConfiguration.builder()
                 .caseStrategy(caseSensitive ? s -> s : String::toUpperCase)
                 .controlCharsFn(fixControlChars ? CompileCommand::convertControlCharacterMarkers : s -> s)
+                .trace(traceFlag)
                 .get();
         ModelBuilder model = new ModelBuilder(config);
         if (heapAllocationFlag) {
             model.useMemoryForHeap(heapStartAddress);
         }
-        model.setTrace(traceFlag);
         optimizations.apply(model);
         Program program = switch (language) {
             case INTEGER_BASIC -> ParseUtil.integerToModel(stream, model);

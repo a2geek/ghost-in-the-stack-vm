@@ -3,6 +3,7 @@ package a2geek.ghost.model;
 import java.util.function.Function;
 
 public class CompilerConfiguration {
+    private boolean trace;
     private Function<String,String> caseStrategy = s -> s;
     private Function<String,String> controlCharsFn = s -> s;
 
@@ -16,6 +17,13 @@ public class CompilerConfiguration {
     public String applyControlCharsFn(String string) {
         return controlCharsFn.apply(string);
     }
+    public void trace(String fmt, Object... args) {
+        if (trace) {
+            System.out.printf(fmt, args);
+            System.out.println();
+        }
+    }
+
 
     public static Builder builder() {
         return new Builder();
@@ -24,6 +32,10 @@ public class CompilerConfiguration {
     public static class Builder {
         private CompilerConfiguration config = new CompilerConfiguration();
 
+        public Builder trace(boolean traceFlag) {
+            config.trace = traceFlag;
+            return this;
+        }
         public Builder caseStrategy(Function<String,String> caseStrategy) {
             config.caseStrategy = caseStrategy;
             return this;

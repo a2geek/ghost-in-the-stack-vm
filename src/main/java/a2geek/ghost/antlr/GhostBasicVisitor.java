@@ -679,8 +679,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                     dimensions.add(visit(expr));
                 }
                 if (modifiers.contains(IdModifier.STATIC) && !dimensions.isEmpty()) {
-                    // FIXME?
-                    System.out.println("WARNING: static array size set by assignment");
+                    config.trace("WARNING: static array size set by assignment");
                 }
                 if (idDecl.getText().contains("()")) {
                     // We should be able to assume no dimensions declared

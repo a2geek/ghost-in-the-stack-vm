@@ -42,7 +42,6 @@ public class ModelBuilder {
     private final Stack<StatementBlock> statementBlock = new Stack<>();
     // TODO determine if this is required any more!
     private final Set<String> librariesIncluded = new HashSet<>();
-    private boolean trace = false;
     private boolean boundsCheck = true;
 
     public ModelBuilder(CompilerConfiguration config) {
@@ -69,9 +68,6 @@ public class ModelBuilder {
         return arrayNameStrategy.apply(name);
     }
 
-    public void setTrace(boolean trace) {
-        this.trace = trace;
-    }
     public void enableBoundsCheck(boolean boundsCheck) {
         this.boundsCheck = boundsCheck;
     }
@@ -161,18 +157,11 @@ public class ModelBuilder {
         return this.scope.peek().addLabels(names);
     }
 
-    public void trace(String fmt, Object... args) {
-        if (trace) {
-            System.out.printf(fmt, args);
-            System.out.println();
-        }
-    }
-
     public void uses(String libname, Predicate<Symbol> exportHandler) {
         var program = getProgram();
         if (!librariesIncluded.contains(libname)) {
             librariesIncluded.add(libname);
-            trace("loading library: %s", libname);
+            config.trace("loading library: %s", libname);
             String name = String.format("/library/%s.bas", libname);
             try (InputStream inputStream = getClass().getResourceAsStream(name)) {
                 if (inputStream == null) {
@@ -319,7 +308,7 @@ public class ModelBuilder {
     }
 
     public Scope moduleDeclBegin(String name) {
-        trace("compiling module '%s'", name);
+        config.trace("compiling module '%s'", name);
         Scope module = new Scope(scope.peek(), config.applyCaseStrategy(name), DeclarationType.GLOBAL);
         this.scope.peek().addLocalSymbol(Symbol.scope(module));
 
@@ -333,7 +322,7 @@ public class ModelBuilder {
     }
 
     public Subroutine subDeclBegin(String name, List<Symbol.Builder> params) {
-        trace("compiling subroutine '%s'", name);
+        config.trace("compiling subroutine '%s'", name);
         Subroutine sub = new Subroutine(scope.peek(), config.applyCaseStrategy(name), params);
         this.scope.peek().addLocalSymbol(Symbol.scope(sub));
 
@@ -355,7 +344,7 @@ public class ModelBuilder {
     }
 
     public a2geek.ghost.model.scope.Function funcDeclBegin(String name, DataType returnType, List<Symbol.Builder> params) {
-        trace("compiling function '%s'", name);
+        config.trace("compiling function '%s'", name);
         a2geek.ghost.model.scope.Function func =
             new a2geek.ghost.model.scope.Function(scope.peek(),
                 Symbol.variable(name, SymbolType.RETURN_VALUE).dataType(returnType), params);
