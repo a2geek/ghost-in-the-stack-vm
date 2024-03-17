@@ -2,8 +2,10 @@ lexer grammar PreprocessorLexer;
 
 options { caseInsensitive=true; }
 
-START : {getCharPositionInLine() == 0}? '#' -> pushMode(DIRECTIVE) ;
-CODE : ~('#')+ ;
+START : START_HASH -> pushMode(DIRECTIVE) ;
+CODE : ( ~[#] | OTHER_HASH )+ ;
+START_HASH : {getCharPositionInLine() == 0}? '#';
+OTHER_HASH : {getCharPositionInLine() != 0}? '#';
 
 mode DIRECTIVE;
 
