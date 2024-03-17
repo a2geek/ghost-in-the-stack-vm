@@ -1,5 +1,7 @@
 # Ghost in the Stack BASIC
 
+## Overview
+
 This language is not meant to necessarily be complete and it is not meant to replicate 
 Integer BASIC or Applesoft BASIC. But the mimicry is real.
 
@@ -45,6 +47,34 @@ uses "mymodule"
 hithere()             ' exported function aliased into primary namespace
 mymodule.heythere()   ' unexportedfunction not available
 ```
+
+## Preprocessor
+
+A simple preprocessor has been added to the BASIC language. It currently does not support nesting of statements, nor are the 
+expressions particularly complex. The intention is to allow some dynamic capability for source code. For instance, the initial 
+purpose is to allow the library modules to suppress functions if specific features are not enabled (such as heap).  
+
+Define an ID with a particular value:
+```
+#define ID <expr>
+```
+
+If/ElseIf/Else/EndIf statements:
+```
+#if <expr>
+#elseif <expr>
+#else
+#endif
+```
+(These cannot be nested.)
+
+Expressions:
+* `=`, `<>` equality, inequality
+* Identifiers start with a letter and contain letters, digits or a '.'
+* `defined(ID)` checks if an ID exists
+* integer constants
+* `"<string>"` - strings are surrounded by quotes
+* boolean values of `True` or `False`
 
 ## Option
 
