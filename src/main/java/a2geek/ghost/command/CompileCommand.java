@@ -123,10 +123,11 @@ public class CompileCommand implements Callable<Integer> {
 
     public void compile() throws IOException {
         CharStream stream = CharStreams.fromPath(sourceCode);
-        ModelBuilder model = new ModelBuilder(caseSensitive ? s -> s : String::toUpperCase);
-        if (fixControlChars) {
-            model.setControlCharsFn(CompileCommand::convertControlCharacterMarkers);
-        }
+        CompilerConfiguration config = CompilerConfiguration.builder()
+                .caseStrategy(caseSensitive ? s -> s : String::toUpperCase)
+                .controlCharsFn(fixControlChars ? CompileCommand::convertControlCharacterMarkers : s -> s)
+                .get();
+        ModelBuilder model = new ModelBuilder(config);
         if (heapAllocationFlag) {
             model.useMemoryForHeap(heapStartAddress);
         }

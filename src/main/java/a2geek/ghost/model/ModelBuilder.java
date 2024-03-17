@@ -36,9 +36,8 @@ public class ModelBuilder {
     public static final String STRINGS_LIBRARY = "strings";
     public static final String TEXT_LIBRARY = "text";
 
-    private final Function<String,String> caseStrategy;
+    private final CompilerConfiguration config;
     private Function<String,String> arrayNameStrategy = s -> s;
-    private Function<String,String> controlCharsFn = s -> s;
     private Stack<Scope> scope = new Stack<>();
     private final Stack<StatementBlock> statementBlock = new Stack<>();
     // TODO determine if this is required any more!
@@ -46,13 +45,17 @@ public class ModelBuilder {
     private boolean trace = false;
     private boolean boundsCheck = true;
 
-    public ModelBuilder(Function<String,String> caseStrategy) {
-        this.caseStrategy = caseStrategy;
-        Program program = new Program(caseStrategy, new StackMemoryManagement(this));
+    public ModelBuilder(CompilerConfiguration config) {
+        this.config = config;
+        Program program = new Program(config, new StackMemoryManagement(this));
         var onerr = OnErrorContext.createPrimary(program);     // always (assumed)
         program.setOnErrorContext(onerr);
         this.scope.push(program);
         this.statementBlock.push(program);
+    }
+
+    public CompilerConfiguration getConfig() {
+        return config;
     }
 
     public Program getProgram() {
@@ -62,14 +65,8 @@ public class ModelBuilder {
         throw new RuntimeException("Program not found");
     }
 
-    public String fixCase(String id) {
-        return caseStrategy.apply(id);
-    }
     public String fixArrayName(String name) {
         return arrayNameStrategy.apply(name);
-    }
-    public String fixControlChars(String value) {
-        return controlCharsFn.apply(value);
     }
 
     public void setTrace(boolean trace) {
@@ -80,9 +77,6 @@ public class ModelBuilder {
     }
     public void setArrayNameStrategy(Function<String,String> arrayNameStrategy) {
         this.arrayNameStrategy = arrayNameStrategy;
-    }
-    public void setControlCharsFn(Function<String,String> controlCharsFn) {
-        this.controlCharsFn = controlCharsFn;
     }
 
     public void useStackForHeap() {
@@ -133,7 +127,7 @@ public class ModelBuilder {
     }
 
     public Optional<Symbol> findSymbol(String name) {
-        return this.scope.peek().findFirst(named(fixCase(name)));
+        return this.scope.peek().findFirst(named(config.applyCaseStrategy(name)));
     }
     public Symbol addVariable(String name, DataType dataType) {
         return this.scope.peek().addLocalSymbol(Symbol.variable(name, SymbolType.VARIABLE).dataType(dataType));
@@ -192,7 +186,7 @@ public class ModelBuilder {
                 ParseUtil.basicToModel(CharStreams.fromStream(inputStream), this);
                 this.scope = oldScopeStack;
                 // any statements in the module body are for initialization
-                var module = program.findFirst(named(fixCase(libname)).and(in(SymbolType.MODULE))).map(Symbol::scope)
+                var module = program.findFirst(named(config.applyCaseStrategy(libname)).and(in(SymbolType.MODULE))).map(Symbol::scope)
                         .orElseThrow(() -> new RuntimeException("not a module: " + libname));
                 addInitializationStatements(module);
             } catch (IOException e) {
@@ -200,7 +194,7 @@ public class ModelBuilder {
             }
         }
         // Apply the export strategy to all components of the module (note we do this every time)
-        var module = program.findFirst(named(fixCase(libname)).and(in(SymbolType.MODULE))).map(Symbol::scope)
+        var module = program.findFirst(named(config.applyCaseStrategy(libname)).and(in(SymbolType.MODULE))).map(Symbol::scope)
                 .orElseThrow(() -> new RuntimeException("not a module: " + libname));
         var exports = module.streamAllLocalScope().filter(exportHandler).map(Symbol::name).toList();
         module.addAllExports(exports);
@@ -227,7 +221,7 @@ public class ModelBuilder {
     }
     public void callSubroutine(String name, List<Expression> params) {
         ensureModuleIncluded(name);
-        var subName = fixCase(name);
+        var subName = config.applyCaseStrategy(name);
         var subScope = this.scope.peek().findFirst(named(subName).and(in(SymbolType.SUBROUTINE)))
                 .map(Symbol::scope).orElse(null);
         if (subScope instanceof Subroutine sub) {
@@ -277,7 +271,7 @@ public class ModelBuilder {
         if (name.contains(".")) {
             ensureModuleIncluded(name);
         }
-        var id = fixCase(name);
+        var id = config.applyCaseStrategy(name);
         return FunctionExpression.isLibraryFunction(id)
             || FunctionExpression.isIntrinsicFunction(id)
             || scope.peek().findFirst(named(id).and(in(SymbolType.FUNCTION))).isPresent();
@@ -288,11 +282,11 @@ public class ModelBuilder {
     }
     public Expression callFunction(String name, List<Expression> params) {
         ensureModuleIncluded(name);
-        var id = fixCase(name);
+        var id = config.applyCaseStrategy(name);
         if (FunctionExpression.isLibraryFunction(id)) {
             FunctionExpression.Descriptor descriptor = FunctionExpression.findDescriptor(id, params).orElseThrow();
             uses(descriptor.library(), nothingExported());
-            id = fixCase(descriptor.fullName());
+            id = config.applyCaseStrategy(descriptor.fullName());
         }
 
         var func = this.scope.peek().findFirst(named(id).and(in(SymbolType.FUNCTION)))
@@ -326,7 +320,7 @@ public class ModelBuilder {
 
     public Scope moduleDeclBegin(String name) {
         trace("compiling module '%s'", name);
-        Scope module = new Scope(scope.peek(), fixCase(name), DeclarationType.GLOBAL);
+        Scope module = new Scope(scope.peek(), config.applyCaseStrategy(name), DeclarationType.GLOBAL);
         this.scope.peek().addLocalSymbol(Symbol.scope(module));
 
         pushScope(module);
@@ -340,7 +334,7 @@ public class ModelBuilder {
 
     public Subroutine subDeclBegin(String name, List<Symbol.Builder> params) {
         trace("compiling subroutine '%s'", name);
-        Subroutine sub = new Subroutine(scope.peek(), fixCase(name), params);
+        Subroutine sub = new Subroutine(scope.peek(), config.applyCaseStrategy(name), params);
         this.scope.peek().addLocalSymbol(Symbol.scope(sub));
 
         pushScope(sub);

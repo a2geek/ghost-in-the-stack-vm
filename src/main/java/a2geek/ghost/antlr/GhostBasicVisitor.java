@@ -22,6 +22,7 @@ import static a2geek.ghost.model.visitor.ExpressionVisitors.hasAnyArraySymbol;
 
 public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     private final ModelBuilder model;
+    private final CompilerConfiguration config;
     private final Map<String,Symbol> gotoGosubLabels = new HashMap<>();
     private final Stack<LoopFrame> forFrames = new Stack<>();
     private final Stack<LoopFrame> doFrames = new Stack<>();
@@ -31,6 +32,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
     public GhostBasicVisitor(ModelBuilder model) {
         this.model = model;
+        this.config = model.getConfig();
         Intrinsic.CPU_REGISTERS.forEach(name -> model.addIntrinsicVariable(name, DataType.INTEGER));
         //
         var sub = new Subroutine(model.getProgram(), "dealloc", List.of(Symbol.variable("bytes", SymbolType.PARAMETER).dataType(DataType.INTEGER)));
@@ -599,7 +601,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
     public Symbol findGotoGosubLabel(BasicParser.IdentifierContext ctx) {
         return gotoGosubLabels.computeIfAbsent(
-                model.fixCase(ctx.getText()),
+                config.applyCaseStrategy(ctx.getText()),
                 x -> model.addLabels(x).getFirst());
     }
 
@@ -668,7 +670,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                 if (idDecl.idModifier() != null) {
                     modifiers.add(IdModifier.valueOf(idDecl.idModifier().getText().toUpperCase()));
                 }
-                String id = model.fixCase(idDecl.identifier().getText());
+                String id = config.applyCaseStrategy(idDecl.identifier().getText());
                 if (names.contains(id)) {
                     throw new RuntimeException("variable already defined: " + id);
                 }
@@ -737,7 +739,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         var names = new HashSet<>();
         if (params != null) {
             params.forEach(idDecl -> {
-                String id = model.fixCase(idDecl.identifier().getText());
+                String id = config.applyCaseStrategy(idDecl.identifier().getText());
                 if (names.contains(id)) {
                     throw new RuntimeException("parameter already defined: " + id);
                 }
@@ -1053,7 +1055,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     @Override
     public Expression visitStringConstant(BasicParser.StringConstantContext ctx) {
         String value = ctx.s.getText().replaceAll("^\"|\"$", "");
-        return new StringConstant(model.fixControlChars(value));
+        return new StringConstant(config.applyControlCharsFn(value));
     }
 
     @Override

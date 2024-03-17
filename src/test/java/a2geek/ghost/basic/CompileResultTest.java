@@ -2,6 +2,7 @@ package a2geek.ghost.basic;
 
 import a2geek.ghost.antlr.ParseUtil;
 import a2geek.ghost.command.util.PrettyPrintVisitor;
+import a2geek.ghost.model.CompilerConfiguration;
 import a2geek.ghost.model.ModelBuilder;
 import a2geek.ghost.model.scope.Program;
 import com.github.difflib.DiffUtils;
@@ -40,7 +41,8 @@ public class CompileResultTest {
     @ParameterizedTest
     @MethodSource({ "sourceFiles" })
     public void test(Path path) throws IOException {
-        ModelBuilder model = new ModelBuilder(String::toUpperCase);
+        CompilerConfiguration config = CompilerConfiguration.builder().caseStrategy(String::toUpperCase).get();
+        ModelBuilder model = new ModelBuilder(config);
         Program.reset();    // reset any global trackers for each program
         CharStream charStream = CharStreams.fromPath(path);
         if (BASIC_MATCHER.matches(path.getFileName())) {

@@ -15,7 +15,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class IntegerBasicVisitorTest {
     public static StatementTester.ScopeTester expect(String source) {
-        ModelBuilder model = new ModelBuilder(String::toUpperCase);
+        CompilerConfiguration config = CompilerConfiguration.builder().caseStrategy(String::toUpperCase).get();
+        ModelBuilder model = new ModelBuilder(config);
         Program program = ParseUtil.integerToModel(CharStreams.fromString(source), model);
         System.out.println(program);
         return new StatementTester.ScopeTester(program,

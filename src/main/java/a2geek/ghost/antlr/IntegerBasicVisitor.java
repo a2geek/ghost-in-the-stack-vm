@@ -26,6 +26,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     public static final String LINE_LABELS = "_line_labels";
 
     private final ModelBuilder model;
+    private final CompilerConfiguration config;
     private final SortedMap<Integer,Symbol> lineLabels = new TreeMap<>();
     private final Map<Symbol,ForFrame> forFrames = new HashMap<>();
     private final Map<Symbol,Expression> stringsDimmed = new HashMap<>();
@@ -35,6 +36,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     public IntegerBasicVisitor(ModelBuilder model) {
         this.model = model;
+        this.config = model.getConfig();
         model.setArrayNameStrategy(s -> s + "()");
         model.uses(MATH_LIBRARY, exportSpecified("ABS", "SGN", "RND"));
         model.uses(STRINGS_LIBRARY, exportSpecified("LEN"));
@@ -435,7 +437,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     public Expression visitInputStatement(IntegerParser.InputStatementContext ctx) {
         if (ctx.prompt != null) {
             String value = ctx.prompt.getText().replaceAll("^\"|\"$", "");
-            model.callLibrarySubroutine("print_string", new StringConstant(model.fixControlChars(value)));
+            model.callLibrarySubroutine("print_string", new StringConstant(config.applyControlCharsFn(value)));
         }
         if (!ctx.getText().contains("$")) {
             // ? prompt is always shown for number input AFAICT.
@@ -715,7 +717,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     @Override
     public Expression visitStrConstExpr(IntegerParser.StrConstExprContext ctx) {
         String value = ctx.value.getText().replaceAll("^\"|\"$", "");
-        return new StringConstant(model.fixControlChars(value));
+        return new StringConstant(config.applyControlCharsFn(value));
     }
 
     @Override
