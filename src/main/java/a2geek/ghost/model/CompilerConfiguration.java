@@ -1,13 +1,21 @@
 package a2geek.ghost.model;
 
+import a2geek.ghost.model.expression.BooleanConstant;
+import a2geek.ghost.model.expression.IntegerConstant;
+
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class CompilerConfiguration {
+    public static final String OPTION_HEAP = "option.heap";
+    public static final String OPTION_HEAP_LOMEM = "option.heap.lomem";
     private boolean trace;
     private boolean boundsCheck = true;
     private Function<String,String> caseStrategy = s -> s;
     private Function<String,String> controlCharsFn = s -> s;
+    private Map<String,Expression> defines = new HashMap<>();
 
     private CompilerConfiguration() {
         // prevent construction
@@ -27,6 +35,9 @@ public class CompilerConfiguration {
     }
     public boolean isBoundsCheckEnabled() {
         return boundsCheck;
+    }
+    public Map<String,Expression> getDefines() {
+        return defines;
     }
 
     public static Builder builder() {
@@ -55,6 +66,13 @@ public class CompilerConfiguration {
         }
         public Builder boundsCheckEnabled(boolean boundsCheckFlag) {
             config.boundsCheck = boundsCheckFlag;
+            return this;
+        }
+        public Builder memoryConfig(boolean heapAllocationFlag, int heapStartAddress) {
+            if (heapAllocationFlag) {
+                config.defines.put(OPTION_HEAP, new BooleanConstant(true));
+                config.defines.put(OPTION_HEAP_LOMEM, new IntegerConstant(heapStartAddress));
+            }
             return this;
         }
 

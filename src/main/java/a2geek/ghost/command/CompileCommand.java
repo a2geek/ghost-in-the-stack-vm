@@ -69,15 +69,8 @@ public class CompileCommand implements Callable<Integer> {
             description = "replace '<CONTROL-?>' with the actual control character")
     private boolean fixControlChars;
 
-    @Option(names = { "--heap" },
-            defaultValue = "false",
-            description = "allocate memory on heap")
-    private boolean heapAllocationFlag;
-
-    @Option(names = { "--heap-start", "--lomem" }, defaultValue = "0x8000",
-            converter = IntegerTypeConverter.class,
-            description = "heap start address (default: ${DEFAULT-VALUE})")
-    private int heapStartAddress;
+    @ArgGroup(exclusive = false, heading = "Memory Configuration:%s")
+    private MemoryConfig memoryConfig = new MemoryConfig();
 
     @ArgGroup(exclusive = false, heading = "Optimizations:%n")
     private OptimizationFlags optimizations = new OptimizationFlags();
@@ -128,10 +121,11 @@ public class CompileCommand implements Callable<Integer> {
                 .controlCharsFn(fixControlChars ? CompileCommand::convertControlCharacterMarkers : s -> s)
                 .trace(traceFlag)
                 .apply(optimizations::configure)
+                .apply(memoryConfig::configure)
                 .get();
         ModelBuilder model = new ModelBuilder(config);
-        if (heapAllocationFlag) {
-            model.useMemoryForHeap(heapStartAddress);
+        if (memoryConfig.heapAllocationFlag) {
+            model.useMemoryForHeap(memoryConfig.heapStartAddress);
         }
         Program program = switch (language) {
             case INTEGER_BASIC -> ParseUtil.integerToModel(stream, model);
@@ -277,6 +271,22 @@ public class CompileCommand implements Callable<Integer> {
     private enum Language {
         BASIC,
         INTEGER_BASIC
+    }
+
+    public static class MemoryConfig {
+        @Option(names = { "--heap" },
+                defaultValue = "false",
+                description = "allocate memory on heap")
+        private boolean heapAllocationFlag;
+
+        @Option(names = { "--heap-start", "--lomem" }, defaultValue = "0x8000",
+                converter = IntegerTypeConverter.class,
+                description = "heap start address (default: ${DEFAULT-VALUE})")
+        private int heapStartAddress;
+
+        public void configure(CompilerConfiguration.Builder builder) {
+            builder.memoryConfig(heapAllocationFlag, heapStartAddress);
+        }
     }
 
     public static class OptimizationFlags {

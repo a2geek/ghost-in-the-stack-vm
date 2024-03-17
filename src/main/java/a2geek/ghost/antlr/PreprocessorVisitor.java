@@ -17,10 +17,8 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 public class PreprocessorVisitor extends PreprocessorGrammarBaseVisitor<Expression> {
-    public static final String OPTION_HEAP = "option.heap";
     public static final Predicate<String> OPTION_REGEX = Pattern.compile(".*option[^\r\n]+heap.+").asPredicate();
     private final Map<String,Expression> variables = new HashMap<>();
-    private final CompilerConfiguration config;
     private final StringBuilder code = new StringBuilder();
     /** Tracking code capture state as a simple boolean. */
     private boolean capture = true;
@@ -31,7 +29,7 @@ public class PreprocessorVisitor extends PreprocessorGrammarBaseVisitor<Expressi
     private String ifDirective = null;
 
     public PreprocessorVisitor(CompilerConfiguration config) {
-        this.config = config;
+        this.variables.putAll(config.getDefines());
     }
 
     public String getCode() {
@@ -42,7 +40,7 @@ public class PreprocessorVisitor extends PreprocessorGrammarBaseVisitor<Expressi
     public Expression visitTerminal(TerminalNode node) {
         if (node.getSymbol().getType() == PreprocessorLexer.CODE) {
             if (OPTION_REGEX.test(node.getText()))  {
-                variables.put(OPTION_HEAP, new BooleanConstant(true));
+                variables.put(CompilerConfiguration.OPTION_HEAP, new BooleanConstant(true));
             }
             if (capture) {
                 code.append(node.getText());
