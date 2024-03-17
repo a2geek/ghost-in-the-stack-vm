@@ -1,5 +1,6 @@
 package a2geek.ghost.antlr;
 
+import a2geek.ghost.model.CompilerConfiguration;
 import org.antlr.v4.runtime.CharStreams;
 import org.junit.jupiter.api.Test;
 
@@ -8,8 +9,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class PreprocessorVisitorTest {
     public static void verifyExpected(final String source, final String expected) {
+        CompilerConfiguration config = CompilerConfiguration.builder().get();
         var stream = CharStreams.fromString(source);
-        var actual = ParseUtil.preprocessor(stream);
+        var actual = ParseUtil.preprocessor(stream, config);
         assertEquals(expected, actual);
     }
 

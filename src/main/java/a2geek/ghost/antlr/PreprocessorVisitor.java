@@ -3,6 +3,7 @@ package a2geek.ghost.antlr;
 import a2geek.ghost.antlr.generated.PreprocessorGrammar;
 import a2geek.ghost.antlr.generated.PreprocessorGrammarBaseVisitor;
 import a2geek.ghost.antlr.generated.PreprocessorLexer;
+import a2geek.ghost.model.CompilerConfiguration;
 import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.expression.BinaryExpression;
 import a2geek.ghost.model.expression.BooleanConstant;
@@ -19,6 +20,7 @@ public class PreprocessorVisitor extends PreprocessorGrammarBaseVisitor<Expressi
     public static final String OPTION_HEAP = "option.heap";
     public static final Predicate<String> OPTION_REGEX = Pattern.compile(".*option[^\r\n]+heap.+").asPredicate();
     private final Map<String,Expression> variables = new HashMap<>();
+    private final CompilerConfiguration config;
     private final StringBuilder code = new StringBuilder();
     /** Tracking code capture state as a simple boolean. */
     private boolean capture = true;
@@ -27,6 +29,10 @@ public class PreprocessorVisitor extends PreprocessorGrammarBaseVisitor<Expressi
      * one was found, but error messages might benefit from the text.
      */
     private String ifDirective = null;
+
+    public PreprocessorVisitor(CompilerConfiguration config) {
+        this.config = config;
+    }
 
     public String getCode() {
         return code.toString();

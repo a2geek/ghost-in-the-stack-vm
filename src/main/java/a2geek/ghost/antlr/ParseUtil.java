@@ -1,12 +1,13 @@
 package a2geek.ghost.antlr;
 
 import a2geek.ghost.antlr.generated.*;
+import a2geek.ghost.model.CompilerConfiguration;
 import a2geek.ghost.model.ModelBuilder;
 import a2geek.ghost.model.scope.Program;
 import org.antlr.v4.runtime.*;
 
 public class ParseUtil {
-    public static String preprocessor(CharStream stream) {
+    public static String preprocessor(CharStream stream, CompilerConfiguration config) {
         PreprocessorLexer lexer = new PreprocessorLexer(stream);
         TrackingErrorListener errorListener = new TrackingErrorListener();
         lexer.addErrorListener(errorListener);
@@ -17,13 +18,13 @@ public class ParseUtil {
         PreprocessorGrammar.SourceContext context = parser.source();
         errorListener.check();
 
-        PreprocessorVisitor visitor = new PreprocessorVisitor();
+        PreprocessorVisitor visitor = new PreprocessorVisitor(config);
         visitor.visit(context);
         return visitor.getCode();
     }
 
     public static Program basicToModel(CharStream stream, ModelBuilder model) {
-        stream = CharStreams.fromString(preprocessor(stream), stream.getSourceName());
+        stream = CharStreams.fromString(preprocessor(stream, model.getConfig()), stream.getSourceName());
         BasicLexer lexer = new BasicLexer(stream);
         TrackingErrorListener errorListener = new TrackingErrorListener();
         lexer.addErrorListener(errorListener);
