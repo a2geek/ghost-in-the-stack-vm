@@ -55,7 +55,7 @@ public class PreprocessorVisitor extends PreprocessorGrammarBaseVisitor<Expressi
     public Expression visitDefineDirective(PreprocessorGrammar.DefineDirectiveContext ctx) {
         var id = ctx.ID().getText();
         var expr = visit(ctx.expr());
-        variables.put(id, expr);
+        variables.putIfAbsent(id, expr);
         return null;
     }
 

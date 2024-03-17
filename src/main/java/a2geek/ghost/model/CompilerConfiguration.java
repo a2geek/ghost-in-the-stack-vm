@@ -75,6 +75,10 @@ public class CompilerConfiguration {
             }
             return this;
         }
+        public Builder defines(Map<String,Expression> defines) {
+            config.defines.putAll(defines);
+            return this;
+        }
 
         public CompilerConfiguration get() {
             return config;

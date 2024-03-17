@@ -59,6 +59,9 @@ public class CompileCommand implements Callable<Integer> {
     @Option(names = { "--trace" }, description = "enable stack traces")
     private boolean traceFlag;
 
+    @Option(names = { "-D", "--define" }, description = "define variables")
+    private Map<String,Expression> definedValues = new HashMap<>();
+
     @Option(names = { "--case-sensitive" },
             defaultValue = "false", showDefaultValue = Visibility.ALWAYS,
             description = "allow identifiers to be case sensitive (A is different from a)")
@@ -122,6 +125,7 @@ public class CompileCommand implements Callable<Integer> {
                 .trace(traceFlag)
                 .apply(optimizations::configure)
                 .apply(memoryConfig::configure)
+                .defines(definedValues)
                 .get();
         ModelBuilder model = new ModelBuilder(config);
         if (memoryConfig.heapAllocationFlag) {
