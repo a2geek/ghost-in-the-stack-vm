@@ -1,9 +1,11 @@
 package a2geek.ghost.model;
 
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class CompilerConfiguration {
     private boolean trace;
+    private boolean boundsCheck = true;
     private Function<String,String> caseStrategy = s -> s;
     private Function<String,String> controlCharsFn = s -> s;
 
@@ -23,7 +25,9 @@ public class CompilerConfiguration {
             System.out.println();
         }
     }
-
+    public boolean isBoundsCheckEnabled() {
+        return boundsCheck;
+    }
 
     public static Builder builder() {
         return new Builder();
@@ -31,6 +35,11 @@ public class CompilerConfiguration {
 
     public static class Builder {
         private CompilerConfiguration config = new CompilerConfiguration();
+
+        public Builder apply(Consumer<CompilerConfiguration.Builder> configurer) {
+            configurer.accept(this);
+            return this;
+        }
 
         public Builder trace(boolean traceFlag) {
             config.trace = traceFlag;
@@ -42,6 +51,10 @@ public class CompilerConfiguration {
         }
         public Builder controlCharsFn(Function<String,String> controlCharsFn) {
             config.controlCharsFn = controlCharsFn;
+            return this;
+        }
+        public Builder boundsCheckEnabled(boolean boundsCheckFlag) {
+            config.boundsCheck = boundsCheckFlag;
             return this;
         }
 

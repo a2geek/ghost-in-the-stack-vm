@@ -127,12 +127,12 @@ public class CompileCommand implements Callable<Integer> {
                 .caseStrategy(caseSensitive ? s -> s : String::toUpperCase)
                 .controlCharsFn(fixControlChars ? CompileCommand::convertControlCharacterMarkers : s -> s)
                 .trace(traceFlag)
+                .apply(optimizations::configure)
                 .get();
         ModelBuilder model = new ModelBuilder(config);
         if (heapAllocationFlag) {
             model.useMemoryForHeap(heapStartAddress);
         }
-        optimizations.apply(model);
         Program program = switch (language) {
             case INTEGER_BASIC -> ParseUtil.integerToModel(stream, model);
             case BASIC -> ParseUtil.basicToModel(stream, model);
@@ -335,11 +335,11 @@ public class CompileCommand implements Callable<Integer> {
                 description = "consolidate/reduce temporary variables (enabled: ${DEFAULT-VALUE})")
         private boolean tempVariableConsolidation;
 
-        public void apply(ModelBuilder model) {
+        public void configure(CompilerConfiguration.Builder builder) {
             if (noOptimizations) {
                 return;
             }
-            model.enableBoundsCheck(boundsChecking);
+            builder.boundsCheckEnabled(boundsChecking);
         }
 
         public void apply(Program program) {

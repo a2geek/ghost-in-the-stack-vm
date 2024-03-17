@@ -40,7 +40,6 @@ public class ModelBuilder {
     private Function<String,String> arrayNameStrategy = s -> s;
     private Stack<Scope> scope = new Stack<>();
     private final Stack<StatementBlock> statementBlock = new Stack<>();
-    private boolean boundsCheck = true;
 
     public ModelBuilder(CompilerConfiguration config) {
         this.config = config;
@@ -66,9 +65,6 @@ public class ModelBuilder {
         return arrayNameStrategy.apply(name);
     }
 
-    public void enableBoundsCheck(boolean boundsCheck) {
-        this.boundsCheck = boundsCheck;
-    }
     public void setArrayNameStrategy(Function<String,String> arrayNameStrategy) {
         this.arrayNameStrategy = arrayNameStrategy;
     }
@@ -442,7 +438,7 @@ public class ModelBuilder {
     }
 
     public void checkArrayBounds(Symbol symbol, List<Expression> indexes, int linenum, String source) {
-        if (!boundsCheck) {
+        if (!config.isBoundsCheckEnabled()) {
             return;
         }
         if (symbol.numDimensions() != indexes.size()) {
