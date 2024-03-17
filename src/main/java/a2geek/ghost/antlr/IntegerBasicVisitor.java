@@ -26,6 +26,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     public static final String LINE_LABELS = "_line_labels";
 
     private final ModelBuilder model;
+    private final CompilerConfiguration config;
     private final SortedMap<Integer,Symbol> lineLabels = new TreeMap<>();
     private final Map<Symbol,ForFrame> forFrames = new HashMap<>();
     private final Map<Symbol,Expression> stringsDimmed = new HashMap<>();
@@ -35,6 +36,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     public IntegerBasicVisitor(ModelBuilder model) {
         this.model = model;
+        this.config = model.getConfig();
         model.setArrayNameStrategy(s -> s + "()");
         model.uses(MATH_LIBRARY, exportSpecified("ABS", "SGN", "RND"));
         model.uses(STRINGS_LIBRARY, exportSpecified("LEN"));
@@ -147,7 +149,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         try {
             visit(ctx.statements());
         } catch (Exception ex) {
-            System.out.println(ctx.getText());
+            config.trace(ctx.getText());
             var msg = String.format("Error in line %d: %s", lineNumber, ex.getMessage());
             throw new RuntimeException(msg, ex);
         }
@@ -163,7 +165,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     @Override
     public Expression visitClrStatement(IntegerParser.ClrStatementContext ctx) {
-        System.out.println("CLR not supported; ignoring it.");
+        config.trace("CLR not supported; ignoring it.");
         return null;
     }
 
@@ -176,7 +178,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     @Override
     public Expression visitDelStatement(IntegerParser.DelStatementContext ctx) {
-        System.out.println("DEL not supported; ignoring it.");
+        config.trace("DEL not supported; ignoring it.");
         return null;
     }
 
@@ -209,7 +211,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     @Override
     public Expression visitDspStatement(IntegerParser.DspStatementContext ctx) {
-        System.out.println("DSP not supported; ignoring it.");
+        config.trace("DSP not supported; ignoring it.");
         return null;
     }
 
@@ -394,7 +396,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     @Override
     public Expression visitHimemStatement(IntegerParser.HimemStatementContext ctx) {
-        System.out.println("HIMEM not supported; ignoring it.");
+        config.trace("HIMEM not supported; ignoring it.");
         return null;
     }
 
@@ -435,7 +437,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     public Expression visitInputStatement(IntegerParser.InputStatementContext ctx) {
         if (ctx.prompt != null) {
             String value = ctx.prompt.getText().replaceAll("^\"|\"$", "");
-            model.callLibrarySubroutine("print_string", new StringConstant(model.fixControlChars(value)));
+            model.callLibrarySubroutine("print_string", new StringConstant(config.applyControlCharsFn(value)));
         }
         if (!ctx.getText().contains("$")) {
             // ? prompt is always shown for number input AFAICT.
@@ -508,7 +510,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     @Override
     public Expression visitListStatement(IntegerParser.ListStatementContext ctx) {
-        System.out.println("LIST not supported; ignoring it.");
+        config.trace("LIST not supported; ignoring it.");
         return null;
     }
 
@@ -518,18 +520,18 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         if (expr.isConstant() && expr.asInteger().isPresent()) {
             int addr = expr.asInteger().orElseThrow();
             if (addr >= 0x803 && addr < 0x1000) {   // totally arbitrary.
-                System.err.println("WARNING: LOMEM indicates this application may over write the $803 location.");
+                config.trace("WARNING: LOMEM indicates this application may over write the $803 location.");
             }
         }
         else {
-            System.out.println("LOMEM not supported; ignoring it.");
+            config.trace("LOMEM not supported; ignoring it.");
         }
         return null;
     }
 
     @Override
     public Expression visitTraceStatement(IntegerParser.TraceStatementContext ctx) {
-        System.out.println("TRACE not supported; ignoring it.");
+        config.trace("TRACE not supported; ignoring it.");
         return null;
     }
 
@@ -623,7 +625,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     @Override
     public Expression visitNotraceStatement(IntegerParser.NotraceStatementContext ctx) {
-        System.out.println("NOTRACE not supported; ignoring it.");
+        config.trace("NOTRACE not supported; ignoring it.");
         return null;
     }
 
@@ -715,7 +717,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     @Override
     public Expression visitStrConstExpr(IntegerParser.StrConstExprContext ctx) {
         String value = ctx.value.getText().replaceAll("^\"|\"$", "");
-        return new StringConstant(model.fixControlChars(value));
+        return new StringConstant(config.applyControlCharsFn(value));
     }
 
     @Override

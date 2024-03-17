@@ -1,15 +1,30 @@
 package a2geek.ghost.antlr;
 
-import a2geek.ghost.antlr.generated.BasicLexer;
-import a2geek.ghost.antlr.generated.BasicParser;
-import a2geek.ghost.antlr.generated.IntegerLexer;
-import a2geek.ghost.antlr.generated.IntegerParser;
+import a2geek.ghost.antlr.generated.*;
+import a2geek.ghost.model.CompilerConfiguration;
 import a2geek.ghost.model.ModelBuilder;
 import a2geek.ghost.model.scope.Program;
 import org.antlr.v4.runtime.*;
 
 public class ParseUtil {
+    public static String preprocessor(CharStream stream, CompilerConfiguration config) {
+        PreprocessorLexer lexer = new PreprocessorLexer(stream);
+        TrackingErrorListener errorListener = new TrackingErrorListener();
+        lexer.addErrorListener(errorListener);
+        TokenStream tokens = new CommonTokenStream(lexer);
+        PreprocessorGrammar parser = new PreprocessorGrammar(tokens);
+        parser.addErrorListener(errorListener);
+
+        PreprocessorGrammar.SourceContext context = parser.source();
+        errorListener.check();
+
+        PreprocessorVisitor visitor = new PreprocessorVisitor(config);
+        visitor.visit(context);
+        return visitor.getCode();
+    }
+
     public static Program basicToModel(CharStream stream, ModelBuilder model) {
+        stream = CharStreams.fromString(preprocessor(stream, model.getConfig()), stream.getSourceName());
         BasicLexer lexer = new BasicLexer(stream);
         TrackingErrorListener errorListener = new TrackingErrorListener();
         lexer.addErrorListener(errorListener);

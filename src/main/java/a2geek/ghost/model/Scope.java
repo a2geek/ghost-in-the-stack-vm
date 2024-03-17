@@ -1,7 +1,6 @@
 package a2geek.ghost.model;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -9,7 +8,7 @@ import static a2geek.ghost.model.Symbol.in;
 import static a2geek.ghost.model.Symbol.named;
 
 public class Scope extends StatementBlock {
-    private final Function<String,String> caseStrategy;
+    private final CompilerConfiguration config;
     private String name;
     private Scope parent;
     private final DeclarationType defaultDeclarationType;
@@ -28,24 +27,24 @@ public class Scope extends StatementBlock {
         return symbolNumber;
     }
 
-    public Scope(Function<String,String> caseStrategy, MemoryManagement memoryManagementStrategy, String name) {
-        this.caseStrategy = caseStrategy;
+    public Scope(CompilerConfiguration config, MemoryManagement memoryManagementStrategy, String name) {
+        this.config = config;
         this.memoryManagementStrategy = memoryManagementStrategy;
-        this.name = caseStrategy.apply(name);
+        this.name = config.applyCaseStrategy(name);
         this.defaultDeclarationType = DeclarationType.GLOBAL;
     }
     public Scope(Scope parent, String name, DeclarationType defaultDeclarationType) {
-        this.caseStrategy = parent.caseStrategy;
+        this.config = parent.config;
         this.memoryManagementStrategy = parent.getMemoryManagementStrategy().create();
-        this.name = caseStrategy.apply(name);
+        this.name = config.applyCaseStrategy(name);
         this.parent = parent;
         this.defaultDeclarationType = defaultDeclarationType;
     }
 
     public void addAllExports(Collection<String> exportNames) {
         for (String exportName : exportNames) {
-            String moduleName = caseStrategy.apply(getName());
-            String targetName = caseStrategy.apply(String.format("%s.%s", moduleName, exportName));
+            String moduleName = config.applyCaseStrategy(getName());
+            String targetName = config.applyCaseStrategy(String.format("%s.%s", moduleName, exportName));
             exports.add(Symbol.variable(exportName, SymbolType.ALIAS).targetName(targetName).build());
         }
     }
@@ -100,7 +99,7 @@ public class Scope extends StatementBlock {
         return symbolTable;
     }
     public Symbol addLocalSymbol(Symbol.Builder builder) {
-        var fixedName = caseStrategy.apply(builder.name());
+        var fixedName = config.applyCaseStrategy(builder.name());
         builder.name(fixedName);
         if (builder.declarationType() == null) {
             builder.declarationType(defaultDeclarationType);

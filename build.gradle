@@ -41,6 +41,9 @@ sourceSets {
 
 generateGrammarSource {
     arguments += ["-visitor"]
+    arguments += ['-package', 'a2geek.ghost.antlr.generated']
+    // need to replace with layout.buildDirectory.dir(...) later
+    outputDirectory = new File(buildDir.toString() + "/generated-src/antlr/main/a2geek/ghost/antlr/generated/")
 }
 
 test {

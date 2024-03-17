@@ -59,6 +59,9 @@ public class CompileCommand implements Callable<Integer> {
     @Option(names = { "--trace" }, description = "enable stack traces")
     private boolean traceFlag;
 
+    @Option(names = { "-D", "--define" }, description = "define variables")
+    private Map<String,Expression> definedValues = new HashMap<>();
+
     @Option(names = { "--case-sensitive" },
             defaultValue = "false", showDefaultValue = Visibility.ALWAYS,
             description = "allow identifiers to be case sensitive (A is different from a)")
@@ -69,15 +72,8 @@ public class CompileCommand implements Callable<Integer> {
             description = "replace '<CONTROL-?>' with the actual control character")
     private boolean fixControlChars;
 
-    @Option(names = { "--heap" },
-            defaultValue = "false",
-            description = "allocate memory on heap")
-    private boolean heapAllocationFlag;
-
-    @Option(names = { "--heap-start", "--lomem" }, defaultValue = "0x8000",
-            converter = IntegerTypeConverter.class,
-            description = "heap start address (default: ${DEFAULT-VALUE})")
-    private int heapStartAddress;
+    @ArgGroup(exclusive = false, heading = "Memory Configuration:%s")
+    private MemoryConfig memoryConfig = new MemoryConfig();
 
     @ArgGroup(exclusive = false, heading = "Optimizations:%n")
     private OptimizationFlags optimizations = new OptimizationFlags();
@@ -123,15 +119,18 @@ public class CompileCommand implements Callable<Integer> {
 
     public void compile() throws IOException {
         CharStream stream = CharStreams.fromPath(sourceCode);
-        ModelBuilder model = new ModelBuilder(caseSensitive ? s -> s : String::toUpperCase);
-        if (fixControlChars) {
-            model.setControlCharsFn(CompileCommand::convertControlCharacterMarkers);
+        CompilerConfiguration config = CompilerConfiguration.builder()
+                .caseStrategy(caseSensitive ? s -> s : String::toUpperCase)
+                .controlCharsFn(fixControlChars ? CompileCommand::convertControlCharacterMarkers : s -> s)
+                .trace(traceFlag)
+                .apply(optimizations::configure)
+                .apply(memoryConfig::configure)
+                .defines(definedValues)
+                .get();
+        ModelBuilder model = new ModelBuilder(config);
+        if (memoryConfig.heapAllocationFlag) {
+            model.useMemoryForHeap(memoryConfig.heapStartAddress);
         }
-        if (heapAllocationFlag) {
-            model.useMemoryForHeap(heapStartAddress);
-        }
-        model.setTrace(traceFlag);
-        optimizations.apply(model);
         Program program = switch (language) {
             case INTEGER_BASIC -> ParseUtil.integerToModel(stream, model);
             case BASIC -> ParseUtil.basicToModel(stream, model);
@@ -278,6 +277,22 @@ public class CompileCommand implements Callable<Integer> {
         INTEGER_BASIC
     }
 
+    public static class MemoryConfig {
+        @Option(names = { "--heap" },
+                defaultValue = "false",
+                description = "allocate memory on heap")
+        private boolean heapAllocationFlag;
+
+        @Option(names = { "--heap-start", "--lomem" }, defaultValue = "0x8000",
+                converter = IntegerTypeConverter.class,
+                description = "heap start address (default: ${DEFAULT-VALUE})")
+        private int heapStartAddress;
+
+        public void configure(CompilerConfiguration.Builder builder) {
+            builder.memoryConfig(heapAllocationFlag, heapStartAddress);
+        }
+    }
+
     public static class OptimizationFlags {
         @Option(names = { "--optimizations" }, negatable = true, defaultValue = "false",
             fallbackValue = "false", showDefaultValue = Visibility.NEVER,
@@ -334,11 +349,11 @@ public class CompileCommand implements Callable<Integer> {
                 description = "consolidate/reduce temporary variables (enabled: ${DEFAULT-VALUE})")
         private boolean tempVariableConsolidation;
 
-        public void apply(ModelBuilder model) {
+        public void configure(CompilerConfiguration.Builder builder) {
             if (noOptimizations) {
                 return;
             }
-            model.enableBoundsCheck(boundsChecking);
+            builder.boundsCheckEnabled(boundsChecking);
         }
 
         public void apply(Program program) {

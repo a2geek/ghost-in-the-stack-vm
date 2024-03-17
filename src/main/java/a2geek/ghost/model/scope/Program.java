@@ -1,18 +1,18 @@
 package a2geek.ghost.model.scope;
 
+import a2geek.ghost.model.CompilerConfiguration;
 import a2geek.ghost.model.MemoryManagement;
 import a2geek.ghost.model.Scope;
 import a2geek.ghost.model.SymbolType;
 
 import java.util.ArrayList;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static a2geek.ghost.model.Symbol.in;
 
 public class Program extends Scope {
-    public Program(Function<String,String> caseStrategy, MemoryManagement memoryManagementStrategy) {
-        super(caseStrategy, memoryManagementStrategy, "main");
+    public Program(CompilerConfiguration config, MemoryManagement memoryManagementStrategy) {
+        super(config, memoryManagementStrategy, "main");
     }
 
     @Override

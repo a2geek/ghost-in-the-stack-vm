@@ -18,9 +18,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class GhostBasicVisitorTest {
     private static ModelBuilder model;
+    private static CompilerConfiguration config;
 
     public static StatementTester.ScopeTester expect(String source) {
-        model = new ModelBuilder(String::toUpperCase);
+        config = CompilerConfiguration.builder().caseStrategy(String::toUpperCase).get();
+        model = new ModelBuilder(config);
         Program program = ParseUtil.basicToModel(CharStreams.fromString(source), model);
         System.out.println(program);
         return new StatementTester.ScopeTester(program,
@@ -47,7 +49,7 @@ public class GhostBasicVisitorTest {
 
     @Test
     public void testUbound() {
-        var arrayRef = Symbol.variable(model.fixCase("a"), SymbolType.VARIABLE)
+        var arrayRef = Symbol.variable(config.applyCaseStrategy("a"), SymbolType.VARIABLE)
                 .dataType(DataType.INTEGER)
                 .declarationType(DeclarationType.GLOBAL)
                 .dimensions(List.of(new IntegerConstant(10)))
@@ -64,7 +66,7 @@ public class GhostBasicVisitorTest {
 
     @Test
     public void testArrayReference() {
-        var arrayRef = Symbol.variable(model.fixCase("a"), SymbolType.VARIABLE)
+        var arrayRef = Symbol.variable(config.applyCaseStrategy("a"), SymbolType.VARIABLE)
                 .dataType(DataType.INTEGER)
                 .declarationType(DeclarationType.GLOBAL)
                 .dimensions(List.of(new IntegerConstant(10)))
