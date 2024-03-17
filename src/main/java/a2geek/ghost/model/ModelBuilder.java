@@ -40,8 +40,6 @@ public class ModelBuilder {
     private Function<String,String> arrayNameStrategy = s -> s;
     private Stack<Scope> scope = new Stack<>();
     private final Stack<StatementBlock> statementBlock = new Stack<>();
-    // TODO determine if this is required any more!
-    private final Set<String> librariesIncluded = new HashSet<>();
     private boolean boundsCheck = true;
 
     public ModelBuilder(CompilerConfiguration config) {
@@ -158,9 +156,7 @@ public class ModelBuilder {
     }
 
     public void uses(String libname, Predicate<Symbol> exportHandler) {
-        var program = getProgram();
-        if (!librariesIncluded.contains(libname)) {
-            librariesIncluded.add(libname);
+        if (findModule(libname).isEmpty()) {
             config.trace("loading library: %s", libname);
             String name = String.format("/library/%s.bas", libname);
             try (InputStream inputStream = getClass().getResourceAsStream(name)) {
@@ -169,25 +165,28 @@ public class ModelBuilder {
                 }
                 // These gyrations are to ensure that anything included is at the PROGRAM level and not in some sub-scope
                 // (such as FUNCTION, SUB, or MODULE).
+                var program = getProgram();
                 var oldScopeStack = this.scope;
                 this.scope = new Stack<>();
                 this.scope.push(program);
                 ParseUtil.basicToModel(CharStreams.fromStream(inputStream), this);
                 this.scope = oldScopeStack;
                 // any statements in the module body are for initialization
-                var module = program.findFirst(named(config.applyCaseStrategy(libname)).and(in(SymbolType.MODULE))).map(Symbol::scope)
-                        .orElseThrow(() -> new RuntimeException("not a module: " + libname));
+                var module = findModule(libname).orElseThrow(() -> new RuntimeException("not a module: " + libname));
                 addInitializationStatements(module);
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
         }
         // Apply the export strategy to all components of the module (note we do this every time)
-        var module = program.findFirst(named(config.applyCaseStrategy(libname)).and(in(SymbolType.MODULE))).map(Symbol::scope)
-                .orElseThrow(() -> new RuntimeException("not a module: " + libname));
+        var module = findModule(libname).orElseThrow(() -> new RuntimeException("not a module: " + libname));
         var exports = module.streamAllLocalScope().filter(exportHandler).map(Symbol::name).toList();
         module.addAllExports(exports);
     }
+    private Optional<Scope> findModule(String libname) {
+        return getProgram().findFirst(named(config.applyCaseStrategy(libname)).and(in(SymbolType.MODULE))).map(Symbol::scope);
+    }
+
     public static Predicate<Symbol> defaultExport() {
         return symbol -> symbol.scope() instanceof Subroutine sub && sub.is(Subroutine.Modifier.EXPORT);
     }
