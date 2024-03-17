@@ -23,6 +23,7 @@ public class ParseUtil {
     }
 
     public static Program basicToModel(CharStream stream, ModelBuilder model) {
+        stream = CharStreams.fromString(preprocessor(stream), stream.getSourceName());
         BasicLexer lexer = new BasicLexer(stream);
         TrackingErrorListener errorListener = new TrackingErrorListener();
         lexer.addErrorListener(errorListener);
