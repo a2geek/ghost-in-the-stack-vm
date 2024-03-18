@@ -73,6 +73,7 @@ public class ModelBuilder {
         getProgram().setMemoryManagementStrategy(new StackMemoryManagement(this));
     }
     public void useMemoryForHeap(int startAddress) {
+        config.getDefines().put(CompilerConfiguration.OPTION_HEAP, new BooleanConstant(true));
         getProgram().setMemoryManagementStrategy(new HeapMemoryManagement(this));
         this.pushStatementBlock(new StatementBlock());
         assignStmt(derefWord(new IntegerConstant(0x69)), new IntegerConstant(startAddress));
