@@ -80,7 +80,7 @@ public class ModelBuilder {
         this.addInitializationStatements(sb);
     }
     public boolean isUsingMemory() {
-        return getProgram().getMemoryManagementStrategy().isUsingMemory();
+        return getProgram().getMemoryManagementStrategy().isUsingHeap();
     }
 
     public void addInitializationStatements(StatementBlock statements) {

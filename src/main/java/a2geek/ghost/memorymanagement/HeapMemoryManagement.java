@@ -18,7 +18,7 @@ public class HeapMemoryManagement implements MemoryManagement {
     }
 
     @Override
-    public boolean isUsingMemory() {
+    public boolean isUsingHeap() {
         return true;
     }
 

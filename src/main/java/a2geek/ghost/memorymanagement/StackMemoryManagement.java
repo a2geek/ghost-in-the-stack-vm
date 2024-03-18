@@ -18,7 +18,7 @@ public class StackMemoryManagement implements MemoryManagement {
     }
 
     @Override
-    public boolean isUsingMemory() {
+    public boolean isUsingHeap() {
         return false;
     }
 
