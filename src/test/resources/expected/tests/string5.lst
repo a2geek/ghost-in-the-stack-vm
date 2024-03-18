@@ -1,0 +1,45 @@
+MAIN:
+    DIM _ONERR_TARGET AS ADDRESS = null
+    DIM _ONERR_FP AS ADDRESS = null
+    DIM _ONERR_SP AS ADDRESS = null
+    DIM A$ AS STRING = null
+    DIM B$ AS STRING = null
+    DIM C$ AS STRING = null
+    DIM D$ AS STRING = null
+    DIM EXPECTED$ AS STRING = null
+   0:     *(105) = 32768
+   1:     CALL MEMORY.HEAPINIT()
+   0:     EXPECTED$ = "Hello, World!"
+   1:     A$ = STRINGS.LEFT$(EXPECTED$, 5)
+   2:     B$ = STRINGS.RIGHT$(EXPECTED$, 6)
+   3:     C$ = STRINGS.MID$(EXPECTED$, 8, -1)
+   4:     D$ = STRINGS.MID$(EXPECTED$, 4, 6)
+   5:     CALL RUNTIME.PRINT_STRING("Actuals:")
+   6:     CALL RUNTIME.PRINT_NEWLINE()
+   7:     CALL RUNTIME.PRINT_STRING("A$='")
+   8:     CALL RUNTIME.PRINT_STRING(A$)
+   9:     CALL RUNTIME.PRINT_STRING("', expected:'Hello'")
+  10:     CALL RUNTIME.PRINT_NEWLINE()
+  11:     CALL RUNTIME.PRINT_STRING("B$='")
+  12:     CALL RUNTIME.PRINT_STRING(B$)
+  13:     CALL RUNTIME.PRINT_STRING("', expected:'World!'")
+  14:     CALL RUNTIME.PRINT_NEWLINE()
+  15:     CALL RUNTIME.PRINT_STRING("C$='")
+  16:     CALL RUNTIME.PRINT_STRING(C$)
+  17:     CALL RUNTIME.PRINT_STRING("', expected:'World!'")
+  18:     CALL RUNTIME.PRINT_NEWLINE()
+  19:     CALL RUNTIME.PRINT_STRING("D$='")
+  20:     CALL RUNTIME.PRINT_STRING(D$)
+  21:     CALL RUNTIME.PRINT_STRING("', expected:'lo, Wo'")
+  22:     CALL RUNTIME.PRINT_NEWLINE()
+  23:     CALL TEXT.INVERSE()
+  24:     IF ((((STRINGS.STRCMP(A$, "Hello") = 0) and (STRINGS.STRCMP(B$, "World!") = 0)) and (STRINGS.STRCMP(C$, "World!") = 0)) and (STRINGS.STRCMP(D$, "lo, Wo") = 0)) THEN
+   0:         CALL RUNTIME.PRINT_STRING("SUCCESS")
+   1:         CALL RUNTIME.PRINT_NEWLINE()
+          ELSE
+   0:         CALL RUNTIME.PRINT_STRING("FAIL")
+   1:         CALL RUNTIME.PRINT_NEWLINE()
+          END IF
+  25:     CALL TEXT.NORMAL()
+  26:     END
+

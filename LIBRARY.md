@@ -149,16 +149,26 @@ The runtime support module has all the input and print routines, support for ON.
 
 ## Strings
 
-Support for the `string` data type. Very rudimentary.
+Support for the `string` data type. Note that any function the _creates_ and returns that string requires `option heap` to be 
+enabled as there is no version that works off the stack.
 
-| Name                                                      |  Type   | Description                                                                       |
-|:----------------------------------------------------------|:-------:|:----------------------------------------------------------------------------------|
-| `strmax(s)`                                               | Integer | The maximum length supported by a string.                                         |
-| `asc(s)`                                                  | Integer | The ASCII value of a string. Most likely with the high bit set.                   |
-| `len(s)`                                                  | Integer | The length of a string.                                                           |
-| `strcat(s1,s2)`                                           |    -    | Concatenates `s2` onto the end of `s1`. Be certain there is enough space in `s1`. |
-| `strcmp(s1,s2)`                                           | Integer | String comparison. -1 if less than, 0 if equal, 1 if greater than.                |
-| `strcpy(target,targetStart,source,sourceStart,sourceEnd)` |    -    | Copy strings.                                                                     |
+| Name                                                      |  Type   | Requirements  | Description                                                                                                                       |
+|:----------------------------------------------------------|:-------:|:-------------:|:----------------------------------------------------------------------------------------------------------------------------------|
+| `asc(s)`                                                  | Integer |       -       | The ASCII value of a string. Most likely with the high bit set.                                                                   |
+| `ascn(s,n)`                                               | Integer |       -       | The ASCII value of a string at position `n`. Similar to `MID$(s,n,1)`.                                                            |
+| `chr$(n)`                                                 | String  | `option heap` | Convert ASCII value `n` to a string (length of 1 character).                                                                      |
+| `left$(s,n)`                                              | String  | `option heap` | Returns left portion of string.                                                                                                   |
+| `len(s)`                                                  | Integer |       -       | The length of a string.                                                                                                           |
+| `mid$(s,start[,n])`                                       | String  | `option heap` | Return the substring of string `s` starting at `start` and optionally length `n`. If `n` is not specified, returns to end of `s`. |
+| `right$(s,n)`                                             | String  | `option heap` | Return the right portion of string.                                                                                               |
+| `str$(n)`                                                 | String  | `option heap` | Converts `n` to an integer number. Values range from -32768 to 32767.                                                             |
+| `strcat(s1,s2)`                                           |    -    |       -       | Concatenates `s2` onto the end of `s1`. Be certain there is enough space in `s1`.                                                 |
+| `strcmp(s1,s2)`                                           | Integer |       -       | String comparison. -1 if less than, 0 if equal, 1 if greater than.                                                                |
+| `strcpy(target,targetStart,source,sourceStart,sourceEnd)` |    -    |       -       | Copy strings.                                                                                                                     |
+| `strmax(s)`                                               | Integer |       -       | The maximum length supported by a string.                                                                                         |
+| `strn(n,maxlen)`                                          | String  |       -       | Convert `n` to a zero padded number. Positive value only (no '-' ever added). Currently using upper input buffer (0x2f0+).        |
+| `strreverse(s)`                                           | String  | `option heap` | Reverse the string `s`. Creates a new string.                                                                                     |
+
 
 ## Text
 

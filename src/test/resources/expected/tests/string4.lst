@@ -1,0 +1,37 @@
+MAIN:
+    DIM _ONERR_TARGET AS ADDRESS = null
+    DIM _ONERR_FP AS ADDRESS = null
+    DIM _ONERR_SP AS ADDRESS = null
+    DIM A$ AS STRING = null
+    DIM B$ AS STRING = null
+    DIM C$ AS STRING = null
+   0:     *(105) = 32768
+   1:     CALL MEMORY.HEAPINIT()
+   0:     A$ = STRINGS.CHR$(197)
+   1:     B$ = STRINGS.STRREVERSE("sdrawkcab")
+   2:     C$ = STRINGS.STR$((- 12345))
+   3:     CALL RUNTIME.PRINT_STRING("Actuals:")
+   4:     CALL RUNTIME.PRINT_NEWLINE()
+   5:     CALL RUNTIME.PRINT_STRING("A$='")
+   6:     CALL RUNTIME.PRINT_STRING(A$)
+   7:     CALL RUNTIME.PRINT_STRING("', expected:'E'")
+   8:     CALL RUNTIME.PRINT_NEWLINE()
+   9:     CALL RUNTIME.PRINT_STRING("B$='")
+  10:     CALL RUNTIME.PRINT_STRING(B$)
+  11:     CALL RUNTIME.PRINT_STRING("', expected:'backwards'")
+  12:     CALL RUNTIME.PRINT_NEWLINE()
+  13:     CALL RUNTIME.PRINT_STRING("C$='")
+  14:     CALL RUNTIME.PRINT_STRING(C$)
+  15:     CALL RUNTIME.PRINT_STRING("', expected:'-12345'")
+  16:     CALL RUNTIME.PRINT_NEWLINE()
+  17:     CALL TEXT.INVERSE()
+  18:     IF (((STRINGS.STRCMP(A$, "E") = 0) and (STRINGS.STRCMP(B$, "backwards") = 0)) and (STRINGS.STRCMP(C$, "-12345") = 0)) THEN
+   0:         CALL RUNTIME.PRINT_STRING("SUCCESS")
+   1:         CALL RUNTIME.PRINT_NEWLINE()
+          ELSE
+   0:         CALL RUNTIME.PRINT_STRING("FAIL")
+   1:         CALL RUNTIME.PRINT_NEWLINE()
+          END IF
+  19:     CALL TEXT.NORMAL()
+  20:     END
+

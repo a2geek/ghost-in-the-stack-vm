@@ -932,16 +932,26 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         return defaultDataType;
     }
 
-    private final Map<String, BiFunction<List<Expression>,ParseTree,Expression>> FUNCTION_HANDLERS = Map.of(
-        "addrof", this::handleAddrOfFunction,
-        "caddr", this::handleCAddrFunction,
-        "cbool", this::handleCBoolFunction,
-        "cbyte", this::handleCByteFunction,
-        "cint", this::handleCIntFunction,
-        "peek", this::handlePeekFunction,
-        "peekw", this::handlePeekwFunction,
-        "ubound", this::handleUboundFunction
-    );
+    private final Map<String, BiFunction<List<Expression>,ParseTree,Expression>> FUNCTION_HANDLERS;
+    {
+        FUNCTION_HANDLERS = new HashMap<>();
+        FUNCTION_HANDLERS.putAll(Map.of(
+            "addrof", this::handleAddrOfFunction,
+            "caddr", this::handleCAddrFunction,
+            "cbool", this::handleCBoolFunction,
+            "cbyte", this::handleCByteFunction,
+            "cint", this::handleCIntFunction,
+            "peek", this::handlePeekFunction,
+            "peekw", this::handlePeekwFunction,
+            "ubound", this::handleUboundFunction
+        ));
+        FUNCTION_HANDLERS.putAll(Map.of(
+            "mid$", this::handleMidFunction,
+            "left$", this::handleLeftFunction,
+            "right$", this::handleRightFunction
+        ));
+    }
+
     Expression handleUboundFunction(List<Expression> params, ParseTree ctx) {
         if (params.size() == 1 && params.getFirst() instanceof VariableReference varRef) {
             return new ArrayLengthFunction(varRef.getSymbol(), 1);
@@ -996,6 +1006,37 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             return new TypeConversionOperator(params.getFirst(), DataType.INTEGER);
         }
         throw new RuntimeException("can only use CInt on a simple variable: " + ctx.getText());
+    }
+    Expression handleMidFunction(List<Expression> params, ParseTree ctx) {
+        ensureHeapEnabled(ctx);
+        if (params.size() == 2) {
+            params.add(new IntegerConstant(-1));
+        }
+        if (params.size() == 3) {
+            return model.callFunction("strings.mid$", params);
+        }
+        throw new RuntimeException("Mid$ expects 2 or 3 parameters: " + ctx.getText());
+    }
+    Expression handleLeftFunction(List<Expression> params, ParseTree ctx) {
+        ensureHeapEnabled(ctx);
+        if (params.size() == 2) {
+            return model.callFunction("strings.left$", params);
+        }
+        throw new RuntimeException("Left$ expects 2 parameters: " + ctx.getText());
+    }
+    Expression handleRightFunction(List<Expression> params, ParseTree ctx) {
+        ensureHeapEnabled(ctx);
+        if (params.size() == 2) {
+            return model.callFunction("strings.right$", params);
+        }
+        throw new RuntimeException("Right$ expects 2 parameters: " + ctx.getText());
+    }
+
+    void ensureHeapEnabled(ParseTree ctx) {
+        if (model.getProgram().getMemoryManagementStrategy().isUsingHeap()) {
+            return;
+        }
+        throw new RuntimeException("requires heap to be enabled: " + ctx.getText());
     }
 
     @Override

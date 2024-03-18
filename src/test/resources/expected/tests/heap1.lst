@@ -24,7 +24,7 @@ MAIN:
    8:     CALL RUNTIME.PRINT_STRING(" iterations. Set to max speed for this one!")
    9:     CALL RUNTIME.PRINT_NEWLINE()
   10:     STARTMEM = MEMORY.MEMFREE()
-  11: _WHILE_LOOP18:
+  11: _WHILE_LOOP21:
   12:     IF (N <> 0) THEN
    0:         IF (I > ubound(ADDR,1)) THEN **
    0:             ERR.NUMBER = 107
@@ -142,11 +142,11 @@ MAIN:
    0:             I = 0
               END IF
   24:         N = (N - 1)
-  25:         GOTO _WHILE_LOOP18
+  25:         GOTO _WHILE_LOOP21
           END IF
-  13: _WHILE_EXIT18:
+  13: _WHILE_EXIT21:
   14:     I = 0
-  15: _FOR_LOOP19:
+  15: _FOR_LOOP22:
   16:     IF (MATH.SGN(1) >= 0) THEN
    0:         IF (I <= ubound(ADDR,1)) THEN
    0:             IF (I > ubound(ADDR,1)) THEN **
@@ -158,9 +158,9 @@ MAIN:
    5:                 RAISE ERROR
                   END IF
    1:             CALL MEMORY.HEAPFREE(*(((ADDR + 2) + (I * 2))))
-   2: _FOR_CONTINUE19:
+   2: _FOR_CONTINUE22:
    3:             I = (I + 1)
-   4:             GOTO _FOR_LOOP19
+   4:             GOTO _FOR_LOOP22
               END IF
           ELSE
    0:         IF (I >= ubound(ADDR,1)) THEN
@@ -173,12 +173,12 @@ MAIN:
    5:                 RAISE ERROR
                   END IF
    1:             CALL MEMORY.HEAPFREE(*(((ADDR + 2) + (I * 2))))
-   2: _FOR_CONTINUE19:
+   2: _FOR_CONTINUE22:
    3:             I = (I + 1)
-   4:             GOTO _FOR_LOOP19
+   4:             GOTO _FOR_LOOP22
               END IF
           END IF
-  17: _FOR_EXIT19:
+  17: _FOR_EXIT22:
   18:     IF (STARTMEM <> MEMORY.MEMFREE()) THEN
    0:         CALL RUNTIME.PRINT_STRING("** ERROR **")
    1:         CALL RUNTIME.PRINT_NEWLINE()
