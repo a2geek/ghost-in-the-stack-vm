@@ -11,6 +11,7 @@ module memory
     '   +4 data: address
     const HEADER_SIZE = 4
     dim freeptr as address
+    dim loptr as address, hiptr as address  ' can't reuse lomem, so crappy names. :-)
 
     const LOMEM = 0x69
     const MEMSIZE = 0x73    ' HIMEM
@@ -39,9 +40,14 @@ module memory
     end function
 
     sub heapinit()
-        memory.freeptr = peekw(LOMEM)
+        memory.loptr = peekw(LOMEM)
+        memory.hiptr = peekw(MEMSIZE)
+        memory.freeptr = memory.loptr
         pokew memory.freeptr,0
-        pokew memory.freeptr+2,peekw(MEMSIZE)-peekw(LOMEM)-HEADER_SIZE
+        pokew memory.freeptr+2,memory.hiptr - memory.loptr - HEADER_SIZE
+#if defined(TRACE)
+        print "HEAPINIT: loptr=";memory.loptr;", hiptr=";memory.hiptr;" size=";peekw(memory.freeptr+2)
+#endif
     end sub
 
     private sub setpriorptr(priorptr as address, newptr as address)
@@ -59,6 +65,9 @@ module memory
 
     volatile function heapalloc(bytes as integer) as address
         dim ptr as address, priorptr as address, dataptr as address, size as integer, needed as integer
+#if defined(TRACE)
+        print "HEAPALLOC: bytes=";bytes
+#endif
         ptr = memory.freeptr
         needed = bytes+HEADER_SIZE
         ' look through the linked list for a chunk that is large enough
@@ -77,6 +86,9 @@ module memory
                 end if
                 ' clean up memory and return the pointer
                 memclr(dataptr, bytes)
+#if defined(TRACE)
+        print "HEAPALLOC: return=";dataptr
+#endif
                 return dataptr
             else
                 ' keep looking until we run out!
@@ -97,6 +109,13 @@ module memory
 
     sub heapfree(data as address)
         dim ptr as address, priorptr as address, dataptr as address
+        ' range check since the compiler can be overzealous
+        if data < memory.loptr or data >= memory.hiptr then
+            return
+        end if
+#if defined(TRACE)
+        print "HEAPFREE: DATA=";data
+#endif
         ' empty list
         dataptr = data-HEADER_SIZE
         if memory.freeptr = 0 then

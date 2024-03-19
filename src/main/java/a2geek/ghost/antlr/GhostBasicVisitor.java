@@ -1123,6 +1123,8 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                 var temp = VariableReference.with(symbol);
                 model.callSubroutine("strings.strcat", temp, l);
                 model.callSubroutine("strings.strcat", temp, r);
+                freeHeap(l);
+                freeHeap(r);
                 return temp;
             }
             else {
@@ -1134,6 +1136,13 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                 return model.callFunction("math.ipow", Arrays.asList(l,r));
             }
             return new BinaryExpression(l, r, op);
+        }
+    }
+    void freeHeap(Expression e) {
+        if (getModel().getProgram().getMemoryManagementStrategy().isUsingHeap()) {
+            if (e instanceof VariableReference ref) {
+                model.callSubroutine("memory.heapfree", ref);
+            }
         }
     }
 
