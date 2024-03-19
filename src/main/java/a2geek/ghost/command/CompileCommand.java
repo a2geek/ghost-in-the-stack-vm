@@ -59,7 +59,8 @@ public class CompileCommand implements Callable<Integer> {
     @Option(names = { "--trace" }, description = "enable stack traces")
     private boolean traceFlag;
 
-    @Option(names = { "-D", "--define" }, description = "define variables")
+    @Option(names = { "-D", "--define" }, mapFallbackValue = "true",
+            description = "define variables (default: ${MAP-FALLBACK-VALUE})")
     private Map<String,Expression> definedValues = new HashMap<>();
 
     @Option(names = { "--case-sensitive" },
