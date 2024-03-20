@@ -15,7 +15,7 @@ public class VariableReference implements Expression {
 
     private final Symbol symbol;
 
-    public VariableReference(Symbol symbol) {
+    private VariableReference(Symbol symbol) {
         this.symbol = symbol;
     }
 

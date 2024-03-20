@@ -29,7 +29,7 @@ public class ExpressionBuilder {
                     .dataType(dataType)
                     .declarationType(declarationType)
                     .build();
-            return new VariableReference(symbol);
+            return VariableReference.with(symbol);
         }
         public static Expression arrayReference(String name, DataType dataType, SymbolType symbolType,
                                                 DeclarationType declarationType, Expression expr, int dimensionSize) {

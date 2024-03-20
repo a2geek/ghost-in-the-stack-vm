@@ -123,7 +123,7 @@ public class CodeGenerationVisitor extends DispatchVisitor {
     }
 
     public void emitLoad(Symbol symbol) {
-        emitLoad(new VariableReference(symbol));
+        emitLoad(VariableReference.with(symbol));
     }
     public void emitLoad(VariableReference var) {
         var symbol = var.getSymbol();

@@ -275,10 +275,10 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         var loopLabel = labels.get(0);
         var nextLabel = labels.get(1);
 
-        var varRef = new VariableReference(ref);
-        var endRef = new VariableReference(frame.getEndRef());
-        var stepRef = new VariableReference(frame.getStepRef());
-        var nextRef = new VariableReference(frame.getNextRef());
+        var varRef = VariableReference.with(ref);
+        var endRef = VariableReference.with(frame.getEndRef());
+        var stepRef = VariableReference.with(frame.getStepRef());
+        var nextRef = VariableReference.with(frame.getNextRef());
 
         // setup FOR statement
         model.assignStmt(varRef, first);
@@ -331,7 +331,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         for (var ivar : ctx.ivar()) {
             var ref = model.addVariable(ivar.getText(), DataType.INTEGER);
             ForFrame frame = forFrames.computeIfAbsent(ref, r -> new ForFrame(r, model.peekScope()));
-            var exitRef = new VariableReference(frame.getExitRef());
+            var exitRef = VariableReference.with(frame.getExitRef());
 
             var labels = model.addLabels("FOR_EXIT");
             var exitLabel = labels.getFirst();
@@ -382,7 +382,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
             model.dynamicGotoGosubStmt(op, arrayReference(lineLabels, List.of(temp.minus1())), true);
             var sb = model.popStatementBlock();
 
-            model.assignStmt(temp, model.callFunction("runtime.line_index", Arrays.asList(expr, new VariableReference(lineNumbers))));
+            model.assignStmt(temp, model.callFunction("runtime.line_index", Arrays.asList(expr, VariableReference.with(lineNumbers))));
             model.ifStmt(test, sb, null);
         }
         return null;
@@ -772,7 +772,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
     @Override
     public Expression visitIntVar(IntegerParser.IntVarContext ctx) {
         var ref = model.addVariable(ctx.n.getText(), DataType.INTEGER);
-        return new VariableReference(ref);
+        return VariableReference.with(ref);
     }
 
     @Override

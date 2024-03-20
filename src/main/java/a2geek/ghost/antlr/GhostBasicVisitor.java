@@ -281,7 +281,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         Expression end = visit(ctx.b);
         Expression step = optVisit(ctx.c).orElse(new IntegerConstant(1));
 
-        var ref = new VariableReference(symbol);
+        var ref = VariableReference.with(symbol);
         var labels = model.addLabels("FOR_LOOP", "FOR_EXIT", "FOR_CONTINUE");
         var loopLabel = labels.get(0);
         var exitLabel = labels.get(1);
@@ -869,7 +869,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                     if (decl.defaultValues().size() != 1) {
                         throw new RuntimeException("can only assign one default value: " + decl.name());
                     }
-                    model.assignStmt(new VariableReference(symbol), decl.defaultValues().getFirst());
+                    model.assignStmt(VariableReference.with(symbol), decl.defaultValues().getFirst());
                 }
             }
         });
@@ -914,7 +914,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             variableTest.test(id);
             return model.addVariable(id, determineDataType(id, DataType.INTEGER));
         });
-        return new VariableReference(symbol);
+        return VariableReference.with(symbol);
     }
 
     /**
