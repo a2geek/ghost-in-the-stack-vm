@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
 /**
@@ -33,6 +34,7 @@ public class CompileResultTest {
     private static final Path EXPECTED_OUTPUT = Path.of("src/test/resources/expected");
     private static final PathMatcher BASIC_MATCHER = FileSystems.getDefault().getPathMatcher("glob:*.bas");
     private static final PathMatcher INTEGER_MATCHER = FileSystems.getDefault().getPathMatcher("glob:*.int");
+    private static final String INLINE_DIFF_MODE = "INLINE";
 
     public static Stream<Path> sourceFiles() throws IOException {
         return Files.find(SOURCE_CODE, 1, (p,a) -> BASIC_MATCHER.matches(p.getFileName()) || INTEGER_MATCHER.matches(p.getFileName()));
@@ -61,34 +63,40 @@ public class CompileResultTest {
         var subpath = BASIC_DIR.relativize(source);
         var expectedIntermediate = EXPECTED_OUTPUT.resolve(subpath).resolveSibling(Path.of(filename));
         var actual = PrettyPrintVisitor.format(program, PrettyPrintVisitor.config().includeModules(false));
+        var inlineMode = INLINE_DIFF_MODE.equalsIgnoreCase(System.getenv("DIFF"));
         if (Files.exists(expectedIntermediate)) {
             // compare
             var expected = Files.readString(expectedIntermediate);
 
-            var patches = DiffUtils.diff(expected, actual, null);
-            var sb = new StringBuilder();
-            patches.getDeltas().forEach(delta -> {
-                if (delta.getType() != DeltaType.EQUAL) {
-                    sb.append(toString(delta.getSource().getChangePosition()));
-                    sb.append(delta.getType());
-                    sb.append(toString(delta.getTarget().getChangePosition()));
-                    sb.append("\n");
-                    if (delta.getSource().getLines() != null) {
-                        delta.getSource().getLines().forEach(line -> {
-                            sb.append(String.format("< %s\n", line));
-                        });
+            if (inlineMode) {
+                var patches = DiffUtils.diff(expected, actual, null);
+                var sb = new StringBuilder();
+                patches.getDeltas().forEach(delta -> {
+                    if (delta.getType() != DeltaType.EQUAL) {
+                        sb.append(toString(delta.getSource().getChangePosition()));
+                        sb.append(delta.getType());
+                        sb.append(toString(delta.getTarget().getChangePosition()));
+                        sb.append("\n");
+                        if (delta.getSource().getLines() != null) {
+                            delta.getSource().getLines().forEach(line -> {
+                                sb.append(String.format("< %s\n", line));
+                            });
+                        }
+                        sb.append("---\n");
+                        if (delta.getTarget().getLines() != null) {
+                            delta.getTarget().getLines().forEach(line -> {
+                                sb.append(String.format("> %s\n", line));
+                            });
+                        }
                     }
-                    sb.append("---\n");
-                    if (delta.getTarget().getLines() != null) {
-                        delta.getTarget().getLines().forEach(line -> {
-                            sb.append(String.format("> %s\n", line));
-                        });
-                    }
-                }
-            });
+                });
 
-            if (!sb.isEmpty()) {
-                fail(sb.toString());
+                if (!sb.isEmpty()) {
+                    fail(sb.toString());
+                }
+            }
+            else {
+                assertEquals(expected, actual);
             }
         }
         else {
