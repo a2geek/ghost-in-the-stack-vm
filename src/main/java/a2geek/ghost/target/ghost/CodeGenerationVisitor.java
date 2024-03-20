@@ -123,10 +123,6 @@ public class CodeGenerationVisitor extends DispatchVisitor {
     }
 
     public void emitLoad(Symbol symbol) {
-        emitLoad(VariableReference.with(symbol));
-    }
-    public void emitLoad(VariableReference var) {
-        var symbol = var.getSymbol();
         switch (symbol.symbolType()) {
             case VARIABLE, PARAMETER, RETURN_VALUE -> {
                 switch (symbol.declarationType()) {
@@ -561,7 +557,7 @@ public class CodeGenerationVisitor extends DispatchVisitor {
 
     @Override
     public Expression visit(VariableReference expression) {
-        emitLoad(expression);
+        emitLoad(expression.getSymbol());
         return null;
     }
 

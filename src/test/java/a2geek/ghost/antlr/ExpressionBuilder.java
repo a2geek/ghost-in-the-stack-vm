@@ -23,7 +23,7 @@ public class ExpressionBuilder {
          * Create a symbol. Since the case strategy <em>is not attached</em>,
          * the case strategy needs to be applied outside of this method.
          */
-        public static VariableReference identifier(String name, DataType dataType, SymbolType symbolType,
+        public static Expression identifier(String name, DataType dataType, SymbolType symbolType,
                                                    DeclarationType declarationType) {
             var symbol = Symbol.variable(name, symbolType)
                     .dataType(dataType)

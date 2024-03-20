@@ -69,8 +69,11 @@ public abstract class StatementTester {
         return this;
     }
 
-    public StatementTester hasSymbol(VariableReference expr) {
-        return hasSymbol(expr.getSymbol());
+    public StatementTester hasSymbol(Expression expr) {
+        if (expr instanceof VariableReference ref) {
+            return hasSymbol(ref.getSymbol());
+        }
+        throw new RuntimeException("[developer error] checking symbol but wrong type of expression: " + expr);
     }
     public StatementTester hasSymbol(Symbol symbol) {
         return hasSymbol(symbol.name(), symbol.dataType(), symbol.symbolType(), symbol.declarationType());

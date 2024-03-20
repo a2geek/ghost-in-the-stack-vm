@@ -290,13 +290,8 @@ public class ModelBuilder {
         throw new RuntimeException("function does not exist: " + id);
     }
 
-    public void assignStmt(VariableReference ref, Expression expr) {
-        AssignmentStatement assignmentStatement = new AssignmentStatement(ref, expr);
-        addStatement(assignmentStatement);
-    }
-    public void assignStmt(DereferenceOperator deref, Expression expr) {
-        AssignmentStatement assignmentStatement = new AssignmentStatement(deref, expr);
-        addStatement(assignmentStatement);
+    public void assignStmt(Expression lhs, Expression rhs) {
+        addStatement(AssignmentStatement.create(lhs,rhs));
     }
     public void ifStmt(Expression expr, StatementBlock trueStatements, StatementBlock falseStatements) {
         IfStatement statement = new IfStatement(expr, trueStatements, falseStatements, SourceType.CODE);
