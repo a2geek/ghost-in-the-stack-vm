@@ -46,6 +46,15 @@ visibility
     : 'public'
     | 'private'
     ;
+paramDecl
+    : '(' ( paramIdDecl ( ',' paramIdDecl )* )? ')'
+    ;
+paramIdDecl
+    : optional? identifier ( '(' ( ',' )* ')' )? ( 'as' datatype )? ( '=' expr )?
+    ;
+optional
+    : 'optional'
+    ;
 
 statements
     : (multipleStatements EOL* | EOL )+
@@ -126,13 +135,6 @@ extendedID
 expressionID
     : extendedID '(' ( expr ( ',' expr )* )? ')'                      # arrayOrFunctionRef
     | extendedID                                                      # variableOrFunctionRef
-    ;
-
-paramDecl
-    : '(' ( paramIdDecl ( ',' paramIdDecl )* )? ')'
-    ;
-paramIdDecl
-    : identifier ( '(' ( ',' )* ')' )? ( 'as' datatype )?
     ;
 
 idDecl

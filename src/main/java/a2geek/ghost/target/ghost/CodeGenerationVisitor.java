@@ -79,7 +79,8 @@ public class CodeGenerationVisitor extends DispatchVisitor {
 
     public void setupDefaultArrayValues(Scope scope) {
         scope.getLocalSymbols().forEach(symbol -> {
-            if (symbol.defaultValues() == null || symbol.symbolType() == SymbolType.CONSTANT) {
+            if (symbol.defaultValues() == null || symbol.numDimensions() == 0
+                    || symbol.symbolType() == SymbolType.CONSTANT) {
                 return;
             }
             var dataType = symbol.dataType();

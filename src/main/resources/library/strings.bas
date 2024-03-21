@@ -179,7 +179,7 @@ module strings
 #endif
 
 #if defined(option.heap)
-    export function mid$(s as string, start as integer, n as integer)
+    export function mid$(s as string, start as integer, optional n as integer = -1)
         dim p as address, q as address
         if n = -1 then
             ' flag from the compiler for mid$(string,start) form

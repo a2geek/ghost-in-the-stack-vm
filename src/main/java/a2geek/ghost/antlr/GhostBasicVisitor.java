@@ -753,8 +753,19 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                     dimensions.add(PlaceholderExpression.of(DataType.INTEGER));
                 }
                 DataType dt = buildDataType(id, idDecl.datatype(), dimensions.isEmpty());
+                List<Expression> defaultValues = new ArrayList<>();
+                if (idDecl.optional() != null || idDecl.expr() != null) {
+                    if (idDecl.expr() == null) {
+                        throw new RuntimeException("Optional parameter specified but no default value given: " + idDecl.getText());
+                    }
+                    var defaultValue = visit(idDecl.expr());
+                    if (!defaultValue.isConstant()) {
+                        throw new RuntimeException("paramater default values must be a constant: " + idDecl.getText());
+                    }
+                    defaultValues.add(defaultValue);
+                }
                 names.add(id);
-                decls.add(new IdDeclaration(Set.of(), id, dt, dimensions, List.of()));
+                decls.add(new IdDeclaration(Set.of(), id, dt, dimensions, defaultValues));
             });
         }
         return decls;
@@ -945,11 +956,6 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             "peekw", this::handlePeekwFunction,
             "ubound", this::handleUboundFunction
         ));
-        FUNCTION_HANDLERS.putAll(Map.of(
-            "mid$", this::handleMidFunction,
-            "left$", this::handleLeftFunction,
-            "right$", this::handleRightFunction
-        ));
     }
 
     Expression handleUboundFunction(List<Expression> params, ParseTree ctx) {
@@ -1006,30 +1012,6 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             return new TypeConversionOperator(params.getFirst(), DataType.INTEGER);
         }
         throw new RuntimeException("can only use CInt on a simple variable: " + ctx.getText());
-    }
-    Expression handleMidFunction(List<Expression> params, ParseTree ctx) {
-        ensureHeapEnabled(ctx);
-        if (params.size() == 2) {
-            params.add(new IntegerConstant(-1));
-        }
-        if (params.size() == 3) {
-            return model.callFunction("strings.mid$", params);
-        }
-        throw new RuntimeException("Mid$ expects 2 or 3 parameters: " + ctx.getText());
-    }
-    Expression handleLeftFunction(List<Expression> params, ParseTree ctx) {
-        ensureHeapEnabled(ctx);
-        if (params.size() == 2) {
-            return model.callFunction("strings.left$", params);
-        }
-        throw new RuntimeException("Left$ expects 2 parameters: " + ctx.getText());
-    }
-    Expression handleRightFunction(List<Expression> params, ParseTree ctx) {
-        ensureHeapEnabled(ctx);
-        if (params.size() == 2) {
-            return model.callFunction("strings.right$", params);
-        }
-        throw new RuntimeException("Right$ expects 2 parameters: " + ctx.getText());
     }
 
     void ensureHeapEnabled(ParseTree ctx) {
@@ -1173,12 +1155,13 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                          List<Expression> defaultValues) {
         /** Validate this is appropriate for a parameter and transform it. */
         public Symbol.Builder toParameter() {
-            if (!defaultValues().isEmpty()) {
-                throw new RuntimeException("parameters cannot have default values");
-            }
-            return Symbol.variable(name, SymbolType.PARAMETER)
+            var builder = Symbol.variable(name, SymbolType.PARAMETER)
                     .dataType(dataType)
                     .dimensions(dimensions);
+            if (defaultValues != null && !defaultValues.isEmpty()) {
+                builder.defaultValues(defaultValues);
+            }
+            return builder;
         }
         public boolean isArray() {
             return dimensions != null && !dimensions.isEmpty();
