@@ -667,7 +667,28 @@ public class CodeGenerationVisitor extends DispatchVisitor {
 
     @Override
     public Expression visit(AddressOfOperator expression) {
-        code.emit(Opcode.LOADA, expression.getSymbol().name());
+        var symbol = expression.getSymbol();
+        switch (symbol.symbolType()) {
+            case VARIABLE, PARAMETER -> {
+                switch (symbol.declarationType()) {
+                    case GLOBAL -> {
+                        code.emit(Opcode.LOADGP);
+                        code.emit(Opcode.INCR);
+                        code.emit(Opcode.LOADC, globalFrameOffset(symbol));
+                        code.emit(Opcode.ADD);
+                    }
+                    case LOCAL -> {
+                        code.emit(Opcode.LOADLP);
+                        code.emit(Opcode.INCR);
+                        code.emit(Opcode.LOADC, localFrameOffset(symbol));
+                        code.emit(Opcode.ADD);
+                    }
+                    case INTRINSIC -> throw error("cannot take address of an intrinsic value: '%s'", expression);
+                };
+            }
+            case LABEL -> code.emit(Opcode.LOADA, symbol.name());
+            default -> throw error("unexpected addressof expression: '%s'", expression);
+        }
         return null;
     }
 

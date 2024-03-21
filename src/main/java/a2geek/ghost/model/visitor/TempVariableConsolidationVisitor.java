@@ -89,7 +89,8 @@ public class TempVariableConsolidationVisitor implements ProgramVisitor {
                 reassignTempVariables(unary.getExpr(), ctx, tracker).ifPresent(unary::setExpr);
             }
             case VariableReference ref -> {
-                expression = VariableReference.with(tracker.replacement(ref.getSymbol(), ctx));
+                // we cannot create a new variable reference here due to BYREF symbols (we nest deref operators then!)
+                ref.setSymbol(tracker.replacement(ref.getSymbol(), ctx));
             }
             default -> throw new RuntimeException("[compiler bug] unsupported expression type: " + expression);
         }

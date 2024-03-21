@@ -703,7 +703,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                     dimensions.add(new IntegerConstant(defaultValues.size()));
                 }
                 names.add(id);
-                decls.add(new IdDeclaration(modifiers, id, dt, dimensions, defaultValues));
+                decls.add(new IdDeclaration(modifiers, id, PassingMode.BYVAL, dt, dimensions, defaultValues));
             });
         }
         return decls;
@@ -764,8 +764,12 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                     }
                     defaultValues.add(defaultValue);
                 }
+                PassingMode passingMode = PassingMode.BYVAL;
+                if (idDecl.passingMode() != null) {
+                    passingMode = PassingMode.valueOf(idDecl.passingMode().getText().toUpperCase());
+                }
                 names.add(id);
-                decls.add(new IdDeclaration(Set.of(), id, dt, dimensions, defaultValues));
+                decls.add(new IdDeclaration(Set.of(), id, passingMode, dt, dimensions, defaultValues));
             });
         }
         return decls;
@@ -1150,6 +1154,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     }
     record IdDeclaration(Set<IdModifier> modifiers,
                          String name,
+                         PassingMode passingMode,
                          DataType dataType,
                          List<Expression> dimensions,
                          List<Expression> defaultValues) {
@@ -1157,7 +1162,8 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         public Symbol.Builder toParameter() {
             var builder = Symbol.variable(name, SymbolType.PARAMETER)
                     .dataType(dataType)
-                    .dimensions(dimensions);
+                    .dimensions(dimensions)
+                    .passingMode(passingMode);
             if (defaultValues != null && !defaultValues.isEmpty()) {
                 builder.defaultValues(defaultValues);
             }

@@ -1,19 +1,21 @@
 package a2geek.ghost.model.expression;
 
-import a2geek.ghost.model.DataType;
-import a2geek.ghost.model.Expression;
-import a2geek.ghost.model.Symbol;
-import a2geek.ghost.model.SymbolType;
+import a2geek.ghost.model.*;
 
 import java.util.Objects;
 import java.util.Optional;
 
 public class VariableReference implements Expression {
-    public static VariableReference with(Symbol symbol) {
-        return new VariableReference(symbol);
+    public static Expression with(Symbol symbol) {
+        if (symbol.passingMode() == PassingMode.BYREF) {
+            return new DereferenceOperator(new VariableReference(symbol), symbol.dataType());
+        }
+        else {
+            return new VariableReference(symbol);
+        }
     }
 
-    private final Symbol symbol;
+    private Symbol symbol;
 
     private VariableReference(Symbol symbol) {
         this.symbol = symbol;
@@ -26,6 +28,10 @@ public class VariableReference implements Expression {
 
     public Symbol getSymbol() {
         return symbol;
+    }
+
+    public void setSymbol(Symbol symbol) {
+        this.symbol = symbol;
     }
 
     @Override

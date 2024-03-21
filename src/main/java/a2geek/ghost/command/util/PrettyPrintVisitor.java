@@ -130,9 +130,9 @@ public class PrettyPrintVisitor {
                 .filter(s -> s.symbolType() == SymbolType.PARAMETER)
                 .map(s -> {
                     if (s.defaultValues() == null || s.defaultValues().isEmpty()) {
-                        return String.format("%s AS %s", s.name(), s.dataType());
+                        return String.format("%s %s AS %s", s.passingMode(), s.name(), s.dataType());
                     }
-                    return String.format("%s AS %s = %s", s.name(), s.dataType(),
+                    return String.format("%s %s AS %s = %s", s.passingMode(), s.name(), s.dataType(),
                         s.defaultValues().getFirst());
                 })
                 .collect(Collectors.joining(", "));

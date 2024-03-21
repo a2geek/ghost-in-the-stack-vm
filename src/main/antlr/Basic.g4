@@ -50,10 +50,14 @@ paramDecl
     : '(' ( paramIdDecl ( ',' paramIdDecl )* )? ')'
     ;
 paramIdDecl
-    : optional? identifier ( '(' ( ',' )* ')' )? ( 'as' datatype )? ( '=' expr )?
+    : optional? passingMode? identifier ( '(' ( ',' )* ')' )? ( 'as' datatype )? ( '=' expr )?
     ;
 optional
     : 'optional'
+    ;
+passingMode
+    : 'byval'
+    | 'byref'
     ;
 
 statements

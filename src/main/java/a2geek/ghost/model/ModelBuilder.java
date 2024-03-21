@@ -236,13 +236,27 @@ public class ModelBuilder {
             if (i < params.size()) {
                 var param = params.get(i);
                 try {
-                    params.set(i, param.checkAndCoerce(requiredParam.dataType()));
+                    param = param.checkAndCoerce(requiredParam.dataType());
                 }
                 catch (RuntimeException ex) {
                     var msg = String.format("'%s' parameter %d is not of type %s: %s", subOrFunc.getName(),
                         i, requiredParam.dataType(), ex.getMessage());
                     throw new RuntimeException(msg);
                 }
+                if (requiredParam.passingMode() == PassingMode.BYREF) {
+                    if (param instanceof VariableReference ref) {
+                        param = new AddressOfOperator(ref.getSymbol());
+                    }
+                    else if (param instanceof DereferenceOperator deref) {
+                        param = deref.getExpr();
+                    }
+                    else {
+                        var msg = String.format("'%s' parameter %d is ByRef and can only pass simple variables or array references: %s",
+                                subOrFunc.getName(), i, param);
+                        throw new RuntimeException(msg);
+                    }
+                }
+                params.set(i, param);
             }
             else if (requiredParam.defaultValues() != null && !requiredParam.defaultValues().isEmpty()) {
                 var param = requiredParam.defaultValues().getFirst();
