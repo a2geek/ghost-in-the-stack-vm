@@ -149,7 +149,18 @@ MAIN:
   15: _FOR_LOOP22:
   16:     IF (MATH.SGN(1) >= 0) THEN
    0:         IF (I <= ubound(ADDR,1)) THEN
-   0:             IF (I > ubound(ADDR,1)) THEN **
+   0:             CALL RUNTIME.PRINT_STRING("FREEING ")
+   1:             IF (I > ubound(SIZE,1)) THEN **
+   0:                 ERR.NUMBER = 107
+   1:                 ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
+   2:                 ERR.LINENUM = 36
+   3:                 ERR.CONTEXT = "SIZE"
+   4:                 ERR.SOURCE = "HEAP1.BAS"
+   5:                 RAISE ERROR
+                  END IF
+   2:             CALL RUNTIME.PRINT_INTEGER(*(((SIZE + 2) + (I * 2))))
+   3:             CALL RUNTIME.PRINT_STRING(" BYTES AT ")
+   4:             IF (I > ubound(ADDR,1)) THEN **
    0:                 ERR.NUMBER = 107
    1:                 ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
    2:                 ERR.LINENUM = 36
@@ -157,14 +168,35 @@ MAIN:
    4:                 ERR.SOURCE = "HEAP1.BAS"
    5:                 RAISE ERROR
                   END IF
-   1:             CALL MEMORY.HEAPFREE(*(((ADDR + 2) + (I * 2))))
-   2: _FOR_CONTINUE22:
-   3:             I = (I + 1)
-   4:             GOTO _FOR_LOOP22
+   5:             CALL RUNTIME.PRINT_ADDRESS(*(((ADDR + 2) + (I * 2))))
+   6:             CALL RUNTIME.PRINT_NEWLINE()
+   7:             IF (I > ubound(ADDR,1)) THEN **
+   0:                 ERR.NUMBER = 107
+   1:                 ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
+   2:                 ERR.LINENUM = 37
+   3:                 ERR.CONTEXT = "ADDR"
+   4:                 ERR.SOURCE = "HEAP1.BAS"
+   5:                 RAISE ERROR
+                  END IF
+   8:             CALL MEMORY.HEAPFREE(*(((ADDR + 2) + (I * 2))))
+   9: _FOR_CONTINUE22:
+  10:             I = (I + 1)
+  11:             GOTO _FOR_LOOP22
               END IF
           ELSE
    0:         IF (I >= ubound(ADDR,1)) THEN
-   0:             IF (I > ubound(ADDR,1)) THEN **
+   0:             CALL RUNTIME.PRINT_STRING("FREEING ")
+   1:             IF (I > ubound(SIZE,1)) THEN **
+   0:                 ERR.NUMBER = 107
+   1:                 ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
+   2:                 ERR.LINENUM = 36
+   3:                 ERR.CONTEXT = "SIZE"
+   4:                 ERR.SOURCE = "HEAP1.BAS"
+   5:                 RAISE ERROR
+                  END IF
+   2:             CALL RUNTIME.PRINT_INTEGER(*(((SIZE + 2) + (I * 2))))
+   3:             CALL RUNTIME.PRINT_STRING(" BYTES AT ")
+   4:             IF (I > ubound(ADDR,1)) THEN **
    0:                 ERR.NUMBER = 107
    1:                 ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
    2:                 ERR.LINENUM = 36
@@ -172,10 +204,20 @@ MAIN:
    4:                 ERR.SOURCE = "HEAP1.BAS"
    5:                 RAISE ERROR
                   END IF
-   1:             CALL MEMORY.HEAPFREE(*(((ADDR + 2) + (I * 2))))
-   2: _FOR_CONTINUE22:
-   3:             I = (I + 1)
-   4:             GOTO _FOR_LOOP22
+   5:             CALL RUNTIME.PRINT_ADDRESS(*(((ADDR + 2) + (I * 2))))
+   6:             CALL RUNTIME.PRINT_NEWLINE()
+   7:             IF (I > ubound(ADDR,1)) THEN **
+   0:                 ERR.NUMBER = 107
+   1:                 ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
+   2:                 ERR.LINENUM = 37
+   3:                 ERR.CONTEXT = "ADDR"
+   4:                 ERR.SOURCE = "HEAP1.BAS"
+   5:                 RAISE ERROR
+                  END IF
+   8:             CALL MEMORY.HEAPFREE(*(((ADDR + 2) + (I * 2))))
+   9: _FOR_CONTINUE22:
+  10:             I = (I + 1)
+  11:             GOTO _FOR_LOOP22
               END IF
           END IF
   17: _FOR_EXIT22:

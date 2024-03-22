@@ -33,6 +33,7 @@ while n <> 0
 end while
 
 for i = 0 to ubound(addr)
+    print "FREEING ";size(i);" BYTES AT ";addr(i)
     memory.heapfree(addr(i))
 next i
 
