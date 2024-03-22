@@ -1114,7 +1114,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                 return temp;
             }
             else {
-                throw new RuntimeException("strings only support in/equality: " + ctx.getText());
+                throw new RuntimeException("strings only support =,<>,+ operations: " + ctx.getText());
             }
         }
         else {
