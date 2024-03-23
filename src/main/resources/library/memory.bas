@@ -36,6 +36,10 @@ module memory
     private inline function GetCount(ptr as address) as integer
         return peekw(ptr+4)
     end function
+    ' range check since the compiler can be overzealous
+    private inline function IsInHeap(ptr as address) as Boolean
+        return ptr >= memory.loptr and ptr < memory.hiptr
+    end function
 
     sub memclr(p as address, bytes as integer)
         dim odd as boolean = bytes AND 1
@@ -60,7 +64,7 @@ module memory
         return n
     end function
 
-    sub heapinit()
+    sub HeapInit()
         memory.loptr = peekw(LOMEM)
         memory.hiptr = peekw(MEMSIZE)
         memory.freeptr = memory.loptr
@@ -128,46 +132,65 @@ module memory
         end if
     end sub
 
-    sub heapfree(data as address)
+    sub HeapFree(data as address)
         dim ptr as address, priorptr as address, dataptr as address
-        ' range check since the compiler can be overzealous
-        if data < memory.loptr or data >= memory.hiptr then
-            return
-        end if
+        if IsInHeap(data) then
 #if defined(TRACE)
-        print "HEAPFREE: DATA=";data
+            print "HEAPFREE: DATA=";data
 #endif
-        ' empty list
-        dataptr = data-HEADER_SIZE
-        if memory.freeptr = 0 then
-            memory.freeptr = dataptr
-            return
-        end if
-        ' find position
-        ptr = memory.freeptr
-        while ptr <> 0 AND ptr < data
-            if GetNext(ptr) = 0 then
-                exit while
+            ' empty list
+            dataptr = data-HEADER_SIZE
+            if memory.freeptr = 0 then
+                memory.freeptr = dataptr
+                return
             end if
-            priorptr = ptr
-            ptr = GetNext(ptr)
-        end while
-        ' insert/consolidate with following chunks
-        if priorptr <> 0 then
-            ' we are adding between two chunks
-            SetNext(dataptr,ptr)
-            SetNext(priorptr,dataptr)
-            consolidate(dataptr)
-            consolidate(priorptr)
-        else
-            ' adding to beginning
-            SetNext(dataptr,ptr)
-            memory.freeptr = dataptr
-            consolidate(dataptr)
+            ' find position
+            ptr = memory.freeptr
+            while ptr <> 0 AND ptr < data
+                if GetNext(ptr) = 0 then
+                    exit while
+                end if
+                priorptr = ptr
+                ptr = GetNext(ptr)
+            end while
+            ' insert/consolidate with following chunks
+            if priorptr <> 0 then
+                ' we are adding between two chunks
+                SetNext(dataptr,ptr)
+                SetNext(priorptr,dataptr)
+                consolidate(dataptr)
+                consolidate(priorptr)
+            else
+                ' adding to beginning
+                SetNext(dataptr,ptr)
+                memory.freeptr = dataptr
+                consolidate(dataptr)
+            end if
         end if
     end sub
 
+    Sub HeapRefIncr(data as address)
+        If IsInHeap(data) then
+            SetCount(data, GetCount(data)+1)
+        End If
+    End Sub
+
+'    Volatile Function HeapRefAllocate(bytes As Address) As Address
+'        Dim s As Address = HeapAlloc(bytes)
+'        HeapRefIncr(s)
+'        return s
+'    End Function
+
+    Sub HeapRefDecr(data as address)
+        If IsInHeap(data) Then
+            SetCount(data, GetCount(data)-1)
+            If GetCount(data) = 0 Then
+                HeapFree(data)
+            End If
+        End If
+    End Sub
+
     ' initialization
-    memory.heapinit()
+    memory.HeapInit()
 
 end module
