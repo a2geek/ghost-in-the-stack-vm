@@ -27,13 +27,13 @@ module memory
     private inline sub SetCount(ptr as address, count as integer)
         pokew ptr+4, count
     end sub
-    private inline function GetNext(ptr as address) as address
+    private volatile function GetNext(ptr as address) as address
         return peekw(ptr+0)
     end function
-    private inline function GetSize(ptr as address) as integer
+    private volatile function GetSize(ptr as address) as integer
         return peekw(ptr+2)
     end function
-    private inline function GetCount(ptr as address) as integer
+    private volatile function GetCount(ptr as address) as integer
         return peekw(ptr+4)
     end function
     ' range check since the compiler can be overzealous
@@ -88,42 +88,6 @@ module memory
         SetSize(ptr, size)
     end sub
 
-    volatile function heapalloc(bytes as integer) as address
-        dim ptr as address, priorptr as address, dataptr as address, size as integer, needed as integer
-#if defined(TRACE)
-        print "HEAPALLOC: bytes=";bytes
-#endif
-        ptr = memory.freeptr
-        needed = bytes+HEADER_SIZE
-        ' look through the linked list for a chunk that is large enough
-        while ptr <> 0
-            size = Getsize(ptr)
-            if needed <= size then
-                dataptr = ptr+HEADER_SIZE
-                ' if the chunk was too large, setup a free chunk
-                if size-needed > HEADER_SIZE then
-                    SetHeader(ptr+needed, peekw(ptr), size-needed)
-                    SetHeader(ptr, 0, needed)
-                    SetPriorPtr(priorptr, ptr+needed)
-                else
-                    SetPriorPtr(priorptr, peekw(ptr))
-                    SetNext(ptr,0)
-                end if
-                ' clean up memory and return the pointer
-                memclr(dataptr, bytes)
-#if defined(TRACE)
-        print "HEAPALLOC: return=";dataptr
-#endif
-                return dataptr
-            else
-                ' keep looking until we run out!
-                priorptr = ptr
-                ptr = GetNext(ptr)
-            end if
-        end while
-        raise error 77, "OUT OF MEMORY"
-    end function
-
     private sub consolidate(ptr as address)
         dim ptrnext as address = GetNext(ptr)
         dim ptrsize as integer = GetSize(ptr)
@@ -134,12 +98,13 @@ module memory
 
     sub HeapFree(data as address)
         dim ptr as address, priorptr as address, dataptr as address
-        if IsInHeap(data) then
+        dataptr = data-HEADER_SIZE
+        if IsInHeap(dataptr) then
 #if defined(TRACE)
             print "HEAPFREE: DATA=";data
 #endif
+
             ' empty list
-            dataptr = data-HEADER_SIZE
             if memory.freeptr = 0 then
                 memory.freeptr = dataptr
                 return
@@ -170,25 +135,84 @@ module memory
     end sub
 
     Sub HeapRefIncr(data as address)
-        If IsInHeap(data) then
-            SetCount(data, GetCount(data)+1)
+        Dim ptr as Address
+        ptr = data-HEADER_SIZE
+        If IsInHeap(ptr) then
+            SetCount(ptr, GetCount(ptr)+1)
         End If
     End Sub
 
-'    Volatile Function HeapRefAllocate(bytes As Address) As Address
-'        Dim s As Address = HeapAlloc(bytes)
-'        HeapRefIncr(s)
-'        return s
-'    End Function
-
-    Sub HeapRefDecr(data as address)
-        If IsInHeap(data) Then
-            SetCount(data, GetCount(data)-1)
-            If GetCount(data) = 0 Then
-                HeapFree(data)
+    Sub HeapRefDecr(ByRef data As Address)
+        Dim ptr as Address
+        ptr = data-HEADER_SIZE
+        If IsInHeap(ptr) Then
+            SetCount(ptr, GetCount(ptr)-1)
+            If GetCount(ptr) = 0 Then
+                HeapFree(data)  ' yes, data since HeapFree also does math
+                data = 0        ' ensure we don't double-free this one
             End If
         End If
     End Sub
+
+    volatile function HeapAlloc(bytes as integer) as address
+        dim ptr as address, priorptr as address, dataptr as address, size as integer, needed as integer
+#if defined(TRACE)
+        print "HEAPALLOC: bytes=";bytes
+#endif
+        ptr = memory.freeptr
+        needed = bytes+HEADER_SIZE
+        ' look through the linked list for a chunk that is large enough
+        while ptr <> 0
+            size = Getsize(ptr)
+            if needed <= size then
+                dataptr = ptr+HEADER_SIZE
+                ' if the chunk was too large, setup a free chunk
+                if size-needed > HEADER_SIZE then
+                    SetHeader(ptr+needed, peekw(ptr), size-needed)
+                    SetHeader(ptr, 0, needed)
+                    SetPriorPtr(priorptr, ptr+needed)
+                else
+                    SetPriorPtr(priorptr, peekw(ptr))
+                    SetNext(ptr,0)
+                end if
+                ' clean up memory and return the pointer
+                SetCount(ptr,0)
+                memclr(dataptr, bytes)
+#if defined(TRACE)
+        print "HEAPALLOC: return=";dataptr
+#endif
+                return dataptr
+            else
+                ' keep looking until we run out!
+                priorptr = ptr
+                ptr = GetNext(ptr)
+            end if
+        end while
+        raise error 77, "OUT OF MEMORY"
+    end function
+
+    sub MemReport()
+        dim ptr as address, freeptr as address
+        dim size as integer, free as integer, used as integer, total as integer
+        ptr = memory.loptr
+        freeptr = memory.freeptr
+
+        while ptr < memory.hiptr - HEADER_SIZE
+            size = GetSize(ptr)
+            print "$";CAddr(ptr);"(";size;" BYTES; REF=";GetCount(ptr);") - ";
+            total = total + size
+            if ptr = freeptr then
+                print "FREE"
+                freeptr = GetNext(freeptr)
+                free = free + size
+            else
+                print "USED"
+                used = used + size
+            end if
+            ' the next ptr is actually the free linked list, so we need to compute this
+            ptr = ptr + size
+        end while
+    end sub
 
     ' initialization
     memory.HeapInit()
