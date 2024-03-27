@@ -23,7 +23,7 @@ print a$
 
 ' We need to clean up the last string as well
 memory.heapfree(a$)
-print "Ending with ";n;" bytes free."
+print "Ending with ";memory.memfree();" bytes free."
 
 inverse
 if n = memory.memfree() then

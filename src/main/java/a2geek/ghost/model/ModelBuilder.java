@@ -79,6 +79,7 @@ public class ModelBuilder {
         assignStmt(derefWord(new IntegerConstant(0x69)), new IntegerConstant(startAddress));
         var sb = this.popStatementBlock();
         this.addInitializationStatements(sb);
+        uses(MEMORY_LIBRARY, nothingExported());
     }
     public boolean isUsingMemory() {
         return getProgram().getMemoryManagementStrategy().isUsingHeap();

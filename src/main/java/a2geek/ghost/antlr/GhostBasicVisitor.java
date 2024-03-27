@@ -102,7 +102,10 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         var ref = visit(ctx.id);
         var expr = visit(ctx.a);
         if (ref instanceof VariableReference varRef) {
+            boolean isString = varRef.getSymbol().dataType() == DataType.STRING;
+            if (isString) model.getProgram().getMemoryManagementStrategy().decrementReferenceCount(ref);
             model.assignStmt(varRef, expr);
+            if (isString) model.getProgram().getMemoryManagementStrategy().incrementReferenceCount(ref);
             return null;
         }
         else if (ref instanceof DereferenceOperator deref) {
@@ -1105,12 +1108,12 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                 // strcat(t1,", ")      ' ditto
                 // uses t1 as expression
                 var symbol = model.addTempVariable(DataType.STRING);
-                model.allocateStringArray(symbol, model.callFunction("strings.len",l).plus(model.callFunction("strings.len",r)));
                 var temp = VariableReference.with(symbol);
+                model.getProgram().getMemoryManagementStrategy().decrementReferenceCount(temp);
+                model.allocateStringArray(symbol, model.callFunction("strings.len",l).plus(model.callFunction("strings.len",r)));
+                model.getProgram().getMemoryManagementStrategy().incrementReferenceCount(temp);
                 model.callSubroutine("strings.strcat", temp, l);
                 model.callSubroutine("strings.strcat", temp, r);
-                freeHeap(l);
-                freeHeap(r);
                 return temp;
             }
             else {
@@ -1122,13 +1125,6 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                 return model.callFunction("math.ipow", Arrays.asList(l,r));
             }
             return new BinaryExpression(l, r, op);
-        }
-    }
-    void freeHeap(Expression e) {
-        if (getModel().getProgram().getMemoryManagementStrategy().isUsingHeap()) {
-            if (e instanceof VariableReference ref) {
-                model.callSubroutine("memory.heapfree", ref);
-            }
         }
     }
 

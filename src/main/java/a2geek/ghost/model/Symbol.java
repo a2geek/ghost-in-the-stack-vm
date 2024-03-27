@@ -103,6 +103,9 @@ public record Symbol(String name, SymbolType symbolType, DeclarationType declara
             this.defaultValues = exprs;
             return this;
         }
+        public List<Expression> defaultValues() {
+            return this.defaultValues;
+        }
         public Builder dataType(DataType dataType) {
             Objects.requireNonNull(dataType);
             this.dataType = dataType;
@@ -120,6 +123,9 @@ public record Symbol(String name, SymbolType symbolType, DeclarationType declara
             Objects.requireNonNull(dimensions);
             this.dimensions = dimensions;
             return this;
+        }
+        public int numDimensions() {
+            return this.dimensions.size();
         }
         public Builder scope(Scope scope) {
             this.scope = scope;

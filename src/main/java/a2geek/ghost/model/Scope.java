@@ -1,5 +1,7 @@
 package a2geek.ghost.model;
 
+import a2geek.ghost.model.expression.StringConstant;
+
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -103,6 +105,10 @@ public class Scope extends StatementBlock {
         builder.name(fixedName);
         if (builder.declarationType() == null) {
             builder.declarationType(defaultDeclarationType);
+        }
+        if (builder.dataType() == DataType.STRING && builder.symbolType() == SymbolType.VARIABLE
+                && builder.numDimensions() == 0 && builder.defaultValues() == null) {
+            builder.defaultValues(StringConstant.EMPTY);
         }
         return findFirstLocalScope(named(builder.name()))
             .map(symbol -> {

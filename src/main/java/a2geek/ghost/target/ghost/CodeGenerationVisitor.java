@@ -49,6 +49,7 @@ public class CodeGenerationVisitor extends DispatchVisitor {
         setupOnErrContext(program.findFirst(named(DEFAULT_ERROR_HANDLER))
                 .orElseThrow(() -> error("unknown label: '%s'", DEFAULT_ERROR_HANDLER)));
         setupDefaultArrayValues(program);
+        setupDefaultStringValues(program);
 
         dispatchAll(program, program);
         // Note we don't have a GLOBAL_FREE; EXIT restores stack for us
@@ -106,6 +107,18 @@ public class CodeGenerationVisitor extends DispatchVisitor {
                 emitStore(symbol);
             } else {
                 throw new RuntimeException("unsupported symbol array with data symbolType of " + dataType);
+            }
+        });
+    }
+
+    public void setupDefaultStringValues(Scope scope) {
+        scope.getLocalSymbols().forEach(symbol -> {
+            if (symbol.dataType() != DataType.STRING || symbol.defaultValues() == null || symbol.symbolType() != SymbolType.VARIABLE) {
+                return;
+            }
+            if (symbol.defaultValues().getFirst() instanceof StringConstant constant) {
+                visit(constant);
+                emitStore(symbol);
             }
         });
     }
@@ -423,6 +436,7 @@ public class CodeGenerationVisitor extends DispatchVisitor {
         if (hasLocalScope) setupLocalFrame(frame);
         saveOnErrContext(subroutine);
         setupDefaultArrayValues(subroutine);
+        setupDefaultStringValues(subroutine);
         if (subroutine.getStatements() != null) {
             dispatchAll(subroutine, subroutine);
         }
@@ -458,6 +472,7 @@ public class CodeGenerationVisitor extends DispatchVisitor {
         setupLocalFrame(frame);
         saveOnErrContext(function);
         setupDefaultArrayValues(function);
+        setupDefaultStringValues(function);
         if (function.getStatements() != null) {
             dispatchAll(function, function);
         }

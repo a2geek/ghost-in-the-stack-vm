@@ -2,7 +2,7 @@ MAIN:
     DIM _ONERR_TARGET AS ADDRESS = null
     DIM _ONERR_FP AS ADDRESS = null
     DIM _ONERR_SP AS ADDRESS = null
-    DIM A$ AS STRING = null
+    DIM A$ AS STRING = [""]
    0:     A$ = ALLOC((1 + 2))
    1:     *(A$) = 1
    0: _L10_14:
