@@ -25,15 +25,25 @@ public class HeapMemoryManagement implements MemoryManagement {
     @Override
     public Expression allocate(Symbol symbol, Expression bytes) {
         allocations.add(symbol);
-        return model.callFunction("memory.heapalloc", bytes);
+        return model.callFunction("memory.HeapAlloc", bytes);
     }
 
     @Override
     public void deallocateAll() {
         allocations.forEach(symbol -> {
-            model.callSubroutine("memory.heapfree", VariableReference.with(symbol));
+            model.callSubroutine("memory.HeapFree", VariableReference.with(symbol));
         });
         allocations.clear();
+    }
+
+    @Override
+    public void incrementReferenceCount(Expression expr) {
+        model.callSubroutine("memory.HeapRefIncr", expr);
+    }
+
+    @Override
+    public void decrementReferenceCount(Expression expr) {
+        model.callSubroutine("memory.HeapRefDecr", expr);
     }
 
     @Override

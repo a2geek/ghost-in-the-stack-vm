@@ -42,6 +42,16 @@ public class StackMemoryManagement implements MemoryManagement {
     }
 
     @Override
+    public void incrementReferenceCount(Expression expr) {
+        // not applicable
+    }
+
+    @Override
+    public void decrementReferenceCount(Expression expr) {
+        // not applicable
+    }
+
+    @Override
     public MemoryManagement create() {
         return new StackMemoryManagement(model);
     }
