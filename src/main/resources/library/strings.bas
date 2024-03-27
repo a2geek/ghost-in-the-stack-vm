@@ -107,8 +107,6 @@ module strings
     sub strcat(a as string, b as string)
         dim p as address, q as address
         p = a
-        poke p, len(a)+len(b)
-        p = p + 1
         while peek(p) <> 0
             p = p + 1
         end while
@@ -118,6 +116,7 @@ module strings
             p = p + 1
             q = q + 1
         end while
+        poke p, 0
     end sub
 
 #if defined(option.heap)
