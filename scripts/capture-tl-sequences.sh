@@ -67,7 +67,7 @@ find src/main/basic -name "*.lst" -print0 |
   xargs -0 cat |
   cut -c20- |
   grep -E --only-matching "^[A-Z][_A-Z0-9]*( |$)" |
-  gawk "${CODE}" |
+  awk "${CODE}" |
   sort |
   uniq -c |
   sort -nb
