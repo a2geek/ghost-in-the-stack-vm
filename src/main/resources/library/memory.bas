@@ -15,6 +15,9 @@ module memory
     dim freeptr as address
     dim loptr as address, hiptr as address  ' can't reuse lomem, so crappy names. :-)
 
+    const A1L = 0x3c
+    const A2L = 0x3e
+    const A4L = 0x42
     const LOMEM = 0x69
     const MEMSIZE = 0x73    ' HIMEM
 
@@ -41,17 +44,26 @@ module memory
         return ptr >= memory.loptr and ptr < memory.hiptr
     end function
 
+    sub MemMove(src as address, srcEnd as address, dst as address)
+        pokew A1L,src
+        pokew A2L,srcEnd
+        pokew A4L,dst
+        cpu.register.y = 0
+        call 0xfe2c
+    end sub
+
     sub memclr(p as address, bytes as integer)
-        dim odd as boolean = bytes AND 1
-        bytes = bytes >> 1
-        while bytes <> 0
-            pokew p,0
-            p = p + 2
-            bytes = bytes - 1
-        end while
-        if odd then
+        select bytes
+        case 0
+            ' do nothing
+        case 1
             poke p,0
-        end if
+        case 2
+            pokew p,0
+        case else
+            poke p,0
+            MemMove(p,p+bytes-2,p+1)
+        end select
     end sub
 
     volatile function memfree() as integer

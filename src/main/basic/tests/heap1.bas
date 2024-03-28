@@ -12,6 +12,8 @@ dim i as integer           ' array index
 dim total as integer
 dim startmem as integer
 
+on error goto showerror
+
 print "Running for ";n;" iterations. Set to max speed for this one!"
 
 startmem = memory.memfree()
@@ -44,4 +46,9 @@ else
     print "** GOOD **"
     print "STARTING AND ENDING MEMORY SIZES MATCH AT ";startmem;" BYTES."
 end if
+end
 
+showerror:
+    print "ERROR #";err.number;" - ";err.message;" AT LINE ";err.linenum;" IN ";err.source;" FOR '";err.context;"'"
+    memory.memreport()
+    end
