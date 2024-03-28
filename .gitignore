@@ -30,4 +30,7 @@ gradle-app.setting
 /src/main/resources/interp-*.as
 *.out
 *.po
+
+# Removing compiler output
 /*.lst
+/src/main/basic/*/*.lst
