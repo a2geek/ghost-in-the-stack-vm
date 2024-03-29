@@ -44,17 +44,16 @@ module strings
     end function
 
     export function len(str as string) as integer
-        dim s as address, n as integer
+        dim s as address
 
         ' skip the maxlen byte
         s = str + 1
 
         while peek(s) <> 0
-            n = n + 1
             s = s + 1
         end while
 
-        return n
+        return s-CAddr(str)-1
     end function
 
     function strcmp(left as string, right as string) as integer
