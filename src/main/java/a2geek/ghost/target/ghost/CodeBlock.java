@@ -17,21 +17,21 @@ public class CodeBlock {
     }
     public void emit(Opcode opcode) {
         Objects.requireNonNull(opcode, "opcode");
-        codeSegment.add(new Instruction(null, opcode, null, null, null));
+        codeSegment.add(new Instruction(null, opcode, null, null, null, null));
     }
     public void emit(Opcode opcode, Integer arg) {
         Objects.requireNonNull(opcode, "opcode");
         Objects.requireNonNull(arg, "arg");
-        codeSegment.add(new Instruction(null, opcode, null, arg, null));
+        codeSegment.add(new Instruction(null, opcode, null, arg, null, null));
     }
     public void emit(String label) {
         Objects.requireNonNull(label, "label");
-        codeSegment.add(new Instruction(label, null, null, null, null));
+        codeSegment.add(new Instruction(label, null, null, null, null, null));
     }
     public void emit(Opcode opcode, String label) {
         Objects.requireNonNull(opcode, "opcode");
         Objects.requireNonNull(label, "label");
-        codeSegment.add(new Instruction(label, opcode, null, null, null));
+        codeSegment.add(new Instruction(label, opcode, null, null, null, null));
     }
     public String emitConstant(String suggestedLabel, String string) {
         Objects.requireNonNull(suggestedLabel, "suggestedLabel");
@@ -44,7 +44,7 @@ public class CodeBlock {
         if (existing.isPresent()) {
             return existing.map(Instruction::label).orElseThrow();
         }
-        Instruction inst = new Instruction(suggestedLabel, null, Directive.CONSTANT, null,
+        Instruction inst = new Instruction(suggestedLabel, null, Directive.CONSTANT, null, null,
             ConstantValue.with(string));
         dataSegment.add(inst);
         return suggestedLabel;
@@ -60,7 +60,7 @@ public class CodeBlock {
         if (existing.isPresent()) {
             return existing.map(Instruction::label).orElseThrow();
         }
-        Instruction inst = new Instruction(suggestedLabel, null, Directive.CONSTANT, null,
+        Instruction inst = new Instruction(suggestedLabel, null, Directive.CONSTANT, null, null,
             ConstantValue.with(integerArray));
         dataSegment.add(inst);
         return suggestedLabel;
@@ -77,7 +77,7 @@ public class CodeBlock {
         if (existing.isPresent()) {
             return existing.map(Instruction::label).orElseThrow();
         }
-        Instruction inst = new Instruction(suggestedLabel, null, Directive.CONSTANT, null,
+        Instruction inst = new Instruction(suggestedLabel, null, Directive.CONSTANT, null, null,
                 ConstantValue.withLabels(stringArray));
         dataSegment.add(inst);
         return suggestedLabel;

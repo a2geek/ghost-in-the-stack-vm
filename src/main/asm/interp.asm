@@ -284,6 +284,8 @@ brtable:
     .addr _load1-1
     .addr _load2-1
     .addr poploop-1     ; POP2
+    .addr _global_setc-1
+    .addr _local_setc-1
 brlen = *-brtable
 
 ; ADD:  (B) (A) => (B+A)
@@ -738,6 +740,26 @@ _decr:
     dec stackA+1,x
 @justlow:
     dec stackA,x
+    jmp loop
+
+; GLOBAL_SETC <offset>;<value>: *(globals+offset)=<value>
+_global_setc:
+    jsr fetch
+    clc
+    adc globals
+    bne setc_common
+
+; LOCAL_SETC <offset>;<value>: *(locals+offset)=<value>
+_local_setc:
+    jsr fetch
+    clc
+    adc locals
+setc_common:
+    tax
+    jsr fetch
+    sta stackA,x
+    jsr fetch
+    sta stackA+1,x
     jmp loop
 
 ; GLOBAL_STORE <offset>: (A) => (); *(globals+offset)=A
