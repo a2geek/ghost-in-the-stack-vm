@@ -380,19 +380,10 @@ public class CodeGenerationVisitor extends DispatchVisitor {
                 .orElseThrow(() -> new RuntimeException(subFullName + " not found"));
         if (scope instanceof Subroutine sub) {
             scopesUsed.add(sub.getFullPathName());
-            boolean hasParameters = !statement.getParameters().isEmpty();
             for (Expression expr : statement.getParameters()) {
                 dispatch(expr);
             }
             code.emit(Opcode.GOSUB, sub.getFullPathName());
-            if (hasParameters) {
-                var bytes = statement.getParameters().stream()
-                    .map(Expression::getType)
-                    .map(DataType::sizeof)
-                    .mapToInt(Integer::intValue)
-                    .sum();
-                code.emit(Opcode.POPN, bytes);
-            }
             return;
         }
         throw new RuntimeException(String.format("calling a subroutine but '%s' is not a subroutine?", subFullName));
@@ -443,7 +434,7 @@ public class CodeGenerationVisitor extends DispatchVisitor {
         code.emit(exitLabel);
         if (hasLocalScope) tearDownLocalFrame(frame);
         restoreOnErrContext(subroutine);
-        code.emit(Opcode.RETURN);
+        code.emit(Opcode.RETURNN, frame.parameterSize());
         frames.pop();
     }
 
@@ -479,7 +470,7 @@ public class CodeGenerationVisitor extends DispatchVisitor {
         code.emit(exitLabel);
         tearDownLocalFrame(frame);
         restoreOnErrContext(function);
-        code.emit(Opcode.RETURN);
+        code.emit(Opcode.RETURNN, frame.parameterSize());
         frames.pop();
     }
 
@@ -627,15 +618,6 @@ public class CodeGenerationVisitor extends DispatchVisitor {
                 code.emit(Opcode.PUSHZ);
                 emitParameters.run();
                 code.emit(Opcode.GOSUB, func.getFullPathName());
-                var hasParameters = !function.getParameters().isEmpty();
-                if (hasParameters) {
-                    var bytes = function.getParameters().stream()
-                        .map(Expression::getType)
-                        .map(DataType::sizeof)
-                        .mapToInt(Integer::intValue)
-                        .sum();
-                    code.emit(Opcode.POPN, bytes);
-                }
             }
         }
         return null;

@@ -56,6 +56,16 @@ public class PeepholeOptimizer {
                 list.set(0, Instructions.POP2());
                 return true;
             }
+            // RETURNN 0000 ==> RETURN
+            if (inst.opcode() == Opcode.RETURNN && ZERO.equals(inst.arg())) {
+                list.set(0, Instructions.RETURN());
+                return true;
+            }
+            // RETURNN 0002 ==> RETURN2
+            if (inst.opcode() == Opcode.RETURNN && TWO.equals(inst.arg())) {
+                list.set(0, Instructions.RETURN2());
+                return true;
+            }
         }
         return false;
     }

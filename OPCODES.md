@@ -15,7 +15,6 @@ Therefore, the `Opcode.java` and `interp.asm` just need to be ordered the same.
 
 > Notes:
 > * Stack references assume 16 bits at this time. So TOS or TOS-1 is two bytes.
-> * Some likely operations are mentioned. They may not exist yet and won't until they are needed.
 
 | Operand        | Length | Notes                                                                                                                                                                                                         |
 |:---------------|:------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -49,6 +48,8 @@ Therefore, the `Opcode.java` and `interp.asm` just need to be ordered the same.
 | `GETYREG`      |   1    | Get the 6502 Y register from last `CALL` and place on stack.                                                                                                                                                  |
 | `CALL`         |   1    | "Native" 6502 call to address at TOS. Uses register settings from `SETACC`, `SETYREG`, and `SETXREG`.  After call, register settings preserved and will be available with `GETACC`, `GETYREG`, and `GETXREG`. |
 | `RETURN`       |   1    | Pop return address off stack and store in IP.                                                                                                                                                                 |
+| `RETURN2`      |   1    | Pop return address off stack and store in IP and remove 2 bytes (parameters).                                                                                                                                 |
+| `RETURNN`      |   2    | Pop return address off stack and store in IP and remove `n` bytes (parameters).                                                                                                                               |
 | `DUP`          |   1    | Duplicate top item on stack.                                                                                                                                                                                  |
 | `INCR`         |   1    | Increment TOS by 1.                                                                                                                                                                                           |
 | `DECR`         |   1    | Decrement TOS by 1.                                                                                                                                                                                           |

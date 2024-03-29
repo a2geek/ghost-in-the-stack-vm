@@ -14,6 +14,7 @@ import static a2geek.ghost.model.Symbol.is;
 public record Frame(
             Scope scope,
             Map<Symbol,Integer> offsets,
+            Integer parameterSize,
             Integer localSize,
             Integer frameSize) {
 
@@ -24,10 +25,10 @@ public record Frame(
         // program treats global variables as local
         for (var ref : program.findAllLocalScope(is(DeclarationType.GLOBAL).and(in(SymbolType.VARIABLE)))) {
             varOffsets.put(ref, varOffset);
-            varOffset += sizeOnHeap(ref);
-            reservation += sizeOnHeap(ref);
+            varOffset += sizeOnStack(ref);
+            reservation += sizeOnStack(ref);
         }
-        return new Frame(program, varOffsets, reservation, varOffset);
+        return new Frame(program, varOffsets, 0, reservation, varOffset);
     }
     public static Frame create(Subroutine subroutine) {
         Map<Symbol,Integer> varOffsets = new HashMap<>();
@@ -36,15 +37,17 @@ public record Frame(
         // local variables are at TOS
         for (var ref : subroutine.findAllLocalScope(is(DeclarationType.LOCAL).and(in(SymbolType.VARIABLE)))) {
             varOffsets.put(ref, varOffset);
-            varOffset += sizeOnHeap(ref);
-            reservation += sizeOnHeap(ref);
+            varOffset += sizeOnStack(ref);
+            reservation += sizeOnStack(ref);
         }
         // frame overhead: return address (2 bytes) + stack index (2 bytes)
         varOffset += DataType.ADDRESS.sizeof() * 2;
         // parameters are above the frame details
+        int parameterSize = 0;
         for (var ref : subroutine.findAllLocalScope(in(SymbolType.PARAMETER))) {
             varOffsets.put(ref, varOffset);
-            varOffset += sizeOnHeap(ref);
+            varOffset += sizeOnStack(ref);
+            parameterSize += sizeOnStack(ref);
         }
         if (subroutine instanceof Function fn) {
             var refs = fn.findAllLocalScope(in(SymbolType.RETURN_VALUE));
@@ -53,12 +56,12 @@ public record Frame(
             }
             for (var ref : refs) {
                 varOffsets.put(ref, varOffset);
-                varOffset += sizeOnHeap(ref);
+                varOffset += sizeOnStack(ref);
             }
         }
-        return new Frame(subroutine, varOffsets, reservation, varOffset);
+        return new Frame(subroutine, varOffsets, parameterSize, reservation, varOffset);
     }
-    public static int sizeOnHeap(Symbol symbol) {
+    public static int sizeOnStack(Symbol symbol) {
         if (symbol.numDimensions() > 0) {
             return DataType.ADDRESS.sizeof();
         }

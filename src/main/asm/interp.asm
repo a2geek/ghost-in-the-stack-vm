@@ -286,6 +286,8 @@ brtable:
     .addr poploop-1     ; POP2
     .addr _global_setc-1
     .addr _local_setc-1
+    .addr _returnn-1
+    .addr _return2-1
 brlen = *-brtable
 
 ; ADD:  (B) (A) => (B+A)
@@ -844,12 +846,32 @@ _fixa:
     sta stackA+1,x
     jmp _incr   ; baseIP is offset by -1
 
+; RETURN2; (n-1 n TOS) => (); IP=TOS; 2 byte parameters removed from stack
+_return2:
+    ldy #2
+    bne return_common
+
+; RETURNN n; (1 .. n-1 n TOS) => (); IP=TOS, parameters removed from stack
+_returnn:
+    jsr fetch
+    tay
+    bne return_common
+
 ; RETURN; (TOS) => (); IP=TOS
 _return:
+    ldy #0
+return_common:
     pla
     sta ip
     pla
     sta ip+1
+    cpy #0
+    beq @exit
+@more:
+    pla
+    dey
+    bne @more
+@exit:
     jmp loop
 
 ; IFNZ <addr>: (A) => (); A <> 0 => IP=addr

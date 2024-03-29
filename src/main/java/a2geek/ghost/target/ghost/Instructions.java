@@ -21,6 +21,9 @@ public class Instructions {
     public static Instruction RETURN() {
         return build(Opcode.RETURN);
     }
+    public static Instruction RETURN2() {
+        return build(Opcode.RETURN2);
+    }
     public static Instruction LOAD0() {
         return build(Opcode.LOAD0);
     }

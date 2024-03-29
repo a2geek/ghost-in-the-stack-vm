@@ -63,7 +63,9 @@ public enum Opcode {
     LOAD2(0),
     POP2(0),
     GLOBAL_SETC(3),
-    LOCAL_SETC(3);
+    LOCAL_SETC(3),
+    RETURNN(1),
+    RETURN2(0);
 
     private final int argc;
 
