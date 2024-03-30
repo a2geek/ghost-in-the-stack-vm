@@ -183,6 +183,32 @@ public class PeepholeOptimizer {
                 list.remove(1);
                 return true;
             }
+            // LOCAL_LOAD nn    ==> LOCAL_(ILOADB|ISTOREB) nn   (or ILOADW|STOREW)
+            // (ILOADB|ISTOREB) ==> remove
+            if (inst1.opcode() == Opcode.LOCAL_LOAD && is(inst2.opcode(), Opcode.ILOADB, Opcode.ISTOREB, Opcode.ILOADW, Opcode.ISTOREW)) {
+                list.set(0, switch (inst2.opcode()) {
+                    case ILOADB -> Instructions.LOCAL_ILOADB(inst1.arg());
+                    case ISTOREB -> Instructions.LOCAL_ISTOREB(inst1.arg());
+                    case ILOADW -> Instructions.LOCAL_ILOADW(inst1.arg());
+                    case ISTOREW -> Instructions.LOCAL_ISTOREW(inst1.arg());
+                    default -> throw new RuntimeException("unexpected opcode for instruction 2");
+                });
+                list.remove(1);
+                return true;
+            }
+            // GLOBAL_LOAD nn    ==> GLOBAL_(ILOADB|ISTOREB) nn   (or ILOADW|STOREW)
+            // (ILOADB|ISTOREB)  ==> remove
+            if (inst1.opcode() == Opcode.GLOBAL_LOAD && is(inst2.opcode(), Opcode.ILOADB, Opcode.ISTOREB, Opcode.ILOADW, Opcode.ISTOREW)) {
+                list.set(0, switch (inst2.opcode()) {
+                    case ILOADB -> Instructions.GLOBAL_ILOADB(inst1.arg());
+                    case ISTOREB -> Instructions.GLOBAL_ISTOREB(inst1.arg());
+                    case ILOADW -> Instructions.GLOBAL_ILOADW(inst1.arg());
+                    case ISTOREW -> Instructions.GLOBAL_ISTOREW(inst1.arg());
+                    default -> throw new RuntimeException("unexpected opcode for instruction 2");
+                });
+                list.remove(1);
+                return true;
+            }
         };
         return false;
     }

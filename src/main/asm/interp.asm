@@ -288,6 +288,14 @@ brtable:
     .addr _local_setc-1
     .addr _returnn-1
     .addr _return2-1
+    .addr _local_iloadb-1
+    .addr _local_istoreb-1
+    .addr _local_iloadw-1
+    .addr _local_istorew-1
+    .addr _global_iloadb-1
+    .addr _global_istoreb-1
+    .addr _global_iloadw-1
+    .addr _global_istorew-1
 brlen = *-brtable
 
 ; ADD:  (B) (A) => (B+A)
@@ -387,12 +395,42 @@ _mods:
     sta stackB+1,x
     jmp unsignedCommon
 
+global2workptr:
+    jsr fetch
+    clc
+    adc globals
+    tax
+    bne stackA2workptr
+local2workptr:
+    jsr fetch
+    clc
+    adc locals
+    tax
+stackA2workptr:
+    lda stackA,x
+    sta workptr
+    lda stackA+1,x
+    sta workptr+1
+    clc ; just setting a known state
+    rts
+
+; LOCAL_ILOADB nn: () => (B)
+_local_iloadb:
+    jsr local2workptr
+    bcc iloadbcommon
+
+; GLOBAL_ILOADB nn: () => (B)
+_global_iloadb:
+    jsr global2workptr
+    bcc iloadbcommon
+
 ; ILOADB: (A) => (B); B = byte(*A)
 _iloadb:
     pla
     sta workptr
     pla
     sta workptr+1
+iloadbcommon:
     ldy #0
     tya
     pha     ; high byte = 0
@@ -400,16 +438,37 @@ _iloadb:
     pha
     jmp loop
 
+; LOCAL_ISTOREB nn: (A) => ()
+_local_istoreb:
+    jsr local2workptr
+    bcc istorebcommon
+
+; GLOBAL_ISTOREB nn: (A) => ()
+_global_istoreb:
+    jsr global2workptr
+    bcc istorebcommon
+
 ; ISTOREB: (B) (A) => (); *A = byte(B)
 _istoreb:
     pla
     sta workptr
     pla
     sta workptr+1
+istorebcommon:
     pla
     ldy #0
     sta (workptr),y
     jmp tossHighByteLoop
+
+; LOCAL_ILOADW nn: () => (B)
+_local_iloadw:
+    jsr local2workptr
+    bcc iloadwcommon
+
+; GLOBAL_ILOADW nn: () => (B)
+_global_iloadw:
+    jsr global2workptr
+    bcc iloadwcommon
 
 ; ILOADW: (A) => (B); B = word(*A)
 _iloadw:
@@ -417,6 +476,7 @@ _iloadw:
     sta workptr
     pla
     sta workptr+1
+iloadwcommon:
     ldy #1
     lda (workptr),y
     pha
@@ -425,12 +485,23 @@ _iloadw:
     pha
     jmp loop
 
+; LOCAL_ISTOREW nn: (A) => ()
+_local_istorew:
+    jsr local2workptr
+    bcc istorewcommon
+
+; GLOBAL_ISTOREW nn: (A) => ()
+_global_istorew:
+    jsr global2workptr
+    bcc istorewcommon
+
 ; ISTOREW: (B) (A) => (); *A = word(B)
 _istorew:
     pla
     sta workptr
     pla
     sta workptr+1
+istorewcommon:
     ldy #0
     pla
     sta (workptr),y

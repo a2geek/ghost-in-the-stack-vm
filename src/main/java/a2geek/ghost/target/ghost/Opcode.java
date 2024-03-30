@@ -65,7 +65,15 @@ public enum Opcode {
     GLOBAL_SETC(3),
     LOCAL_SETC(3),
     RETURNN(1),
-    RETURN2(0);
+    RETURN2(0),
+    LOCAL_ILOADB(1),
+    LOCAL_ISTOREB(1),
+    LOCAL_ILOADW(1),
+    LOCAL_ISTOREW(1),
+    GLOBAL_ILOADB(1),
+    GLOBAL_ISTOREB(1),
+    GLOBAL_ILOADW(1),
+    GLOBAL_ISTOREW(1);
 
     private final int argc;
 

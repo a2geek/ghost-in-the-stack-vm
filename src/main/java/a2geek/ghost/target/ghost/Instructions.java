@@ -66,4 +66,28 @@ public class Instructions {
     public static Instruction LOCAL_DECR(int arg) {
         return build(Opcode.LOCAL_DECR, arg);
     }
+    public static Instruction LOCAL_ILOADB(int arg) {
+        return build(Opcode.LOCAL_ILOADB, arg);
+    }
+    public static Instruction LOCAL_ISTOREB(int arg) {
+        return build(Opcode.LOCAL_ISTOREB, arg);
+    }
+    public static Instruction GLOBAL_ILOADB(int arg) {
+        return build(Opcode.GLOBAL_ILOADB, arg);
+    }
+    public static Instruction GLOBAL_ISTOREB(int arg) {
+        return build(Opcode.GLOBAL_ISTOREB, arg);
+    }
+    public static Instruction LOCAL_ILOADW(int arg) {
+        return build(Opcode.LOCAL_ILOADW, arg);
+    }
+    public static Instruction LOCAL_ISTOREW(int arg) {
+        return build(Opcode.LOCAL_ISTOREW, arg);
+    }
+    public static Instruction GLOBAL_ILOADW(int arg) {
+        return build(Opcode.GLOBAL_ILOADW, arg);
+    }
+    public static Instruction GLOBAL_ISTOREW(int arg) {
+        return build(Opcode.GLOBAL_ISTOREW, arg);
+    }
 }
