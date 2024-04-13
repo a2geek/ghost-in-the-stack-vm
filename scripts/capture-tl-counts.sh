@@ -39,7 +39,7 @@ find src/main/basic -name "*.int" -print0 |
 find src/main/basic -name "*.lst" -print0 |
   xargs -0 cat |
   cut -c20- |
-  grep -E --only-matching "^[A-Z][_A-Z0-9]*( [_A-Z][._A-Z0-9]*|$)" |
+  grep -E --only-matching "^[A-Z][_A-Z0-9]*( [._A-Z0-9]+|$)" |
   sort |
   uniq -c |
   sort -nb
