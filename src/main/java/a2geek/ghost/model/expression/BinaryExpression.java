@@ -3,49 +3,13 @@ package a2geek.ghost.model.expression;
 import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.Expression;
 
-import java.util.*;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.TreeMap;
 import java.util.function.BiFunction;
 
 public class BinaryExpression implements Expression {
-    private static final List<Descriptor> DESCRIPTORS = List.of(
-        // Arithmetic
-        new Descriptor("+", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN, DataType.BYTE),
-        new Descriptor("+", DataType.ADDRESS, DataType.STRING, DataType.INTEGER, DataType.BYTE),       // STR + n  => ADDR
-        new Descriptor("+", DataType.ADDRESS, DataType.ADDRESS, DataType.INTEGER, DataType.BYTE),      // ADDR + n => ADDR
-        new Descriptor("-", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN, DataType.BYTE),
-        new Descriptor("-", DataType.ADDRESS, DataType.ADDRESS, DataType.INTEGER, DataType.BYTE),      // ADDR - n => ADDR
-        new Descriptor("*", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN, DataType.BYTE),
-        new Descriptor("/", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN, DataType.BYTE),
-        new Descriptor("mod", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN, DataType.BYTE),
-        new Descriptor("^", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN, DataType.BYTE),
-        // Comparison
-        new Descriptor("<", DataType.BOOLEAN, DataType.INTEGER, DataType.BOOLEAN, DataType.ADDRESS, DataType.BYTE),
-        new Descriptor(">", DataType.BOOLEAN, DataType.INTEGER, DataType.BOOLEAN, DataType.ADDRESS, DataType.BYTE),
-        new Descriptor("<=", DataType.BOOLEAN, DataType.INTEGER, DataType.BOOLEAN, DataType.ADDRESS, DataType.BYTE),
-        new Descriptor(">=", DataType.BOOLEAN, DataType.INTEGER, DataType.BOOLEAN, DataType.ADDRESS, DataType.BYTE),
-        new Descriptor("=", DataType.BOOLEAN, DataType.INTEGER, DataType.BOOLEAN, DataType.ADDRESS, DataType.BYTE),
-        new Descriptor("<>", DataType.BOOLEAN, DataType.INTEGER, DataType.BOOLEAN, DataType.ADDRESS, DataType.BYTE),
-        // Logical
-        new Descriptor("or", DataType.BOOLEAN, DataType.BOOLEAN),
-        new Descriptor("and", DataType.BOOLEAN, DataType.BOOLEAN),
-        new Descriptor("xor", DataType.BOOLEAN, DataType.BOOLEAN),
-        // Bit
-        new Descriptor("or", DataType.INTEGER, DataType.INTEGER, DataType.BYTE),
-        new Descriptor("and", DataType.INTEGER, DataType.INTEGER, DataType.BYTE),
-        new Descriptor("xor", DataType.INTEGER, DataType.INTEGER, DataType.BYTE),
-        new Descriptor("<<", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN, DataType.BYTE),
-        // FIXME: STRING needs to be replaced here
-        new Descriptor(">>", DataType.INTEGER, DataType.INTEGER, DataType.BOOLEAN, DataType.STRING, DataType.ADDRESS, DataType.BYTE)
-    );
-    public static Optional<Descriptor> findDescriptor(String operator, DataType left, DataType right) {
-        for (var d : DESCRIPTORS) {
-            if (d.operator().equalsIgnoreCase(operator) && d.validateArgTypes(left, right)) {
-                return Optional.of(d);
-            }
-        }
-        return Optional.empty();
-    }
-
     private static final Map<String, BiFunction<Integer,Integer,Integer>> INTEGER_OPS;
     static {
         // 'Map.of(...)' maxes out at 10 items.
@@ -90,7 +54,7 @@ public class BinaryExpression implements Expression {
         ));
     }
 
-    private final Descriptor descriptor;
+    private final DataType dataType;
     private Expression l;
     private Expression r;
     private final String op;
@@ -117,11 +81,7 @@ public class BinaryExpression implements Expression {
 
     @Override
     public DataType getType() {
-        return descriptor.returnType();
-    }
-
-    public Descriptor getDescriptor() {
-        return descriptor;
+        return dataType;
     }
 
     @Override
@@ -130,15 +90,92 @@ public class BinaryExpression implements Expression {
     }
 
     public BinaryExpression(Expression l, Expression r, String op) {
-        Descriptor d = findDescriptor(op, l.getType(), r.getType()).orElseThrow(() ->
-            new RuntimeException(String.format("argument types not supported for '%s': %s, %s",
-                    op, l.getType(), r.getType()))
-        );
-
-        this.l = l;
-        this.r = r;
         this.op = op.toLowerCase();
-        this.descriptor = d;
+        switch (this.op) {
+            // Arithmetic
+            case "+" -> {
+                if (l.isType(DataType.STRING) && r.isType(DataType.STRING)) {
+                    this.l = l.checkAndCoerce(DataType.STRING);
+                    this.r = r.checkAndCoerce(DataType.STRING);
+                    this.dataType = DataType.STRING;
+                }
+                else if (l.isType(DataType.ADDRESS, DataType.STRING)) {
+                    this.l = l.checkAndCoerce(DataType.ADDRESS);
+                    this.r = r.checkAndCoerce(DataType.INTEGER);
+                    this.dataType = DataType.ADDRESS;
+                }
+                else if (r.isType(DataType.ADDRESS, DataType.STRING)) {
+                    this.l = l.checkAndCoerce(DataType.INTEGER);
+                    this.r = r.checkAndCoerce(DataType.ADDRESS);
+                    this.dataType = DataType.ADDRESS;
+                }
+                else {
+                    this.l = l.checkAndCoerce(DataType.INTEGER);
+                    this.r = r.checkAndCoerce(DataType.INTEGER);
+                    this.dataType = DataType.INTEGER;
+                }
+            }
+            case "-" -> {
+                if (l.isType(DataType.ADDRESS)) {
+                    this.l = l.checkAndCoerce(DataType.ADDRESS);
+                    this.r = r.checkAndCoerce(DataType.INTEGER);
+                    this.dataType = DataType.ADDRESS;
+                }
+                else if (r.isType(DataType.ADDRESS)) {
+                    this.l = l.checkAndCoerce(DataType.INTEGER);
+                    this.r = r.checkAndCoerce(DataType.ADDRESS);
+                    this.dataType = DataType.ADDRESS;
+                }
+                else {
+                    this.l = l.checkAndCoerce(DataType.INTEGER);
+                    this.r = r.checkAndCoerce(DataType.INTEGER);
+                    this.dataType = DataType.INTEGER;
+                }
+            }
+            case "*", "/", "mod", "^" -> {
+                this.l = l.checkAndCoerce(DataType.INTEGER);
+                this.r = r.checkAndCoerce(DataType.INTEGER);
+                this.dataType = DataType.INTEGER;
+            }
+            // Comparison
+            case "=", "<>" -> {
+                if (l.isType(DataType.STRING) && r.isType(DataType.STRING)) {
+                    this.l = l.checkAndCoerce(DataType.STRING);
+                    this.r = r.checkAndCoerce(DataType.STRING);
+                    this.dataType = DataType.BOOLEAN;
+                }
+                else {
+                    this.l = l.checkAndCoerce(DataType.INTEGER);
+                    this.r = r.checkAndCoerce(DataType.INTEGER);
+                    this.dataType = DataType.BOOLEAN;
+                }
+            }
+            case "<", "<=", ">", ">=" -> {
+                this.l = l.checkAndCoerce(DataType.INTEGER);
+                this.r = r.checkAndCoerce(DataType.INTEGER);
+                this.dataType = DataType.BOOLEAN;
+            }
+            // Logical | Bit
+            case "or", "and", "xor" -> {
+                if (l.isType(DataType.BOOLEAN) && r.isType(DataType.BOOLEAN)) {
+                    this.l = l.checkAndCoerce(DataType.BOOLEAN);
+                    this.r = r.checkAndCoerce(DataType.BOOLEAN);
+                    this.dataType = DataType.BOOLEAN;
+                } else {
+                    this.l = l.checkAndCoerce(DataType.INTEGER);
+                    this.r = r.checkAndCoerce(DataType.INTEGER);
+                    this.dataType = DataType.INTEGER;
+                }
+            }
+            case "<<", ">>" -> {
+                this.l = l.checkAndCoerce(DataType.INTEGER);
+                this.r = r.checkAndCoerce(DataType.INTEGER);
+                this.dataType = DataType.INTEGER;
+            }
+            default -> {
+                throw new RuntimeException("unknown operation: " + this.op);
+            }
+        }
     }
     public BinaryExpression(String op, Expression l, Expression r) {
         // this seems a better arrangement, at least sometimes?
@@ -173,7 +210,7 @@ public class BinaryExpression implements Expression {
     @Override
     public Optional<String> asString() {
         if (isConstant()) {
-            return switch (descriptor.returnType()) {
+            return switch (dataType) {
                 case BOOLEAN -> asBoolean().map(b -> b ? "True" : "False");
                 // TODO fix this up when byte becomes a real type
                 case INTEGER, BYTE -> asInteger().map(i -> Integer.toString(i));
@@ -201,21 +238,5 @@ public class BinaryExpression implements Expression {
     @Override
     public String toString() {
         return String.format("(%s %s %s)", l, op, r);
-    }
-
-    public record Descriptor(
-            String operator,
-            DataType returnType,
-            DataType ...allowedTypes
-    ) {
-        public boolean validateArgTypes(DataType left, DataType right) {
-            return isAllowed(left) && isAllowed(right);
-        }
-        boolean isAllowed(DataType type) {
-            for (var t : allowedTypes) {
-                if (t == type) return true;
-            }
-            return false;
-        }
     }
 }

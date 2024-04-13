@@ -73,7 +73,7 @@ MAIN:
               END IF
           END IF
   10: _FOR_EXIT8:
-  11:     IF (*((- 16384)) < 128) THEN
+  11:     IF (CInt(*((- 16384))) < 128) THEN
    0:         GOTO _DO_LOOP7
           END IF
   12: _DO_EXIT7:

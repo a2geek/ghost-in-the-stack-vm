@@ -6,7 +6,7 @@ MAIN:
     DIM GOOD AS INTEGER = null
     DIM BAD AS INTEGER = null
    0:     DATA = CByte(ALLOC((2 + ((5 + 1) * 1))))
-   1:     *((DATA + 0)) = 5
+   1:     *((CInt(DATA) + 0)) = 5
    2:     CALL TEXT.TEXT()
    3:     CALL TEXT.HOME()
    4:     CALL RUNTIME.PRINT_STRING("Setting BYTE values...")
@@ -19,7 +19,7 @@ MAIN:
    4:         ERR.SOURCE = "ARRAYS10.BAS"
    5:         RAISE ERROR
           END IF
-   7:     *(((DATA + 2) + (0 * 1))) = 239
+   7:     *(((CInt(DATA) + 2) + (0 * 1))) = 239
    8:     IF (1 > ubound(DATA,1)) THEN **
    0:         ERR.NUMBER = 107
    1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
@@ -28,7 +28,7 @@ MAIN:
    4:         ERR.SOURCE = "ARRAYS10.BAS"
    5:         RAISE ERROR
           END IF
-   9:     *(((DATA + 2) + (1 * 1))) = 238
+   9:     *(((CInt(DATA) + 2) + (1 * 1))) = 238
   10:     IF (2 > ubound(DATA,1)) THEN **
    0:         ERR.NUMBER = 107
    1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
@@ -37,7 +37,7 @@ MAIN:
    4:         ERR.SOURCE = "ARRAYS10.BAS"
    5:         RAISE ERROR
           END IF
-  11:     *(((DATA + 2) + (2 * 1))) = 237
+  11:     *(((CInt(DATA) + 2) + (2 * 1))) = 237
   12:     IF (3 > ubound(DATA,1)) THEN **
    0:         ERR.NUMBER = 107
    1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
@@ -46,7 +46,7 @@ MAIN:
    4:         ERR.SOURCE = "ARRAYS10.BAS"
    5:         RAISE ERROR
           END IF
-  13:     *(((DATA + 2) + (3 * 1))) = 236
+  13:     *(((CInt(DATA) + 2) + (3 * 1))) = 236
   14:     IF (4 > ubound(DATA,1)) THEN **
    0:         ERR.NUMBER = 107
    1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
@@ -55,7 +55,7 @@ MAIN:
    4:         ERR.SOURCE = "ARRAYS10.BAS"
    5:         RAISE ERROR
           END IF
-  15:     *(((DATA + 2) + (4 * 1))) = 235
+  15:     *(((CInt(DATA) + 2) + (4 * 1))) = 235
   16:     IF (5 > ubound(DATA,1)) THEN **
    0:         ERR.NUMBER = 107
    1:         ERR.MESSAGE = "ARRAY INDEX OUT OF BOUNDS"
@@ -64,7 +64,7 @@ MAIN:
    4:         ERR.SOURCE = "ARRAYS10.BAS"
    5:         RAISE ERROR
           END IF
-  17:     *(((DATA + 2) + (5 * 1))) = 234
+  17:     *(((CInt(DATA) + 2) + (5 * 1))) = 234
   18:     CALL RUNTIME.PRINT_STRING("Checking BYTE values...")
   19:     CALL RUNTIME.PRINT_NEWLINE()
   20:     CALL CHECK(0, 239)
@@ -99,7 +99,7 @@ SUB CHECK(BYVAL EXPECTED AS INTEGER, BYVAL I AS INTEGER)
    4:         ERR.SOURCE = "CHECK"
    5:         RAISE ERROR
           END IF
-   4:     CALL RUNTIME.PRINT_BYTE(CInt(*(((DATA + 2) + (I * 1)))))
+   4:     CALL RUNTIME.PRINT_BYTE(CInt(*(((CInt(DATA) + 2) + (I * 1)))))
    5:     CALL RUNTIME.PRINT_STRING(" = ")
    6:     CALL RUNTIME.PRINT_BYTE(CInt(CByte(EXPECTED)))
    7:     CALL RUNTIME.PRINT_STRING(": ")
@@ -111,7 +111,7 @@ SUB CHECK(BYVAL EXPECTED AS INTEGER, BYVAL I AS INTEGER)
    4:         ERR.SOURCE = "CHECK"
    5:         RAISE ERROR
           END IF
-   9:     IF (*(((DATA + 2) + (I * 1))) = CByte(EXPECTED)) THEN
+   9:     IF (CInt(*(((CInt(DATA) + 2) + (I * 1)))) = CInt(CByte(EXPECTED))) THEN
    0:         CALL RUNTIME.PRINT_STRING("Ok.")
    1:         CALL RUNTIME.PRINT_NEWLINE()
    2:         GOOD = (GOOD + 1)
