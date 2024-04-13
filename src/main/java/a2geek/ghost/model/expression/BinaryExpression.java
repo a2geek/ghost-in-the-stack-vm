@@ -3,61 +3,48 @@ package a2geek.ghost.model.expression;
 import a2geek.ghost.model.DataType;
 import a2geek.ghost.model.Expression;
 
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.TreeMap;
 import java.util.function.BiFunction;
+import java.util.function.BiPredicate;
 
 public class BinaryExpression implements Expression {
-    private static final Map<String, BiFunction<Integer,Integer,Integer>> INTEGER_OPS;
+    private static final List<Descriptor> descriptors = new ArrayList<>();
     static {
-        // 'Map.of(...)' maxes out at 10 items.
-        INTEGER_OPS = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-        // Arithmetic
-        INTEGER_OPS.putAll(Map.of(
-            "+",   (a,b) -> a+b,
-            "-",   (a,b) -> a-b,
-            "*",   (a,b) -> a*b,
-            "/",   (a,b) -> a/b,
-            "mod", (a,b) -> a%b,
-            "^", (a,b) -> (int)Math.pow(a,b)
-        ));
-        // Comparison
-        INTEGER_OPS.putAll(Map.of(
-            "<",   (a,b) -> (a<b) ? 1 : 0,
-            "<=",  (a,b) -> (a<=b) ? 1 : 0,
-            ">",   (a,b) -> (a>b) ? 1 : 0,
-            ">=",  (a,b) -> (a>=b) ? 1 : 0,
-            "=",   (a,b) -> (a==b) ? 1 : 0,
-            "<>",  (a,b) -> (a!=b) ? 1 : 0
-        ));
-        // Bit
-        INTEGER_OPS.putAll(Map.of(
-            "or",  (a,b) -> a|b,
-            "and", (a,b) -> a&b,
-            "xor", (a,b) -> a^b,
-            "<<", (a,b) -> a<<b,
-            ">>", (a,b) -> a>>b
-        ));
+        op("+").bothTypesAre(DataType.STRING).stringReduction((a, b)->a+b).result(DataType.STRING)
+                .and().leftTypeIs(DataType.ADDRESS, DataType.STRING).coerceLeftTo(DataType.ADDRESS).coerceRightTo(DataType.INTEGER).result(DataType.ADDRESS)
+                .and().rightTypeIs(DataType.ADDRESS, DataType.STRING).coerceRightTo(DataType.ADDRESS).coerceLeftTo(DataType.INTEGER).result(DataType.ADDRESS)
+                .and().anyType().coerceBothTo(DataType.INTEGER).integerReduction(Integer::sum).result(DataType.INTEGER);
+        op("-").leftTypeIs(DataType.ADDRESS).coerceRightTo(DataType.INTEGER).result(DataType.ADDRESS)
+                .and().rightTypeIs(DataType.ADDRESS).coerceLeftTo(DataType.INTEGER).result(DataType.ADDRESS)
+                .and().anyType().coerceBothTo(DataType.INTEGER).integerReduction((a, b)->a-b).result(DataType.INTEGER);
+        op("*").anyType().coerceBothTo(DataType.INTEGER).integerReduction((a,b)->a*b).result(DataType.INTEGER);
+        op("/").anyType().coerceBothTo(DataType.INTEGER).integerReduction((a,b)->a/b).result(DataType.INTEGER);
+        op("mod").anyType().coerceBothTo(DataType.INTEGER).integerReduction((a,b)->a%b).result(DataType.INTEGER);
+        op("^").anyType().coerceBothTo(DataType.INTEGER).integerReduction((a,b)->(int)Math.pow(a,b)).result(DataType.INTEGER);
+        op("=").bothTypesAre(DataType.STRING).result(DataType.BOOLEAN)
+                .and().anyType().coerceBothTo(DataType.INTEGER).integerReduction((a, b)-> Objects.equals(a, b) ? 1 : 0).result(DataType.BOOLEAN);
+        op("<>").bothTypesAre(DataType.STRING).result(DataType.BOOLEAN)
+                .and().anyType().coerceBothTo(DataType.INTEGER).integerReduction((a, b)-> !Objects.equals(a, b) ? 1 : 0).result(DataType.BOOLEAN);
+        op("<").anyType().coerceBothTo(DataType.INTEGER).integerReduction((a,b)->a<b ? 1 : 0).result(DataType.BOOLEAN);
+        op("<=").anyType().coerceBothTo(DataType.INTEGER).integerReduction((a,b)->a<=b ? 1 : 0).result(DataType.BOOLEAN);
+        op(">").anyType().coerceBothTo(DataType.INTEGER).integerReduction((a,b)->a>b ? 1 : 0).result(DataType.BOOLEAN);
+        op(">=").anyType().coerceBothTo(DataType.INTEGER).integerReduction((a,b)->a>=b ? 1 : 0).result(DataType.BOOLEAN);
+        op("or").bothTypesAre(DataType.BOOLEAN).booleanReduction((a,b)->a||b).result(DataType.BOOLEAN)
+                .and().anyType().coerceBothTo(DataType.INTEGER).integerReduction((a, b)->a|b).result(DataType.INTEGER);
+        op("and").bothTypesAre(DataType.BOOLEAN).booleanReduction((a,b)->a&&b).result(DataType.BOOLEAN)
+                .and().anyType().coerceBothTo(DataType.INTEGER).integerReduction((a, b)->a&b).result(DataType.INTEGER);
+        op("xor").bothTypesAre(DataType.BOOLEAN).booleanReduction((a,b)->a^b).result(DataType.BOOLEAN)
+                .and().anyType().coerceBothTo(DataType.INTEGER).integerReduction((a, b)->a^b).result(DataType.INTEGER);
+        op("<<").anyType().coerceBothTo(DataType.INTEGER).integerReduction((a, b)->a<<b).result(DataType.INTEGER);
+        op(">>").anyType().coerceBothTo(DataType.INTEGER).integerReduction((a, b)->a>>b).result(DataType.INTEGER);
     }
 
-    private static final Map<String, BiFunction<Boolean,Boolean,Boolean>> LOGICAL_OPS;
-    static {
-        // 'Map.of(...)' maxes out at 10 items.
-        LOGICAL_OPS = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-        // Logical
-        LOGICAL_OPS.putAll(Map.of(
-            "or",  (a,b) -> a || b,
-            "and", (a,b) -> a && b,
-            "xor", (a,b) -> a ^ b
-        ));
-    }
-
-    private final DataType dataType;
+    private final Descriptor descriptor;
     private Expression l;
     private Expression r;
-    private final String op;
 
     public Expression getL() {
         return l;
@@ -76,12 +63,12 @@ public class BinaryExpression implements Expression {
     }
 
     public String getOp() {
-        return op;
+        return descriptor.operation;
     }
 
     @Override
     public DataType getType() {
-        return dataType;
+        return descriptor.resultType;
     }
 
     @Override
@@ -90,92 +77,21 @@ public class BinaryExpression implements Expression {
     }
 
     public BinaryExpression(Expression l, Expression r, String op) {
-        this.op = op.toLowerCase();
-        switch (this.op) {
-            // Arithmetic
-            case "+" -> {
-                if (l.isType(DataType.STRING) && r.isType(DataType.STRING)) {
-                    this.l = l.checkAndCoerce(DataType.STRING);
-                    this.r = r.checkAndCoerce(DataType.STRING);
-                    this.dataType = DataType.STRING;
-                }
-                else if (l.isType(DataType.ADDRESS, DataType.STRING)) {
-                    this.l = l.checkAndCoerce(DataType.ADDRESS);
-                    this.r = r.checkAndCoerce(DataType.INTEGER);
-                    this.dataType = DataType.ADDRESS;
-                }
-                else if (r.isType(DataType.ADDRESS, DataType.STRING)) {
-                    this.l = l.checkAndCoerce(DataType.INTEGER);
-                    this.r = r.checkAndCoerce(DataType.ADDRESS);
-                    this.dataType = DataType.ADDRESS;
-                }
-                else {
-                    this.l = l.checkAndCoerce(DataType.INTEGER);
-                    this.r = r.checkAndCoerce(DataType.INTEGER);
-                    this.dataType = DataType.INTEGER;
-                }
-            }
-            case "-" -> {
-                if (l.isType(DataType.ADDRESS)) {
-                    this.l = l.checkAndCoerce(DataType.ADDRESS);
-                    this.r = r.checkAndCoerce(DataType.INTEGER);
-                    this.dataType = DataType.ADDRESS;
-                }
-                else if (r.isType(DataType.ADDRESS)) {
-                    this.l = l.checkAndCoerce(DataType.INTEGER);
-                    this.r = r.checkAndCoerce(DataType.ADDRESS);
-                    this.dataType = DataType.ADDRESS;
-                }
-                else {
-                    this.l = l.checkAndCoerce(DataType.INTEGER);
-                    this.r = r.checkAndCoerce(DataType.INTEGER);
-                    this.dataType = DataType.INTEGER;
-                }
-            }
-            case "*", "/", "mod", "^" -> {
-                this.l = l.checkAndCoerce(DataType.INTEGER);
-                this.r = r.checkAndCoerce(DataType.INTEGER);
-                this.dataType = DataType.INTEGER;
-            }
-            // Comparison
-            case "=", "<>" -> {
-                if (l.isType(DataType.STRING) && r.isType(DataType.STRING)) {
-                    this.l = l.checkAndCoerce(DataType.STRING);
-                    this.r = r.checkAndCoerce(DataType.STRING);
-                    this.dataType = DataType.BOOLEAN;
-                }
-                else {
-                    this.l = l.checkAndCoerce(DataType.INTEGER);
-                    this.r = r.checkAndCoerce(DataType.INTEGER);
-                    this.dataType = DataType.BOOLEAN;
-                }
-            }
-            case "<", "<=", ">", ">=" -> {
-                this.l = l.checkAndCoerce(DataType.INTEGER);
-                this.r = r.checkAndCoerce(DataType.INTEGER);
-                this.dataType = DataType.BOOLEAN;
-            }
-            // Logical | Bit
-            case "or", "and", "xor" -> {
-                if (l.isType(DataType.BOOLEAN) && r.isType(DataType.BOOLEAN)) {
-                    this.l = l.checkAndCoerce(DataType.BOOLEAN);
-                    this.r = r.checkAndCoerce(DataType.BOOLEAN);
-                    this.dataType = DataType.BOOLEAN;
-                } else {
-                    this.l = l.checkAndCoerce(DataType.INTEGER);
-                    this.r = r.checkAndCoerce(DataType.INTEGER);
-                    this.dataType = DataType.INTEGER;
-                }
-            }
-            case "<<", ">>" -> {
-                this.l = l.checkAndCoerce(DataType.INTEGER);
-                this.r = r.checkAndCoerce(DataType.INTEGER);
-                this.dataType = DataType.INTEGER;
-            }
-            default -> {
-                throw new RuntimeException("unknown operation: " + this.op);
+        op = op.toLowerCase();
+        Descriptor descriptor = null;
+        for (var d : descriptors) {
+            if (Objects.equals(op, d.operation) && d.requirements.test(l,r)) {
+                descriptor = d;
+                break;
             }
         }
+        if (descriptor == null) {
+            var msg = String.format("unknown operation: (%s %s %s)", l, op, r);
+            throw new RuntimeException(msg);
+        }
+        this.l = l.checkAndCoerce(descriptor.leftType);
+        this.r = r.checkAndCoerce(descriptor.rightType);
+        this.descriptor = descriptor;
     }
     public BinaryExpression(String op, Expression l, Expression r) {
         // this seems a better arrangement, at least sometimes?
@@ -185,13 +101,13 @@ public class BinaryExpression implements Expression {
     @Override
     public Optional<Boolean> asBoolean() {
         if (isConstant()) {
-            if (INTEGER_OPS.containsKey(op)) {
-                return asInteger().map(i -> i != 0);
-            }
-            if (LOGICAL_OPS.containsKey(op)) {
+            if (descriptor.booleanReduction != null) {
                 Boolean left = this.getL().asBoolean().orElseThrow(() -> new RuntimeException("expecting a left boolean constant: " + toString()));
                 Boolean right = this.getR().asBoolean().orElseThrow(() -> new RuntimeException("expecting a right boolean constant: " + toString()));
-                return Optional.of(LOGICAL_OPS.get(op).apply(left, right));
+                return Optional.of(descriptor.booleanReduction.apply(left, right));
+            }
+            else if (descriptor.integerReduction != null) {
+                return asInteger().map(i -> i != 0);
             }
         }
         return Optional.empty();
@@ -199,10 +115,15 @@ public class BinaryExpression implements Expression {
 
     @Override
     public Optional<Integer> asInteger() {
-        if (isConstant() && INTEGER_OPS.containsKey(op)) {
-            Integer left = this.getL().asInteger().orElseThrow(() -> new RuntimeException("expecting a left integer constant: " + toString()));
-            Integer right = this.getR().asInteger().orElseThrow(() -> new RuntimeException("expecting a right integer constant: " + toString()));
-            return Optional.of(INTEGER_OPS.get(op).apply(left, right));
+        if (isConstant()) {
+            if (descriptor.integerReduction != null) {
+                Integer left = this.getL().asInteger().orElseThrow(() -> new RuntimeException("expecting a left integer constant: " + toString()));
+                Integer right = this.getR().asInteger().orElseThrow(() -> new RuntimeException("expecting a right integer constant: " + toString()));
+                return Optional.of(descriptor.integerReduction.apply(left, right));
+            }
+            else if (descriptor.booleanReduction != null) {
+                return asBoolean().map(b -> b ? 1 : 0);
+            }
         }
         return Optional.empty();
     }
@@ -210,13 +131,17 @@ public class BinaryExpression implements Expression {
     @Override
     public Optional<String> asString() {
         if (isConstant()) {
-            return switch (dataType) {
-                case BOOLEAN -> asBoolean().map(b -> b ? "True" : "False");
-                // TODO fix this up when byte becomes a real type
-                case INTEGER, BYTE -> asInteger().map(i -> Integer.toString(i));
-                case STRING -> throw new RuntimeException("unable to evaluate string expressions at this time");
-                case ADDRESS -> throw new RuntimeException("unable to evaluate address expressions at this time");
-            };
+            if (descriptor.stringReduction != null) {
+                String left = this.getL().asString().orElseThrow(() -> new RuntimeException("expecting a left string constant: " + toString()));
+                String right = this.getR().asString().orElseThrow(() -> new RuntimeException("expecting a right string constant: " + toString()));
+                return Optional.of(descriptor.stringReduction.apply(left, right));
+            }
+            else if (descriptor.booleanReduction != null) {
+                return asBoolean().map(b -> b ? "True" : "False");
+            }
+            else if (descriptor.integerReduction != null) {
+                return asInteger().map(i -> Integer.toString(i));
+            }
         }
         return Optional.empty();
     }
@@ -225,18 +150,138 @@ public class BinaryExpression implements Expression {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o instanceof BinaryExpression that) {
-            return Objects.equals(l, that.l) && Objects.equals(r, that.r) && Objects.equals(op, that.op);
+            return Objects.equals(l, that.l) && Objects.equals(r, that.r) && Objects.equals(descriptor, that.descriptor);
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(l, r, op);
+        return Objects.hash(l, r, descriptor);
     }
 
     @Override
     public String toString() {
-        return String.format("(%s %s %s)", l, op, r);
+        return String.format("(%s %s %s)", l, descriptor.operation, r);
+    }
+
+    private record Descriptor(String operation, BiPredicate<Expression,Expression> requirements,
+                      BiFunction<Integer,Integer,Integer> integerReduction,
+                      BiFunction<Boolean,Boolean,Boolean> booleanReduction,
+                      BiFunction<String,String,String> stringReduction,
+                      DataType leftType, DataType rightType, DataType resultType) {
+    }
+    private static Builder op(String operation) {
+        return new Builder(operation);
+    }
+    private static class Builder {
+        private final String operation;
+        private BiPredicate<Expression,Expression> requirements;
+        private BiFunction<Integer,Integer,Integer> integerReduction;
+        private BiFunction<Boolean,Boolean,Boolean> booleanReduction;
+        private BiFunction<String,String,String> stringReduction;
+        private DataType leftType;
+        private DataType rightType;
+
+        Builder(String operation) {
+            Objects.requireNonNull(operation);
+            this.operation = operation;
+        }
+        Builder bothTypesAre(DataType ...dataTypes) {
+            Objects.requireNonNull(dataTypes, operation);
+            addRequirement((l, r) -> l.isType(dataTypes) && r.isType(dataTypes));
+            if (dataTypes.length == 1) {
+                return coerceBothTo(dataTypes[0]);
+            }
+            return this;
+        }
+        Builder leftTypeIs(DataType ...dataTypes) {
+            Objects.requireNonNull(dataTypes, operation);
+            addRequirement((l, r) -> l.isType(dataTypes));
+            if (dataTypes.length == 1) {
+                return coerceLeftTo(dataTypes[0]);
+            }
+            return this;
+        }
+        Builder rightTypeIs(DataType ...dataTypes) {
+            Objects.requireNonNull(dataTypes, operation);
+            addRequirement((l, r) -> r.isType(dataTypes));
+            if (dataTypes.length == 1) {
+                return coerceRightTo(dataTypes[0]);
+            }
+            return this;
+        }
+        Builder anyType() {
+            addRequirement((l,r) -> true);
+            return this;
+        }
+
+        Builder coerceBothTo(DataType dataType) {
+            Objects.requireNonNull(dataType, operation);
+            this.leftType = dataType;
+            this.rightType = dataType;
+            return this;
+        }
+        Builder coerceLeftTo(DataType dataType) {
+            Objects.requireNonNull(dataType, operation);
+            this.leftType = dataType;
+            return this;
+        }
+        Builder coerceRightTo(DataType dataType) {
+            Objects.requireNonNull(dataType, operation);
+            this.rightType = dataType;
+            return this;
+        }
+
+        Builder stringReduction(BiFunction<String,String,String> stringReduction) {
+            Objects.requireNonNull(stringReduction, operation);
+            this.stringReduction = stringReduction;
+            return this;
+        }
+        Builder booleanReduction(BiFunction<Boolean,Boolean,Boolean> booleanReduction) {
+            Objects.requireNonNull(booleanReduction, operation);
+            this.booleanReduction = booleanReduction;
+            return this;
+        }
+        Builder integerReduction(BiFunction<Integer,Integer,Integer> integerReduction) {
+            Objects.requireNonNull(integerReduction, operation);
+            this.integerReduction = integerReduction;
+            return this;
+        }
+
+        Continuation result(DataType resultType) {
+            Objects.requireNonNull(resultType);
+
+            // validation to help prevent stupid programmer errors
+            Objects.requireNonNull(requirements, operation);
+            Objects.requireNonNull(leftType, operation);
+            Objects.requireNonNull(rightType, operation);
+
+            // add to our list
+            var d = new Descriptor(operation, requirements, integerReduction, booleanReduction, stringReduction, leftType, rightType, resultType);
+            BinaryExpression.descriptors.add(d);
+
+            return new Continuation(this);
+        }
+
+        void addRequirement(BiPredicate<Expression,Expression> requirement) {
+            if (requirements != null) {
+                requirements = requirements.and(requirement);
+            }
+            else {
+                requirements = requirement;
+            }
+        }
+    }
+    static class Continuation {
+        private final Builder previous;
+        
+        private Continuation(Builder builder) {
+            this.previous = builder;
+        }
+        
+        Builder and() {
+            return new Builder(previous.operation);
+        }
     }
 }

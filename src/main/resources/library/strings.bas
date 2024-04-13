@@ -177,11 +177,11 @@ module strings
 #endif
 
 #if defined(option.heap)
-    export function mid$(s as string, start as integer, optional n as integer = -1)
-        dim p as address, q as address
+    export function mid$(src as string, start as integer, optional n as integer = -1)
+        dim p as address, q as address, s as address
         if n = -1 then
             ' flag from the compiler for mid$(string,start) form
-            n = strings.len(s)
+            n = strings.len(src)
         end if
         if start < 1 or n < 0 then
             raise error 53, "ILLEGAL QUANTITY ERROR", "MID$"
@@ -189,7 +189,7 @@ module strings
         p = memory.heapalloc(n+2)
         poke p,n+2
         q = p + 1
-        s = s + start
+        s = src + start
         while n > 0 and peek(s) <> 0
             poke q,peek(s)
             q = q + 1
