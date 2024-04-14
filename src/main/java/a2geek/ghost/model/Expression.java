@@ -72,6 +72,7 @@ public interface Expression {
     default BinaryExpression times(Expression rhs) {
         return new BinaryExpression("*", this, rhs);
     }
+    default BinaryExpression dividedBy(Expression rhs) { return new BinaryExpression("/", this, rhs); }
     default BinaryExpression plus(Expression rhs) {
         return new BinaryExpression("+", this, rhs);
     }

@@ -101,6 +101,17 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     public Expression visitAssignment(BasicParser.AssignmentContext ctx) {
         var ref = visit(ctx.id);
         var expr = visit(ctx.a);
+        switch (ctx.op.getText()) {
+            case "=" -> {} // do nothing
+            case "+=" -> expr = ref.plus(expr);
+            case "-=" -> expr = ref.minus(expr);
+            case "/=" -> expr = ref.dividedBy(expr);
+            case "*=" -> expr = ref.times(expr);
+            case "^=" -> expr = model.callFunction("math.ipow", ref, expr);
+            case ">>=" -> expr = ref.rshift(expr);
+            case "<<=" -> expr = ref.lshift(expr);
+            default -> throw new RuntimeException("unexpected assignment operator: " + ctx.getText());
+        }
         if (expr.isType(DataType.STRING)) {
             expr = handleStringConcatenation(expr);
         }

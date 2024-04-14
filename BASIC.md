@@ -206,6 +206,19 @@ var = expr
 let var = expr
 ```
 
+There are a number of shorthand assignment statements available as well:
+
+| Assignment | Description                                                                  |
+|:-----------|:-----------------------------------------------------------------------------|
+| `=`        | Assign the given expression to the left-hand side.                           |
+| `+=`       | Add expression to the left-hand side. Same as `var = var + expr`.            |
+| `-=`       | Subtract expression to the left-hand side. Same as `var = var - expr`.       |
+| `*=`       | Multiply left-hand side by expression. Same as `var = var * expr`.           |
+| `/=`       | Divide left-hand side by expression. Same as `var = var / expr`.             |
+| `^=`       | Raise left-hand side to the power of expression. Same as `var = var ^ expr`. |
+| `<<=`      | Right shift left-hand side by expression bits. Same as `var = var << expr`.  |
+| `>>=`      | Left shift left-hand side by expression bits. Same as `var = var >> expr`.   |
+
 ### Traditional control flow
 
 Labels replace line numbers and `GOTO`/`GOSUB` targets those labels. `GOSUB` pushes the old code
