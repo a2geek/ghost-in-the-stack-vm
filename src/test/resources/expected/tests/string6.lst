@@ -1,0 +1,54 @@
+MAIN:
+    DIM _ONERR_TARGET AS ADDRESS = null
+    DIM _ONERR_FP AS ADDRESS = null
+    DIM _ONERR_SP AS ADDRESS = null
+    DIM A$ AS STRING = [""]
+    DIM N AS INTEGER = null
+    DIM _TEMP21 AS STRING = [""]
+    DIM _TEMP22 AS STRING = [""]
+   0:     *(105) = 32768
+   1:     CALL MEMORY.HEAPINIT()
+   0:     N = MEMORY.MEMFREE()
+   1:     CALL RUNTIME.PRINT_STRING("Starting with ")
+   2:     CALL RUNTIME.PRINT_INTEGER(N)
+   3:     CALL RUNTIME.PRINT_STRING(" bytes free.")
+   4:     CALL RUNTIME.PRINT_NEWLINE()
+   5:     CALL MEMORY.HEAPREFDECR(addrof(A$))
+   6:     A$ = "The "
+   7:     CALL MEMORY.HEAPREFINCR(A$)
+   8:     _TEMP21 = MEMORY.HEAPALLOC(((STRINGS.LEN(A$) + STRINGS.LEN("quick brown ")) + 2))
+   9:     *(_TEMP21) = CByte((STRINGS.LEN(A$) + STRINGS.LEN("quick brown ")))
+  10:     CALL STRINGS.STRCAT(_TEMP21, A$)
+  11:     CALL STRINGS.STRCAT(_TEMP21, "quick brown ")
+  12:     CALL MEMORY.HEAPREFDECR(addrof(A$))
+  13:     A$ = _TEMP21
+  14:     CALL MEMORY.HEAPREFINCR(A$)
+  15:     _TEMP22 = MEMORY.HEAPALLOC(((((STRINGS.LEN(A$) + STRINGS.LEN("fox jumps ")) + STRINGS.LEN("over the")) + STRINGS.LEN(" lazy dog.")) + 2))
+  16:     *(_TEMP22) = CByte((((STRINGS.LEN(A$) + STRINGS.LEN("fox jumps ")) + STRINGS.LEN("over the")) + STRINGS.LEN(" lazy dog.")))
+  17:     CALL STRINGS.STRCAT(_TEMP22, A$)
+  18:     CALL STRINGS.STRCAT(_TEMP22, "fox jumps ")
+  19:     CALL STRINGS.STRCAT(_TEMP22, "over the")
+  20:     CALL STRINGS.STRCAT(_TEMP22, " lazy dog.")
+  21:     CALL MEMORY.HEAPREFDECR(addrof(A$))
+  22:     A$ = _TEMP22
+  23:     CALL MEMORY.HEAPREFINCR(A$)
+  24:     CALL RUNTIME.PRINT_STRING("Result: ")
+  25:     CALL RUNTIME.PRINT_NEWLINE()
+  26:     CALL RUNTIME.PRINT_STRING(A$)
+  27:     CALL RUNTIME.PRINT_NEWLINE()
+  28:     CALL MEMORY.HEAPFREE(A$)
+  29:     CALL RUNTIME.PRINT_STRING("Ending with ")
+  30:     CALL RUNTIME.PRINT_INTEGER(MEMORY.MEMFREE())
+  31:     CALL RUNTIME.PRINT_STRING(" bytes free.")
+  32:     CALL RUNTIME.PRINT_NEWLINE()
+  33:     CALL TEXT.INVERSE()
+  34:     IF (N = MEMORY.MEMFREE()) THEN
+   0:         CALL RUNTIME.PRINT_STRING("SUCCESS")
+   1:         CALL RUNTIME.PRINT_NEWLINE()
+          ELSE
+   0:         CALL RUNTIME.PRINT_STRING("FAIL")
+   1:         CALL RUNTIME.PRINT_NEWLINE()
+          END IF
+  35:     CALL TEXT.NORMAL()
+  36:     END
+

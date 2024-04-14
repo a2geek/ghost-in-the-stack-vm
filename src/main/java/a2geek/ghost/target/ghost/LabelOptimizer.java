@@ -83,7 +83,8 @@ public class LabelOptimizer {
             var inst = list.getFirst();
             if (is(inst.opcode(), Opcode.LOADA, Opcode.IFNZ, Opcode.IFZ, Opcode.GOTO, Opcode.GOSUB)
                     && replaceLabels.containsKey(inst.label())) {
-                list.set(0, new Instruction(replaceLabels.get(inst.label()), inst.opcode(), null, null, null));
+                list.set(0, new Instruction(replaceLabels.get(inst.label()), inst.opcode(),
+                    null, null, null, null));
             }
         }
     }

@@ -1,0 +1,86 @@
+MAIN:
+    DIM _ONERR_TARGET AS ADDRESS = null
+    DIM _ONERR_FP AS ADDRESS = null
+    DIM _ONERR_SP AS ADDRESS = null
+    DIM T1 AS INTEGER = null
+    DIM T2 AS INTEGER = null
+    DIM I AS INTEGER = null
+   0:     CALL RUNTIME.PRINT_STRING("Accumulate1: ADDROF(T1)=")
+   1:     CALL RUNTIME.PRINT_ADDRESS(addrof(T1))
+   2:     CALL RUNTIME.PRINT_NEWLINE()
+   3:     I = 1
+   4: _FOR_LOOP7:
+   5:     IF (MATH.SGN(1) >= 0) THEN
+   0:         IF (I <= 10) THEN
+   0:             CALL ACCUMULATE1(addrof(T1), I)
+   1:             CALL RUNTIME.PRINT_STRING("Accumulate1: total=")
+   2:             CALL RUNTIME.PRINT_INTEGER(T1)
+   3:             CALL RUNTIME.PRINT_STRING(", value=")
+   4:             CALL RUNTIME.PRINT_INTEGER(I)
+   5:             CALL RUNTIME.PRINT_NEWLINE()
+   6: _FOR_CONTINUE7:
+   7:             I = (I + 1)
+   8:             GOTO _FOR_LOOP7
+              END IF
+          ELSE
+   0:         IF (I >= 10) THEN
+   0:             CALL ACCUMULATE1(addrof(T1), I)
+   1:             CALL RUNTIME.PRINT_STRING("Accumulate1: total=")
+   2:             CALL RUNTIME.PRINT_INTEGER(T1)
+   3:             CALL RUNTIME.PRINT_STRING(", value=")
+   4:             CALL RUNTIME.PRINT_INTEGER(I)
+   5:             CALL RUNTIME.PRINT_NEWLINE()
+   6: _FOR_CONTINUE7:
+   7:             I = (I + 1)
+   8:             GOTO _FOR_LOOP7
+              END IF
+          END IF
+   6: _FOR_EXIT7:
+   7:     I = 1
+   8: _FOR_LOOP8:
+   9:     IF (MATH.SGN(1) >= 0) THEN
+   0:         IF (I <= 10) THEN
+   0:             T2 = ACCUMULATE2(T2, I)
+   1:             CALL RUNTIME.PRINT_STRING("Accumulate2: total=")
+   2:             CALL RUNTIME.PRINT_INTEGER(T2)
+   3:             CALL RUNTIME.PRINT_STRING(", value=")
+   4:             CALL RUNTIME.PRINT_INTEGER(I)
+   5:             CALL RUNTIME.PRINT_NEWLINE()
+   6: _FOR_CONTINUE8:
+   7:             I = (I + 1)
+   8:             GOTO _FOR_LOOP8
+              END IF
+          ELSE
+   0:         IF (I >= 10) THEN
+   0:             T2 = ACCUMULATE2(T2, I)
+   1:             CALL RUNTIME.PRINT_STRING("Accumulate2: total=")
+   2:             CALL RUNTIME.PRINT_INTEGER(T2)
+   3:             CALL RUNTIME.PRINT_STRING(", value=")
+   4:             CALL RUNTIME.PRINT_INTEGER(I)
+   5:             CALL RUNTIME.PRINT_NEWLINE()
+   6: _FOR_CONTINUE8:
+   7:             I = (I + 1)
+   8:             GOTO _FOR_LOOP8
+              END IF
+          END IF
+  10: _FOR_EXIT8:
+  11:     CALL TEXT.INVERSE()
+  12:     IF ((T1 = EXPECTED) and (T2 = EXPECTED)) THEN
+   0:         CALL RUNTIME.PRINT_STRING("SUCCESS")
+   1:         CALL RUNTIME.PRINT_NEWLINE()
+          ELSE
+   0:         CALL RUNTIME.PRINT_STRING("FAIL")
+   1:         CALL RUNTIME.PRINT_NEWLINE()
+          END IF
+  13:     CALL TEXT.NORMAL()
+  14:     END
+
+SUB ACCUMULATE1(BYVAL VALUE AS INTEGER, BYREF TOTAL AS INTEGER)
+   0:     *(TOTAL) = (*(TOTAL) + VALUE)
+END SUB
+
+FUNCTION ACCUMULATE2(BYVAL VALUE AS INTEGER, BYVAL TOTAL AS INTEGER) AS INTEGER
+   0:     TOTAL = (TOTAL + VALUE)
+   1:     RETURN TOTAL
+END FUNCTION
+

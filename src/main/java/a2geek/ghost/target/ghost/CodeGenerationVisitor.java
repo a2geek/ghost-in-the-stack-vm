@@ -49,6 +49,7 @@ public class CodeGenerationVisitor extends DispatchVisitor {
         setupOnErrContext(program.findFirst(named(DEFAULT_ERROR_HANDLER))
                 .orElseThrow(() -> error("unknown label: '%s'", DEFAULT_ERROR_HANDLER)));
         setupDefaultArrayValues(program);
+        setupDefaultStringValues(program);
 
         dispatchAll(program, program);
         // Note we don't have a GLOBAL_FREE; EXIT restores stack for us
@@ -79,7 +80,8 @@ public class CodeGenerationVisitor extends DispatchVisitor {
 
     public void setupDefaultArrayValues(Scope scope) {
         scope.getLocalSymbols().forEach(symbol -> {
-            if (symbol.defaultValues() == null || symbol.symbolType() == SymbolType.CONSTANT) {
+            if (symbol.defaultValues() == null || symbol.numDimensions() == 0
+                    || symbol.symbolType() == SymbolType.CONSTANT) {
                 return;
             }
             var dataType = symbol.dataType();
@@ -109,6 +111,18 @@ public class CodeGenerationVisitor extends DispatchVisitor {
         });
     }
 
+    public void setupDefaultStringValues(Scope scope) {
+        scope.getLocalSymbols().forEach(symbol -> {
+            if (symbol.dataType() != DataType.STRING || symbol.defaultValues() == null || symbol.symbolType() != SymbolType.VARIABLE) {
+                return;
+            }
+            if (symbol.defaultValues().getFirst() instanceof StringConstant constant) {
+                visit(constant);
+                emitStore(symbol);
+            }
+        });
+    }
+
     public int localFrameOffset(Symbol symbol) {
         if (this.frames.getLast().offsets().containsKey(symbol)) {
             return this.frames.getLast().offsets().get(symbol);
@@ -123,10 +137,6 @@ public class CodeGenerationVisitor extends DispatchVisitor {
     }
 
     public void emitLoad(Symbol symbol) {
-        emitLoad(new VariableReference(symbol));
-    }
-    public void emitLoad(VariableReference var) {
-        var symbol = var.getSymbol();
         switch (symbol.symbolType()) {
             case VARIABLE, PARAMETER, RETURN_VALUE -> {
                 switch (symbol.declarationType()) {
@@ -370,19 +380,10 @@ public class CodeGenerationVisitor extends DispatchVisitor {
                 .orElseThrow(() -> new RuntimeException(subFullName + " not found"));
         if (scope instanceof Subroutine sub) {
             scopesUsed.add(sub.getFullPathName());
-            boolean hasParameters = !statement.getParameters().isEmpty();
             for (Expression expr : statement.getParameters()) {
                 dispatch(expr);
             }
             code.emit(Opcode.GOSUB, sub.getFullPathName());
-            if (hasParameters) {
-                var bytes = statement.getParameters().stream()
-                    .map(Expression::getType)
-                    .map(DataType::sizeof)
-                    .mapToInt(Integer::intValue)
-                    .sum();
-                code.emit(Opcode.POPN, bytes);
-            }
             return;
         }
         throw new RuntimeException(String.format("calling a subroutine but '%s' is not a subroutine?", subFullName));
@@ -426,13 +427,14 @@ public class CodeGenerationVisitor extends DispatchVisitor {
         if (hasLocalScope) setupLocalFrame(frame);
         saveOnErrContext(subroutine);
         setupDefaultArrayValues(subroutine);
+        setupDefaultStringValues(subroutine);
         if (subroutine.getStatements() != null) {
             dispatchAll(subroutine, subroutine);
         }
         code.emit(exitLabel);
         if (hasLocalScope) tearDownLocalFrame(frame);
         restoreOnErrContext(subroutine);
-        code.emit(Opcode.RETURN);
+        code.emit(Opcode.RETURNN, frame.parameterSize());
         frames.pop();
     }
 
@@ -461,13 +463,14 @@ public class CodeGenerationVisitor extends DispatchVisitor {
         setupLocalFrame(frame);
         saveOnErrContext(function);
         setupDefaultArrayValues(function);
+        setupDefaultStringValues(function);
         if (function.getStatements() != null) {
             dispatchAll(function, function);
         }
         code.emit(exitLabel);
         tearDownLocalFrame(frame);
         restoreOnErrContext(function);
-        code.emit(Opcode.RETURN);
+        code.emit(Opcode.RETURNN, frame.parameterSize());
         frames.pop();
     }
 
@@ -561,7 +564,7 @@ public class CodeGenerationVisitor extends DispatchVisitor {
 
     @Override
     public Expression visit(VariableReference expression) {
-        emitLoad(expression);
+        emitLoad(expression.getSymbol());
         return null;
     }
 
@@ -615,15 +618,6 @@ public class CodeGenerationVisitor extends DispatchVisitor {
                 code.emit(Opcode.PUSHZ);
                 emitParameters.run();
                 code.emit(Opcode.GOSUB, func.getFullPathName());
-                var hasParameters = !function.getParameters().isEmpty();
-                if (hasParameters) {
-                    var bytes = function.getParameters().stream()
-                        .map(Expression::getType)
-                        .map(DataType::sizeof)
-                        .mapToInt(Integer::intValue)
-                        .sum();
-                    code.emit(Opcode.POPN, bytes);
-                }
             }
         }
         return null;
@@ -670,7 +664,28 @@ public class CodeGenerationVisitor extends DispatchVisitor {
 
     @Override
     public Expression visit(AddressOfOperator expression) {
-        code.emit(Opcode.LOADA, expression.getSymbol().name());
+        var symbol = expression.getSymbol();
+        switch (symbol.symbolType()) {
+            case VARIABLE, PARAMETER -> {
+                switch (symbol.declarationType()) {
+                    case GLOBAL -> {
+                        code.emit(Opcode.LOADGP);
+                        code.emit(Opcode.INCR);
+                        code.emit(Opcode.LOADC, globalFrameOffset(symbol));
+                        code.emit(Opcode.ADD);
+                    }
+                    case LOCAL -> {
+                        code.emit(Opcode.LOADLP);
+                        code.emit(Opcode.INCR);
+                        code.emit(Opcode.LOADC, localFrameOffset(symbol));
+                        code.emit(Opcode.ADD);
+                    }
+                    case INTRINSIC -> throw error("cannot take address of an intrinsic value: '%s'", expression);
+                };
+            }
+            case LABEL -> code.emit(Opcode.LOADA, symbol.name());
+            default -> throw error("unexpected addressof expression: '%s'", expression);
+        }
         return null;
     }
 

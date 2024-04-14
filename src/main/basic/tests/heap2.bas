@@ -21,8 +21,8 @@ addr2 = memory.heapalloc(100)
 memory.heapfree(addr1)
 memory.heapfree(addr2)
 addr3 = memory.heapalloc(200)
-if addr3 <> 0x8004 then
-    print "Test 1: Expecting $8004 but got ";addr3;"."
+if addr3 <> 0x8006 then
+    print "Test 1: Expecting $8006 but got ";addr3;"."
 else
     print "Test 1: Passed."
 end if
@@ -35,9 +35,9 @@ temp = memory.heapalloc(100)
 memory.heapfree(addr1)
 addr2 = memory.heapalloc(50)
 addr3 = memory.heapalloc(50)
-' $8000+104(chunk1)+4 and $8000+104(chunk1)+54(chunk2)+4
-if addr2 <> 0x806C OR addr3 <> 0x80A2 then
-    print "Test 2: Expecting $806C/$80A2 but got ";addr2;" and ";addr3;"."
+' $8000+106(chunk1)+6 and $8000+106(chunk1)+56(chunk2)+6
+if addr2 <> 0x8070 OR addr3 <> 0x80A8 then
+    print "Test 2: Expecting $8070/$80A8 but got ";addr2;" and ";addr3;"."
 else
     print "Test 2: Passed."
 end if
@@ -47,8 +47,8 @@ end if
 memory.heapfree(addr2)
 memory.heapfree(addr3)
 addr1 = memory.heapalloc(200)
-if addr1 <> 0x806C then
-    print "Test 3: Expecting $806C but got ";addr1;"."
+if addr1 <> 0x8070 then
+    print "Test 3: Expecting $8070 but got ";addr1;"."
 else
     print "Test 3: Passed."
 end if

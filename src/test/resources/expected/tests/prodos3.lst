@@ -12,7 +12,7 @@ MAIN:
    6:     CALL RUNTIME.PRINT_STRING("PRESS ENTER TO QUIT")
    7:     CALL RUNTIME.PRINT_NEWLINE()
    8: _WHILE_LOOP21:
-   9:     IF (*((- 16384)) < 128) THEN
+   9:     IF (CInt(*((- 16384))) < 128) THEN
    0:         GOTO _WHILE_LOOP21
           END IF
   10: _WHILE_EXIT21:

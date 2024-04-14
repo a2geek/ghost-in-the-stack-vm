@@ -101,16 +101,85 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     public Expression visitAssignment(BasicParser.AssignmentContext ctx) {
         var ref = visit(ctx.id);
         var expr = visit(ctx.a);
+        if (expr.isType(DataType.STRING)) {
+            expr = handleStringConcatenation(expr);
+        }
+        if (ref.isType(DataType.STRING)) {
+            model.getProgram().getMemoryManagementStrategy().decrementReferenceCount(ref);
+        }
         if (ref instanceof VariableReference varRef) {
             model.assignStmt(varRef, expr);
+            if (ref.isType(DataType.STRING)) {
+                model.getProgram().getMemoryManagementStrategy().incrementReferenceCount(ref);
+            }
             return null;
         }
         else if (ref instanceof DereferenceOperator deref) {
             model.assignStmt(deref, expr);
+            if (ref.isType(DataType.STRING)) {
+                model.getProgram().getMemoryManagementStrategy().incrementReferenceCount(ref);
+            }
             return null;
         }
         else {
             throw new RuntimeException("expecting a variable type for assignment: " + ctx.id.getText());
+        }
+    }
+
+    /**
+     * The tree structure for string concatenation creates an unnecessarily complex chain of events.
+     * Instead of concatenating just two items at a time, we concatenate all of them at once.
+     * Note that this strategy does mean we need to identify every place a string expression might
+     * exist and set that up.
+     * <p/>
+     * From (pseudocode for <pre>a$=a$+b$+c$</pre> with extra details dropped):
+     * <pre>
+     *     T1=alloc(len(b$)+len(c$))
+     *     strcat(T1,b$)
+     *     strcat(T1,c$)
+     *     T2=alloc(len(a$)+len(T1))
+     *     strcat(T2,a$)
+     *     strcat(T2,T1)
+     *     return T2
+     * </pre>
+     * ... to ...
+     * <pre>
+     *     T1=alloc(len(a$)+len(b$)+len(c$))
+     *     strcat(T1,a$)
+     *     strcat(T1,b$)
+     *     strcat(T1,c$)
+     *     return T1
+     * </pre>
+     */
+    Expression handleStringConcatenation(Expression expr) {
+        if (!expr.isType(DataType.STRING)) {
+            throw new RuntimeException("[compiler bug] expecting string expression: " + expr);
+        }
+        // only for binary concatenation expressions
+        if (!(expr instanceof BinaryExpression bin && "+".equals(bin.getOp()))) {
+            return expr;
+        }
+        List<Expression> exprs = new ArrayList<>();
+        collectStringExpressions(expr, exprs);
+        var strlen = exprs.stream()
+                .map(str -> model.callFunction("strings.len",str))
+                .reduce(Expression::plus)
+                .orElseThrow();
+        var symbol = model.addTempVariable(DataType.STRING);
+        var temp = VariableReference.with(symbol);
+        model.allocateStringArray(symbol, strlen);
+        exprs.forEach(str -> {
+            model.callSubroutine("strings.strcat", temp, str);
+        });
+        return temp;
+    }
+    public void collectStringExpressions(Expression source, List<Expression> exprs) {
+        if (source instanceof BinaryExpression bin) {
+            collectStringExpressions(bin.getL(), exprs);
+            collectStringExpressions(bin.getR(), exprs);
+        }
+        else {
+            exprs.add(source);
         }
     }
 
@@ -225,11 +294,11 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         Expression expr = visit(ctx.a);
         Expression msg = StringConstant.EMPTY;
         if (ctx.m != null) {
-            msg = visit(ctx.m);
+            msg = handleStringConcatenation(visit(ctx.m));
         }
         Expression context = StringConstant.EMPTY;
         if (ctx.c != null) {
-            context = visit(ctx.c);
+            context = handleStringConcatenation(visit(ctx.c));
         }
         var linenum = new IntegerConstant(ctx.getStart().getLine());
         var source = new StringConstant(ctx.getStart().getTokenSource().getSourceName());
@@ -281,7 +350,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         Expression end = visit(ctx.b);
         Expression step = optVisit(ctx.c).orElse(new IntegerConstant(1));
 
-        var ref = new VariableReference(symbol);
+        var ref = VariableReference.with(symbol);
         var labels = model.addLabels("FOR_LOOP", "FOR_EXIT", "FOR_CONTINUE");
         var loopLabel = labels.get(0);
         var exitLabel = labels.get(1);
@@ -568,7 +637,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                 switch (expr.getType()) {
                     case INTEGER -> model.callLibrarySubroutine("print_integer", expr);
                     case BOOLEAN -> model.callLibrarySubroutine("print_boolean", expr);
-                    case STRING -> model.callLibrarySubroutine("print_string", expr);
+                    case STRING -> model.callLibrarySubroutine("print_string", handleStringConcatenation(expr));
                     case ADDRESS -> model.callLibrarySubroutine("print_address", expr);
                     case BYTE -> model.callLibrarySubroutine("print_byte", expr);
                     default -> throw new RuntimeException("Unsupported PRINT type: " + expr.getType());
@@ -703,7 +772,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                     dimensions.add(new IntegerConstant(defaultValues.size()));
                 }
                 names.add(id);
-                decls.add(new IdDeclaration(modifiers, id, dt, dimensions, defaultValues));
+                decls.add(new IdDeclaration(modifiers, id, PassingMode.BYVAL, dt, dimensions, defaultValues));
             });
         }
         return decls;
@@ -753,8 +822,23 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                     dimensions.add(PlaceholderExpression.of(DataType.INTEGER));
                 }
                 DataType dt = buildDataType(id, idDecl.datatype(), dimensions.isEmpty());
+                List<Expression> defaultValues = new ArrayList<>();
+                if (idDecl.optional() != null || idDecl.expr() != null) {
+                    if (idDecl.expr() == null) {
+                        throw new RuntimeException("Optional parameter specified but no default value given: " + idDecl.getText());
+                    }
+                    var defaultValue = visit(idDecl.expr());
+                    if (!defaultValue.isConstant()) {
+                        throw new RuntimeException("paramater default values must be a constant: " + idDecl.getText());
+                    }
+                    defaultValues.add(defaultValue);
+                }
+                PassingMode passingMode = PassingMode.BYVAL;
+                if (idDecl.passingMode() != null) {
+                    passingMode = PassingMode.valueOf(idDecl.passingMode().getText().toUpperCase());
+                }
                 names.add(id);
-                decls.add(new IdDeclaration(Set.of(), id, dt, dimensions, List.of()));
+                decls.add(new IdDeclaration(Set.of(), id, passingMode, dt, dimensions, defaultValues));
             });
         }
         return decls;
@@ -869,7 +953,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                     if (decl.defaultValues().size() != 1) {
                         throw new RuntimeException("can only assign one default value: " + decl.name());
                     }
-                    model.assignStmt(new VariableReference(symbol), decl.defaultValues().getFirst());
+                    model.assignStmt(VariableReference.with(symbol), decl.defaultValues().getFirst());
                 }
             }
         });
@@ -914,7 +998,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             variableTest.test(id);
             return model.addVariable(id, determineDataType(id, DataType.INTEGER));
         });
-        return new VariableReference(symbol);
+        return VariableReference.with(symbol);
     }
 
     /**
@@ -932,16 +1016,21 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         return defaultDataType;
     }
 
-    private final Map<String, BiFunction<List<Expression>,ParseTree,Expression>> FUNCTION_HANDLERS = Map.of(
-        "addrof", this::handleAddrOfFunction,
-        "caddr", this::handleCAddrFunction,
-        "cbool", this::handleCBoolFunction,
-        "cbyte", this::handleCByteFunction,
-        "cint", this::handleCIntFunction,
-        "peek", this::handlePeekFunction,
-        "peekw", this::handlePeekwFunction,
-        "ubound", this::handleUboundFunction
-    );
+    private final Map<String, BiFunction<List<Expression>,ParseTree,Expression>> FUNCTION_HANDLERS;
+    {
+        FUNCTION_HANDLERS = new HashMap<>();
+        FUNCTION_HANDLERS.putAll(Map.of(
+            "addrof", this::handleAddrOfFunction,
+            "caddr", this::handleCAddrFunction,
+            "cbool", this::handleCBoolFunction,
+            "cbyte", this::handleCByteFunction,
+            "cint", this::handleCIntFunction,
+            "peek", this::handlePeekFunction,
+            "peekw", this::handlePeekwFunction,
+            "ubound", this::handleUboundFunction
+        ));
+    }
+
     Expression handleUboundFunction(List<Expression> params, ParseTree ctx) {
         if (params.size() == 1 && params.getFirst() instanceof VariableReference varRef) {
             return new ArrayLengthFunction(varRef.getSymbol(), 1);
@@ -996,6 +1085,13 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             return new TypeConversionOperator(params.getFirst(), DataType.INTEGER);
         }
         throw new RuntimeException("can only use CInt on a simple variable: " + ctx.getText());
+    }
+
+    void ensureHeapEnabled(ParseTree ctx) {
+        if (model.getProgram().getMemoryManagementStrategy().isUsingHeap()) {
+            return;
+        }
+        throw new RuntimeException("requires heap to be enabled: " + ctx.getText());
     }
 
     @Override
@@ -1067,25 +1163,19 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         if (l.isType(DataType.STRING) && r.isType(DataType.STRING)) {
             if ("=".equals(op) || "<>".equals(op)) {
                 // strcmp(l,r) op 0
+                l = handleStringConcatenation(l);
+                r = handleStringConcatenation(r);
                 return new BinaryExpression(
                         model.callFunction("strings.strcmp", Arrays.asList(l,r)),
                         IntegerConstant.ZERO,
                         op);
             }
             else if ("+".equals(op)) {
-                // t1 = new(len(left)+len(right)+2)
-                // strcat(t1,"Hello")   ' sets length as well
-                // strcat(t1,", ")      ' ditto
-                // uses t1 as expression
-                var symbol = model.addTempVariable(DataType.STRING);
-                model.allocateStringArray(symbol, model.callFunction("strings.len",l).plus(model.callFunction("strings.len",r)));
-                var temp = VariableReference.with(symbol);
-                model.callSubroutine("strings.strcat", temp, l);
-                model.callSubroutine("strings.strcat", temp, r);
-                return temp;
+                // Note that we are deferring code to later
+                return l.plus(r);
             }
             else {
-                throw new RuntimeException("strings only support in/equality: " + ctx.getText());
+                throw new RuntimeException("strings only support =,<>,+ operations: " + ctx.getText());
             }
         }
         else {
@@ -1118,17 +1208,20 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     }
     record IdDeclaration(Set<IdModifier> modifiers,
                          String name,
+                         PassingMode passingMode,
                          DataType dataType,
                          List<Expression> dimensions,
                          List<Expression> defaultValues) {
         /** Validate this is appropriate for a parameter and transform it. */
         public Symbol.Builder toParameter() {
-            if (!defaultValues().isEmpty()) {
-                throw new RuntimeException("parameters cannot have default values");
-            }
-            return Symbol.variable(name, SymbolType.PARAMETER)
+            var builder = Symbol.variable(name, SymbolType.PARAMETER)
                     .dataType(dataType)
-                    .dimensions(dimensions);
+                    .dimensions(dimensions)
+                    .passingMode(passingMode);
+            if (defaultValues != null && !defaultValues.isEmpty()) {
+                builder.defaultValues(defaultValues);
+            }
+            return builder;
         }
         public boolean isArray() {
             return dimensions != null && !dimensions.isEmpty();

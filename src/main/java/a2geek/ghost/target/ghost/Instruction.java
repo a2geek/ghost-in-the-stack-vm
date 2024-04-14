@@ -5,7 +5,7 @@ import java.io.ByteArrayOutputStream;
 import java.util.Map;
 import java.util.Objects;
 
-public record Instruction (String label, Opcode opcode, Directive directive, Integer arg, ConstantValue constantValue) {
+public record Instruction (String label, Opcode opcode, Directive directive, Integer arg, Integer arg2, ConstantValue constantValue) {
     public boolean isLabelOnly() {
         return label != null && opcode == null && directive == null && arg == null && constantValue == null;
     }
@@ -45,6 +45,11 @@ public record Instruction (String label, Opcode opcode, Directive directive, Int
             case 2:
                 data[1] = (byte)(value & 0xff);
                 data[2] = (byte)(value >> 8 & 0xff);
+                break;
+            case 3:
+                data[1] = value.byteValue();
+                data[2] = (byte)(arg2 & 0xff);
+                data[3] = (byte)(arg2 >> 8 & 0xff);
                 break;
         }
         return data;
@@ -98,8 +103,11 @@ public record Instruction (String label, Opcode opcode, Directive directive, Int
         else if (label == null && opcode != null && arg == null) {
             return String.format("\t%s", opcode);
         }
-        else if (label == null && opcode != null && arg != null) {
+        else if (label == null && opcode != null && arg != null && arg2 == null) {
             return String.format("\t%s %04X", opcode, arg & 0xffff);
+        }
+        else if (label == null && opcode != null && arg != null && arg2 != null) {
+            return String.format("\t%s %04X,%04X", opcode, arg & 0xffff, arg2 & 0xffff);
         }
         else if (label != null && opcode != null && arg == null) {
             return String.format("\t%s %s", opcode, label);

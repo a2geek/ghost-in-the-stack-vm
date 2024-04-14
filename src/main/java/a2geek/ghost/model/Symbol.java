@@ -11,7 +11,7 @@ import java.util.function.Predicate;
 
 public record Symbol(String name, SymbolType symbolType, DeclarationType declarationType,
                      List<Expression> defaultValues, DataType dataType, List<Expression> dimensions,
-                     Scope scope, String targetName, boolean temporary) {
+                     Scope scope, String targetName, boolean temporary, PassingMode passingMode) {
     public boolean hasDefaultValue(int size) {
         return defaultValues != null && defaultValues.size() == size;
     }
@@ -49,6 +49,7 @@ public record Symbol(String name, SymbolType symbolType, DeclarationType declara
         private Scope scope;
         private String targetName;
         private boolean temporary = false;  // explicitly the default
+        private PassingMode passingMode = PassingMode.BYVAL;
 
         Builder(String name, SymbolType symbolType) {
             Objects.requireNonNull(name);
@@ -66,6 +67,7 @@ public record Symbol(String name, SymbolType symbolType, DeclarationType declara
             this.scope = original.scope;
             this.targetName = original.targetName;
             this.temporary = original.temporary;
+            this.passingMode = original.passingMode;
         }
         public Builder name(String name) {
             Objects.requireNonNull(name);
@@ -101,6 +103,9 @@ public record Symbol(String name, SymbolType symbolType, DeclarationType declara
             this.defaultValues = exprs;
             return this;
         }
+        public List<Expression> defaultValues() {
+            return this.defaultValues;
+        }
         public Builder dataType(DataType dataType) {
             Objects.requireNonNull(dataType);
             this.dataType = dataType;
@@ -119,6 +124,9 @@ public record Symbol(String name, SymbolType symbolType, DeclarationType declara
             this.dimensions = dimensions;
             return this;
         }
+        public int numDimensions() {
+            return this.dimensions.size();
+        }
         public Builder scope(Scope scope) {
             this.scope = scope;
             return this;
@@ -131,6 +139,10 @@ public record Symbol(String name, SymbolType symbolType, DeclarationType declara
             this.temporary = temporary;
             return this;
         }
+        public Builder passingMode(PassingMode passingMode) {
+            this.passingMode = passingMode;
+            return this;
+        }
         public boolean equals(Symbol symbol) {
             if (symbol == null) return false;
             return Objects.equals(this.name, symbol.name)
@@ -140,14 +152,15 @@ public record Symbol(String name, SymbolType symbolType, DeclarationType declara
                 && Objects.equals(this.defaultValues, symbol.defaultValues)
                 && Objects.equals(this.dataType, symbol.dataType)
                 && Objects.equals(this.dimensions, symbol.dimensions)
-                && Objects.equals(this.temporary, symbol.temporary);
+                && Objects.equals(this.temporary, symbol.temporary)
+                && Objects.equals(this.passingMode, symbol.passingMode);
         }
         public Symbol build() {
             if (defaultValues != null && defaultValues.size() > 1 && dimensions.isEmpty()) {
                 throw new RuntimeException("expecting array but no dimensions assigned " + name);
             }
             return new Symbol(name, symbolType, declarationType, defaultValues, dataType, dimensions,
-                    scope, targetName, temporary);
+                    scope, targetName, temporary, passingMode);
         }
     }
 

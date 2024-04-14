@@ -18,7 +18,7 @@ public class StackMemoryManagement implements MemoryManagement {
     }
 
     @Override
-    public boolean isUsingMemory() {
+    public boolean isUsingHeap() {
         return false;
     }
 
@@ -39,6 +39,16 @@ public class StackMemoryManagement implements MemoryManagement {
             model.callSubroutine("dealloc", bytes);
         });
         allocations.clear();
+    }
+
+    @Override
+    public void incrementReferenceCount(Expression expr) {
+        // not applicable
+    }
+
+    @Override
+    public void decrementReferenceCount(Expression expr) {
+        // not applicable
     }
 
     @Override

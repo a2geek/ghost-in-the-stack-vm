@@ -193,7 +193,7 @@ public class InliningVisitor extends Visitor implements RepeatingVisitor {
                     throw new RuntimeException(msg);
                 }
                 var expr = dispatch(statement.getExpr()).orElseThrow();
-                addStatement(new AssignmentStatement(VariableReference.with(returnValue), expr));
+                addStatement(AssignmentStatement.create(VariableReference.with(returnValue), expr));
             }
             addStatement(new GotoGosubStatement("goto", returnLabel));
         }
@@ -215,12 +215,9 @@ public class InliningVisitor extends Visitor implements RepeatingVisitor {
 
         @Override
         public void visit(AssignmentStatement statement, VisitorContext context) {
+            var lhs = dispatch(statement.getVar()).orElseThrow();
             var expr = dispatch(statement.getValue()).orElseThrow();
-            switch (dispatch(statement.getVar()).orElseThrow()) {
-                case VariableReference ref -> addStatement(new AssignmentStatement(ref, expr));
-                case DereferenceOperator deref -> addStatement(new AssignmentStatement(deref, expr));
-                default -> throw new RuntimeException("[compiler bug] unexpected LHS of assignment: " + statement);
-            }
+            addStatement(AssignmentStatement.create(lhs, expr));
         }
 
         @Override

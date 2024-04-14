@@ -382,7 +382,7 @@ public class GhostBasicVisitorTest {
                 Symbol.variable("a", SymbolType.PARAMETER).dataType(DataType.INTEGER)
                       .dimensions(List.of(PlaceholderExpression.of(DataType.INTEGER))).build()
         );
-        var arraySymbol = new VariableReference(Symbol.variable("A", SymbolType.VARIABLE)
+        var arraySymbol = VariableReference.with(Symbol.variable("A", SymbolType.VARIABLE)
             .dataType(DataType.INTEGER)
             .declarationType(DeclarationType.GLOBAL)
             .dimensions(List.of(new IntegerConstant(10)))

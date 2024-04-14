@@ -128,7 +128,13 @@ public class PrettyPrintVisitor {
     public String formatParameters(Scope scope) {
         return scope.getLocalSymbols().stream()
                 .filter(s -> s.symbolType() == SymbolType.PARAMETER)
-                .map(s -> String.format("%s AS %s", s.name(), s.dataType()))
+                .map(s -> {
+                    if (s.defaultValues() == null || s.defaultValues().isEmpty()) {
+                        return String.format("%s %s AS %s", s.passingMode(), s.name(), s.dataType());
+                    }
+                    return String.format("%s %s AS %s = %s", s.passingMode(), s.name(), s.dataType(),
+                        s.defaultValues().getFirst());
+                })
                 .collect(Collectors.joining(", "));
     }
 

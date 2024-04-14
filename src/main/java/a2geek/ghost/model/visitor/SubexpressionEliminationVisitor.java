@@ -69,7 +69,7 @@ public class SubexpressionEliminationVisitor implements ProgramVisitor {
                 var replacement = makeTempVariable.apply(candidate.getType());
                 var n = tracker.remove(candidate);
                 replace(replacement, statements.subList(n, statements.size()), candidate);
-                statements.add(n, new AssignmentStatement(VariableReference.with(replacement), candidate));
+                statements.add(n, AssignmentStatement.create(VariableReference.with(replacement), candidate));
                 i = -1;  // rewind and try again
                 tracker.reset();
             }

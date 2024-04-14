@@ -102,10 +102,23 @@ All variables are assumed to be 16 bit integers. Other data types exist in expre
 Subroutines may be declared at the top of the program. They have their own variable scope and share access to global variables.
 
 ```basic
-[visibility] [modifiers] sub name(a,b,c)
+[visibility] [modifiers] sub name[(parameterList)]
     ...
 end sub
 ```
+
+The `parameterList` consists of an optional comma-separated list of parameters:
+
+```basic
+[ Optional ] [ ByVal | ByRef ] ID [()] [ As <DataType> ] [ = <constant expression> ]
+```
+
+* `ByVal` passes the parameter by value and cannot change the calling value while `ByRef` passes a reference (pointer) and can change the caller's value.
+* NOTE: Regardless of the `ByVal` or `ByRef` nomenclature, array values may be changed.
+* `ID` is any identifier of the form `[a-z][a-z0-9_]*`.
+* If the `ID` has parenthesis, then an array is being passed.
+* A [datatype](#data-types) may be specified. Depending on the `option strict` setting, this may be required in some manner.
+* Optional parameters can be specified by the `Optional` keyword (ironically, this is optional) but the default value must be specified as a constant expression.
 
 Visibility flags:
 
@@ -305,7 +318,7 @@ constants will also be fine.
 ```basic
 for var = expr to expr step expr
    ' ...
-   [ continues for ]
+   [ continue for ]
    ' ...
    [ exit for ]
    ' ...

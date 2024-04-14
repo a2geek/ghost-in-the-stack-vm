@@ -14,7 +14,7 @@ MAIN:
    6:     Y = MATH.RND(40)
    7:     CALL LORES.COLOR(C)
    8:     CALL LORES.PLOT(X, Y)
-   9:     IF (*((- 16384)) < 128) THEN
+   9:     IF (CInt(*((- 16384))) < 128) THEN
    0:         GOTO _DO_LOOP7
           END IF
   10: _DO_EXIT7:

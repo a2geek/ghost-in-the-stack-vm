@@ -73,14 +73,16 @@ public class ModelBuilder {
         getProgram().setMemoryManagementStrategy(new StackMemoryManagement(this));
     }
     public void useMemoryForHeap(int startAddress) {
+        config.getDefines().put(CompilerConfiguration.OPTION_HEAP, new BooleanConstant(true));
         getProgram().setMemoryManagementStrategy(new HeapMemoryManagement(this));
         this.pushStatementBlock(new StatementBlock());
         assignStmt(derefWord(new IntegerConstant(0x69)), new IntegerConstant(startAddress));
         var sb = this.popStatementBlock();
         this.addInitializationStatements(sb);
+        uses(MEMORY_LIBRARY, nothingExported());
     }
     public boolean isUsingMemory() {
-        return getProgram().getMemoryManagementStrategy().isUsingMemory();
+        return getProgram().getMemoryManagementStrategy().isUsingHeap();
     }
 
     public void addInitializationStatements(StatementBlock statements) {
@@ -227,28 +229,46 @@ public class ModelBuilder {
         }
     }
 
-    void checkCallParameters(Subroutine subOrFunc, List<Expression> params) {
-        var requiredParameters = subOrFunc.findAllLocalScope(in(SymbolType.PARAMETER));
+    void checkCallParameters(Subroutine subOrFunc, final List<Expression> params) {
+        // params are reversed, so this makes is easier
+        var requiredParameters = subOrFunc.findAllLocalScope(in(SymbolType.PARAMETER)).reversed();
+        for (int i = 0; i<requiredParameters.size(); i++) {
+            var requiredParam = requiredParameters.get(i);
+            if (i < params.size()) {
+                var param = params.get(i);
+                try {
+                    param = param.checkAndCoerce(requiredParam.dataType());
+                }
+                catch (RuntimeException ex) {
+                    var msg = String.format("'%s' parameter %d is not of type %s: %s", subOrFunc.getName(),
+                        i, requiredParam.dataType(), ex.getMessage());
+                    throw new RuntimeException(msg);
+                }
+                if (requiredParam.passingMode() == PassingMode.BYREF) {
+                    if (param instanceof VariableReference ref) {
+                        param = new AddressOfOperator(ref.getSymbol());
+                    }
+                    else if (param instanceof DereferenceOperator deref) {
+                        param = deref.getExpr();
+                    }
+                    else {
+                        var msg = String.format("'%s' parameter %d is ByRef and can only pass simple variables or array references: %s",
+                                subOrFunc.getName(), i, param);
+                        throw new RuntimeException(msg);
+                    }
+                }
+                params.set(i, param);
+            }
+            else if (requiredParam.defaultValues() != null && !requiredParam.defaultValues().isEmpty()) {
+                var param = requiredParam.defaultValues().getFirst();
+                params.add(param);
+            }
+        }
         if (params.size() != requiredParameters.size()) {
-            // fixme - this should be fixed for clarity
-            var msg = String.format("sub/func '%s' requires %d parameters", subOrFunc.getName(),
-                    requiredParameters.size());
+            var msg = String.format("'%s' requires %d parameters", subOrFunc.getName(),
+                requiredParameters.size());
             throw new RuntimeException(msg);
         }
-        params = params.reversed(); // call parameters are reversed fixing to make comparison easier
-        for (int i = 0; i<requiredParameters.size(); i++) {
-            var param = params.get(i);
-            var requiredParam = requiredParameters.get(i);
-            try {
-                params.set(i, param.checkAndCoerce(requiredParam.dataType()));
-            }
-            catch (RuntimeException ex) {
-                var msg = String.format("sub/func '%s' parameter %d is not of type %s: %s", subOrFunc.getName(),
-                        i, requiredParam.dataType(), ex.getMessage());
-                throw new RuntimeException(msg);
-            }
-        }
-
     }
 
     public boolean isFunction(String name) {
@@ -289,13 +309,8 @@ public class ModelBuilder {
         throw new RuntimeException("function does not exist: " + id);
     }
 
-    public void assignStmt(VariableReference ref, Expression expr) {
-        AssignmentStatement assignmentStatement = new AssignmentStatement(ref, expr);
-        addStatement(assignmentStatement);
-    }
-    public void assignStmt(DereferenceOperator deref, Expression expr) {
-        AssignmentStatement assignmentStatement = new AssignmentStatement(deref, expr);
-        addStatement(assignmentStatement);
+    public void assignStmt(Expression lhs, Expression rhs) {
+        addStatement(AssignmentStatement.create(lhs,rhs));
     }
     public void ifStmt(Expression expr, StatementBlock trueStatements, StatementBlock falseStatements) {
         IfStatement statement = new IfStatement(expr, trueStatements, falseStatements, SourceType.CODE);
