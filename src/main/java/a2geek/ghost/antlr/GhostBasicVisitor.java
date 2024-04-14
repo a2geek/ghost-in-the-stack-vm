@@ -167,9 +167,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                 .orElseThrow();
         var symbol = model.addTempVariable(DataType.STRING);
         var temp = VariableReference.with(symbol);
-        //model.getProgram().getMemoryManagementStrategy().decrementReferenceCount(temp);
         model.allocateStringArray(symbol, strlen);
-        //model.getProgram().getMemoryManagementStrategy().incrementReferenceCount(temp);
         exprs.forEach(str -> {
             model.callSubroutine("strings.strcat", temp, str);
         });
