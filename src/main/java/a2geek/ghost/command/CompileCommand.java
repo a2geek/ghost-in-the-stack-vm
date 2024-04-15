@@ -88,6 +88,9 @@ public class CompileCommand implements Callable<Integer> {
     @Option(names = { "--symbols" }, description = "dump symbol table to file")
     private Optional<String> symbolTableFile;
 
+    @Option(names = { "--stage" }, description = "run compiler to specified stage", defaultValue = "OUTPUT")
+    private Stage stage;
+
     public static String convertControlCharacterMarkers(String value) {
         Pattern pattern = Pattern.compile("<CTRL-(.)>", Pattern.CASE_INSENSITIVE);
         Matcher matcher = pattern.matcher(value);
@@ -165,12 +168,41 @@ public class CompileCommand implements Callable<Integer> {
                 throw new UncheckedIOException(ex);
             }
         });
+        if (stage == Stage.INTERMEDIATE) {
+            System.out.println("Intermediate code file written; stopping compilation.");
+            return;
+        }
 
         CodeGenerationVisitor codeGenerationVisitor = new CodeGenerationVisitor();
         codeGenerationVisitor.visit(program);
 
         List<Instruction> code = codeGenerationVisitor.getInstructions();
+        if (stage == Stage.TARGET) {
+            targetCodeListing.ifPresent(filename -> {
+                try {
+                    // FIXME - likely need a formatter
+                    Files.write(Path.of(filename), code.toString().getBytes());
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            });
+            System.out.println("Target code file written; stopping compilation.");
+            return;
+        }
+
         optimizations.apply(code);
+        if (stage == Stage.OPTIMIZATION) {
+            targetCodeListing.ifPresent(filename -> {
+                try {
+                    // FIXME - likely need a formatter
+                    Files.write(Path.of(filename), code.toString().getBytes());
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            });
+            System.out.println("Target code file written; stopping compilation.");
+            return;
+        }
 
         // Assembly first pass: Figure out label values
         Map<String,Integer> addrs = new HashMap<>();
@@ -417,5 +449,12 @@ public class CompileCommand implements Callable<Integer> {
                 }
             }
         }
+    }
+
+    enum Stage {
+        INTERMEDIATE,
+        TARGET,
+        OPTIMIZATION,
+        OUTPUT
     }
 }
