@@ -18,6 +18,7 @@ public class Scope extends StatementBlock {
     private final Set<Symbol> exports = new HashSet<>();
     private OnErrorContext onErrorContext;
     private MemoryManagement memoryManagementStrategy;
+    private final Set<Symbol> availableTempVariables = new HashSet<>();
     /** Tracking a distinct global label number to prevent name collisions. */
     private static int symbolNumber = 1;
 
@@ -127,9 +128,23 @@ public class Scope extends StatementBlock {
 
     /** Generate a temporary variable within this scope. */
     public Symbol addTempVariable(DataType dataType) {
+        // first we try to reuse any available temp variables
+        for (var temp : availableTempVariables) {
+            if (temp.dataType() == dataType) {
+                availableTempVariables.remove(temp);
+                return temp;
+            }
+        }
+        // if not, create a new one
         symbolNumber+= 1;
         var name = String.format("_temp%d", symbolNumber);
         return addLocalSymbol(Symbol.variable(name, SymbolType.VARIABLE).dataType(dataType).temporary(true));
+    }
+    public void releaseTempVariable(Symbol temp) {
+        // ensure we're talking about a temp -- this way the test doesn't need to be repeated everywhere
+        if (temp.temporary()) {
+            availableTempVariables.add(temp);
+        }
     }
 
     /** Generate labels for code. The multiple values is to allow grouping of labels (same label number) for complex structures. */

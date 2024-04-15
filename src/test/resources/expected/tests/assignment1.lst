@@ -1,0 +1,44 @@
+MAIN:
+    DIM _ONERR_TARGET AS ADDRESS = null
+    DIM _ONERR_FP AS ADDRESS = null
+    DIM _ONERR_SP AS ADDRESS = null
+    DIM N AS INTEGER = null
+    DIM I AS INTEGER = null
+   0:     N = 10
+   1:     CALL CHECK(N, 10)
+   2:     N = MATH.IPOW(N, 4)
+   3:     CALL CHECK(N, 10000)
+   4:     N = (N + 5)
+   5:     CALL CHECK(N, 10005)
+   6:     N = (N - 2)
+   7:     CALL CHECK(N, 10003)
+   8:     N = (N / 3)
+   9:     CALL CHECK(N, 3334)
+  10:     N = (N * 6)
+  11:     CALL CHECK(N, 20004)
+  12:     N = (N >> 3)
+  13:     CALL CHECK(N, 2500)
+  14:     N = (N << 2)
+  15:     CALL CHECK(N, 10000)
+  16:     CALL RUNTIME.PRINT_STRING("** END **")
+  17:     CALL RUNTIME.PRINT_NEWLINE()
+  18:     END
+
+SUB CHECK(BYVAL EXPECTED AS INTEGER, BYVAL ACTUAL AS INTEGER)
+   0:     I = (I + 1)
+   1:     CALL RUNTIME.PRINT_STRING("STEP #")
+   2:     CALL RUNTIME.PRINT_INTEGER(I)
+   3:     CALL RUNTIME.PRINT_STRING(": ")
+   4:     CALL RUNTIME.PRINT_INTEGER(ACTUAL)
+   5:     CALL RUNTIME.PRINT_STRING(" - ")
+   6:     IF (ACTUAL = EXPECTED) THEN
+   0:         CALL RUNTIME.PRINT_STRING("MATCH")
+   1:         CALL RUNTIME.PRINT_NEWLINE()
+          ELSE
+   0:         CALL TEXT.INVERSE()
+   1:         CALL RUNTIME.PRINT_STRING("FAIL")
+   2:         CALL RUNTIME.PRINT_NEWLINE()
+   3:         CALL TEXT.NORMAL()
+          END IF
+END SUB
+

@@ -148,6 +148,11 @@ public class ModelBuilder {
     public Symbol addTempVariable(DataType dataType) {
         return this.scope.peek().addTempVariable(dataType);
     }
+    public void releaseTempVariable(Expression expr) {
+        if (expr instanceof VariableReference varRef) {
+            this.scope.peek().releaseTempVariable(varRef.getSymbol());
+        }
+    }
     /** Generate labels for code. The multiple values is to allow grouping of labels (same label number) for complex structures. */
     public List<Symbol> addLabels(String... names) {
         return this.scope.peek().addLabels(names);

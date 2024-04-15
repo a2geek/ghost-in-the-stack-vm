@@ -18,4 +18,3 @@ Revisit boolean versus bit logic. NOT/AND/OR don't always work as expected; mayb
 Time to split VM?  Split out GhostVM, reduce the instruction set. Primary VM becomes BasicVM?
 Deferment of Sub/Func check would help with interwoven dependencies (latest: a RAISE ERROR in MEMORY immediately pulls in ERR which requires HEAP function which got deferred)
 Possible new instructions: LOCAL_I[LOAD|STORE][B|W] N to replace LOCAL_LOAD N, I[LOAD|STORE][B|W] sequences.
-Change temp variable allocation to better track usage and not create as many extra temp variables.
