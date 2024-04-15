@@ -123,7 +123,6 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             if (ref.isType(DataType.STRING)) {
                 model.getProgram().getMemoryManagementStrategy().incrementReferenceCount(ref);
             }
-            model.releaseTempVariable(expr);
             return null;
         }
         else if (ref instanceof DereferenceOperator deref) {
@@ -131,7 +130,6 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             if (ref.isType(DataType.STRING)) {
                 model.getProgram().getMemoryManagementStrategy().incrementReferenceCount(ref);
             }
-            model.releaseTempVariable(expr);
             return null;
         }
         else {
@@ -287,7 +285,6 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
             currentStatementBlock = model.popStatementBlock();
         }
         model.addStatements(currentStatementBlock);
-        model.releaseTempVariable(expr);
         return null;
     }
 
@@ -317,8 +314,6 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         var linenum = new IntegerConstant(ctx.getStart().getLine());
         var source = new StringConstant(ctx.getStart().getTokenSource().getSourceName());
         model.raiseError(expr, msg, linenum, source, context);
-        model.releaseTempVariable(msg);
-        model.releaseTempVariable(context);
         return null;
     }
 
@@ -653,11 +648,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
                 switch (expr.getType()) {
                     case INTEGER -> model.callLibrarySubroutine("print_integer", expr);
                     case BOOLEAN -> model.callLibrarySubroutine("print_boolean", expr);
-                    case STRING -> {
-                        expr = handleStringConcatenation(expr);
-                        model.callLibrarySubroutine("print_string", expr);
-                        model.releaseTempVariable(expr);
-                    }
+                    case STRING -> model.callLibrarySubroutine("print_string", handleStringConcatenation(expr));
                     case ADDRESS -> model.callLibrarySubroutine("print_address", expr);
                     case BYTE -> model.callLibrarySubroutine("print_byte", expr);
                     default -> throw new RuntimeException("Unsupported PRINT type: " + expr.getType());
@@ -735,7 +726,6 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         model.dynamicGotoGosubStmt(op, arrayReference(addrs, List.of(expr.minus1())), true);
         var sb = model.popStatementBlock();
         model.ifStmt(test, sb, null);
-        model.releaseTempVariable(expr);
         return null;
     }
 

@@ -141,7 +141,7 @@ public class Scope extends StatementBlock {
         return addLocalSymbol(Symbol.variable(name, SymbolType.VARIABLE).dataType(dataType).temporary(true));
     }
     public void releaseTempVariable(Symbol temp) {
-        // ensure we're talking about a temp -- this way the test doesn't need to be repeated everywhere
+        // double-check we're talking about a temp
         if (temp.temporary()) {
             availableTempVariables.add(temp);
         }

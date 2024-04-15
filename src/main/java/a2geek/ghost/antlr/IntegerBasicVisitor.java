@@ -384,7 +384,6 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
             model.assignStmt(temp, model.callFunction("runtime.line_index", Arrays.asList(expr, VariableReference.with(lineNumbers))));
             model.ifStmt(test, sb, null);
-            model.releaseTempVariable(temp);
         }
         return null;
     }

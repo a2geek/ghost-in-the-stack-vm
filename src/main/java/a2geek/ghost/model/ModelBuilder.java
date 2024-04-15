@@ -148,11 +148,6 @@ public class ModelBuilder {
     public Symbol addTempVariable(DataType dataType) {
         return this.scope.peek().addTempVariable(dataType);
     }
-    public void releaseTempVariable(Expression expr) {
-        if (expr instanceof VariableReference varRef) {
-            this.scope.peek().releaseTempVariable(varRef.getSymbol());
-        }
-    }
     /** Generate labels for code. The multiple values is to allow grouping of labels (same label number) for complex structures. */
     public List<Symbol> addLabels(String... names) {
         return this.scope.peek().addLabels(names);
@@ -222,6 +217,11 @@ public class ModelBuilder {
             checkCallParameters(sub, params);
             CallSubroutine callSubroutine = new CallSubroutine(sub, params);
             addStatement(callSubroutine);
+            for (Expression param : params) {
+                if (param instanceof VariableReference varRef && varRef.getSymbol().temporary()) {
+                    this.peekScope().releaseTempVariable(varRef.getSymbol());
+                }
+            }
         } else {
             throw new RuntimeException("subroutine does not exist: " + subName);
         }
@@ -316,10 +316,16 @@ public class ModelBuilder {
 
     public void assignStmt(Expression lhs, Expression rhs) {
         addStatement(AssignmentStatement.create(lhs,rhs));
+        if (rhs instanceof VariableReference varRef && varRef.getSymbol().temporary()) {
+            this.scope.peek().releaseTempVariable(varRef.getSymbol());
+        }
     }
     public void ifStmt(Expression expr, StatementBlock trueStatements, StatementBlock falseStatements) {
         IfStatement statement = new IfStatement(expr, trueStatements, falseStatements, SourceType.CODE);
         addStatement(statement);
+        if (expr instanceof VariableReference varRef && varRef.getSymbol().temporary()) {
+            this.peekScope().releaseTempVariable(varRef.getSymbol());
+        }
     }
 
     public Scope moduleDeclBegin(String name) {
