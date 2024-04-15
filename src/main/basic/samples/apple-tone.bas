@@ -29,7 +29,9 @@ again:
     COLOR(12)
 
 keyloop:
-    X= PEEK (-16384):IF X<128 THEN GOTO keyloop: POKE -16368,0:X=X-176
+    X= PEEK (-16384):IF X<128 THEN GOTO keyloop
+    POKE -16368,0
+    X=X-176
     IF X=1 THEN P=194
     IF X=2 THEN P=173
     IF X=3 THEN P=155
