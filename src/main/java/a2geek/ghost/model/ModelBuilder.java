@@ -7,6 +7,7 @@ import a2geek.ghost.model.expression.*;
 import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.scope.Subroutine;
 import a2geek.ghost.model.statement.*;
+import a2geek.ghost.model.visitor.StatementVisitors;
 import org.antlr.v4.runtime.CharStreams;
 
 import java.io.IOException;
@@ -92,6 +93,11 @@ public class ModelBuilder {
     }
     public void addStatement(Statement statement) {
         this.statementBlock.peek().addStatement(statement);
+        StatementVisitors.captureSymbols(statement, false).forEach(symbol -> {
+            if (symbol.temporary()) {
+                this.peekScope().releaseTempVariable(symbol);
+            }
+        });
     }
     public void addStatements(StatementBlock statements) {
         Objects.requireNonNull(statements);
@@ -146,7 +152,10 @@ public class ModelBuilder {
         return this.scope.peek().addLocalSymbol(Symbol.constant(name, value));
     }
     public Symbol addTempVariable(DataType dataType) {
-        return this.scope.peek().addTempVariable(dataType);
+        return this.scope.peek().addTempVariable(dataType, true);
+    }
+    public Symbol addGeneratedVariable(DataType dataType) {
+        return this.scope.peek().addGeneratedVariable(dataType);
     }
     /** Generate labels for code. The multiple values is to allow grouping of labels (same label number) for complex structures. */
     public List<Symbol> addLabels(String... names) {
@@ -217,11 +226,6 @@ public class ModelBuilder {
             checkCallParameters(sub, params);
             CallSubroutine callSubroutine = new CallSubroutine(sub, params);
             addStatement(callSubroutine);
-            for (Expression param : params) {
-                if (param instanceof VariableReference varRef && varRef.getSymbol().temporary()) {
-                    this.peekScope().releaseTempVariable(varRef.getSymbol());
-                }
-            }
         } else {
             throw new RuntimeException("subroutine does not exist: " + subName);
         }
@@ -316,16 +320,10 @@ public class ModelBuilder {
 
     public void assignStmt(Expression lhs, Expression rhs) {
         addStatement(AssignmentStatement.create(lhs,rhs));
-        if (rhs instanceof VariableReference varRef && varRef.getSymbol().temporary()) {
-            this.scope.peek().releaseTempVariable(varRef.getSymbol());
-        }
     }
     public void ifStmt(Expression expr, StatementBlock trueStatements, StatementBlock falseStatements) {
         IfStatement statement = new IfStatement(expr, trueStatements, falseStatements, SourceType.CODE);
         addStatement(statement);
-        if (expr instanceof VariableReference varRef && varRef.getSymbol().temporary()) {
-            this.peekScope().releaseTempVariable(varRef.getSymbol());
-        }
     }
 
     public Scope moduleDeclBegin(String name) {

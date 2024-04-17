@@ -2,15 +2,65 @@ package a2geek.ghost.model.visitor;
 
 import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.Statement;
+import a2geek.ghost.model.Symbol;
 import a2geek.ghost.model.VisitorContext;
 import a2geek.ghost.model.statement.*;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class StatementVisitors {
     private StatementVisitors() {
         // prevent construction
+    }
+
+    /**
+     * Capture all symbols for the given statement. Note that this optionally unwraps IfStatement if recursive is specified.
+     */
+    public static Set<Symbol> captureSymbols(Statement statement, boolean recursive) {
+        List<Expression> exprs = new ArrayList<>();
+        Set<Symbol> symbols = new HashSet<>();
+        switch (statement) {
+            case AssignmentStatement assignmentStatement -> {
+                exprs.add(assignmentStatement.getVar());
+                exprs.add(assignmentStatement.getValue());
+            }
+            case CallStatement callStatement -> exprs.add(callStatement.getExpr());
+            case CallSubroutine callSubroutine -> exprs.addAll(callSubroutine.getParameters());
+            case DynamicGotoGosubStatement dynamicGotoGosubStatement -> exprs.add(dynamicGotoGosubStatement.getTarget());
+            case EndStatement ignore -> {}
+            case GotoGosubStatement gotoGosubStatement -> symbols.add(gotoGosubStatement.getLabel());
+            case IfStatement ifStatement -> {
+                exprs.add(ifStatement.getExpression());
+                if (recursive) {
+                    List<Statement> stmts = new ArrayList<>();
+                    if (ifStatement.hasTrueStatements()) {
+                        stmts.addAll(ifStatement.getTrueStatements().getInitializationStatements());
+                        stmts.addAll(ifStatement.getTrueStatements().getStatements());
+                    }
+                    if (ifStatement.hasFalseStatements()) {
+                        stmts.addAll(ifStatement.getFalseStatements().getInitializationStatements());
+                        stmts.addAll(ifStatement.getFalseStatements().getStatements());
+                    }
+                    stmts.stream().map(stmt -> StatementVisitors.captureSymbols(stmt, recursive)).forEach(symbols::addAll);
+                }
+            }
+            case LabelStatement labelStatement -> symbols.add(labelStatement.getLabel());
+            case OnErrorStatement onErrorStatement -> {
+                if (onErrorStatement.getLabel() != null) {
+                    symbols.add(onErrorStatement.getLabel());
+                }
+            }
+            case PopStatement ignored -> {}
+            case RaiseErrorStatement ignored -> {}
+            case ReturnStatement returnStatement -> {
+                if (returnStatement.getExpr() != null) {
+                    exprs.add(returnStatement.getExpr());
+                }
+            }
+            default -> throw new RuntimeException("[compiler bug] statement type not supported: " + statement);
+        }
+        exprs.stream().map(ExpressionVisitors::captureSymbols).forEach(symbols::addAll);
+        return symbols;
     }
 
     public static <T extends ExpressionTracker<T>> void dispatchToExpression(List<Statement> statements, T tracker, ExpressionDispatcherFunction<T> dispatcher) {

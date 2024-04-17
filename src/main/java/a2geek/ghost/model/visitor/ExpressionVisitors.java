@@ -4,7 +4,9 @@ import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.Symbol;
 import a2geek.ghost.model.expression.*;
 
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * This class contains simple visitors that are implemented in a single recursive method.
@@ -18,44 +20,41 @@ public class ExpressionVisitors {
      * Determine if the expression uses symbol.
      */
     public static boolean hasSymbol(Expression expr, Symbol symbol) {
-        return switch (expr) {
-            case AddressOfOperator addrOf -> Objects.equals(addrOf.getSymbol(), symbol);
-            case ArrayLengthFunction arrayLen -> Objects.equals(arrayLen.getSymbol(), symbol);
-            case BinaryExpression bin -> hasSymbol(bin.getL(), symbol) || hasSymbol(bin.getR(), symbol);
-            case BooleanConstant ignored -> false;
-            case ByteConstant ignored -> false;
-            case DereferenceOperator deref -> hasSymbol(deref.getExpr(), symbol);
-            case FunctionExpression func -> func.getParameters().stream().map(param -> hasSymbol(param, symbol)).reduce(Boolean::logicalOr).orElse(false);
-            case IntegerConstant ignored -> false;
-            case PlaceholderExpression ignored -> false;
-            case StringConstant ignored -> false;
-            case TypeConversionOperator conversion -> hasSymbol(conversion.getExpr(), symbol);
-            case UnaryExpression unary -> hasSymbol(unary.getExpr(), symbol);
-            case VariableReference ref -> Objects.equals(ref.getSymbol(), symbol);
-            default -> throw new RuntimeException("[compiler bug] unsupported expression type: " + expr);
-        };
+        return captureSymbols(expr).contains(symbol);
     }
 
     /**
      * Determine if the expression uses any type of array symbol.
      */
     public static boolean hasAnyArraySymbol(Expression expr) {
-        return switch (expr) {
-            case AddressOfOperator addrOf -> addrOf.getSymbol().numDimensions() > 0;
-            case ArrayLengthFunction arrayLen -> arrayLen.getSymbol().numDimensions() > 0;
-            case BinaryExpression bin -> hasAnyArraySymbol(bin.getL()) || hasAnyArraySymbol(bin.getR());
-            case BooleanConstant ignored -> false;
-            case ByteConstant ignored -> false;
-            case DereferenceOperator deref -> hasAnyArraySymbol(deref.getExpr());
-            case FunctionExpression func -> func.getParameters().stream().map(ExpressionVisitors::hasAnyArraySymbol).reduce(Boolean::logicalOr).orElse(false);
-            case IntegerConstant ignored -> false;
-            case PlaceholderExpression ignored -> false;
-            case StringConstant ignored -> false;
-            case TypeConversionOperator conversion -> hasAnyArraySymbol(conversion.getExpr());
-            case UnaryExpression unary -> hasAnyArraySymbol(unary.getExpr());
-            case VariableReference ref -> ref.getSymbol().numDimensions() > 0;
+        return captureSymbols(expr).stream().anyMatch(s -> s.numDimensions() > 0);
+    }
+
+    /**
+     * Capture all symbols in the given expression.
+     */
+    public static Set<Symbol> captureSymbols(Expression expr) {
+        Set<Symbol> symbols = new HashSet<>();
+        switch (expr) {
+            case AddressOfOperator addrOf -> symbols.add(addrOf.getSymbol());
+            case ArrayLengthFunction arrayLen -> symbols.add(arrayLen.getSymbol());
+            case BinaryExpression bin -> {
+                symbols.addAll(captureSymbols(bin.getL()));
+                symbols.addAll(captureSymbols(bin.getR()));
+            }
+            case BooleanConstant ignored -> {}
+            case ByteConstant ignored -> {}
+            case DereferenceOperator deref -> symbols.addAll(captureSymbols(deref.getExpr()));
+            case FunctionExpression func -> func.getParameters().stream().map(ExpressionVisitors::captureSymbols).forEach(symbols::addAll);
+            case IntegerConstant ignored -> {}
+            case PlaceholderExpression ignored -> {}
+            case StringConstant ignored -> {}
+            case TypeConversionOperator conversion -> symbols.addAll(captureSymbols(conversion.getExpr()));
+            case UnaryExpression unary -> symbols.addAll(captureSymbols(unary.getExpr()));
+            case VariableReference ref -> symbols.add(ref.getSymbol());
             default -> throw new RuntimeException("[compiler bug] unsupported expression type: " + expr);
-        };
+        }
+        return symbols;
     }
 
     /**

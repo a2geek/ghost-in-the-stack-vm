@@ -128,11 +128,18 @@ public class Scope extends StatementBlock {
 
     /** Generate a temporary variable within this scope. */
     public Symbol addTempVariable(DataType dataType) {
-        // first we try to reuse any available temp variables
-        for (var temp : availableTempVariables) {
-            if (temp.dataType() == dataType) {
-                availableTempVariables.remove(temp);
-                return temp;
+        return addTempVariable(dataType, false);
+    }
+    public Symbol addTempVariable(DataType dataType, boolean reuseExistingVariables) {
+        if (reuseExistingVariables) {
+            // depending on stage of compilation/optimization, temp variables may have been cleaned up, so update available temp variables
+            availableTempVariables.retainAll(symbolTable);
+            // first we try to reuse any available temp variables
+            for (var temp : availableTempVariables) {
+                if (temp.dataType() == dataType) {
+                    availableTempVariables.remove(temp);
+                    return temp;
+                }
             }
         }
         // if not, create a new one
@@ -145,6 +152,11 @@ public class Scope extends StatementBlock {
         if (temp.temporary()) {
             availableTempVariables.add(temp);
         }
+    }
+    public Symbol addGeneratedVariable(DataType dataType) {
+        symbolNumber+= 1;
+        var name = String.format("_gen%d", symbolNumber);
+        return addLocalSymbol(Symbol.variable(name, SymbolType.VARIABLE).dataType(dataType));
     }
 
     /** Generate labels for code. The multiple values is to allow grouping of labels (same label number) for complex structures. */

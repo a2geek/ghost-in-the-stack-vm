@@ -26,7 +26,7 @@ public class StackMemoryManagement implements MemoryManagement {
     public Expression allocate(Symbol symbol, Expression bytes) {
         allocations.put(symbol, bytes);
         if (bytes.asInteger().isEmpty()) {
-            var temp = VariableReference.with(model.addTempVariable(bytes.getType()));
+            var temp = VariableReference.with(model.addGeneratedVariable(bytes.getType()));
             model.assignStmt(temp, bytes);
             allocations.put(symbol, temp);
         }
