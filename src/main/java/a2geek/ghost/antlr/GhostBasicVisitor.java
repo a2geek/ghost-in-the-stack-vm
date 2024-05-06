@@ -1214,6 +1214,14 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
         return new UnaryExpression(op, e);
     }
 
+    @Override
+    public Expression visitIfShortExpr(BasicParser.IfShortExprContext ctx) {
+        Expression trueExpr = visit(ctx.t);
+        Expression condExpr = visit(ctx.c);
+        Expression falseExpr = visit(ctx.f);
+        return new IfExpression(condExpr, trueExpr, falseExpr);
+    }
+
     enum IdModifier {
         STATIC
     }

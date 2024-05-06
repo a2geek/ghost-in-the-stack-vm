@@ -56,6 +56,7 @@ public abstract class DispatchVisitor implements ProgramVisitor {
             case ByteConstant e -> Optional.ofNullable(visit(e));
             case DereferenceOperator e -> Optional.ofNullable(visit(e));
             case FunctionExpression e -> Optional.ofNullable(visit(e));
+            case IfExpression e -> Optional.ofNullable(visit(e));
             case IntegerConstant e -> Optional.ofNullable(visit(e));
             case PlaceholderExpression e -> Optional.ofNullable(visit(e));
             case StringConstant e -> Optional.ofNullable(visit(e));
@@ -120,6 +121,7 @@ public abstract class DispatchVisitor implements ProgramVisitor {
     public abstract Expression visit(ByteConstant expression);
     public abstract Expression visit(DereferenceOperator expression);
     public abstract Expression visit(FunctionExpression expression);
+    public abstract Expression visit(IfExpression expression);
     public abstract Expression visit(IntegerConstant expression);
     public abstract Expression visit(PlaceholderExpression expression);
     public abstract Expression visit(StringConstant expression);

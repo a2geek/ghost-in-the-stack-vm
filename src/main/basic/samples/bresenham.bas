@@ -8,17 +8,9 @@ sub plotLine(x0 as integer, y0 as integer, x1 as integer, y1 as integer)
     dim err as integer
 
     dx = abs(x1 - x0)
-    if x0 < x1 then
-        sx = 1
-    else
-        sx = -1
-    end if
+    sx = 1 if x0 < x1 else -1
     dy = -abs(y1 - y0)
-    if y0 < y1 then
-        sy = 1
-    else
-        sy = -1
-    end if
+    sy = 1 if y0 < y1 else -1
     err = dx + dy
 
     while true

@@ -194,4 +194,18 @@ public abstract class Visitor extends DispatchVisitor {
     public Expression visit(PlaceholderExpression expression) {
         return null;
     }
+
+    @Override
+    public Expression visit(IfExpression expression) {
+        var c = dispatch(expression.getCondition());
+        var t = dispatch(expression.getTrueValue());
+        var f = dispatch(expression.getFalseValue());
+        if (c.isPresent() || t.isPresent() || f.isPresent()) {
+            c.ifPresent(expression::setCondition);
+            t.ifPresent(expression::setTrueValue);
+            f.ifPresent(expression::setFalseValue);
+            return expression;
+        }
+        return null;
+    }
 }

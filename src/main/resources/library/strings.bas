@@ -87,11 +87,7 @@ module strings
     sub strcpy(target as string, targetStart as integer, _
             source as String, sourceStart as integer, sourceEnd as integer)
         dim t as address, s as address
-        if sourceEnd = 0 then
-            sourceEnd = len(source)
-        else
-            sourceEnd = sourceEnd - sourceStart + 1
-        end if
+        sourceEnd = len(source) if sourceEnd = 0 else sourceEnd - sourceStart + 1
         t = target + targetStart
         s = source + sourceStart
         while sourceEnd > 0 and peek(s) <> 0

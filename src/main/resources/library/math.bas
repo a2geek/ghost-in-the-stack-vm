@@ -15,17 +15,11 @@ module Math
     ' Note: Simulated Integer BASIC random generator
     export volatile function rnd(n as integer) as integer
         r = random() mod n
-        if r < 0 then
-            return -r
-        end if
-        return r
+        return r if r >= 0 else -r
     end function
 
     export inline function abs(n as integer) as integer
-        if n < 0 then
-            return -n
-        end if
-        return n
+        return n if n >= 0 else -n
     end function
 
     export inline function sgn(n as integer) as integer
@@ -40,19 +34,11 @@ module Math
     end function
 
     export inline function min(a as integer, b as integer) as integer
-        if a < b then
-            return a
-        else
-            return b
-        end if
+        return a if a < b else b
     end function
 
     export inline function max(a as integer, b as integer) as integer
-        if a > b then
-            return a
-        else
-            return b
-        end if
+        return a if a > b else b
     end function
 
     ' See: https://stackoverflow.com/questions/101439/the-most-efficient-way-to-implement-an-integer-based-power-function-powint-int

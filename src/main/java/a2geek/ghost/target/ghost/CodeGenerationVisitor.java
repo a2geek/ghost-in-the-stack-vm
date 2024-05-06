@@ -348,7 +348,7 @@ public class CodeGenerationVisitor extends DispatchVisitor {
             code.emit(Opcode.GOTO, f.getExitLabel());
         }
         else if (hasReturnValue) {
-            throw new RuntimeException("cannot return value from a subroutine");
+            throw new RuntimeException("cannot return value from a subroutine: " + this.frames.peek().scope().getName());
         }
         else if (this.frames.peek().scope() instanceof Subroutine s) {
             code.emit(Opcode.GOTO, s.getExitLabel());
@@ -698,6 +698,22 @@ public class CodeGenerationVisitor extends DispatchVisitor {
 
     @Override
     public Expression visit(PlaceholderExpression expression) {
+        return null;
+    }
+
+    @Override
+    public Expression visit(IfExpression expression) {
+        var labels = label("IF_ELSE", "IF_EXIT");
+        var elseLabel = labels.get(0);
+        var exitLabel = labels.get(1);
+
+        dispatch(expression.getCondition());
+        code.emit(Opcode.IFZ, elseLabel);
+        dispatch(expression.getTrueValue());
+        code.emit(Opcode.GOTO, exitLabel);
+        code.emit(elseLabel);
+        dispatch(expression.getFalseValue());
+        code.emit(exitLabel);
         return null;
     }
 }

@@ -42,11 +42,7 @@ module runtime
     end sub
 
     sub print_boolean(b as boolean)
-        if b then
-            print "True";
-        else
-            print "False";
-        end if
+        print ("True" if b else "False");
     end sub
 
     sub print_newline

@@ -46,6 +46,11 @@ public class ExpressionVisitors {
             case ByteConstant ignored -> {}
             case DereferenceOperator deref -> symbols.addAll(captureSymbols(deref.getExpr()));
             case FunctionExpression func -> func.getParameters().stream().map(ExpressionVisitors::captureSymbols).forEach(symbols::addAll);
+            case IfExpression ifx -> {
+                symbols.addAll(captureSymbols(ifx.getCondition()));
+                symbols.addAll(captureSymbols(ifx.getTrueValue()));
+                symbols.addAll(captureSymbols(ifx.getFalseValue()));
+            }
             case IntegerConstant ignored -> {}
             case PlaceholderExpression ignored -> {}
             case StringConstant ignored -> {}
@@ -72,6 +77,7 @@ public class ExpressionVisitors {
             case ByteConstant ignored -> false;
             case DereferenceOperator deref -> hasSubexpression(deref.getExpr(), target);
             case FunctionExpression func -> func.getParameters().stream().map(param -> hasSubexpression(param, target)).reduce(Boolean::logicalOr).orElse(false);
+            case IfExpression ifx -> hasSubexpression(ifx.getCondition(), target) || hasSubexpression(ifx.getTrueValue(), target) || hasSubexpression(ifx.getFalseValue(), target);
             case IntegerConstant ignored -> false;
             case PlaceholderExpression ignored -> false;
             case StringConstant ignored -> false;
@@ -101,6 +107,7 @@ public class ExpressionVisitors {
                 }
                 yield functionExpression.getParameters().stream().map(ExpressionVisitors::hasVolatileFunction).reduce(Boolean::logicalOr).orElse(false);
             }
+            case IfExpression ifx -> hasVolatileFunction(ifx.getCondition()) || hasVolatileFunction(ifx.getTrueValue()) || hasVolatileFunction(ifx.getFalseValue());
             case IntegerConstant ignored -> false;
             case PlaceholderExpression ignored -> false;
             case StringConstant ignored -> false;
@@ -126,6 +133,7 @@ public class ExpressionVisitors {
             case ByteConstant ignored -> 1;
             case DereferenceOperator deref -> 1 + weight(deref.getExpr());
             case FunctionExpression functionExpression -> 2 + functionExpression.getParameters().stream().mapToInt(ExpressionVisitors::weight).sum();
+            case IfExpression ifx -> 1 + weight(ifx.getCondition()) + weight(ifx.getTrueValue()) + weight(ifx.getFalseValue());
             case IntegerConstant ignored -> 1;
             case PlaceholderExpression ignored -> 1;
             case StringConstant ignored -> 1;

@@ -41,6 +41,11 @@ public class TempVariableConsolidationVisitor implements ProgramVisitor {
             case ByteConstant ignored -> {}
             case DereferenceOperator deref -> captureActiveRanges(deref.getExpr(), ctx, tracker);
             case FunctionExpression func -> func.getParameters().forEach(param -> captureActiveRanges(param, ctx, tracker));
+            case IfExpression ifx -> {
+                captureActiveRanges(ifx.getCondition(), ctx, tracker.create(ctx));
+                captureActiveRanges(ifx.getTrueValue(), ctx, tracker.create(ctx));
+                captureActiveRanges(ifx.getFalseValue(), ctx, tracker.create(ctx));
+            }
             case IntegerConstant ignored -> {}
             case PlaceholderExpression ignored -> {}
             case StringConstant ignored -> {}
@@ -78,6 +83,11 @@ public class TempVariableConsolidationVisitor implements ProgramVisitor {
                         func.getParameters().set(i, param.get());
                     }
                 }
+            }
+            case IfExpression ifx -> {
+                reassignTempVariables(ifx.getCondition(), ctx, tracker.create(ctx)).ifPresent(ifx::setCondition);
+                reassignTempVariables(ifx.getTrueValue(), ctx, tracker.create(ctx)).ifPresent(ifx::setTrueValue);
+                reassignTempVariables(ifx.getFalseValue(), ctx, tracker.create(ctx)).ifPresent(ifx::setFalseValue);
             }
             case IntegerConstant ignored -> {}
             case PlaceholderExpression ignored -> {}

@@ -324,5 +324,13 @@ public class InliningVisitor extends Visitor implements RepeatingVisitor {
         public Expression visit(PlaceholderExpression expression) {
             return null;
         }
+
+        @Override
+        public Expression visit(IfExpression expression) {
+            var c = dispatch(expression.getCondition());
+            var t = dispatch(expression.getTrueValue());
+            var f = dispatch(expression.getFalseValue());
+            return new IfExpression(c.orElseThrow(), t.orElseThrow(), f.orElseThrow());
+        }
     }
 }

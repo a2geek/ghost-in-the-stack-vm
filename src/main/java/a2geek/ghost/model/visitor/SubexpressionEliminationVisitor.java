@@ -157,6 +157,11 @@ public class SubexpressionEliminationVisitor implements ProgramVisitor {
         else if (original instanceof TypeConversionOperator conversionOperator) {
             conversionOperator.setExpr(replace(conversionOperator.getExpr(), candidate, replacement));
         }
+        else if (original instanceof IfExpression ifExpression) {
+            ifExpression.setCondition(replace(ifExpression.getCondition(), candidate, replacement));
+            ifExpression.setTrueValue(replace(ifExpression.getTrueValue(), candidate, replacement));
+            ifExpression.setFalseValue(replace(ifExpression.getFalseValue(), candidate, replacement));
+        }
         return original;
     }
 
@@ -186,6 +191,7 @@ public class SubexpressionEliminationVisitor implements ProgramVisitor {
             case ByteConstant ignored -> null;
             case DereferenceOperator dereferenceOperator -> capture(tracker, dereferenceOperator.getExpr(), n);
             case FunctionExpression functionExpression -> captureParams(tracker, functionExpression.getParameters(), n);
+            case IfExpression ifx -> captureParams(tracker, List.of(ifx.getCondition(), ifx.getTrueValue(), ifx.getFalseValue()), n);
             case IntegerConstant ignored -> null;
             case PlaceholderExpression ignored -> null;
             case StringConstant ignored -> null;

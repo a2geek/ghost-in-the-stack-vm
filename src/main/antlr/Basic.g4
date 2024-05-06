@@ -184,6 +184,7 @@ expr
     | a=expr op=( '<<' | '>>' ) b=expr                                  # binaryExpr
     | a=expr op=( 'or' | 'and' | 'xor' ) b=expr                         # binaryExpr
     | op=('-' | 'not') a=expr                                           # unaryExpr
+    | t=expr 'if' c=expr 'else' f=expr                                  # ifShortExpr
     | id=expressionID                                                   # expressionIDExpr
     | a=INT                                                             # intConstant
     | s=STR                                                             # stringConstant

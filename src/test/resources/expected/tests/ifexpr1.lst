@@ -1,0 +1,37 @@
+MAIN:
+    DIM _ONERR_TARGET AS ADDRESS = null
+    DIM _ONERR_FP AS ADDRESS = null
+    DIM _ONERR_SP AS ADDRESS = null
+    DIM A AS INTEGER = null
+    DIM B AS BOOLEAN = null
+    DIM C AS STRING = [""]
+    DIM R AS INTEGER = null
+   0:     CALL TEXT.TEXT()
+   1:     CALL TEXT.HOME()
+   2:     R = 6
+   3:     A = 10 IF (R < 5) ELSE 20
+   4:     B = True IF (R > 5) ELSE False
+   5:     C = "Exactly 5" IF (R = 5) ELSE "Other than 5"
+   6:     CALL RUNTIME.PRINT_STRING("A=")
+   7:     CALL RUNTIME.PRINT_INTEGER(A)
+   8:     CALL RUNTIME.PRINT_STRING(" (expecting 20)")
+   9:     CALL RUNTIME.PRINT_NEWLINE()
+  10:     CALL RUNTIME.PRINT_STRING("B=")
+  11:     CALL RUNTIME.PRINT_BOOLEAN(B)
+  12:     CALL RUNTIME.PRINT_STRING(" (expecting True)")
+  13:     CALL RUNTIME.PRINT_NEWLINE()
+  14:     CALL RUNTIME.PRINT_STRING("C='")
+  15:     CALL RUNTIME.PRINT_STRING(C)
+  16:     CALL RUNTIME.PRINT_STRING("' (expecting 'Other than 5')")
+  17:     CALL RUNTIME.PRINT_NEWLINE()
+  18:     CALL TEXT.INVERSE()
+  19:     IF (((A = 20) and (B = True)) and (STRINGS.STRCMP(C, "Other than 5") = 0)) THEN
+   0:         CALL RUNTIME.PRINT_STRING("SUCCESS")
+   1:         CALL RUNTIME.PRINT_NEWLINE()
+          ELSE
+   0:         CALL RUNTIME.PRINT_STRING("FAILURE")
+   1:         CALL RUNTIME.PRINT_NEWLINE()
+          END IF
+  20:     CALL TEXT.NORMAL()
+  21:     END
+
