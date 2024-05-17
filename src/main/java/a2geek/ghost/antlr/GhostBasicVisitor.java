@@ -9,6 +9,8 @@ import a2geek.ghost.model.scope.Subroutine;
 import a2geek.ghost.model.statement.GotoGosubStatement;
 import a2geek.ghost.model.statement.IfStatement;
 import a2geek.ghost.model.statement.OnErrorStatement;
+import a2geek.ghost.model.visitor.ExpressionVisitors;
+import a2geek.ghost.model.visitor.StatementVisitors;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.util.*;
@@ -20,7 +22,7 @@ import static a2geek.ghost.model.CommonExpressions.*;
 import static a2geek.ghost.model.ModelBuilder.*;
 import static a2geek.ghost.model.visitor.ExpressionVisitors.hasAnyArraySymbol;
 
-public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
+public class GhostBasicVisitor extends BasicBaseVisitorWrapper {
     private final ModelBuilder model;
     private final CompilerConfiguration config;
     private final Map<String,Symbol> gotoGosubLabels = new HashMap<>();
@@ -29,6 +31,7 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
     private final Stack<LoopFrame> repeatFrames = new Stack<>();
     private final Stack<LoopFrame> whileFrames = new Stack<>();
     private Predicate<String> variableTest = (s) -> true;
+    private int statementDepth;
 
     public GhostBasicVisitor(ModelBuilder model) {
         this.model = model;
@@ -45,6 +48,23 @@ public class GhostBasicVisitor extends BasicBaseVisitor<Expression> {
 
     public Optional<Expression> optVisit(ParseTree pt) {
         return Optional.ofNullable(pt).map(this::visit);
+    }
+
+    @Override
+    public void enterExpression() {
+        statementDepth++;
+    }
+    @Override
+    public Expression exitExpression(Expression expr) {
+        statementDepth--;
+        if (statementDepth == 0) {
+            ExpressionVisitors.captureSymbols(expr).forEach(symbol -> {
+                if (symbol.temporary()) {
+                    model.peekScope().releaseTempVariable(symbol);
+                }
+            });
+        }
+        return expr;
     }
 
     @Override

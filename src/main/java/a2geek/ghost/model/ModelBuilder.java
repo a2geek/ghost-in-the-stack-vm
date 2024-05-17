@@ -93,11 +93,11 @@ public class ModelBuilder {
     }
     public void addStatement(Statement statement) {
         this.statementBlock.peek().addStatement(statement);
-        StatementVisitors.captureSymbols(statement, false).forEach(symbol -> {
-            if (symbol.temporary()) {
-                this.peekScope().releaseTempVariable(symbol);
-            }
-        });
+//        StatementVisitors.captureSymbols(statement, false).forEach(symbol -> {
+//            if (symbol.temporary()) {
+//                this.peekScope().releaseTempVariable(symbol);
+//            }
+//        });
     }
     public void addStatements(StatementBlock statements) {
         Objects.requireNonNull(statements);

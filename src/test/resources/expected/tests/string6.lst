@@ -5,6 +5,7 @@ MAIN:
     DIM A$ AS STRING = [""]
     DIM N AS INTEGER = null
     DIM _TEMP21 AS STRING = [""]
+    DIM _TEMP22 AS STRING = [""]
    0:     *(105) = 32768
    1:     CALL MEMORY.HEAPINIT()
    0:     N = MEMORY.MEMFREE()
@@ -22,14 +23,14 @@ MAIN:
   12:     CALL MEMORY.HEAPREFDECR(addrof(A$))
   13:     A$ = _TEMP21
   14:     CALL MEMORY.HEAPREFINCR(A$)
-  15:     _TEMP21 = MEMORY.HEAPALLOC(((((STRINGS.LEN(A$) + STRINGS.LEN("fox jumps ")) + STRINGS.LEN("over the")) + STRINGS.LEN(" lazy dog.")) + 2))
-  16:     *(_TEMP21) = CByte((((STRINGS.LEN(A$) + STRINGS.LEN("fox jumps ")) + STRINGS.LEN("over the")) + STRINGS.LEN(" lazy dog.")))
-  17:     CALL STRINGS.STRCAT(_TEMP21, A$)
-  18:     CALL STRINGS.STRCAT(_TEMP21, "fox jumps ")
-  19:     CALL STRINGS.STRCAT(_TEMP21, "over the")
-  20:     CALL STRINGS.STRCAT(_TEMP21, " lazy dog.")
+  15:     _TEMP22 = MEMORY.HEAPALLOC(((((STRINGS.LEN(A$) + STRINGS.LEN("fox jumps ")) + STRINGS.LEN("over the")) + STRINGS.LEN(" lazy dog.")) + 2))
+  16:     *(_TEMP22) = CByte((((STRINGS.LEN(A$) + STRINGS.LEN("fox jumps ")) + STRINGS.LEN("over the")) + STRINGS.LEN(" lazy dog.")))
+  17:     CALL STRINGS.STRCAT(_TEMP22, A$)
+  18:     CALL STRINGS.STRCAT(_TEMP22, "fox jumps ")
+  19:     CALL STRINGS.STRCAT(_TEMP22, "over the")
+  20:     CALL STRINGS.STRCAT(_TEMP22, " lazy dog.")
   21:     CALL MEMORY.HEAPREFDECR(addrof(A$))
-  22:     A$ = _TEMP21
+  22:     A$ = _TEMP22
   23:     CALL MEMORY.HEAPREFINCR(A$)
   24:     CALL RUNTIME.PRINT_STRING("Result: ")
   25:     CALL RUNTIME.PRINT_NEWLINE()
