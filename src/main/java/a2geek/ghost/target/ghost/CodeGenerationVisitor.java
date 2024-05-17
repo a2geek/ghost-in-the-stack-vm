@@ -434,20 +434,29 @@ public class CodeGenerationVisitor extends DispatchVisitor {
         code.emit(exitLabel);
         if (hasLocalScope) tearDownLocalFrame(frame);
         restoreOnErrContext(subroutine);
-        code.emit(Opcode.RETURNN, frame.parameterSize());
+        if (frame.parameterSize() > 0) {
+            code.emit(Opcode.RETURNN, frame.parameterSize());
+        }
+        else {
+            code.emit(Opcode.RETURN);
+        }
         frames.pop();
     }
 
     public void setupLocalFrame(Frame frame) {
         code.emit(Opcode.LOADLP);
-        code.emit(Opcode.LOADC, frame.localSize());
-        code.emit(Opcode.PUSHZ);
+        if (frame.localSize() > 0) {
+            code.emit(Opcode.LOADC, frame.localSize());
+            code.emit(Opcode.PUSHZ);
+        }
         code.emit(Opcode.LOADSP);
         code.emit(Opcode.DECR);
         code.emit(Opcode.STORELP);
     }
     public void tearDownLocalFrame(Frame frame) {
-        code.emit(Opcode.POPN, frame.localSize());
+        if (frame.localSize() > 0) {
+            code.emit(Opcode.POPN, frame.localSize());
+        }
         code.emit(Opcode.STORELP);
     }
 
