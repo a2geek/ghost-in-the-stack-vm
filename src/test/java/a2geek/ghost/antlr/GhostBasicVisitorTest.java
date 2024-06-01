@@ -48,6 +48,16 @@ public class GhostBasicVisitorTest {
     }
 
     @Test
+    public void testOptionDefaultType() {
+        expect("""
+                option default string
+                dim s, i as integer
+                """)
+            .hasSymbol("s", DataType.STRING, SymbolType.VARIABLE, DeclarationType.GLOBAL)
+            .hasSymbol("i", DataType.INTEGER, SymbolType.VARIABLE, DeclarationType.GLOBAL);
+    }
+
+    @Test
     public void testUbound() {
         var arrayRef = Symbol.variable(config.applyCaseStrategy("a"), SymbolType.VARIABLE)
                 .dataType(DataType.INTEGER)
