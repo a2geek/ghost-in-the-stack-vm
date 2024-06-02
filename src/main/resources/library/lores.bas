@@ -12,6 +12,24 @@ module lores
     const MON_SCRN = 0xf871
     const MON_SETGR = 0xfb40
 
+    ' Colors
+    const BLACK = 0
+    const MAGENTA = 1
+    const DARK_BLUE = 2
+    const PURPLE = 3
+    const DARK_GREEN = 4
+    const DARK_GRAY = 5
+    const MEDIUM_BLUE = 6
+    const LIGHT_BLUE = 7
+    const BROWN = 8
+    const ORANGE = 9
+    const GREY = 10
+    const PINK = 11
+    const GREEN = 12
+    const YELLOW = 13
+    const AQUA = 14
+    const WHITE = 15
+
     export inline sub color(c as integer)
         cpu.register.a = c
         call MON_SETCOL
