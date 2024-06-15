@@ -11,7 +11,6 @@ import java.util.function.Function;
 public class CompilerConfiguration {
     public static final String OPTION_HEAP = "option.heap";
     public static final String OPTION_HEAP_LOMEM = "option.heap.lomem";
-    private boolean trace;
     private boolean boundsCheck = true;
     private Function<String,String> caseStrategy = s -> s;
     private Function<String,String> controlCharsFn = s -> s;
@@ -26,12 +25,6 @@ public class CompilerConfiguration {
     }
     public String applyControlCharsFn(String string) {
         return controlCharsFn.apply(string);
-    }
-    public void trace(String fmt, Object... args) {
-        if (trace) {
-            System.out.printf(fmt, args);
-            System.out.println();
-        }
     }
     public boolean isBoundsCheckEnabled() {
         return boundsCheck;
@@ -52,10 +45,6 @@ public class CompilerConfiguration {
             return this;
         }
 
-        public Builder trace(boolean traceFlag) {
-            config.trace = traceFlag;
-            return this;
-        }
         public Builder caseStrategy(Function<String,String> caseStrategy) {
             config.caseStrategy = caseStrategy;
             return this;

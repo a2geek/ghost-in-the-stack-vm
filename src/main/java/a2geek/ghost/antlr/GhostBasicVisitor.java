@@ -1,6 +1,5 @@
 package a2geek.ghost.antlr;
 
-import a2geek.ghost.antlr.generated.BasicBaseVisitor;
 import a2geek.ghost.antlr.generated.BasicParser;
 import a2geek.ghost.antlr.generated.BasicParser.IfStatementContext;
 import a2geek.ghost.model.*;
@@ -10,7 +9,6 @@ import a2geek.ghost.model.statement.GotoGosubStatement;
 import a2geek.ghost.model.statement.IfStatement;
 import a2geek.ghost.model.statement.OnErrorStatement;
 import a2geek.ghost.model.visitor.ExpressionVisitors;
-import a2geek.ghost.model.visitor.StatementVisitors;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.util.*;
@@ -18,6 +16,7 @@ import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static a2geek.ghost.TrackingLogger.LOGGER;
 import static a2geek.ghost.model.CommonExpressions.*;
 import static a2geek.ghost.model.ModelBuilder.*;
 import static a2geek.ghost.model.visitor.ExpressionVisitors.hasAnyArraySymbol;
@@ -104,15 +103,15 @@ public class GhostBasicVisitor extends BasicBaseVisitorWrapper {
             case "strict" -> {
                 this.variableTest = this::ensureVariableExists;
             }
-            default -> throw new RuntimeException("unknown option type: " + ctx.getText());
+            default -> LOGGER.failf("unknown option type: %s", ctx.getText());
         }
         return null;
     }
 
     public boolean ensureVariableExists(String varName) {
         if (model.findSymbol(varName).isEmpty()) {
-            var msg = String.format("variable '%s' does not exist; in option strict mode, it must be DIMmed", varName);
-            throw new RuntimeException(msg);
+            LOGGER.errorf("variable '%s' does not exist; in option strict mode, it must be DIMmed", varName);
+            return false;
         }
         return true;
     }
@@ -130,7 +129,7 @@ public class GhostBasicVisitor extends BasicBaseVisitorWrapper {
             case "^=" -> expr = model.callFunction("math.ipow", ref, expr);
             case ">>=" -> expr = ref.rshift(expr);
             case "<<=" -> expr = ref.lshift(expr);
-            default -> throw new RuntimeException("unexpected assignment operator: " + ctx.getText());
+            default -> LOGGER.failf("unexpected assignment operator: %s", ctx.getText());
         }
         if (expr.isType(DataType.STRING)) {
             expr = handleStringConcatenation(expr);
@@ -153,7 +152,8 @@ public class GhostBasicVisitor extends BasicBaseVisitorWrapper {
             return null;
         }
         else {
-            throw new RuntimeException("expecting a variable type for assignment: " + ctx.id.getText());
+            LOGGER.errorf("expecting a variable type for assignment: %s", ctx.id.getText());
+            return null;
         }
     }
 
@@ -184,7 +184,7 @@ public class GhostBasicVisitor extends BasicBaseVisitorWrapper {
      */
     Expression handleStringConcatenation(Expression expr) {
         if (!expr.isType(DataType.STRING)) {
-            throw new RuntimeException("[compiler bug] expecting string expression: " + expr);
+            LOGGER.failf("expecting string expression: %s", expr);
         }
         // only for binary concatenation expressions
         if (!(expr instanceof BinaryExpression bin && "+".equals(bin.getOp()))) {
@@ -314,7 +314,10 @@ public class GhostBasicVisitor extends BasicBaseVisitorWrapper {
             case "goto" -> new OnErrorStatement(findGotoGosubLabel(ctx.l));
             case "disable" -> new OnErrorStatement(OnErrorStatement.Operation.DISABLE);
             case "resume" -> new OnErrorStatement(OnErrorStatement.Operation.RESUME_NEXT);
-            default -> throw new RuntimeException("unexpected ON ERROR construct: " + ctx.getText());
+            default -> {
+                LOGGER.failf("unexpected ON ERROR construct: %s", ctx.getText());
+                yield null;
+            }
         };
         model.addStatement(stmt);
         return null;
@@ -456,7 +459,7 @@ public class GhostBasicVisitor extends BasicBaseVisitorWrapper {
         switch (ctx.op.getText()) {
             case "while" -> model.ifStmt(test, StatementBlock.EMPTY, gotoExitStatement);
             case "until" -> model.ifStmt(test, gotoExitStatement, null);
-            default -> throw new RuntimeException("unexpected do loop type: " + ctx.op.getText());
+            default -> LOGGER.errorf("unexpected do loop type: %s", ctx.op.getText());
         }
         doFrames.push(new LoopFrame(loopLabel, exitLabel));
         optVisit(ctx.s);
@@ -516,7 +519,7 @@ public class GhostBasicVisitor extends BasicBaseVisitorWrapper {
         switch (ctx.op.getText()) {
             case "while" -> model.ifStmt(test, gotoStatement, null);
             case "until" -> model.ifStmt(test, StatementBlock.EMPTY, gotoStatement);
-            default -> throw new RuntimeException("unexpected do loop type: " + ctx.op.getText());
+            default -> LOGGER.errorf("unexpected do loop type: %s", ctx.op.getText());
         }
         model.labelStmt(exitLabel);
 
@@ -623,18 +626,24 @@ public class GhostBasicVisitor extends BasicBaseVisitorWrapper {
             case "while" -> whileFrames;
             case "repeat" -> repeatFrames;
             case "do" -> doFrames;
-            default -> throw new RuntimeException("unknown exit type: " + ctx.getText());
+            default -> {
+                LOGGER.errorf("unknown exit type: %s", ctx.getText());
+                yield new Stack<LoopFrame>();
+            }
         };
 
         if (frames.isEmpty()) {
-            var msg = String.format("'%s %s' must be in a %s statement", op, stmtType, stmtType);
-            throw new RuntimeException(msg);
+            LOGGER.errorf("'%s %s' must be in a %s statement", op, stmtType, stmtType);
+            return null;
         }
 
         var label = switch (op) {
             case "continue" -> frames.peek().continueLabel;
             case "exit" -> frames.peek().exitLabel;
-            default -> throw new RuntimeException("unknown exit type: " + ctx.getText());
+            default -> {
+                LOGGER.errorf("unknown exit type: %s", ctx.getText());
+                yield Symbol.label("UNKNOWN").build();
+            }
         };
         model.gotoGosubStmt("goto", label);
         return null;
@@ -671,7 +680,7 @@ public class GhostBasicVisitor extends BasicBaseVisitorWrapper {
                     case STRING -> model.callLibrarySubroutine("print_string", handleStringConcatenation(expr));
                     case ADDRESS -> model.callLibrarySubroutine("print_address", expr);
                     case BYTE -> model.callLibrarySubroutine("print_byte", expr);
-                    default -> throw new RuntimeException("Unsupported PRINT type: " + expr.getType());
+                    default -> LOGGER.errorf("Unsupported PRINT type: %s", expr.getType());
                 }
             }
         }
@@ -694,7 +703,7 @@ public class GhostBasicVisitor extends BasicBaseVisitorWrapper {
         switch (ctx.op.getText().toLowerCase()) {
             case "poke" -> model.assignStmt(derefByte(a), b);
             case "pokew" -> model.assignStmt(derefWord(a), b);
-            default -> throw new RuntimeException("[compiler bug] unknown poke statement: " + ctx.getText());
+            default -> LOGGER.failf("unknown poke statement: %s", ctx.getText());
         }
         return null;
     }
@@ -772,14 +781,14 @@ public class GhostBasicVisitor extends BasicBaseVisitorWrapper {
                 }
                 String id = config.applyCaseStrategy(idDecl.identifier().getText());
                 if (names.contains(id)) {
-                    throw new RuntimeException("variable already defined: " + id);
+                    LOGGER.errorf("variable already defined: %s", id);
                 }
                 List<Expression> dimensions = new ArrayList<>();
                 for (var expr : idDecl.expr()) {
                     dimensions.add(visit(expr));
                 }
                 if (modifiers.contains(IdModifier.STATIC) && !dimensions.isEmpty()) {
-                    config.trace("WARNING: static array size set by assignment");
+                    LOGGER.warningf("static array size set by assignment");
                 }
                 if (idDecl.getText().contains("()")) {
                     // We should be able to assume no dimensions declared
@@ -792,8 +801,8 @@ public class GhostBasicVisitor extends BasicBaseVisitorWrapper {
                     for (var defaultExpr : idDecl.idDeclDefault().expr()) {
                         var expr = visit(defaultExpr);
                         if (isArray && !expr.isConstant()) {
-                            throw new RuntimeException("array default values currently must be constant: "
-                                    + defaultExpr.getText());
+                            LOGGER.errorf("array default values currently must be constant: %s",
+                                    defaultExpr.getText());
                         }
                         defaultValues.add(expr);
                     }
@@ -829,8 +838,8 @@ public class GhostBasicVisitor extends BasicBaseVisitorWrapper {
         else if (nameType == dt) {
             return dt;
         }
-        var msg = String.format("'%s' can't be type %s", id, dt);
-        throw new RuntimeException(msg);
+        LOGGER.errorf("'%s' can't be type %s", id, dt);
+        return null;
     }
 
     List<IdDeclaration> buildIdDeclarationList(List<BasicParser.ParamIdDeclContext> params) {
@@ -840,7 +849,7 @@ public class GhostBasicVisitor extends BasicBaseVisitorWrapper {
             params.forEach(idDecl -> {
                 String id = config.applyCaseStrategy(idDecl.identifier().getText());
                 if (names.contains(id)) {
-                    throw new RuntimeException("parameter already defined: " + id);
+                    LOGGER.errorf("parameter already defined: %s", id);
                 }
                 int numDimensions = 0;
                 if (idDecl.getText().contains("(")) {
@@ -856,11 +865,11 @@ public class GhostBasicVisitor extends BasicBaseVisitorWrapper {
                 List<Expression> defaultValues = new ArrayList<>();
                 if (idDecl.optional() != null || idDecl.expr() != null) {
                     if (idDecl.expr() == null) {
-                        throw new RuntimeException("Optional parameter specified but no default value given: " + idDecl.getText());
+                        LOGGER.errorf("Optional parameter specified but no default value given: %s", idDecl.getText());
                     }
                     var defaultValue = visit(idDecl.expr());
                     if (!defaultValue.isConstant()) {
-                        throw new RuntimeException("paramater default values must be a constant: " + idDecl.getText());
+                        LOGGER.errorf("parameter default values must be a constant: %s", idDecl.getText());
                     }
                     defaultValues.add(defaultValue);
                 }
@@ -901,10 +910,7 @@ public class GhostBasicVisitor extends BasicBaseVisitorWrapper {
                     case "inline" -> subOrFunc.add(Subroutine.Modifier.INLINE);
                     case "export" -> subOrFunc.add(Subroutine.Modifier.EXPORT);
                     case "volatile" -> subOrFunc.add(Subroutine.Modifier.VOLATILE);
-                    default -> {
-                        var msg = String.format("Unknown modifier '%s' encountered", modifier.getText());
-                        throw new RuntimeException(msg);
-                    }
+                    default -> LOGGER.errorf("Unknown modifier '%s' encountered", modifier.getText());
                 }
             });
         }
@@ -914,17 +920,14 @@ public class GhostBasicVisitor extends BasicBaseVisitorWrapper {
             switch (ctx.getText().toLowerCase()) {
                 case "public" -> subOrFunc.set(Visibility.PUBLIC);
                 case "private" -> subOrFunc.set(Visibility.PRIVATE);
-                default -> {
-                    var msg = String.format("Unknown visibility '%s' encountered", ctx.getText());
-                    throw new RuntimeException(msg);
-                }
+                default -> LOGGER.errorf("Unknown visibility '%s' encountered", ctx.getText());
             }
         }
     }
 
     void ensureValidConstruct(Subroutine subOrFunc) {
         if (subOrFunc.is(Visibility.PRIVATE) && subOrFunc.is(Subroutine.Modifier.EXPORT)) {
-            throw new RuntimeException("cannot export a private routine: " + subOrFunc.getFullPathName());
+            LOGGER.errorf("cannot export a private routine: %s", subOrFunc.getFullPathName());
         }
     }
 
@@ -967,7 +970,7 @@ public class GhostBasicVisitor extends BasicBaseVisitorWrapper {
                 if (decl.hasDefaultValues() && decl.dimensions.size() == 1) {
                     decl.defaultValues().forEach(expr -> {
                         if (!expr.isConstant()) {
-                            throw new RuntimeException("default array values must be constant");
+                            LOGGER.errorf("default array values must be constant: %s", decl.name());
                         }
                     });
                     model.addArrayDefaultVariable(decl.name(), decl.dataType(),
@@ -982,7 +985,7 @@ public class GhostBasicVisitor extends BasicBaseVisitorWrapper {
                 var symbol = model.addVariable(decl.name(), decl.dataType());
                 if (decl.hasDefaultValues()) {
                     if (decl.defaultValues().size() != 1) {
-                        throw new RuntimeException("can only assign one default value: " + decl.name());
+                        LOGGER.errorf("can only assign one default value: %s", decl.name());
                     }
                     model.assignStmt(VariableReference.with(symbol), decl.defaultValues().getFirst());
                 }
@@ -1006,8 +1009,7 @@ public class GhostBasicVisitor extends BasicBaseVisitorWrapper {
                 model.addConstant(decl.id.getText(), e);
             }
             else {
-                String msg = String.format("'%s' is not a constant: %s", decl.id.getText(), e);
-                throw new RuntimeException(msg);
+                LOGGER.errorf("'%s' is not a constant: %s", decl.id.getText(), e);
             }
         }
         return null;
@@ -1024,7 +1026,7 @@ public class GhostBasicVisitor extends BasicBaseVisitorWrapper {
         // Look for a likely symbol - and it might already exist
         var symbol = model.findSymbol(id).orElseGet(() -> {
             if (id.contains(".")) {
-                throw new RuntimeException("invalid identifier: " + id);
+                LOGGER.errorf("invalid identifier: %s", id);
             }
             variableTest.test(id);
             return model.addVariable(id, determineDataType(id, DataType.INTEGER));
@@ -1069,19 +1071,22 @@ public class GhostBasicVisitor extends BasicBaseVisitorWrapper {
         else if (params.size() == 2 && params.getFirst() instanceof VariableReference varRef && params.getLast().isConstant()) {
             return new ArrayLengthFunction(varRef.getSymbol(), params.getLast().asInteger().orElseThrow());
         }
-        throw new RuntimeException("ubound expects a variable name (and optionally an index number) as its argument: " + ctx.getText());
+        LOGGER.errorf("ubound expects a variable name (and optionally an index number) as its argument: %s", ctx.getText());
+        return null;
     }
     Expression handlePeekFunction(List<Expression> params, ParseTree ctx) {
         if (params.size() == 1) {
             return derefByte(params.getFirst());
         }
-        throw new RuntimeException("peek expects one paramter: " + ctx.getText());
+        LOGGER.errorf("peek expects one paramter: %s", ctx.getText());
+        return null;
     }
     Expression handlePeekwFunction(List<Expression> params, ParseTree ctx) {
         if (params.size() == 1) {
             return derefWord(params.getFirst());
         }
-        throw new RuntimeException("peekw expects one paramter: " + ctx.getText());
+        LOGGER.errorf("peekw expects one paramter: %s", ctx.getText());
+        return null;
     }
     Expression handleAddrOfFunction(List<Expression> params, ParseTree ctx) {
         if (params.size() == 1 && params.getFirst() instanceof VariableReference varRef) {
@@ -1091,38 +1096,43 @@ public class GhostBasicVisitor extends BasicBaseVisitorWrapper {
         else if (params.size() == 1 && params.getFirst() instanceof DereferenceOperator deref && hasAnyArraySymbol(deref.getExpr())) {
             return deref.getExpr();
         }
-        throw new RuntimeException("can only take addrof a simple variable or an array index: " + ctx.getText());
+        LOGGER.errorf("can only take addrof a simple variable or an array index: %s", ctx.getText());
+        return null;
     }
     Expression handleCAddrFunction(List<Expression> params, ParseTree ctx) {
         if (params.size() == 1) {
             return new TypeConversionOperator(params.getFirst(), DataType.ADDRESS);
         }
-        throw new RuntimeException("can only use CAddr on a simple variable: " + ctx.getText());
+        LOGGER.errorf("can only use CAddr on a simple variable: %s", ctx.getText());
+        return null;
     }
     Expression handleCBoolFunction(List<Expression> params, ParseTree ctx) {
         if (params.size() == 1) {
             return new TypeConversionOperator(params.getFirst(), DataType.BOOLEAN);
         }
-        throw new RuntimeException("can only use CBool on a simple variable: " + ctx.getText());
+        LOGGER.errorf("can only use CBool on a simple variable: %s", ctx.getText());
+        return null;
     }
     Expression handleCByteFunction(List<Expression> params, ParseTree ctx) {
         if (params.size() == 1) {
             return new TypeConversionOperator(params.getFirst(), DataType.BYTE);
         }
-        throw new RuntimeException("can only use CByte on a simple variable: " + ctx.getText());
+        LOGGER.errorf("can only use CByte on a simple variable: %s", ctx.getText());
+        return null;
     }
     Expression handleCIntFunction(List<Expression> params, ParseTree ctx) {
         if (params.size() == 1) {
             return new TypeConversionOperator(params.getFirst(), DataType.INTEGER);
         }
-        throw new RuntimeException("can only use CInt on a simple variable: " + ctx.getText());
+        LOGGER.errorf("can only use CInt on a simple variable: %s", ctx.getText());
+        return null;
     }
 
     void ensureHeapEnabled(ParseTree ctx) {
         if (model.getProgram().getMemoryManagementStrategy().isUsingHeap()) {
             return;
         }
-        throw new RuntimeException("requires heap to be enabled: " + ctx.getText());
+        LOGGER.errorf("requires heap to be enabled: %s", ctx.getText());
     }
 
     @Override
@@ -1144,15 +1154,15 @@ public class GhostBasicVisitor extends BasicBaseVisitorWrapper {
 
         var existing = model.findSymbol(id);
         if (existing.isEmpty()) {
-            throw new RuntimeException("variable does not exist: " + id);
+            LOGGER.errorf("variable does not exist: %s", id);
+            return null;
         }
         if (params.size() != existing.get().numDimensions()) {
             if (existing.get().numDimensions() == 0) {
-                throw new RuntimeException("variable is not declared as an array: " + id);
+                LOGGER.errorf("variable is not declared as an array: %s", id);
             }
             else {
-                var msg = String.format("variable %s should have %d dimensions: %s", id, existing.get().numDimensions(), ctx.getText());
-                throw new RuntimeException(msg);
+                LOGGER.errorf("variable %s should have %d dimensions: %s", id, existing.get().numDimensions(), ctx.getText());
             }
         }
 
@@ -1206,7 +1216,8 @@ public class GhostBasicVisitor extends BasicBaseVisitorWrapper {
                 return l.plus(r);
             }
             else {
-                throw new RuntimeException("strings only support =,<>,+ operations: " + ctx.getText());
+                LOGGER.errorf("strings only support =,<>,+ operations: %s", ctx.getText());
+                return null;
             }
         }
         else {

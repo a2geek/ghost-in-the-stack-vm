@@ -14,6 +14,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.util.*;
 
+import static a2geek.ghost.TrackingLogger.LOGGER;
 import static a2geek.ghost.model.CommonExpressions.arrayReference;
 import static a2geek.ghost.model.CommonExpressions.derefByte;
 import static a2geek.ghost.model.ModelBuilder.*;
@@ -119,8 +120,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
                 model.addInitializationStatements(sb);
             }
             else {
-                var msg = String.format("indeterminate temp string size for %s: based on %s", symbol, symbols);
-                throw new RuntimeException(msg);
+                LOGGER.errorf("indeterminate temp string size for %s: based on %s", symbol, symbols);
             }
         });
         return null;
@@ -149,9 +149,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         try {
             visit(ctx.statements());
         } catch (Exception ex) {
-            config.trace(ctx.getText());
-            var msg = String.format("Error in line %d: %s", lineNumber, ex.getMessage());
-            throw new RuntimeException(msg, ex);
+            LOGGER.errorf("Error in line %d: %s", lineNumber, ex.getMessage());
         }
         return null;
     }
@@ -165,7 +163,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     @Override
     public Expression visitClrStatement(IntegerParser.ClrStatementContext ctx) {
-        config.trace("CLR not supported; ignoring it.");
+        LOGGER.warningf("CLR not supported; ignoring it.");
         return null;
     }
 
@@ -178,7 +176,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     @Override
     public Expression visitDelStatement(IntegerParser.DelStatementContext ctx) {
-        config.trace("DEL not supported; ignoring it.");
+        LOGGER.warningf("DEL not supported; ignoring it.");
         return null;
     }
 
@@ -211,7 +209,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     @Override
     public Expression visitDspStatement(IntegerParser.DspStatementContext ctx) {
-        config.trace("DSP not supported; ignoring it.");
+        LOGGER.warningf("DSP not supported; ignoring it.");
         return null;
     }
 
@@ -363,7 +361,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         var expr = visit(ctx.e);
         var op = ctx.g.getText();
         if (!expr.isType(DataType.INTEGER)) {
-            throw new RuntimeException("GOTO/GOSUB must have an integer target: " + ctx.getText());
+            LOGGER.errorf("GOTO/GOSUB must have an integer target: %s", ctx.getText());
         }
         if (expr.isConstant()) {
             var line = expr.asInteger().map(this::gotoGosubLabel).orElseThrow();
@@ -396,7 +394,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     @Override
     public Expression visitHimemStatement(IntegerParser.HimemStatementContext ctx) {
-        config.trace("HIMEM not supported; ignoring it.");
+        LOGGER.warningf("HIMEM not supported; ignoring it.");
         return null;
     }
 
@@ -450,11 +448,11 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
                 switch (varRef.getType()) {
                     case INTEGER -> model.assignStmt(varRef, model.callFunction("runtime.input_scaninteger", Collections.emptyList()));
                     case STRING ->  model.callLibrarySubroutine("input_scanstring", varRef);
-                    default -> throw new RuntimeException("input statement not implemented yet: " + varRef.getType());
+                    default -> LOGGER.errorf("input statement not implemented yet: %s", varRef.getType());
                 }
             }
             else {
-                throw new RuntimeException("unknown variable type: " + avar);
+                LOGGER.errorf("unknown variable type: %s", avar);
             }
         }
         return null;
@@ -471,7 +469,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
             model.assignStmt(deref, expr);
         }
         else {
-            throw new RuntimeException("unknown variable type: " + ivar);
+            LOGGER.errorf("unknown variable type: %s", ivar);
         }
         return null;
     }
@@ -499,7 +497,8 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
             targetStart = params.get(1);
         }
         else {
-            throw new RuntimeException("unknown assignment variable type: " + srefExpr);
+            LOGGER.errorf("unknown assignment variable type: %s", srefExpr);
+            return null;
         }
         if (stringExpr instanceof StringConstant str) {
             sourceEnd = new IntegerConstant(str.getValue().length());
@@ -510,7 +509,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     @Override
     public Expression visitListStatement(IntegerParser.ListStatementContext ctx) {
-        config.trace("LIST not supported; ignoring it.");
+        LOGGER.warningf("LIST not supported; ignoring it.");
         return null;
     }
 
@@ -520,18 +519,18 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         if (expr.isConstant() && expr.asInteger().isPresent()) {
             int addr = expr.asInteger().orElseThrow();
             if (addr >= 0x803 && addr < 0x1000) {   // totally arbitrary.
-                config.trace("WARNING: LOMEM indicates this application may over write the $803 location.");
+                LOGGER.warningf("LOMEM indicates this application may over write the $803 location.");
             }
         }
         else {
-            config.trace("LOMEM not supported; ignoring it.");
+            LOGGER.warningf("LOMEM not supported; ignoring it.");
         }
         return null;
     }
 
     @Override
     public Expression visitTraceStatement(IntegerParser.TraceStatementContext ctx) {
-        config.trace("TRACE not supported; ignoring it.");
+        LOGGER.warningf("TRACE not supported; ignoring it.");
         return null;
     }
 
@@ -557,11 +556,11 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         // the stack.
         if (model.isCurrentScope(Program.class)) {
             model.addStatement(new PopStatement());
-            return null;
         }
         else {
-            throw new RuntimeException("POP statement only supported in main program.");
+            LOGGER.errorf("POP statement only supported in main program.");
         }
+        return null;
     }
 
     @Override
@@ -591,7 +590,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
                 switch (expr.getType()) {
                     case INTEGER -> model.callLibrarySubroutine("print_integer", expr);
                     case STRING -> model.callLibrarySubroutine("print_string", expr);
-                    default -> throw new RuntimeException("Unsupported PRINT type: " + expr.getType());
+                    default -> LOGGER.errorf("Unsupported PRINT type: %s", expr.getType());
                 }
             }
         }
@@ -614,7 +613,8 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     @Override
     public Expression visitRunStatement(IntegerParser.RunStatementContext ctx) {
-        throw new RuntimeException("RUN not supported.");
+        LOGGER.errorf("RUN not supported; this prevents further compilation.");
+        return null;
     }
 
     @Override
@@ -625,7 +625,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
 
     @Override
     public Expression visitNotraceStatement(IntegerParser.NotraceStatementContext ctx) {
-        config.trace("NOTRACE not supported; ignoring it.");
+        LOGGER.warningf("NOTRACE not supported; ignoring it.");
         return null;
     }
 
@@ -847,6 +847,7 @@ public class IntegerBasicVisitor extends IntegerBaseVisitor<Expression> {
         if (model.isUsingMemory()) {
             return 255;     // largest string supported, but only if we are using heap
         }
-        throw new RuntimeException(String.format("cannot evaluate (%s - %s) + 1", end, start));
+        LOGGER.failf("cannot evaluate (%s - %s) + 1", end, start);
+        return 0;
     }
 }

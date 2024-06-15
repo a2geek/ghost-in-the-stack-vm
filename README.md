@@ -72,31 +72,37 @@ rewritten model which has some minor optimizations at this time.
 The compiler can be invoked with `--help` to see a list of options:
 ```shell
 $ java -jar build/libs/GhostBasic-1.0-SNAPSHOT.jar --help
-Usage: compile [-hV] [--case-sensitive] [--debug] [--fix-control-chars] [--heap] [--integer] [--quiet] [--trace] [-il=<intermediateCodeListing>] [--lomem=<heapStartAddress>] [-o=<outputFile>] [--symbols=<symbolTableFile>] [-tl=<targetCodeListing>]
-               [[--[no-]optimizations] [--[no-]bounds-checking] [--[no-]constant-reduction] [--[no-]strength-reduction] [--[no-]dead-code-elimination] [--[no-]peephole-optimizer] [--[no-]label-optimizer] [--[no-]code-inlining] [--[no-]
-               expression-rewrite] [--[no-]subexpression-elimination] [--[no-]temp-variable-consolidation]] <sourceCode>
+Usage: compile [-hV] [--case-sensitive] [--debug] [--fix-control-chars] [--integer] [--quiet] [--trace] [-il=<intermediateCodeListing>] [--level=<logLevel>] [-o=<outputFile>] [--stage=<stage>] [--symbols=<symbolTableFile>]
+               [-tl=<targetCodeListing>] [-D=<String=Expression>]... [[--heap] [--lomem=<heapStartAddress>]] [[--[no-]optimizations] [--[no-]bounds-checking] [--[no-]constant-reduction] [--[no-]strength-reduction] [--[no-]dead-code-elimination] [--
+               [no-]peephole-optimizer] [--[no-]label-optimizer] [--[no-]code-inlining] [--[no-]expression-rewrite] [--[no-]subexpression-elimination] [--[no-]temp-variable-consolidation]] <sourceCode>
 Compile Ghost BASIC program.
       <sourceCode>           program to compile
       --case-sensitive       allow identifiers to be case sensitive (A is different from a)
                                Default: false
+  -D, --define=<String=Expression>
+                             define variables (default: true)
       --debug                use the debugging interpreter
       --fix-control-chars    replace '<CONTROL-?>' with the actual control character
   -h, --help                 Show this help message and exit.
-      --heap                 allocate memory on heap
       -il, --intermediate-code-listing=<intermediateCodeListing>
                              create intermediate code listing file
       --integer              integer basic program
-      --lomem, --heap-start=<heapStartAddress>
-                             heap start address (default: 0x8000)
+      --level=<logLevel>     set logging level
+                               Default: WARNING
   -o, --output=<outputFile>  output file name
                                Default: a.out
       --quiet                reduce output
+      --stage=<stage>        run compiler to specified stage
       --symbols=<symbolTableFile>
                              dump symbol table to file
       -tl, --target-code-listing=<targetCodeListing>
                              create listing file
       --trace                enable stack traces
   -V, --version              Print version information and exit.
+Memory Configuration:
+      --heap                 allocate memory on heap
+      --lomem, --heap-start=<heapStartAddress>
+                             heap start address (default: 0x8000)
 Optimizations:
       --[no-]bounds-checking perform bounds checking on arrays (enabled: true)
       --[no-]code-inlining   enable code inlining (enabled: true)

@@ -16,6 +16,8 @@ import java.util.Map;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
+import static a2geek.ghost.TrackingLogger.LOGGER;
+
 public class PreprocessorVisitor extends PreprocessorGrammarBaseVisitor<Expression> {
     public static final Predicate<String> OPTION_REGEX = Pattern.compile(".*option[^\r\n]+heap.+").asPredicate();
     private final Map<String,Expression> variables = new HashMap<>();
@@ -119,13 +121,19 @@ public class PreprocessorVisitor extends PreprocessorGrammarBaseVisitor<Expressi
     public Expression visitIdOrFnExpr(PreprocessorGrammar.IdOrFnExprContext ctx) {
         var id = ctx.ID().getText();
         if (id.equalsIgnoreCase("defined")) {
-            requires(ctx.expr(), error("defined function requires an ID"));
-            return new BooleanConstant(variables.containsKey(ctx.expr().getText()));
+            if (ctx.expr() == null) {
+                LOGGER.errorf("defined function requires an ID");
+                return null;
+            }
+            else {
+                return new BooleanConstant(variables.containsKey(ctx.expr().getText()));
+            }
         }
         if (variables.containsKey(id)) {
             return variables.get(id);
         }
-        throw error("ID '%s' is not defined", id);
+        LOGGER.errorf("ID '%s' is not defined", id);
+        return null;
     }
 
     @Override
@@ -141,17 +149,5 @@ public class PreprocessorVisitor extends PreprocessorGrammarBaseVisitor<Expressi
     @Override
     public Expression visitStringExpr(PreprocessorGrammar.StringExprContext ctx) {
         return new StringConstant(ctx.getText());
-    }
-
-    // Utilities
-
-    void requires(PreprocessorGrammar.ExprContext ctx, RuntimeException error) {
-        if (ctx == null) {
-            throw error;
-        }
-    }
-
-    RuntimeException error(String fmt, Object... args) {
-        return new RuntimeException(String.format(fmt, args));
     }
 }

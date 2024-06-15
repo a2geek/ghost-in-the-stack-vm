@@ -5,11 +5,13 @@ import a2geek.ghost.model.expression.IntegerConstant;
 import a2geek.ghost.model.expression.VariableReference;
 import a2geek.ghost.model.scope.Program;
 import org.antlr.v4.runtime.CharStreams;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static a2geek.ghost.TrackingLogger.LOGGER;
 import static a2geek.ghost.antlr.ExpressionBuilder.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -21,6 +23,11 @@ public class IntegerBasicVisitorTest {
         System.out.println(program);
         return new StatementTester.ScopeTester(program,
             String::toUpperCase, s -> String.format("%s()", s));
+    }
+
+    @BeforeEach
+    public void beforeEach() {
+        LOGGER.clear();
     }
 
     @Test

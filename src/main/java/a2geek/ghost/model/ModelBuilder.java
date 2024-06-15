@@ -7,7 +7,6 @@ import a2geek.ghost.model.expression.*;
 import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.scope.Subroutine;
 import a2geek.ghost.model.statement.*;
-import a2geek.ghost.model.visitor.StatementVisitors;
 import org.antlr.v4.runtime.CharStreams;
 
 import java.io.IOException;
@@ -18,6 +17,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import static a2geek.ghost.TrackingLogger.LOGGER;
 import static a2geek.ghost.model.CommonExpressions.derefByte;
 import static a2geek.ghost.model.CommonExpressions.derefWord;
 import static a2geek.ghost.model.Symbol.in;
@@ -164,7 +164,7 @@ public class ModelBuilder {
 
     public void uses(String libname, Predicate<Symbol> exportHandler) {
         if (findModule(libname).isEmpty()) {
-            config.trace("loading library: %s", libname);
+            LOGGER.infof("loading library: %s", libname);
             String name = String.format("/library/%s.bas", libname);
             try (InputStream inputStream = getClass().getResourceAsStream(name)) {
                 if (inputStream == null) {
@@ -327,7 +327,7 @@ public class ModelBuilder {
     }
 
     public Scope moduleDeclBegin(String name) {
-        config.trace("compiling module '%s'", name);
+        LOGGER.infof("compiling module '%s'", name);
         Scope module = new Scope(scope.peek(), config.applyCaseStrategy(name), DeclarationType.GLOBAL);
         this.scope.peek().addLocalSymbol(Symbol.scope(module));
 
@@ -341,7 +341,7 @@ public class ModelBuilder {
     }
 
     public Subroutine subDeclBegin(String name, List<Symbol.Builder> params) {
-        config.trace("compiling subroutine '%s'", name);
+        LOGGER.infof("compiling subroutine '%s'", name);
         Subroutine sub = new Subroutine(scope.peek(), config.applyCaseStrategy(name), params);
         this.scope.peek().addLocalSymbol(Symbol.scope(sub));
 
@@ -363,7 +363,7 @@ public class ModelBuilder {
     }
 
     public a2geek.ghost.model.scope.Function funcDeclBegin(String name, DataType returnType, List<Symbol.Builder> params) {
-        config.trace("compiling function '%s'", name);
+        LOGGER.infof("compiling function '%s'", name);
         a2geek.ghost.model.scope.Function func =
             new a2geek.ghost.model.scope.Function(scope.peek(),
                 Symbol.variable(name, SymbolType.RETURN_VALUE).dataType(returnType), params);

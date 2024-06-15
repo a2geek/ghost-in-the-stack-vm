@@ -1,5 +1,6 @@
 package a2geek.ghost.command;
 
+import a2geek.ghost.TrackingLogger;
 import a2geek.ghost.antlr.ParseUtil;
 import a2geek.ghost.command.util.ByteFormatter;
 import a2geek.ghost.command.util.IntegerTypeConverter;
@@ -29,6 +30,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static a2geek.ghost.TrackingLogger.LOGGER;
 import static a2geek.ghost.model.Symbol.in;
 import static picocli.CommandLine.ArgGroup;
 
@@ -37,6 +39,7 @@ import static picocli.CommandLine.ArgGroup;
 public class CompileCommand implements Callable<Integer> {
     public static final String INTERPRETER = "/interp-base.as";
     public static final String DEBUG_INTERPRETER = "/interp-debug-base.as";
+
     @Parameters(index = "0", description = "program to compile")
     private Path sourceCode;
 
@@ -59,6 +62,12 @@ public class CompileCommand implements Callable<Integer> {
     @Option(names = { "--trace" }, description = "enable stack traces")
     private boolean traceFlag;
 
+    @Option(names = { "--level" }, description = "set logging level",
+            defaultValue = "WARNING", showDefaultValue = Visibility.ALWAYS)
+    private void setLogLevel(TrackingLogger.Level level) {
+        LOGGER.setLevel(level);
+    }
+
     @Option(names = { "-D", "--define" }, mapFallbackValue = "true",
             description = "define variables (default: ${MAP-FALLBACK-VALUE})")
     private Map<String,Expression> definedValues = new HashMap<>();
@@ -73,7 +82,7 @@ public class CompileCommand implements Callable<Integer> {
             description = "replace '<CONTROL-?>' with the actual control character")
     private boolean fixControlChars;
 
-    @ArgGroup(exclusive = false, heading = "Memory Configuration:%s")
+    @ArgGroup(exclusive = false, heading = "Memory Configuration:%n")
     private MemoryConfig memoryConfig = new MemoryConfig();
 
     @ArgGroup(exclusive = false, heading = "Optimizations:%n")
@@ -126,7 +135,6 @@ public class CompileCommand implements Callable<Integer> {
         CompilerConfiguration config = CompilerConfiguration.builder()
                 .caseStrategy(caseSensitive ? s -> s : String::toUpperCase)
                 .controlCharsFn(fixControlChars ? CompileCommand::convertControlCharacterMarkers : s -> s)
-                .trace(traceFlag)
                 .apply(optimizations::configure)
                 .apply(memoryConfig::configure)
                 .defines(definedValues)
