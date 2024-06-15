@@ -31,6 +31,7 @@ public class GhostBasicVisitor extends BasicBaseVisitorWrapper {
     private final Stack<LoopFrame> whileFrames = new Stack<>();
     private Predicate<String> variableTest = (s) -> true;
     private int statementDepth;
+    private DataType defaultDataType = DataType.INTEGER;
 
     public GhostBasicVisitor(ModelBuilder model) {
         this.model = model;
@@ -102,6 +103,13 @@ public class GhostBasicVisitor extends BasicBaseVisitorWrapper {
             }
             case "strict" -> {
                 this.variableTest = this::ensureVariableExists;
+            }
+            case "default" -> {
+                if (ctx.optionTypes().dt == null) {
+                    LOGGER.failf("data type required in 'option default <type>' statement");
+                } else {
+                    this.defaultDataType = DataType.valueOf(ctx.optionTypes().dt.getText().toUpperCase());
+                }
             }
             default -> LOGGER.failf("unknown option type: %s", ctx.getText());
         }
@@ -827,7 +835,7 @@ public class GhostBasicVisitor extends BasicBaseVisitorWrapper {
             dt = DataType.INTEGER;
         }
         if (nameType == null && dt == null) {
-            return DataType.INTEGER;
+            return defaultDataType;
         }
         else if (nameType == null) {
             return dt;

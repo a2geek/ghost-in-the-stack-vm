@@ -82,8 +82,9 @@ The `option` keyword allows some compiler settings to be embedded in the applica
 
 | Option                         | Description                                                                                      |
 |:-------------------------------|:-------------------------------------------------------------------------------------------------|
-| `option strict`                | Requires all variables to be declared instead of being implicitly created on first use.          |
+| `option default <type>`        | Set the default variable datatype. By convention, this is an Integer.                            |
 | `option heap` ( `lomem=ADDR` ) | Enable heap (instead of stack) for array allocation. `lomem` defaults to $8000 if not specified. |
+| `option strict`                | Requires all variables to be declared instead of being implicitly created on first use.          |
 
 ## Data types
 

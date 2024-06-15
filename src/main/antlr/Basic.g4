@@ -19,6 +19,7 @@ directives
 optionTypes // "options" is an ANTLR grammar keyword
     : op='heap' ( LOMEM '=' lomem=INT )?
     | op='strict'
+    | op='default' dt=datatype
     ;
 
 module
