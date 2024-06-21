@@ -38,9 +38,9 @@ public class LabelOptimizer {
             if (inst.opcode() != null && inst.label() != null) {
                 usedLabels.add(inst.label());
             }
-            else if (inst.directive() == Directive.CONSTANT
-                     && inst.constantValue().constantType() == ConstantType.LABEL_ARRAY_LESS_1) {
-                usedLabels.addAll(inst.constantValue().stringArray());
+            else if (inst.directive() != null
+                     && inst.directive().type() == Directive.Type.LABEL_ARRAY_LESS_1) {
+                usedLabels.addAll(inst.directive().array().stream().map(String.class::cast).toList());
             }
         }
     }
@@ -84,7 +84,7 @@ public class LabelOptimizer {
             if (is(inst.opcode(), Opcode.LOADA, Opcode.IFNZ, Opcode.IFZ, Opcode.GOTO, Opcode.GOSUB)
                     && replaceLabels.containsKey(inst.label())) {
                 list.set(0, new Instruction(replaceLabels.get(inst.label()), inst.opcode(),
-                    null, null, null, null));
+                    null, null, null));
             }
         }
     }

@@ -6,16 +6,16 @@ public class Instructions {
     }
 
     private static Instruction build(Opcode opcode) {
-        return new Instruction(null, opcode, null, null, null,null);
+        return new Instruction(null, opcode, null, null, null);
     }
     private static Instruction build(Opcode opcode, int arg) {
-        return new Instruction(null, opcode, null, arg, null, null);
+        return new Instruction(null, opcode, null, arg, null);
     }
     private static Instruction build(Opcode opcode, int arg, int arg2) {
-        return new Instruction(null, opcode, null, arg, arg2, null);
+        return new Instruction(null, opcode, null, arg, arg2);
     }
     private static Instruction build(Opcode opcode, String label) {
-        return new Instruction(label, opcode, null, null, null, null);
+        return new Instruction(label, opcode, null, null, null);
     }
 
     public static Instruction RETURN() {

@@ -1,19 +1,18 @@
 package a2geek.ghost.target.ghost;
 
-import java.io.ByteArrayOutputStream;
 import java.util.Map;
 import java.util.Objects;
 
-public record Instruction (String label, Opcode opcode, Directive directive, Integer arg, Integer arg2, ConstantValue constantValue) {
+public record Instruction (String label, Opcode opcode, Directive directive, Integer arg, Integer arg2) {
     public boolean isLabelOnly() {
-        return label != null && opcode == null && directive == null && arg == null && constantValue == null;
+        return label != null && opcode == null && directive == null && arg == null;
     }
     public int size() {
         if (opcode != null) {
             return opcode.getSize();
         }
-        else if (directive == Directive.CONSTANT) {
-            return constantValue.size();
+        else if (directive != null) {
+            return directive.size();
         }
         return 0;
     }
@@ -22,7 +21,7 @@ public record Instruction (String label, Opcode opcode, Directive directive, Int
             return handleOpcode(addrs);
         }
         else if (directive != null) {
-            return handleDirective(addrs);
+            return directive.generate(addrs);
         }
         return new byte[0];
     }
@@ -42,47 +41,6 @@ public record Instruction (String label, Opcode opcode, Directive directive, Int
             return opcode.generate(value, arg2);
         }
     }
-    byte[] handleDirective(Map<String,Integer> addrs) {
-        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-        switch (constantValue.constantType()) {
-            case STRING_VALUE -> {
-                bytes.write(constantValue.string().length());
-                for (byte ch : constantValue.string().getBytes()) {
-                    bytes.write(ch|0x80);
-                }
-                bytes.write(0);
-            }
-            case INTEGER_ARRAY -> {
-                // BASIC arrays ignore the zeroth element, so 1,2,3,4 is length of 3
-                int size = constantValue.integerArray().size()-1;
-                bytes.write(size & 0xff);
-                bytes.write(size >> 8 & 0xff);
-                for (int value : constantValue.integerArray()) {
-                    bytes.write(value & 0xff);
-                    bytes.write(value >> 8 & 0xff);
-                }
-            }
-            case LABEL_ARRAY_LESS_1 -> {
-                // BASIC arrays ignore the zeroth element, so 1,2,3,4 is length of 3
-                int size = constantValue.stringArray().size()-1;
-                bytes.write(size & 0xff);
-                bytes.write(size >> 8 & 0xff);
-                for (String label : constantValue.stringArray()) {
-                    Integer value = addrs.get(label);
-                    if (value == null) {
-                        throw new RuntimeException("label not found: " + label);
-                    }
-                    value = value - 1;
-                    bytes.write(value & 0xff);
-                    bytes.write(value >> 8 & 0xff);
-                }
-            }
-            default -> {
-                throw new RuntimeException("Unsupported directive: " + directive);
-            }
-        }
-        return bytes.toByteArray();
-    }
     @Override
     public String toString() {
         if (label != null && opcode == null && directive == null && arg == null) {
@@ -91,8 +49,8 @@ public record Instruction (String label, Opcode opcode, Directive directive, Int
         else if (opcode != null) {
             return String.format("\t%s", opcode.format(objectArray(label, arg, arg2)));
         }
-        else if (label != null && directive == Directive.CONSTANT) {
-            return String.format("%s:\t%s %s", label, directive, constantValue);
+        else if (directive != null) {
+            return String.format("%s:\t%s", label, directive.format());
         }
         else {
             var message = String.format("Unexpected instruction: %s %s %04d", label, opcode, arg);
