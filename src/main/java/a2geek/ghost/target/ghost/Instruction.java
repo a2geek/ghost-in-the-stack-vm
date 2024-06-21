@@ -1,6 +1,5 @@
 package a2geek.ghost.target.ghost;
 
-
 import java.io.ByteArrayOutputStream;
 import java.util.Map;
 import java.util.Objects;
@@ -11,7 +10,7 @@ public record Instruction (String label, Opcode opcode, Directive directive, Int
     }
     public int size() {
         if (opcode != null) {
-            return opcode.getArgumentCount() + 1;
+            return opcode.getSize();
         }
         else if (directive == Directive.CONSTANT) {
             return constantValue.size();
@@ -28,31 +27,20 @@ public record Instruction (String label, Opcode opcode, Directive directive, Int
         return new byte[0];
     }
     byte[] handleOpcode(Map<String,Integer> addrs) {
-        byte[] data = new byte[size()];
-        data[0] = opcode.getByteCode();
-        if (data.length == 1) {
-            return data;
-        }
         Integer value = arg;
-        if (value == null) {
+        if (value == null && label != null) {
             value = addrs.get(label);
+            Objects.requireNonNull(value, "arg or label: " + this);
         }
-        Objects.requireNonNull(value, "arg or label: " + this);
-        switch (opcode.getArgumentCount()) {
-            case 1:
-                data[1] = value.byteValue();
-                break;
-            case 2:
-                data[1] = (byte)(value & 0xff);
-                data[2] = (byte)(value >> 8 & 0xff);
-                break;
-            case 3:
-                data[1] = value.byteValue();
-                data[2] = (byte)(arg2 & 0xff);
-                data[3] = (byte)(arg2 >> 8 & 0xff);
-                break;
+        if (value == null) {
+            return opcode.generate();
         }
-        return data;
+        else if (arg2 == null) {
+            return opcode.generate(value);
+        }
+        else {
+            return opcode.generate(value, arg2);
+        }
     }
     byte[] handleDirective(Map<String,Integer> addrs) {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -100,17 +88,8 @@ public record Instruction (String label, Opcode opcode, Directive directive, Int
         if (label != null && opcode == null && directive == null && arg == null) {
             return String.format("%s:", label);
         }
-        else if (label == null && opcode != null && arg == null) {
-            return String.format("\t%s", opcode);
-        }
-        else if (label == null && opcode != null && arg != null && arg2 == null) {
-            return String.format("\t%s %04X", opcode, arg & 0xffff);
-        }
-        else if (label == null && opcode != null && arg != null && arg2 != null) {
-            return String.format("\t%s %04X,%04X", opcode, arg & 0xffff, arg2 & 0xffff);
-        }
-        else if (label != null && opcode != null && arg == null) {
-            return String.format("\t%s %s", opcode, label);
+        else if (opcode != null) {
+            return String.format("\t%s", opcode.format(objectArray(label, arg, arg2)));
         }
         else if (label != null && directive == Directive.CONSTANT) {
             return String.format("%s:\t%s %s", label, directive, constantValue);
@@ -119,5 +98,19 @@ public record Instruction (String label, Opcode opcode, Directive directive, Int
             var message = String.format("Unexpected instruction: %s %s %04d", label, opcode, arg);
             throw new RuntimeException(message);
         }
+    }
+    private Object[] objectArray(Object ...args) {
+        int n = 0;
+        for (Object arg : args) {
+            if (arg != null) n++;
+        }
+        Object[] data = new Object[n];
+        n = 0;
+        for (Object arg : args) {
+            if (arg != null) {
+                data[n++] = arg;
+            }
+        }
+        return data;
     }
 }
