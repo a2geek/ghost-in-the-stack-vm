@@ -3,13 +3,11 @@ Capturing ideas
 
 Validate memory footprint for variable allocation in some manner
 Looks like usage of Symbol may need to be checked? There is no constraint that a found variable is what is expected (aka a constant instead of a variable).
-Look at how bytecode is created - feels like Opcode and Directive can support Instruction more directly.
 Review generated code and look for alternates with new opcodes.
 Unit tests?  Integer BASIC(done)  BASIC(done)  optimizations(done)  code generation?
 Interpreter for use in tests.
 Structure assembly project; it's gonna get messier.
 Add Applesoft. DEF FN == Function
-Decide on assembler syntax; extensible would be nice (embeddable even better - homebrew would be sufficient)
 Need to determine if interpreter should keep signed and unsigned operations or can that just be replaced with wrapper code (removes DIVS/MULS/MODS)
 Enhance USES statement to allow custom imports (example: USES MIN,MAX FROM "MATH")
 Optimize/short circuit OR/AND with IFNZ/IFZ
@@ -18,3 +16,9 @@ Revisit boolean versus bit logic. NOT/AND/OR don't always work as expected; mayb
 Time to split VM?  Split out GhostVM, reduce the instruction set. Primary VM becomes BasicVM?
 Deferment of Sub/Func check would help with interwoven dependencies (latest: a RAISE ERROR in MEMORY immediately pulls in ERR which requires HEAP function which got deferred)
 Possible new instructions: LOCAL_I[LOAD|STORE][B|W] N to replace LOCAL_LOAD N, I[LOAD|STORE][B|W] sequences.
+Research/fix/rewrite optimizers to handle array (array indexing?) more correctly; they optimize too aggressively
+
+Start refactoring for generalized/actual assembler:
+* Look at how bytecode is created - feels like Opcode and Directive can support Instruction more directly.
+* Decide on assembler syntax; extensible would be nice (embeddable even better - custom would be sufficient)
+
