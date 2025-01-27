@@ -41,9 +41,6 @@ import static picocli.CommandLine.ArgGroup;
 @Command(name = "compile", mixinStandardHelpOptions = true, usageHelpAutoWidth = true,
     description = "Compile Ghost BASIC program.")
 public class CompileCommand implements Callable<Integer> {
-    public static final String INTERPRETER = "/interp-base.as";
-    public static final String DEBUG_INTERPRETER = "/interp-debug-base.as";
-
     @Parameters(index = "0", description = "program to compile")
     private Path sourceCode;
 
@@ -271,10 +268,9 @@ public class CompileCommand implements Callable<Integer> {
     }
 
     public void saveAsAppleSingle(byte[] code) throws IOException {
-        String source = Files.readString(Path.of("/home/rob/Documents/Source/ghost-in-the-stack-vm/src/main/asm/interp.asm"));
         AssemblerState interpreter = null;
         try {
-            interpreter = AssemblerService.assemble(Sources.get(source));
+            interpreter = AssemblerService.assemble(Sources.get(() -> getClass().getResourceAsStream("/asm/interp.asm")));
         } catch (AssemblerException ex) {
             interpreter = AssemblerState.get();
             interpreter.getLog().forEach(System.out::println);
