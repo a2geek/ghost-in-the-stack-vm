@@ -1,5 +1,9 @@
 package a2geek.ghost.command;
 
+import a2geek.asm.api.service.AssemblerService;
+import a2geek.asm.api.service.AssemblerState;
+import a2geek.asm.api.util.AssemblerException;
+import a2geek.asm.api.util.Sources;
 import a2geek.ghost.TrackingLogger;
 import a2geek.ghost.antlr.ParseUtil;
 import a2geek.ghost.command.util.ByteFormatter;
@@ -267,17 +271,24 @@ public class CompileCommand implements Callable<Integer> {
     }
 
     public void saveAsAppleSingle(byte[] code) throws IOException {
-        String asInterpreter = debugFlag ? DEBUG_INTERPRETER : INTERPRETER;
-        AppleSingle as = AppleSingle.read(getClass().getResourceAsStream(asInterpreter));
+        String source = Files.readString(Path.of("/home/rob/Documents/Source/ghost-in-the-stack-vm/src/main/asm/interp.asm"));
+        AssemblerState interpreter = null;
+        try {
+            interpreter = AssemblerService.assemble(Sources.get(source));
+        } catch (AssemblerException ex) {
+            interpreter = AssemblerState.get();
+            interpreter.getLog().forEach(System.out::println);
+            throw new IOException(ex);
+        }
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        baos.writeBytes(as.getDataFork());  // Interpreter code
+        baos.writeBytes(interpreter.getOutput().toByteArray());
         baos.writeBytes(code);              // Byte code program
 
         AppleSingle.builder()
-                .access(as.getProdosFileInfo().getAccess())
-                .auxType(as.getProdosFileInfo().getAuxType())
-                .fileType(as.getProdosFileInfo().getFileType())
+                .access(0xc3)
+                .auxType(0x803)
+                .fileType(0x06) // BIN
                 .dataFork(baos.toByteArray())
                 .build()
                 .save(outputFile);

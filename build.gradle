@@ -9,6 +9,13 @@ version '1.0-SNAPSHOT'
 
 repositories {
     mavenCentral()
+    maven {
+        url = uri("https://maven.pkg.github.com/a2geek/ghost-assembler")
+        credentials {
+            username = project.findProperty("gpr.user") ?: System.getenv("USERNAME")
+            password = project.findProperty("gpr.key") ?: System.getenv("TOKEN")
+        }
+    }
 }
 
 dependencies {
@@ -16,6 +23,7 @@ dependencies {
     implementation "org.antlr:antlr4-runtime:4.13.1"
     implementation 'info.picocli:picocli:4.7.6'
     implementation "net.sf.applecommander:applesingle-api:1.2.2"
+    implementation "a2geek:ghost-assembler-api:0.11.1-RELEASE"
     testImplementation "org.junit.jupiter:junit-jupiter:5.10.2"
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
     testImplementation 'org.hamcrest:hamcrest:2.2'
@@ -29,13 +37,6 @@ java {
 }
 
 sourceSets {
-    doFirst {
-        // Embed building of interpreter
-        exec {
-            workingDir "src/main/asm"
-            commandLine "make"
-        }
-    }
     main.java.srcDirs += "${project.buildDir}/generated-src/antlr/main"
 }
 

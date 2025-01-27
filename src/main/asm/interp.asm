@@ -1,11 +1,9 @@
-    .p02
+    .cpu <MOS6502>
 
-    .zeropage
-
-ip:        .addr 0
-workptr:   .word 0
+ip =       $00
+workptr =  $02
 .ifdef DEBUG
-traceptr:  .addr 0
+traceptr = $04
 .endif
 
 stack = $100
@@ -18,7 +16,7 @@ crout = $fd8e
 prbyte = $fdda
 cout = $fded
 
-    .code
+    .org $803
 
     jmp main
 
@@ -296,7 +294,8 @@ brtable:
     .addr _global_istoreb-1
     .addr _global_iloadw-1
     .addr _global_istorew-1
-brlen = *-brtable
+brtableend:
+brlen = brtableend-brtable
 
 ; ADD:  (B) (A) => (B+A)
 _add:
