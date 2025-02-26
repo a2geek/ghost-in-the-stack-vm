@@ -18,7 +18,7 @@ dependencies {
     implementation "net.sf.applecommander:applesingle-api:1.2.2"
     testImplementation "org.junit.jupiter:junit-jupiter:5.10.2"
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
-    testImplementation 'org.hamcrest:hamcrest:2.2'
+    testImplementation 'org.hamcrest:hamcrest:3.0'
     testImplementation "io.github.java-diff-utils:java-diff-utils:4.12"
 }
 
