@@ -4,8 +4,8 @@ plugins {
     id 'antlr'
 }
 
-group 'a2geek.ghost'
-version '1.0-SNAPSHOT'
+group = 'a2geek.ghost'
+version = '1.0-SNAPSHOT'
 
 repositories {
     mavenCentral()
