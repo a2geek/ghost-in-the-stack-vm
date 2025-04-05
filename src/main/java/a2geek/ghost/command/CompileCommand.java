@@ -9,6 +9,7 @@ import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.visitor.*;
 import a2geek.ghost.target.TargetBackend;
 import a2geek.ghost.target.ghost.GhostBackend;
+import a2geek.ghost.target.mos6502.MOS6502Backend;
 import io.github.applecommander.applesingle.AppleSingle;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
@@ -18,6 +19,7 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -189,15 +191,15 @@ public class CompileCommand implements Callable<Integer> {
             System.out.println("Target code file written; stopping compilation.");
             System.exit(0);
         }
-        var optimized = backend.optimize(code, optimizations.targetOptimizations());
+        var optimized = code.optimize(optimizations.targetOptimizations());
         if (stage == Stage.OPTIMIZATION) {
             targetCodeListing.map(Path::of).ifPresent(optimized::writeSource);
             System.out.println("Optimized target code file written; stopping compilation.");
             System.exit(0);
         }
-        var binout = backend.assemble(optimized);
+        var binout = code.assemble();
         targetCodeListing.map(Path::of).ifPresent(binout::writeSource);
-        symbolTableFile.map(Path::of).ifPresent(binout::writeSymbols);
+        symbolTableFile.map(Path::of).ifPresent(path -> writeSymbols(program, path));
 
         AppleSingle.builder()
                 .access(0xc3)
@@ -206,6 +208,38 @@ public class CompileCommand implements Callable<Integer> {
                 .dataFork(binout.getBytes())
                 .build()
                 .save(outputFile);
+    }
+
+    public void writeSymbols(Program program, Path path) {
+        var fmt = "| %-20.20s | %-5.5s | %-10.10s | %-10.10s | %-10.10s | %-20.20s | %-15.15s | %-20.20s | %-20.20s |\n";
+        var scopes = new ArrayList<Scope>();
+        scopes.addLast(program);
+        try (
+                var bw = Files.newBufferedWriter(path);
+                var pw = new PrintWriter(bw)
+        ) {
+            pw.printf(fmt, "Name", "Temp?", "SymType", "DeclType", "DataType", "Scope", "Dimensions", "Default", "TargetName");
+            while (!scopes.isEmpty()) {
+                var scope = scopes.removeFirst();
+                scope.getLocalSymbols().forEach(symbol -> {
+                    pw.printf(fmt, symbol.name(), symbol.temporary() ? "Temp" : "-",
+                            symbol.symbolType(), symbol.declarationType(),
+                            ifNull(symbol.dataType(), "-n/a-"), scope.getName(),
+                            symbol.dimensions().isEmpty() ? "N/A" : symbol.dimensions(),
+                            ifNull(symbol.defaultValues(),"-none-"),
+                            ifNull(symbol.targetName(), "-"));
+                    if (symbol.scope() != null) {
+                        scopes.addLast(symbol.scope());
+                    }
+                });
+            }
+        }
+        catch (IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
+    }
+    private String ifNull(Object value, String defaultValue) {
+        return value == null ? defaultValue : value.toString();
     }
 
     private enum Language {
@@ -348,7 +382,8 @@ public class CompileCommand implements Callable<Integer> {
     }
 
     enum Target {
-        GHOSTVM(new GhostBackend());
+        GHOSTVM(new GhostBackend()),
+        MOS6502(new MOS6502Backend());
 
         TargetBackend backend;
 

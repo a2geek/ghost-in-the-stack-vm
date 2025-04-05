@@ -5,14 +5,12 @@ import a2geek.asm.api.service.AssemblerState;
 import a2geek.asm.api.util.AssemblerException;
 import a2geek.asm.api.util.Sources;
 import a2geek.ghost.command.util.ByteFormatter;
-import a2geek.ghost.model.Scope;
 import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.target.TargetBackend;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,9 +25,9 @@ public class GhostBackend implements TargetBackend {
         return new GhostCode(program, instructions);
     }
 
-    @Override
-    public Code optimize(Code code, OptimizationFlags optimizations) {
-        if (code instanceof GhostCode(Program program, List<Instruction> instructions)) {
+    record GhostCode(Program program, List<Instruction> instructions) implements Code {
+        @Override
+        public Code optimize(OptimizationFlags optimizations) {
             if (optimizations.labels()) {
                 LabelOptimizer.optimize(instructions);
             }
@@ -45,12 +43,9 @@ public class GhostBackend implements TargetBackend {
             }
             return new GhostCode(program, instructions);
         }
-        throw new RuntimeException("unexpected Code type: " + code.getClass().getName());
-    }
 
-    @Override
-    public Binary assemble(Code code) {
-        if (code instanceof GhostCode(Program program, List<Instruction> instructions)) {
+        @Override
+        public Binary assemble() {
             ByteArrayOutputStream binary = new ByteArrayOutputStream();
 
             // Generate the interpreter with the built-in assembler
@@ -103,10 +98,6 @@ public class GhostBackend implements TargetBackend {
             }
             return new GhostBinary(program, binary.toByteArray(), sw.toString());
         }
-        throw new RuntimeException("unexpected Code type: " + code.getClass().getName());
-    }
-
-    record GhostCode(Program program, List<Instruction> instructions) implements Code {
         @Override
         public void writeSource(Path path) {
             try {
@@ -125,39 +116,6 @@ public class GhostBackend implements TargetBackend {
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
-        }
-
-        @Override
-        public void writeSymbols(Path path) {
-            var fmt = "| %-20.20s | %-5.5s | %-10.10s | %-10.10s | %-10.10s | %-20.20s | %-15.15s | %-20.20s | %-20.20s |\n";
-            var scopes = new ArrayList<Scope>();
-            scopes.addLast(program);
-            try (
-                var bw = Files.newBufferedWriter(path);
-                var pw = new PrintWriter(bw)
-            ) {
-                pw.printf(fmt, "Name", "Temp?", "SymType", "DeclType", "DataType", "Scope", "Dimensions", "Default", "TargetName");
-                while (!scopes.isEmpty()) {
-                    var scope = scopes.removeFirst();
-                    scope.getLocalSymbols().forEach(symbol -> {
-                        pw.printf(fmt, symbol.name(), symbol.temporary() ? "Temp" : "-",
-                                symbol.symbolType(), symbol.declarationType(),
-                                ifNull(symbol.dataType(), "-n/a-"), scope.getName(),
-                                symbol.dimensions().isEmpty() ? "N/A" : symbol.dimensions(),
-                                ifNull(symbol.defaultValues(),"-none-"),
-                                ifNull(symbol.targetName(), "-"));
-                        if (symbol.scope() != null) {
-                            scopes.addLast(symbol.scope());
-                        }
-                    });
-                }
-            }
-            catch (IOException ex) {
-                throw new UncheckedIOException(ex);
-            }
-        }
-        private String ifNull(Object value, String defaultValue) {
-            return value == null ? defaultValue : value.toString();
         }
 
         @Override

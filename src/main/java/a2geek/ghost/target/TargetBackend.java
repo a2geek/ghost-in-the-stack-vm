@@ -14,13 +14,13 @@ import java.nio.file.Path;
  */
 public interface TargetBackend {
     Code generate(Program program);
-    Code optimize(Code code, OptimizationFlags optimizations);
-    Binary assemble(Code code);
 
     /**
      * Manages target code.
      */
     interface Code {
+        Code optimize(OptimizationFlags optimizations);
+        Binary assemble();
         void writeSource(Path path);
     }
 
@@ -29,7 +29,6 @@ public interface TargetBackend {
      */
     interface Binary {
         void writeSource(Path path);
-        void writeSymbols(Path path);
         byte[] getBytes();
     }
 
