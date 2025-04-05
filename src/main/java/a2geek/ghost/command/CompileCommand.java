@@ -1,21 +1,14 @@
 package a2geek.ghost.command;
 
-import a2geek.asm.api.service.AssemblerService;
-import a2geek.asm.api.service.AssemblerState;
-import a2geek.asm.api.util.AssemblerException;
-import a2geek.asm.api.util.Sources;
 import a2geek.ghost.TrackingLogger;
 import a2geek.ghost.antlr.ParseUtil;
-import a2geek.ghost.command.util.ByteFormatter;
 import a2geek.ghost.command.util.IntegerTypeConverter;
 import a2geek.ghost.command.util.PrettyPrintVisitor;
 import a2geek.ghost.model.*;
 import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.visitor.*;
-import a2geek.ghost.target.ghost.CodeGenerationVisitor;
-import a2geek.ghost.target.ghost.Instruction;
-import a2geek.ghost.target.ghost.LabelOptimizer;
-import a2geek.ghost.target.ghost.PeepholeOptimizer;
+import a2geek.ghost.target.TargetBackend;
+import a2geek.ghost.target.ghost.GhostBackend;
 import io.github.applecommander.applesingle.AppleSingle;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
@@ -24,7 +17,8 @@ import picocli.CommandLine.Help.Visibility;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -100,6 +94,9 @@ public class CompileCommand implements Callable<Integer> {
 
     @Option(names = { "--stage" }, description = "run compiler to specified stage", defaultValue = "OUTPUT")
     private Stage stage;
+
+    @Option(names = { "-t", "--target" }, description = "target (virtual) processor")
+    private Target target = Target.GHOSTVM;
 
     public static String convertControlCharacterMarkers(String value) {
         Pattern pattern = Pattern.compile("<CTRL-(.)>", Pattern.CASE_INSENSITIVE);
@@ -182,142 +179,33 @@ public class CompileCommand implements Callable<Integer> {
             return;
         }
 
-        CodeGenerationVisitor codeGenerationVisitor = new CodeGenerationVisitor();
-        codeGenerationVisitor.visit(program);
+        // From this point, working with target code!
+        // Examples: GhostVM, BasicVM, Plasma, 6502, 65C02, 65816, etc.
 
-        List<Instruction> code = codeGenerationVisitor.getInstructions();
+        var backend = target.backend();
+        var code = backend.generate(program);
         if (stage == Stage.TARGET) {
-            targetCodeListing.ifPresent(filename -> {
-                try {
-                    // FIXME - likely need a formatter
-                    Files.write(Path.of(filename), code.toString().getBytes());
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-            });
+            targetCodeListing.map(Path::of).ifPresent(code::writeSource);
             System.out.println("Target code file written; stopping compilation.");
-            return;
+            System.exit(0);
         }
-
-        optimizations.apply(code);
+        var optimized = backend.optimize(code, optimizations.targetOptimizations());
         if (stage == Stage.OPTIMIZATION) {
-            targetCodeListing.ifPresent(filename -> {
-                try {
-                    // FIXME - likely need a formatter
-                    Files.write(Path.of(filename), code.toString().getBytes());
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-            });
-            System.out.println("Target code file written; stopping compilation.");
-            return;
+            targetCodeListing.map(Path::of).ifPresent(optimized::writeSource);
+            System.out.println("Optimized target code file written; stopping compilation.");
+            System.exit(0);
         }
-
-        // Assembly first pass: Figure out label values
-        Map<String,Integer> addrs = new HashMap<>();
-        int addr = 0;
-        for (Instruction instruction : code) {
-            if (instruction.opcode() == null && instruction.label() != null) {
-                addrs.put(instruction.label(), addr);
-            }
-            addr += instruction.size();
-        }
-
-        // Assembly second pass: Generate output
-        StringWriter sw = new StringWriter();
-        PrintWriter pw = new PrintWriter(sw);
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        addr = 0;
-        for (Instruction instruction : code) {
-            byte[] data = instruction.assemble(addrs);
-            out.writeBytes(data);
-            //
-            ByteFormatter bf = ByteFormatter.from(data);
-            if (instruction.opcode() != null) {
-                pw.printf("%04x: %-10.10s  %s\n", addr, bf.get(data.length), instruction);
-            }
-            else if (instruction.directive() != null) {
-                int lineaddr = addr;
-                pw.printf("%04x: %-10.10s  %s\n", lineaddr, bf.get(3), instruction);
-                lineaddr+= 3;
-                while (bf.hasMore()) {
-                    pw.printf("%04x: %s\n", lineaddr, bf.get(8));
-                    lineaddr += 8;
-                }
-            }
-            else {
-                pw.printf("%04x: %-10.10s  %s\n", addr, "", instruction);
-            }
-            //
-            addr += instruction.size();
-        }
-
-        targetCodeListing.ifPresent(filename -> {
-            try {
-                Files.write(Path.of(filename), sw.toString().getBytes());
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
-        });
-
-        symbolTableFile.ifPresent(filename -> {
-            saveSymbolTable(program, filename);
-        });
-
-        saveAsAppleSingle(out.toByteArray());
-    }
-
-    public void saveAsAppleSingle(byte[] code) throws IOException {
-        AssemblerState interpreter = null;
-        try {
-            interpreter = AssemblerService.assemble(Sources.get(() -> getClass().getResourceAsStream("/asm/interp.asm")));
-        } catch (AssemblerException ex) {
-            interpreter = AssemblerState.get();
-            interpreter.getLog().forEach(System.out::println);
-            throw new IOException(ex);
-        }
-
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        baos.writeBytes(interpreter.getOutput().toByteArray());
-        baos.writeBytes(code);              // Byte code program
+        var binout = backend.assemble(optimized);
+        targetCodeListing.map(Path::of).ifPresent(binout::writeSource);
+        symbolTableFile.map(Path::of).ifPresent(binout::writeSymbols);
 
         AppleSingle.builder()
                 .access(0xc3)
                 .auxType(0x803)
                 .fileType(0x06) // BIN
-                .dataFork(baos.toByteArray())
+                .dataFork(binout.getBytes())
                 .build()
                 .save(outputFile);
-    }
-
-
-    public void saveSymbolTable(Program program, String filename) {
-        var fmt = "| %-20.20s | %-5.5s | %-10.10s | %-10.10s | %-10.10s | %-20.20s | %-15.15s | %-20.20s | %-20.20s |\n";
-        var scopes = new ArrayList<Scope>();
-        scopes.addLast(program);
-        try (PrintWriter pw = new PrintWriter(filename)) {
-            pw.printf(fmt, "Name", "Temp?", "SymType", "DeclType", "DataType", "Scope", "Dimensions", "Default", "TargetName");
-            while (!scopes.isEmpty()) {
-                var scope = scopes.removeFirst();
-                scope.getLocalSymbols().forEach(symbol -> {
-                    pw.printf(fmt, symbol.name(), symbol.temporary() ? "Temp" : "-",
-                            symbol.symbolType(), symbol.declarationType(),
-                            ifNull(symbol.dataType(), "-n/a-"), scope.getName(),
-                            symbol.dimensions().isEmpty() ? "N/A" : symbol.dimensions(),
-                            ifNull(symbol.defaultValues(),"-none-"),
-                            ifNull(symbol.targetName(), "-"));
-                    if (symbol.scope() != null) {
-                        scopes.addLast(symbol.scope());
-                    }
-                });
-            }
-        }
-        catch (IOException ex) {
-            throw new UncheckedIOException(ex);
-        }
-    }
-    private String ifNull(Object value, String defaultValue) {
-        return value == null ? defaultValue : value.toString();
     }
 
     private enum Language {
@@ -447,22 +335,8 @@ public class CompileCommand implements Callable<Integer> {
             } while (counter != oldCounter);
         }
 
-        public void apply(List<Instruction> code) {
-            if (noOptimizations) {
-                return;
-            }
-            if (labelOptimizer) {
-                LabelOptimizer.optimize(code);
-            }
-            if (peepholeOptimizer) {
-                int loops = 5;      // arbitrarily picking maximum number of passes
-                while (loops > 0 && PeepholeOptimizer.optimize(code) > 0) {
-                    if (labelOptimizer) {
-                        LabelOptimizer.optimize(code);  // This gets impacted by the peephole optimizer as well
-                    }
-                    loops--;
-                }
-            }
+        public TargetBackend.OptimizationFlags targetOptimizations() {
+            return new TargetBackend.OptimizationFlags(this.peepholeOptimizer, this.labelOptimizer);
         }
     }
 
@@ -471,5 +345,19 @@ public class CompileCommand implements Callable<Integer> {
         TARGET,
         OPTIMIZATION,
         OUTPUT
+    }
+
+    enum Target {
+        GHOSTVM(new GhostBackend());
+
+        TargetBackend backend;
+
+        Target(TargetBackend backend) {
+            this.backend = backend;
+        }
+
+        TargetBackend backend() {
+            return backend;
+        }
     }
 }
