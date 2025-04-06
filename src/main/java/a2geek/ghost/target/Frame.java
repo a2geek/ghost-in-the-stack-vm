@@ -1,4 +1,4 @@
-package a2geek.ghost.target.ghost;
+package a2geek.ghost.target;
 
 import a2geek.ghost.model.*;
 import a2geek.ghost.model.scope.Function;
@@ -30,7 +30,7 @@ public record Frame(
         }
         return new Frame(program, varOffsets, 0, reservation, varOffset);
     }
-    public static Frame create(Subroutine subroutine) {
+    public static Frame create(Subroutine subroutine, int frameOverhead) {
         Map<Symbol,Integer> varOffsets = new HashMap<>();
         int varOffset = 0;
         int reservation = 0;
@@ -40,8 +40,8 @@ public record Frame(
             varOffset += sizeOnStack(ref);
             reservation += sizeOnStack(ref);
         }
-        // frame overhead: return address (2 bytes) + stack index (2 bytes)
-        varOffset += DataType.ADDRESS.sizeof() * 2;
+        // frame overhead varies by target
+        varOffset += frameOverhead;
         // parameters are above the frame details
         int parameterSize = 0;
         for (var ref : subroutine.findAllLocalScope(in(SymbolType.PARAMETER))) {

@@ -27,7 +27,7 @@ public record AssemblerCode(Program program, List<LineParts> instructions, Funct
         AssemblerState result = null;
         try {
             // TODO - Assembler API likely should allow the List<LineParts> directly.
-            String source = instructions.stream().map(LineParts::toString).collect(Collectors.joining("\n"));
+            String source = instructions.stream().map(this::toSourceLine).collect(Collectors.joining("\n"));
             result = AssemblerService.assemble(Sources.get(source));
         } catch (AssemblerException | IOException ex) {
             result = AssemblerState.get();
@@ -37,10 +37,47 @@ public record AssemblerCode(Program program, List<LineParts> instructions, Funct
         return new AssemblerBinary(program, result);
     }
 
+    private String toSourceLine(LineParts parts) {
+        StringBuilder buf = new StringBuilder();
+        if (parts.getLabel() != null) {
+            buf.append(parts.getLabel());
+            if (!"=".equals(parts.getOpcode())) {
+                buf.append(':');
+            }
+        } else {
+            buf.append("    ");
+        }
+
+        if (parts.getOpcode() != null) {
+            if (!buf.isEmpty()) {
+                buf.append(' ');
+            }
+            buf.append(parts.getOpcode());
+        }
+
+        if (parts.getExpression() != null) {
+            if (!buf.isEmpty()) {
+                buf.append(' ');
+            }
+            buf.append(parts.getExpression());
+        }
+
+        if (parts.getComment() != null) {
+            if (!buf.isEmpty()) {
+                buf.append(' ');
+            }
+            buf.append("; ");
+            buf.append(parts.getComment());
+        }
+
+        return buf.toString();
+
+    }
+
     @Override
     public void writeSource(Path path) {
         try {
-            String source = instructions.stream().map(LineParts::toString).collect(Collectors.joining("\n"));
+            String source = instructions.stream().map(this::toSourceLine).collect(Collectors.joining("\n"));
             Files.write(path, source.getBytes());
         } catch (IOException e) {
             throw new UncheckedIOException(e);

@@ -6,9 +6,11 @@ import a2geek.ghost.model.scope.Function;
 import a2geek.ghost.model.scope.Program;
 import a2geek.ghost.model.scope.Subroutine;
 import a2geek.ghost.model.statement.*;
+import a2geek.ghost.target.Frame;
 
 import java.util.*;
 
+import static a2geek.ghost.Util.errorf;
 import static a2geek.ghost.model.Symbol.*;
 
 public class CodeGenerationVisitor extends DispatchVisitor {
@@ -18,6 +20,9 @@ public class CodeGenerationVisitor extends DispatchVisitor {
     private int labelNumber;
     private final Set<String> scopesUsed = new HashSet<>();
     private final Set<String> scopesProcessed = new HashSet<>();
+
+    // frame overhead: return address (2 bytes) + stack index (2 bytes)
+    private final int frameOverhead = DataType.ADDRESS.sizeof() * 2;
 
     public List<Instruction> getInstructions() {
         return code.getInstructions();
@@ -32,10 +37,6 @@ public class CodeGenerationVisitor extends DispatchVisitor {
         return labels;
     }
 
-    private RuntimeException error(String fmt, Object... args) {
-        return new RuntimeException(String.format(fmt, args));
-    }
-
     @Override
     public void visit(Program program) {
         var frame = this.frames.push(Frame.create(program));
@@ -47,7 +48,7 @@ public class CodeGenerationVisitor extends DispatchVisitor {
         code.emit(Opcode.STOREGP);
         code.emit(Opcode.STORELP);
         setupOnErrContext(program.findFirst(named(DEFAULT_ERROR_HANDLER))
-                .orElseThrow(() -> error("unknown label: '%s'", DEFAULT_ERROR_HANDLER)));
+                .orElseThrow(() -> errorf("unknown label: '%s'", DEFAULT_ERROR_HANDLER)));
         setupDefaultArrayValues(program);
         setupDefaultStringValues(program);
 
@@ -202,7 +203,7 @@ public class CodeGenerationVisitor extends DispatchVisitor {
             }
         }
         else {
-            throw error("not valid assignment: %s", statement);
+            throw errorf("not valid assignment: %s", statement);
         }
     }
 
@@ -422,7 +423,7 @@ public class CodeGenerationVisitor extends DispatchVisitor {
         var exitLabel = label("SUBEXIT").getFirst();
         subroutine.setExitLabel(exitLabel);
         var hasLocalScope = !subroutine.findAllLocalScope(is(DeclarationType.LOCAL).and(in(SymbolType.VARIABLE, SymbolType.PARAMETER))).isEmpty();
-        var frame = frames.push(Frame.create(subroutine));
+        var frame = frames.push(Frame.create(subroutine, frameOverhead));
         code.emit(subroutine.getFullPathName());
         if (hasLocalScope) setupLocalFrame(frame);
         saveOnErrContext(subroutine);
@@ -464,7 +465,7 @@ public class CodeGenerationVisitor extends DispatchVisitor {
     public void visit(Function function) {
         // NOTE/WARNING: Function cannot have the optimization to drop LOCAL_RESERVE/LOCAL_FREE
         //               because the RETURN_VALUE is always present and relative to function entry.
-        var frame = frames.push(Frame.create(function));
+        var frame = frames.push(Frame.create(function, frameOverhead));
         var labels = label("FUNCXIT");
         var exitLabel = labels.getFirst();
         function.setExitLabel(exitLabel);
@@ -689,11 +690,11 @@ public class CodeGenerationVisitor extends DispatchVisitor {
                         code.emit(Opcode.LOADC, localFrameOffset(symbol));
                         code.emit(Opcode.ADD);
                     }
-                    case INTRINSIC -> throw error("cannot take address of an intrinsic value: '%s'", expression);
+                    case INTRINSIC -> throw errorf("cannot take address of an intrinsic value: '%s'", expression);
                 };
             }
             case LABEL -> code.emit(Opcode.LOADA, symbol.name());
-            default -> throw error("unexpected addressof expression: '%s'", expression);
+            default -> throw errorf("unexpected addressof expression: '%s'", expression);
         }
         return null;
     }
