@@ -13,7 +13,7 @@ import java.util.*;
 import static a2geek.ghost.Util.errorf;
 import static a2geek.ghost.model.Symbol.*;
 
-public class CodeGenerationVisitor extends DispatchVisitor {
+public class CodeGenerationVisitor extends DispatchVisitor<Expression> {
     public static final String DEFAULT_ERROR_HANDLER = "RUNTIME.DEFAULTERRORHANDLER";
     private final Stack<Frame> frames = new Stack<>();
     private final CodeBlock code = new CodeBlock();

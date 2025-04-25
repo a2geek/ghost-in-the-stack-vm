@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * A default implementation of the visitor pattern.
  */
-public abstract class Visitor extends DispatchVisitor {
+public abstract class Visitor extends DispatchVisitor<Expression> {
     @Override
     public void visit(AssignmentStatement statement, VisitorContext context) {
         var expr = dispatch(statement.getValue());

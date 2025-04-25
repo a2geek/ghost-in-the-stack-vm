@@ -15,7 +15,7 @@ import static a2geek.ghost.model.Symbol.in;
  * A visitor pattern with only the dispatch methods implemented.
  * @see Visitor a class with default visit methods
  */
-public abstract class DispatchVisitor implements ProgramVisitor {
+public abstract class DispatchVisitor<E> implements ProgramVisitor {
     public void dispatch(Scope scope) {
         switch (scope) {
             case Program s -> visit(s);
@@ -44,7 +44,7 @@ public abstract class DispatchVisitor implements ProgramVisitor {
                     statement.getClass().getName());
         }
     }
-    public Optional<Expression> dispatch(Expression expression) {
+    public Optional<E> dispatch(Expression expression) {
         return switch (expression) {
             // This occurs when the expression is optional, such as the RETURN statement.
             // Catching it here instead of testing everywhere else as issues are discovered.
@@ -114,18 +114,18 @@ public abstract class DispatchVisitor implements ProgramVisitor {
     public abstract void visit(OnErrorStatement statement, VisitorContext context);
     public abstract void visit(RaiseErrorStatement statement, VisitorContext context);
 
-    public abstract Expression visit(AddressOfOperator expression);
-    public abstract Expression visit(ArrayLengthFunction expression);
-    public abstract Expression visit(BinaryExpression expression);
-    public abstract Expression visit(BooleanConstant expression);
-    public abstract Expression visit(ByteConstant expression);
-    public abstract Expression visit(DereferenceOperator expression);
-    public abstract Expression visit(FunctionExpression expression);
-    public abstract Expression visit(IfExpression expression);
-    public abstract Expression visit(IntegerConstant expression);
-    public abstract Expression visit(PlaceholderExpression expression);
-    public abstract Expression visit(StringConstant expression);
-    public abstract Expression visit(TypeConversionOperator expression);
-    public abstract Expression visit(UnaryExpression expression);
-    public abstract Expression visit(VariableReference expression);
+    public abstract E visit(AddressOfOperator expression);
+    public abstract E visit(ArrayLengthFunction expression);
+    public abstract E visit(BinaryExpression expression);
+    public abstract E visit(BooleanConstant expression);
+    public abstract E visit(ByteConstant expression);
+    public abstract E visit(DereferenceOperator expression);
+    public abstract E visit(FunctionExpression expression);
+    public abstract E visit(IfExpression expression);
+    public abstract E visit(IntegerConstant expression);
+    public abstract E visit(PlaceholderExpression expression);
+    public abstract E visit(StringConstant expression);
+    public abstract E visit(TypeConversionOperator expression);
+    public abstract E visit(UnaryExpression expression);
+    public abstract E visit(VariableReference expression);
 }
