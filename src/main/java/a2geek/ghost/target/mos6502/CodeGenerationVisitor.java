@@ -15,6 +15,9 @@ import static a2geek.ghost.Util.errorf;
 import static a2geek.ghost.model.Symbol.in;
 import static a2geek.ghost.model.Symbol.named;
 import static a2geek.ghost.target.mos6502.ExpressionGenerators.*;
+import static a2geek.ghost.target.mos6502.TempSuppliers.symbolSupplier;
+import static a2geek.ghost.target.mos6502.TempSuppliers.terminalSupplier;
+import static a2geek.ghost.target.mos6502.Terminals.*;
 
 public class CodeGenerationVisitor extends DispatchVisitor<ExpressionGenerator> {
     public static final String INITIAL_SP = "_INITSP";
