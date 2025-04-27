@@ -2,6 +2,7 @@ package a2geek.ghost.target.mos6502;
 
 import a2geek.ghost.model.Intrinsic;
 import a2geek.ghost.model.Symbol;
+import a2geek.ghost.target.mos6502.ExpressionGenerator.Terminal;
 
 import static a2geek.ghost.Util.errorf;
 import static a2geek.ghost.target.mos6502.CodeGenerationVisitor.*;
@@ -11,7 +12,7 @@ public class Terminals {
         // prevent construction
     }
 
-    public static ExpressionGenerator.Terminal symbolReference(final Symbol symbol) {
+    public static Terminal symbolReference(final Symbol symbol) {
         return switch (symbol.declarationType()) {
             case LOCAL -> localVariable(symbol);
             case GLOBAL -> globalVariable(symbol);
@@ -19,8 +20,8 @@ public class Terminals {
         };
     }
 
-    public static ExpressionGenerator.Terminal localVariable(final Symbol symbol) {
-        return new ExpressionGenerator.Terminal() {
+    public static Terminal localVariable(final Symbol symbol) {
+        return new Terminal() {
             @Override
             public void generateByteOp(AssemblyWriter asm, String op, int offset) {
                 // TODO - offset in this case is offset to the local variable
@@ -39,8 +40,8 @@ public class Terminals {
         };
     }
 
-    public static ExpressionGenerator.Terminal globalVariable(final Symbol symbol) {
-        return new ExpressionGenerator.Terminal() {
+    public static Terminal globalVariable(final Symbol symbol) {
+        return new Terminal() {
             @Override
             public void generateByteOp(AssemblyWriter asm, String op, int offset) {
                 asm.op(op, "%s+%d", symbol.name(), offset);
@@ -56,7 +57,7 @@ public class Terminals {
         };
     }
 
-    public static ExpressionGenerator.Terminal intrinsicVariable(final Symbol symbol) {
+    public static Terminal intrinsicVariable(final Symbol symbol) {
         final var name = switch (symbol.name().toLowerCase()) {
             case Intrinsic.CPU_REGISTER_A -> REG_A;
             case Intrinsic.CPU_REGISTER_X -> REG_X;
@@ -79,8 +80,8 @@ public class Terminals {
         };
     }
 
-    public static ExpressionGenerator.Terminal indyReference(final String label) {
-        return new ExpressionGenerator.Terminal() {
+    public static Terminal indyReference(final String label) {
+        return new Terminal() {
             @Override
             public void generateByteOp(AssemblyWriter asm, String op, int offset) {
                 if (offset == 0) {
@@ -103,8 +104,8 @@ public class Terminals {
         };
     }
 
-    public static ExpressionGenerator.Terminal tosReference() {
-        return new ExpressionGenerator.Terminal() {
+    public static Terminal tosReference() {
+        return new Terminal() {
             @Override
             public void generateByteOp(AssemblyWriter asm, String op, int offset) {
                 switch (op.toUpperCase()) {
@@ -124,8 +125,8 @@ public class Terminals {
         };
     }
 
-    public static ExpressionGenerator.Terminal intConstant(int value) {
-        return new ExpressionGenerator.Terminal() {
+    public static Terminal intConstant(int value) {
+        return new Terminal() {
             @Override
             public void generateByteOp(AssemblyWriter asm, String op, int offset) {
                 var n = switch(offset) {
@@ -146,8 +147,8 @@ public class Terminals {
         };
     }
 
-    public static ExpressionGenerator.Terminal labelReference(String label) {
-        return new ExpressionGenerator.Terminal() {
+    public static Terminal labelReference(String label) {
+        return new Terminal() {
             @Override
             public void generateByteOp(AssemblyWriter asm, String op, int offset) {
                 if (offset == 0) {
@@ -168,8 +169,8 @@ public class Terminals {
         };
     }
 
-    public static ExpressionGenerator.Terminal addressReference(final int address, final int size) {
-        return new ExpressionGenerator.Terminal() {
+    public static Terminal addressReference(final int address, final int size) {
+        return new Terminal() {
             @Override
             public void generateByteOp(AssemblyWriter asm, String op, int offset) {
                 asm.op(op, "%d", address + offset);
