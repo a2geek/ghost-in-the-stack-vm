@@ -32,6 +32,10 @@ public class Terminals {
             public int size() {
                 return symbol.dataType().sizeof();
             }
+            @Override
+            public String toString() {
+                return String.format("stack+%s,x", symbol.name());
+            }
         };
     }
 
@@ -44,6 +48,10 @@ public class Terminals {
             @Override
             public int size() {
                 return symbol.dataType().sizeof();
+            }
+            @Override
+            public String toString() {
+                return symbol.name();
             }
         };
     }
@@ -63,6 +71,10 @@ public class Terminals {
             @Override
             public int size() {
                 return 1;
+            }
+            @Override
+            public String toString() {
+                return symbol.name();
             }
         };
     }
@@ -84,6 +96,10 @@ public class Terminals {
             public int size() {
                 return 2;   // TODO ???
             }
+            @Override
+            public String toString() {
+                return String.format("(%s),y", label);
+            }
         };
     }
 
@@ -100,6 +116,10 @@ public class Terminals {
             @Override
             public int size() {
                 return 2;   // TODO ???
+            }
+            @Override
+            public String toString() {
+                return "STACK";
             }
         };
     }
@@ -119,6 +139,10 @@ public class Terminals {
             public int size() {
                 return 2;
             }
+            @Override
+            public String toString() {
+                return String.format("#%d", value);
+            }
         };
     }
 
@@ -137,6 +161,10 @@ public class Terminals {
             public int size() {
                 return 2;
             }
+            @Override
+            public String toString() {
+                return label;
+            }
         };
     }
 
@@ -149,6 +177,10 @@ public class Terminals {
             @Override
             public int size() {
                 return size;
+            }
+            @Override
+            public String toString() {
+                return String.format("%04x", address);
             }
         };
     }

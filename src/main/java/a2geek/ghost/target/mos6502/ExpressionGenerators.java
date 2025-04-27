@@ -9,6 +9,9 @@ public class ExpressionGenerators {
         return (asm, supplier) -> {
             var expr = exprGen.toTerminal(asm, supplier);
             var result = supplier.get();
+            if (expr.equals(result)) {
+                return expr;    // this expression assigned to our result
+            }
             expr.generateByteOp(asm, "LDA", 0);
             result.generateByteOp(asm, "STA", 0);
             if (result.size() > 1) {

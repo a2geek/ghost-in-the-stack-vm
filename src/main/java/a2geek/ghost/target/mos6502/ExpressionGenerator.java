@@ -1,5 +1,7 @@
 package a2geek.ghost.target.mos6502;
 
+import java.util.Objects;
+
 public interface ExpressionGenerator {
     Terminal toTerminal(AssemblyWriter asm, TempSupplier supplier);
 
@@ -10,6 +12,9 @@ public interface ExpressionGenerator {
         }
         void generateByteOp(AssemblyWriter asm, String op, int offset);
         int size();
+        default boolean equals(Terminal t) {
+            return Objects.equals(toString(), t.toString());
+        }
     }
 
     interface TempSupplier {
