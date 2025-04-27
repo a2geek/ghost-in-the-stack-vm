@@ -44,7 +44,12 @@ public class Terminals {
         return new Terminal() {
             @Override
             public void generateByteOp(AssemblyWriter asm, String op, int offset) {
-                asm.op(op, "%s+%d", symbol.name(), offset);
+                if (offset == 0) {
+                    asm.op(op, "%s", symbol.name());
+                }
+                else {
+                    asm.op(op, "%s+%d", symbol.name(), offset);
+                }
             }
             @Override
             public int size() {
@@ -64,10 +69,15 @@ public class Terminals {
             case Intrinsic.CPU_REGISTER_Y -> REG_Y;
             default -> throw errorf("unknown intrinsic variable '%s'", symbol.name());
         };
-        return new ExpressionGenerator.Terminal() {
+        return new Terminal() {
             @Override
             public void generateByteOp(AssemblyWriter asm, String op, int offset) {
-                asm.op(op, "%s+%d", name, offset);
+                if (offset == 0) {
+                    asm.op(op, "%s", name);
+                }
+                else {
+                    asm.op(op, "%s+%d", name, offset);
+                }
             }
             @Override
             public int size() {
