@@ -367,8 +367,13 @@ public class CodeGenerationVisitor extends DispatchVisitor<ExpressionGenerator> 
 
     @Override
     public ExpressionGenerator visit(BinaryExpression expression) {
-        // TODO
-        return intConstant(0xe5);
+        var l = dispatch(expression.getL()).orElseThrow();
+        var r = dispatch(expression.getR()).orElseThrow();
+        return switch (expression.getOp()) {
+            case "+" -> add(l, r);
+            // TODO
+            default -> intConstant(0xe5);
+        };
     }
 
     @Override

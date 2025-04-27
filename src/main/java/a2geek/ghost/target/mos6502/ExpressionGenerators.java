@@ -72,4 +72,33 @@ public class ExpressionGenerators {
             return result;
         };
     }
+    public static ExpressionGenerator add(ExpressionGenerator exprA, ExpressionGenerator exprB) {
+        return (asm, supplier) -> {
+            var a = exprA.toTerminal(asm, supplier);
+            var b = exprB.toTerminal(asm, supplier);
+            var result = supplier.get();
+            asm.CLC();
+            a.generateByteOp(asm, "LDA", 0);
+            b.generateByteOp(asm, "ADC", 0);
+            result.generateByteOp(asm, "STA", 0);
+            if (result.size() > 1) {
+                if (a.size() > 1) {
+                    a.generateByteOp(asm, "LDA", 1);
+                }
+                else {
+                    asm.LDA("#0");
+                }
+                if (b.size() > 1) {
+                    b.generateByteOp(asm, "ADC", 1);
+                }
+                else {
+                    // Not needed
+                }
+                result.generateByteOp(asm, "STA", 1);
+            }
+            supplier.free(a);
+            supplier.free(b);
+            return result;
+        };
+    }
 }
