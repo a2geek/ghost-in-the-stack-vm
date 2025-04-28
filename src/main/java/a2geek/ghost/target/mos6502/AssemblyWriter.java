@@ -39,6 +39,13 @@ public class AssemblyWriter {
         return this;
     }
 
+    public AssemblyWriter comment(String fmt, Object... args) {
+        LineParts parts = new LineParts();
+        parts.setComment(String.format(fmt, args));
+        codeSegment.add(parts);
+        return this;
+    }
+
     public AssemblyWriter op(String opcode) {
         return emit(codeSegment, null, opcode, null);
     }

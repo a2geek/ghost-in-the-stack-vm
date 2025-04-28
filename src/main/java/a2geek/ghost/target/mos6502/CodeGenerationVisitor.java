@@ -176,10 +176,12 @@ public class CodeGenerationVisitor extends DispatchVisitor<ExpressionGenerator> 
         var value = dispatch(statement.getValue()).orElseThrow();
         if (statement.getVar() instanceof VariableReference ref) {
             // A = <value> (simple assignment)
+            code.comment("%s = %s", ref.getSymbol().name(), statement.getValue());
             assign(value).toTerminal(code, symbolSupplier(ref.getSymbol()));
         }
         else if (statement.getVar() instanceof DereferenceOperator deref) {
             // *(<expr>) = <value>   (dereferenced assignment)
+            code.comment("*(%s) = %s", deref.getExpr(), statement.getValue());
             if (deref.getExpr().isConstant()) {
                 assign(value).toTerminal(code, terminalSupplier(addressReference(
                         deref.getExpr().asInteger().orElseThrow(),
@@ -199,6 +201,7 @@ public class CodeGenerationVisitor extends DispatchVisitor<ExpressionGenerator> 
     @Override
     public void visit(EndStatement statement, VisitorContext context) {
         // BASIC "END" can be anywhere, so this is an attempt for a clean exit.
+        code.comment("END");
         code.LDX(INITIAL_SP)
             .TXS()
             .RTS();
@@ -206,6 +209,7 @@ public class CodeGenerationVisitor extends DispatchVisitor<ExpressionGenerator> 
 
     @Override
     public void visit(CallStatement statement, VisitorContext context) {
+        code.comment("CALL %s", statement.getExpr());
         if (statement.getExpr().isConstant()) {
             code.LDA(REG_A)
                 .LDX(REG_X)
@@ -247,6 +251,7 @@ public class CodeGenerationVisitor extends DispatchVisitor<ExpressionGenerator> 
 
         dispatch(statement.getExpression());
         if (statement.hasTrueStatements()) {
+            code.comment("IF %s THEN", statement.getExpression());
             code.PLA()
                 .STA(IF_TEMP)
                 .PLA()
@@ -256,12 +261,14 @@ public class CodeGenerationVisitor extends DispatchVisitor<ExpressionGenerator> 
                 .label(trueLabel);
             dispatchAll(context, statement.getTrueStatements());
             if (statement.hasFalseStatements()) {
+                code.comment("ELSE");
                 code.JMP(exitLabel);
                 code.label(elseLabel);
                 dispatchAll(context, statement.getFalseStatements());
             }
         }
         else {
+            code.comment("IF NOT %s THEN", statement.getExpression());
             code.PLA()
                 .STA(IF_TEMP)
                 .PLA()
@@ -271,11 +278,13 @@ public class CodeGenerationVisitor extends DispatchVisitor<ExpressionGenerator> 
                 .label(elseLabel);
             dispatchAll(context, statement.getFalseStatements());
         }
+        code.comment("END IF");
         code.label(exitLabel);
     }
 
     @Override
     public void visit(GotoGosubStatement statement, VisitorContext context) {
+        code.comment("%s %s", statement.getOp().toUpperCase(), statement.getLabel().name());
         switch (statement.getOp()) {
             case "goto" -> code.JMP(statement.getLabel().name());
             case "gosub" -> code.JSR(statement.getLabel().name());
