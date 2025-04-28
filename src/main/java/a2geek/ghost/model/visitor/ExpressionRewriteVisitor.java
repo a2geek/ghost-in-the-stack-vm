@@ -5,6 +5,7 @@ import a2geek.ghost.model.Expression;
 import a2geek.ghost.model.Visitor;
 import a2geek.ghost.model.expression.BinaryExpression;
 import a2geek.ghost.model.expression.IntegerConstant;
+import a2geek.ghost.model.expression.UnaryExpression;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +28,42 @@ public class ExpressionRewriteVisitor extends Visitor {
                     case "*" -> nonConstants.times(new IntegerConstant(visitor.getConstantTotal()));
                     default -> throw new RuntimeException("unexpected op: " + expression.getOp());
                 };
+            }
+        }
+        // check additive operators combined with unary minus - note we have to check numerical constants as well
+        if ("+".equals(expression.getOp())) {
+            if (expression.getL() instanceof UnaryExpression ul && ul.getOp().equals("-")) {
+                // -a + b => b - a
+                var a = ul.getExpr();
+                var b = expression.getR();
+                return new BinaryExpression(b, a, "-");
+            }
+            else if (expression.getR() instanceof UnaryExpression ur && ur.getOp().equals("-")) {
+                // a + -b => a - b
+                var a = expression.getL();
+                var b = ur.getExpr();
+                return new BinaryExpression(a, b, "-");
+            }
+            else if (expression.getL() instanceof IntegerConstant il && il.getValue() < 0) {
+                // -# + b => b - #
+                var a = new IntegerConstant(-il.getValue());
+                var b = expression.getR();
+                return new BinaryExpression(b, a, "-");
+            }
+            else if (expression.getR() instanceof IntegerConstant ir && ir.getValue() < 0) {
+                // a + -# => a - #
+                var a = expression.getL();
+                var b = new IntegerConstant(-ir.getValue());
+                return new BinaryExpression(a, b, "-");
+            }
+
+        }
+        else if ("-".equals(expression.getOp())) {
+            if (expression.getR() instanceof IntegerConstant ir && ir.getValue() < 0) {
+                // a - -# => a + #
+                var a = expression.getL();
+                var b = new IntegerConstant(-ir.getValue());
+                return new BinaryExpression(a, b, "+");
             }
         }
 
