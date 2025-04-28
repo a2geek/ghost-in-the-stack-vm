@@ -370,7 +370,8 @@ public class CodeGenerationVisitor extends DispatchVisitor<ExpressionGenerator> 
         var l = dispatch(expression.getL()).orElseThrow();
         var r = dispatch(expression.getR()).orElseThrow();
         return switch (expression.getOp()) {
-            case "+" -> add(l, r);
+            case "+" -> addSub(l, r, "CLC", "ADC");
+            case "-" -> addSub(l, r, "SEC", "SBC");
             // TODO
             default -> intConstant(0xe5);
         };
