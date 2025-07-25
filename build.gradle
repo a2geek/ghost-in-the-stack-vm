@@ -19,7 +19,7 @@ dependencies {
     testImplementation "org.junit.jupiter:junit-jupiter:5.13.4"
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
     testImplementation 'org.hamcrest:hamcrest:3.0'
-    testImplementation "io.github.java-diff-utils:java-diff-utils:4.15"
+    testImplementation "io.github.java-diff-utils:java-diff-utils:4.16"
 }
 
 java {
